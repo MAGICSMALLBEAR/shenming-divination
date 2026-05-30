@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, PanResponder } from 'react-native';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { playIncenseSound } from '@/services/proceduralSound';
 
 interface IncenseRitualProps {
   godName: string;
@@ -43,6 +44,7 @@ export function IncenseRitual({ godName, onComplete }: IncenseRitualProps) {
 
   const handlePlace = () => {
     if (litCount >= 1) {
+      playIncenseSound().catch(() => {});
       setStep('placed');
       setTimeout(onComplete, 800);
     }

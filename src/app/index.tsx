@@ -16,16 +16,21 @@ import { StarBackground } from '@/components/StarBackground';
 import { FireworksEffect } from '@/components/FireworksEffect';
 import { ZhugeNumberInput } from '@/components/ZhugeNumberInput';
 import { addWish } from '@/services/wishTracker';
+import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
+import { playResultSound } from '@/services/proceduralSound';
 
 export default function HomeScreen() {
   const div = useDivination();
   const [strictMode, setStrictMode] = React.useState(false);
   const [incenseDone, setIncenseDone] = React.useState(false);
   const [showFireworks, setShowFireworks] = React.useState(false);
+  const [fortuneExpanded, setFortuneExpanded] = React.useState(false);
+  const fortune = React.useMemo(() => getDailyFortune(), []);
 
-  // 抽到上上/大吉籤時觸發煙火
+  // 抽到上上/大吉籤時觸發煙火；進入結果播放音效
   React.useEffect(() => {
     if (div.step === 'result' && div.drawnPoem) {
+      playResultSound().catch(() => {});
       const level = div.drawnPoem.level;
       if (level.includes('上') || level.includes('大吉')) {
         setShowFireworks(true);
@@ -127,7 +132,12 @@ export default function HomeScreen() {
   const renderContent = () => {
     switch (div.step) {
       case 'select-god':
-        return <GodSelector onSelectGod={div.selectGod} />;
+        return (
+          <View style={styles.fullScreen}>
+            <DailyFortuneCard fortune={fortune} expanded={fortuneExpanded} onToggle={() => setFortuneExpanded(v => !v)} />
+            <GodSelector onSelectGod={div.selectGod} />
+          </View>
+        );
       case 'set-question':
         return (
           <View style={styles.fullScreen}>
@@ -253,6 +263,98 @@ export default function HomeScreen() {
     </ErrorBoundary>
   );
 }
+
+// ─── 今日運勢折疊卡 ───────────────────────────────────────────
+function DailyFortuneCard({ fortune, expanded, onToggle }: { fortune: DailyFortune; expanded: boolean; onToggle: () => void }) {
+  const SCORE_LABELS = [
+    { key: 'wealth' as const, label: '財', icon: '💰' },
+    { key: 'career' as const, label: '事', icon: '💼' },
+    { key: 'love' as const, label: '愛', icon: '💕' },
+    { key: 'health' as const, label: '康', icon: '🏥' },
+  ];
+  const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
+  const overallColor = fortune.overall >= 4 ? TempleTheme.success : fortune.overall >= 3 ? TempleTheme.warning : TempleTheme.danger;
+
+  return (
+    <View style={fStyles.card}>
+      <TouchableOpacity style={fStyles.header} onPress={onToggle} activeOpacity={0.8}>
+        <View style={fStyles.headerLeft}>
+          <Text style={fStyles.title}>今日運勢</Text>
+          <View style={fStyles.overallRow}>
+            <Text style={[fStyles.stars, { color: overallColor }]}>{stars(fortune.overall)}</Text>
+            <View style={[fStyles.colorDot, { backgroundColor: fortune.luckyColor.hex }]} />
+            <Text style={fStyles.colorName}>{fortune.luckyColor.name}</Text>
+          </View>
+        </View>
+        <View style={fStyles.miniScores}>
+          {SCORE_LABELS.map(({ key, icon }) => (
+            <View key={key} style={fStyles.miniItem}>
+              <Text style={fStyles.miniIcon}>{icon}</Text>
+              <Text style={[fStyles.miniStar, { color: fortune.scores[key] >= 4 ? TempleTheme.success : fortune.scores[key] >= 3 ? TempleTheme.warning : TempleTheme.danger }]}>
+                {'★'.repeat(fortune.scores[key])}
+              </Text>
+            </View>
+          ))}
+        </View>
+        <Text style={fStyles.chevron}>{expanded ? '▲' : '▼'}</Text>
+      </TouchableOpacity>
+
+      {expanded && (
+        <View style={fStyles.body}>
+          {SCORE_LABELS.map(({ key, label, icon }) => (
+            <View key={key} style={fStyles.scoreRow}>
+              <Text style={fStyles.scoreIcon}>{icon}</Text>
+              <Text style={fStyles.scoreLabel}>{label}運</Text>
+              <Text style={[fStyles.scoreStar, { color: fortune.scores[key] >= 4 ? TempleTheme.success : fortune.scores[key] >= 3 ? TempleTheme.warning : TempleTheme.danger }]}>
+                {stars(fortune.scores[key])}
+              </Text>
+            </View>
+          ))}
+          <View style={fStyles.divider} />
+          <View style={fStyles.infoRow}>
+            <Text style={fStyles.infoItem}>🧭 吉位：{fortune.luckyDirection}</Text>
+            <Text style={fStyles.infoItem}>🔢 幸運數：{fortune.luckyNumber}</Text>
+          </View>
+          <View style={fStyles.infoRow}>
+            <Text style={fStyles.infoItem}>⏰ 吉時：{fortune.auspiciousHour}</Text>
+            <Text style={fStyles.infoItem}>🔮 今日五行：{fortune.wuxingToday}</Text>
+          </View>
+          <Text style={fStyles.advice}>{fortune.advice}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const fStyles = StyleSheet.create({
+  card: {
+    marginHorizontal: TempleSpacing.md, marginBottom: TempleSpacing.sm,
+    backgroundColor: TempleTheme.bgCard, borderRadius: 14,
+    borderWidth: 1, borderColor: TempleTheme.goldDark + '30', overflow: 'hidden',
+  },
+  header: { flexDirection: 'row', alignItems: 'center', padding: TempleSpacing.sm, gap: TempleSpacing.sm },
+  headerLeft: { flex: 1 },
+  title: { fontSize: 12, fontWeight: '700', color: TempleTheme.goldLight, marginBottom: 2 },
+  overallRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  stars: { fontSize: 11, letterSpacing: 1 },
+  colorDot: { width: 10, height: 10, borderRadius: 5 },
+  colorName: { fontSize: 10, color: TempleTheme.textMuted },
+  miniScores: { flexDirection: 'row', gap: 4 },
+  miniItem: { alignItems: 'center' },
+  miniIcon: { fontSize: 12 },
+  miniStar: { fontSize: 7 },
+  chevron: { fontSize: 12, color: TempleTheme.textMuted, paddingHorizontal: 4 },
+  body: { paddingHorizontal: TempleSpacing.md, paddingBottom: TempleSpacing.md, borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '20' },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, gap: 6 },
+  scoreIcon: { fontSize: 14, width: 20 },
+  scoreLabel: { fontSize: 12, color: TempleTheme.textMuted, width: 28 },
+  scoreStar: { fontSize: 12, letterSpacing: 1 },
+  divider: { height: 1, backgroundColor: TempleTheme.goldDark + '20', marginVertical: 8 },
+  infoRow: { flexDirection: 'row', gap: TempleSpacing.md, marginBottom: 4 },
+  infoItem: { fontSize: 11, color: TempleTheme.textLight, flex: 1 },
+  advice: { fontSize: TempleFonts.small, color: TempleTheme.gold, marginTop: 6, fontStyle: 'italic', lineHeight: 18 },
+});
+// ─────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },

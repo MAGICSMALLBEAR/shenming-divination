@@ -1,40 +1,49 @@
-// 神明選擇卡片 - 含光暈脈衝動畫
-import React, { useRef, useEffect } from 'react';
+// 神明選擇卡片 - 含光暈脈衝動畫 + 守護神推薦 + 神明漢字肖像
+import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Animated } from 'react-native';
 import { gods, questionCategories, type God } from '@/data/gods';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { getSettings } from '@/services/storage';
+import { calcBazi, parseBirthYear } from '@/services/bazi';
+
+// 神明代表漢字（取代 emoji，更有廟宇感）
+const GOD_CHAR: Record<number, string> = {
+  1: '關', 2: '觀', 3: '媽', 4: '王', 5: '保', 6: '土', 7: '娘', 8: '文', 9: '孔',
+};
 
 interface GodSelectorProps {
   onSelectGod: (godId: number) => void;
 }
 
 export function GodSelector({ onSelectGod }: GodSelectorProps) {
-  const getGodIcon = (god: God) => {
-    switch (god.category) {
-      case 'war': return '⚔️';
-      case 'compassion': return '🪷';
-      case 'sea': return '🌊';
-      case 'health': return '💊';
-      case 'wealth': return '🪙';
-      case 'general': return '🏛️';
-    }
-  };
+  const [patronGodId, setPatronGodId] = useState<number | null>(null);
+
+  useEffect(() => {
+    getSettings().then(s => {
+      if (s?.birthDate) {
+        const year = parseBirthYear(s.birthDate);
+        if (year) setPatronGodId(calcBazi(year).patronGodId);
+      }
+    });
+  }, []);
 
   const getGodColor = (god: God) => {
     switch (god.category) {
-      case 'war': return '#B22222';
-      case 'compassion': return '#FF69B4';
-      case 'sea': return '#1E90FF';
-      case 'health': return '#2E8B57';
-      case 'wealth': return '#DAA520';
-      case 'general': return '#8B6914';
+      case 'war':        return '#C0392B';
+      case 'compassion': return '#E91E8C';
+      case 'sea':        return '#1565C0';
+      case 'health':     return '#2E7D32';
+      case 'wealth':     return '#F9A825';
+      case 'general':    return '#6D4C41';
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>請選擇神明</Text>
-      <Text style={styles.subtitle}>誠心祈求，心誠則靈</Text>
+      <Text style={styles.subtitle}>
+        {patronGodId ? '🌟 金色框為您的守護神明' : '誠心祈求，心誠則靈'}
+      </Text>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
         <View style={styles.grid}>
@@ -42,8 +51,9 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
             <GodCard
               key={god.id}
               god={god}
-              icon={getGodIcon(god)}
+              char={GOD_CHAR[god.id] ?? '神'}
               color={getGodColor(god)}
+              isPatron={patronGodId === god.id}
               onPress={() => onSelectGod(god.id)}
             />
           ))}
@@ -53,7 +63,7 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
   );
 }
 
-function GodCard({ god, icon, color, onPress }: { god: God; icon: string; color: string; onPress: () => void }) {
+function GodCard({ god, char, color, isPatron, onPress }: { god: God; char: string; color: string; isPatron: boolean; onPress: () => void }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
 
@@ -72,33 +82,47 @@ function GodCard({ god, icon, color, onPress }: { god: God; icon: string; color:
     ).start();
   }, []);
 
-  const borderColor = glowAnim.interpolate({ inputRange: [0, 1], outputRange: [color + '20', color + 'AA'] });
-  const shadowOpacity = glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.05, 0.3] });
+  const borderColor = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [isPatron ? color + '80' : color + '20', color + 'CC'],
+  });
+  const shadowOpacity = glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.05, 0.35] });
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.cardWrapper}>
       <Animated.View
         style={[
           styles.godCard,
+          isPatron && styles.godCardPatron,
           {
             borderColor,
             transform: [{ scale: pulseAnim }],
             shadowColor: color,
             shadowOpacity,
-            shadowRadius: 12,
+            shadowRadius: 14,
             shadowOffset: { width: 0, height: 4 },
             elevation: 6,
           },
         ]}
       >
-        {/* 光暈背景 */}
-        <Animated.View style={[styles.glowBg, { backgroundColor: color + '08', opacity: glowAnim }]} />
+        <Animated.View style={[styles.glowBg, { backgroundColor: color + '10', opacity: glowAnim }]} />
 
-        <Text style={styles.godIcon}>{icon}</Text>
+        {/* 守護神徽章 */}
+        {isPatron && (
+          <View style={[styles.patronBadge, { backgroundColor: color }]}>
+            <Text style={styles.patronBadgeText}>守護</Text>
+          </View>
+        )}
+
+        {/* 神明漢字肖像 */}
+        <View style={[styles.godPortrait, { backgroundColor: color + '18' }]}>
+          <Text style={[styles.godChar, { color }]}>{char}</Text>
+        </View>
+
         <Text style={[styles.godName, { color }]}>{god.name}</Text>
-        <Text style={styles.godPoem}>{god.poemSystem}</Text>
+        <Text style={styles.godPoem}>{god.poemSystem} · {god.totalPoems}首</Text>
         <Text style={styles.godDesc} numberOfLines={2}>
-          {god.description.slice(0, 40)}...
+          {god.description.slice(0, 36)}…
         </Text>
       </Animated.View>
     </TouchableOpacity>
@@ -212,14 +236,25 @@ const styles = StyleSheet.create({
   cardWrapper: { width: '46%' },
   godCard: {
     backgroundColor: TempleTheme.bgCard, borderRadius: 16,
-    padding: TempleSpacing.md, alignItems: 'center',
-    borderWidth: 1.5, overflow: 'hidden',
+    paddingHorizontal: TempleSpacing.sm, paddingVertical: TempleSpacing.md,
+    alignItems: 'center', borderWidth: 1.5, overflow: 'hidden',
   },
+  godCardPatron: { borderWidth: 2 },
   glowBg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 14 },
-  godIcon: { fontSize: 40, marginBottom: TempleSpacing.xs },
+  patronBadge: {
+    position: 'absolute', top: 8, right: 8,
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6,
+  },
+  patronBadgeText: { fontSize: 9, color: '#FFF', fontWeight: '700' },
+  godPortrait: {
+    width: 60, height: 60, borderRadius: 30,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: TempleSpacing.sm,
+  },
+  godChar: { fontSize: 32, fontWeight: '900' },
   godName: { fontSize: TempleFonts.body, fontWeight: '700', marginBottom: 2 },
-  godPoem: { fontSize: 11, color: TempleTheme.textMuted, marginBottom: TempleSpacing.xs },
-  godDesc: { fontSize: 11, color: TempleTheme.textMuted, textAlign: 'center', lineHeight: 16 },
+  godPoem: { fontSize: 10, color: TempleTheme.textMuted, marginBottom: TempleSpacing.xs },
+  godDesc: { fontSize: 10, color: TempleTheme.textMuted, textAlign: 'center', lineHeight: 15 },
   // Form
   formScroll: { flex: 1 },
   formContainer: { paddingHorizontal: TempleSpacing.md },
