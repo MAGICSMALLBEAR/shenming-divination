@@ -1,6 +1,7 @@
 // 神明資料 - 支援的神明與籤詩系統
 import { leiyushiPoems } from './poems/leiyushi';
 import { jiazi60Poems } from './poems/jiazi60';
+import { zhugeShenShuPoems } from './poems/zhugeShenShu';
 
 export interface God {
   id: number;
@@ -95,6 +96,16 @@ export const gods: God[] = [
     blessing: '願帝君開啟智慧，文思泉湧，考試順利，金榜題名。',
     category: 'general',
   },
+  {
+    id: 9,
+    name: '孔明神數',
+    title: '諸葛武侯',
+    description: '傳說諸葛孔明依易經創制，問卜者報一數字，依易卦64爻推算人生吉凶。',
+    poemSystem: '諸葛神數',
+    totalPoems: 64,
+    blessing: '願智慧如諸葛，籌謀帷幄，決勝千里，謀事在人成事在天。',
+    category: 'general',
+  },
 ];
 
 // 問事類別
@@ -114,8 +125,7 @@ export function getPoemsByGod(godId: number) {
   const god = gods.find(g => g.id === godId);
   if (!god) return leiyushiPoems;
 
-  if (god.poemSystem === '六十甲子籤') {
-    return jiazi60Poems;
-  }
+  if (god.poemSystem === '六十甲子籤') return jiazi60Poems;
+  if (god.poemSystem === '諸葛神數') return zhugeShenShuPoems;
   return leiyushiPoems;
 }

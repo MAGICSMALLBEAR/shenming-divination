@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing } from 'reac
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { playTossSound, playShengbeiSound, vibrateLight } from '@/services/proceduralSound';
 import type { JiaobeiResult } from '@/services/divination';
+import { ParticleEffect } from './ParticleEffect';
 
 interface JiaobeiProps {
   onToss: () => JiaobeiResult;
@@ -15,6 +16,7 @@ interface JiaobeiProps {
 export function Jiaobei({ onToss, onShengbei, results, strictMode }: JiaobeiProps) {
   const [isAnimating, setIsAnimating] = React.useState(false);
   const [currentResult, setCurrentResult] = React.useState<JiaobeiResult | null>(null);
+  const [showParticle, setShowParticle] = React.useState(false);
   const jumpAnim = useRef(new Animated.Value(0)).current;
   const resultFade = useRef(new Animated.Value(0)).current;
   const strictCount = results.filter(r => r === 'shengbei').length;
@@ -34,8 +36,13 @@ export function Jiaobei({ onToss, onShengbei, results, strictMode }: JiaobeiProp
     ]).start(async () => {
       const result = onToss();
       setCurrentResult(result);
-      if (result === 'shengbei') await playShengbeiSound();
-      else await playTossSound();
+      if (result === 'shengbei') {
+        await playShengbeiSound();
+        setShowParticle(true);
+        setTimeout(() => setShowParticle(false), 1000);
+      } else {
+        await playTossSound();
+      }
 
       Animated.spring(resultFade, { toValue: 1, friction: 6, tension: 40, useNativeDriver: false }).start(() => {
         setIsAnimating(false);
@@ -63,6 +70,7 @@ export function Jiaobei({ onToss, onShengbei, results, strictMode }: JiaobeiProp
 
   return (
     <View style={styles.container}>
+      <ParticleEffect active={showParticle} type="gold" />
       <Text style={styles.title}>擲筊請示</Text>
       <Text style={styles.attemptText}>
         第 {results.length + 1} 次擲筊

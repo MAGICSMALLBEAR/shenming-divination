@@ -1,8 +1,8 @@
 // 求籤流程 Hook - 管理完整求籤狀態機
 import { useState, useCallback } from 'react';
 import type { Poem } from '@/data/poems/leiyushi';
-import { gods, getPoemsByGod } from '@/data/gods';
-import { tossJiaobei, drawPoem, saveDivinationRecord } from '@/services/divination';
+import { gods } from '@/data/gods';
+import { tossJiaobei, drawPoem, drawZhugePoem, saveDivinationRecord } from '@/services/divination';
 import { addFavorite, removeFavorite, isFavorite } from '@/services/storage';
 import { getAIInterpretation } from '@/services/ai';
 import type { JiaobeiResult } from '@/services/divination';
@@ -12,6 +12,7 @@ export type FlowStep =
   | 'select-god'
   | 'set-question'
   | 'meditate'
+  | 'enter-zhuge-number'
   | 'toss-jiaobei'
   | 'drawing'
   | 'reveal-poem'
@@ -25,6 +26,7 @@ export function useDivination() {
   const [questionCategory, setQuestionCategory] = useState('general');
   const [userName, setUserName] = useState('');
   const [jiaobeiResults, setJiaobeiResults] = useState<JiaobeiResult[]>([]);
+  const [zhugeNumber, setZhugeNumber] = useState<number | null>(null);
   const [drawnPoem, setDrawnPoem] = useState<Poem | null>(null);
   const [aiInterpretation, setAIInterpretation] = useState<string | null>(null);
   const [currentRecord, setCurrentRecord] = useState<DivinationRecord | null>(null);
@@ -54,9 +56,14 @@ export function useDivination() {
   }, []);
 
   const finishMeditation = useCallback(() => {
-    setJiaobeiResults([]);
-    setStep('toss-jiaobei');
-  }, []);
+    const god = selectedGodId ? gods.find(g => g.id === selectedGodId) : null;
+    if (god?.poemSystem === '諸葛神數') {
+      setStep('enter-zhuge-number');
+    } else {
+      setJiaobeiResults([]);
+      setStep('toss-jiaobei');
+    }
+  }, [selectedGodId]);
 
   const performJiaobei = useCallback((): JiaobeiResult => {
     const result = tossJiaobei();
@@ -64,14 +71,23 @@ export function useDivination() {
     return result;
   }, []);
 
-  const performDraw = useCallback(async () => {
+  const submitZhugeNumber = useCallback((n: number) => {
+    setZhugeNumber(n);
+    setStep('drawing');
+  }, []);
+
+  const performDraw = useCallback(async (inputZhugeNumber?: number) => {
     if (!selectedGodId) return;
     setStep('drawing');
     setIsLoading(true);
 
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    const poem = drawPoem(selectedGodId);
+    const god = gods.find(g => g.id === selectedGodId);
+    const num = inputZhugeNumber ?? zhugeNumber;
+    const poem = (god?.poemSystem === '諸葛神數' && num != null)
+      ? drawZhugePoem(num)
+      : drawPoem(selectedGodId);
     setDrawnPoem(poem);
     setStep('reveal-poem');
 
@@ -79,7 +95,6 @@ export function useDivination() {
     setStep('ai-interpret');
     let interpretation: string | null = null;
     try {
-      const god = gods.find(g => g.id === selectedGodId);
       interpretation = await getAIInterpretation({
         godName: god?.name || '神明',
         userName: userName || '善信',
@@ -97,7 +112,6 @@ export function useDivination() {
     }
 
     // 儲存紀錄
-    const god = gods.find(g => g.id === selectedGodId);
     const record = await saveDivinationRecord({
       godName: god?.name || '神明',
       poem,
@@ -113,7 +127,7 @@ export function useDivination() {
 
     setIsLoading(false);
     setStep('result');
-  }, [selectedGodId, question, questionCategory, userName]);
+  }, [selectedGodId, question, questionCategory, userName, zhugeNumber]);
 
   // 收藏/取消收藏
   const toggleFavorite = useCallback(async () => {
@@ -136,6 +150,7 @@ export function useDivination() {
     setQuestionCategory('general');
     setUserName('');
     setJiaobeiResults([]);
+    setZhugeNumber(null);
     setDrawnPoem(null);
     setAIInterpretation(null);
     setCurrentRecord(null);
@@ -163,6 +178,7 @@ export function useDivination() {
     startMeditation,
     finishMeditation,
     performJiaobei,
+    submitZhugeNumber,
     performDraw,
     toggleFavorite,
     reset,

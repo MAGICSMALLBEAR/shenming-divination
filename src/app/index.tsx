@@ -12,12 +12,27 @@ import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-them
 import { speakText, stopSpeaking } from '@/services/speech';
 import { IncenseSmoke } from '@/components/IncenseSmoke';
 import { IncenseRitual } from '@/components/IncenseRitual';
+import { StarBackground } from '@/components/StarBackground';
+import { FireworksEffect } from '@/components/FireworksEffect';
+import { ZhugeNumberInput } from '@/components/ZhugeNumberInput';
 import { t } from '@/services/i18n';
 
 export default function HomeScreen() {
   const div = useDivination();
   const [strictMode, setStrictMode] = React.useState(false);
   const [incenseDone, setIncenseDone] = React.useState(false);
+  const [showFireworks, setShowFireworks] = React.useState(false);
+
+  // 抽到上上/大吉籤時觸發煙火
+  React.useEffect(() => {
+    if (div.step === 'result' && div.drawnPoem) {
+      const level = div.drawnPoem.level;
+      if (level.includes('上') || level.includes('大吉')) {
+        setShowFireworks(true);
+        setTimeout(() => setShowFireworks(false), 3000);
+      }
+    }
+  }, [div.step, div.drawnPoem]);
   React.useEffect(() => {
     import('@/services/storage').then(({ getSettings }) => {
       getSettings().then(s => {
@@ -27,12 +42,13 @@ export default function HomeScreen() {
   }, []);
 
   const canGoBack = div.step !== 'select-god' && div.step !== 'drawing' && div.step !== 'ai-interpret';
-  const showBack = div.step === 'set-question' || div.step === 'meditate' || div.step === 'toss-jiaobei';
+  const showBack = div.step === 'set-question' || div.step === 'meditate' || div.step === 'toss-jiaobei' || div.step === 'enter-zhuge-number';
 
   const handleBack = () => {
     switch (div.step) {
       case 'set-question': div.goToStep('select-god'); break;
       case 'meditate': if (incenseDone) { setIncenseDone(false); } else { div.goToStep('set-question'); } break;
+      case 'enter-zhuge-number': div.goToStep('meditate'); break;
       case 'toss-jiaobei': div.goToStep('meditate'); break;
       default: handleReset();
     }
@@ -60,17 +76,21 @@ export default function HomeScreen() {
   );
 
   const renderStepIndicator = () => {
+    const isZhuge = div.selectedGod?.poemSystem === '諸葛神數';
     const steps = [
       { key: 'select-god', icon: '🏛️' },
       { key: 'set-question', icon: '📝' },
       { key: 'meditate', icon: '🧘' },
-      { key: 'toss-jiaobei', icon: '🎯' },
+      { key: isZhuge ? 'enter-zhuge-number' : 'toss-jiaobei', icon: isZhuge ? '🔢' : '🎯' },
       { key: 'drawing', icon: '🎋' },
       { key: 'result', icon: '✨' },
     ];
-    const currentIndex = steps.findIndex(s =>
-      div.step === 'reveal-poem' || div.step === 'ai-interpret' ? s.key === 'result' : s.key === div.step
-    );
+    const stepKey = (s: string) => {
+      if (s === 'reveal-poem' || s === 'ai-interpret') return 'result';
+      if (s === 'toss-jiaobei' && isZhuge) return 'enter-zhuge-number';
+      return s;
+    };
+    const currentIndex = steps.findIndex(s => s.key === stepKey(div.step));
 
     return (
       <View style={styles.stepIndicator}>
@@ -113,6 +133,12 @@ export default function HomeScreen() {
           return <IncenseRitual godName={div.selectedGod?.name || '神明'} onComplete={() => setIncenseDone(true)} />;
         }
         return <MeditationScreen godName={div.selectedGod?.name || '神明'} onComplete={div.finishMeditation} />;
+      case 'enter-zhuge-number':
+        return (
+          <ZhugeNumberInput
+            onSubmit={(n) => div.performDraw(n)}
+          />
+        );
       case 'toss-jiaobei':
         return (
           <Jiaobei
@@ -151,14 +177,14 @@ export default function HomeScreen() {
       return;
     }
     setIsSpeaking(true);
-    const text = `${div.selectedGod?.name || '神明'}靈籤，第${div.drawnPoem.number}籤。${div.drawnPoem.content}。${div.aiInterpretation || ''}`;
+    const text = `${div.selectedGod?.name || '神明'}靈籤，第${div.drawnPoem.number}籤，${div.drawnPoem.title}。${div.drawnPoem.content}。${div.aiInterpretation || ''}`;
     await speakText(text);
     setIsSpeaking(false);
   };
 
   const handleShare = async () => {
     if (!div.drawnPoem) return;
-    const text = `【${div.selectedGod?.name || '神明'}靈籤】第 ${div.drawnPoem.number} 籤 · ${div.drawnPoem.level}\n\n${div.drawnPoem.content}\n\n— 神明占卜`;
+    const text = `【${div.selectedGod?.name || '神明'}靈籤】第 ${div.drawnPoem.number} 籤 · ${div.drawnPoem.title} · ${div.drawnPoem.level}\n${div.drawnPoem.ganzhi}\n\n${div.drawnPoem.content}\n\n— 神明占卜`;
     await Share.share({ message: text });
   };
 
@@ -192,7 +218,9 @@ export default function HomeScreen() {
     <ErrorBoundary onReset={handleReset}>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
+        <StarBackground />
         {div.step === 'meditate' || div.step === 'toss-jiaobei' ? <IncenseSmoke /> : null}
+        <FireworksEffect active={showFireworks} />
         <View style={styles.container}>
           {renderHeader()}
           {renderStepIndicator()}

@@ -43,7 +43,7 @@ export async function setItem(key: string, value: string): Promise<void> {
   }
 }
 
-async function removeItem(key: string): Promise<void> {
+export async function removeItem(key: string): Promise<void> {
   try {
     const AsyncStorage = require('@react-native-async-storage/async-storage').default;
     await AsyncStorage.removeItem(key);

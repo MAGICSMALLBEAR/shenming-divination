@@ -7,11 +7,11 @@ import { ThemedView } from './themed-view';
 import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
 
 const tabs = [
-  { name: 'index', href: '/', label: '求籤' },
-  { name: 'collection', href: '/collection', label: '收藏' },
-  { name: 'wishes', href: '/wishes', label: '願望' },
-  { name: 'stats', href: '/stats', label: '統計' },
-  { name: 'settings', href: '/settings', label: '設定' },
+  { name: 'index', href: '/' as const, label: '求籤' },
+  { name: 'collection', href: '/collection' as const, label: '收藏' },
+  { name: 'wishes', href: '/wishes' as const, label: '願望' },
+  { name: 'stats', href: '/stats' as const, label: '統計' },
+  { name: 'settings', href: '/settings' as const, label: '設定' },
 ];
 
 export default function AppTabs() {

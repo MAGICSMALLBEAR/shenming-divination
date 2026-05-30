@@ -3,6 +3,7 @@ import { getPoemsByGod } from '@/data/gods';
 import type { Poem } from '@/data/poems/leiyushi';
 import type { DivinationRecord } from './storage';
 import { addHistory } from './storage';
+export { drawZhugePoem } from '@/data/poems/zhugeShenShu';
 
 // 擲筊結果
 export type JiaobeiResult = 'shengbei' | 'xiaobei' | 'yinbei';

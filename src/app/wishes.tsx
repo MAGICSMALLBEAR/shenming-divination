@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  SafeAreaView, StatusBar, ScrollView, TextInput, Alert,
+  SafeAreaView, StatusBar, ScrollView, TextInput, Alert, RefreshControl,
 } from 'react-native';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { getWishes, addWish, fulfillWish, removeWish, type Wish } from '@/services/wishTracker';
@@ -86,7 +86,7 @@ export default function WishesScreen() {
           </View>
         )}
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent} refreshing={false} onRefresh={loadData}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent} refreshControl={<RefreshControl refreshing={false} onRefresh={loadData} tintColor={TempleTheme.gold} />}>
           {activeWishes.length === 0 && fulfilledWishes.length === 0 && (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>🙏</Text>

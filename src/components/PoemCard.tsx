@@ -1,9 +1,12 @@
-// 籤詩卡片元件 - 含揭示動畫、解曰高亮、一鍵複製
+// 籤詩卡片 - 捲軸展開動畫 + 逐行浮現 + 籤詩配圖 + 解曰高亮 + 複製
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import type { Poem } from '@/data/poems/leiyushi';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { getPoemTheme, type PoemTheme } from '@/data/poemThemes';
+import { PoemComments } from './PoemComments';
+import { AskFollowUp } from './AskFollowUp';
 
 interface PoemCardProps {
   poem: Poem;
@@ -11,29 +14,56 @@ interface PoemCardProps {
   aiInterpretation?: string | null;
   isLoading?: boolean;
   questionCategory?: string;
+  userName?: string;
 }
 
-export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionCategory }: PoemCardProps) {
+export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionCategory, userName }: PoemCardProps) {
+  const poemTheme = getPoemTheme(poem.number, poem.level);
+
+  // 捲軸展開動畫
+  const scrollAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
   const aiFadeAnim = useRef(new Animated.Value(0)).current;
+
+  // 逐行浮現
+  const lineAnims = useRef(
+    poem.content.split('\n').map(() => new Animated.Value(0))
+  ).current;
+
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    // 重置
+    scrollAnim.setValue(0);
     fadeAnim.setValue(0);
-    slideAnim.setValue(30);
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: false }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 800, useNativeDriver: false }),
-    ]).start();
+    lineAnims.forEach(a => a.setValue(0));
+
+    // 1. 卡片淡入
+    Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: false }).start();
+
+    // 2. 捲軸展開
+    Animated.timing(scrollAnim, {
+      toValue: 1, duration: 900,
+      useNativeDriver: false,
+    }).start(() => {
+      // 3. 文字逐行浮現
+      Animated.stagger(120,
+        lineAnims.map(a =>
+          Animated.spring(a, { toValue: 1, friction: 8, tension: 60, useNativeDriver: false })
+        )
+      ).start();
+    });
   }, [poem.number]);
 
   useEffect(() => {
     if (aiInterpretation) {
       aiFadeAnim.setValue(0);
-      Animated.timing(aiFadeAnim, { toValue: 1, duration: 600, useNativeDriver: false }).start();
+      Animated.timing(aiFadeAnim, { toValue: 1, duration: 800, useNativeDriver: false }).start();
     }
   }, [aiInterpretation]);
+
+  const cardScale = scrollAnim.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] });
+  const cardOpacity = scrollAnim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] });
 
   const levelColor = (level: string) => {
     if (level.includes('上') || level.includes('大吉')) return TempleTheme.success;
@@ -41,65 +71,94 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
     return TempleTheme.warning;
   };
 
-  const handleCopy = async () => {
-    let text = `【${godName}靈籤】第 ${poem.number} 籤 · ${poem.level} · ${poem.ganzhi}\n\n`;
-    text += `籤詩：\n${poem.content}\n\n`;
-    text += `白話：${poem.vernacular}\n\n`;
-    if (poem.story) text += `典故：${poem.story}\n\n`;
-    if (aiInterpretation) text += `解籤：\n${aiInterpretation}`;
+  const catToKey: Record<string, string> = {
+    career: 'career', love: 'marriage', wealth: 'wealth',
+    health: 'health', study: 'study', travel: 'travel',
+  };
+  const highlightKey = questionCategory ? catToKey[questionCategory] : null;
 
+  const handleCopy = async () => {
+    let text = `【${godName}靈籤】第 ${poem.number} 籤 · ${poem.title} · ${poem.level}\n`;
+    text += `${poem.ganzhi}\n\n`;
+    text += `${poem.content}\n\n白話：${poem.vernacular}\n`;
+    if (aiInterpretation) text += `\n解籤：\n${aiInterpretation}`;
     try {
       await Clipboard.setStringAsync(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      Alert.alert('複製失敗', '請手動選取文字複製');
-    }
+    } catch { Alert.alert('請手動選取文字複製'); }
   };
-
-  // 判斷哪個解曰與問事類別相關
-  const categoryToJieYueKey: Record<string, string> = {
-    career: 'career',
-    love: 'marriage',
-    wealth: 'wealth',
-    health: 'health',
-    study: 'study',
-    travel: 'travel',
-  };
-  const highlightKey = questionCategory ? categoryToJieYueKey[questionCategory] : null;
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
-      <Animated.View style={[styles.poemCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+    <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+
+      {/* 籤詩主卡 */}
+      <Animated.View style={[
+        styles.poemCard,
+        {
+          opacity: cardOpacity,
+          transform: [{ scale: cardScale }],
+          borderColor: poemTheme.borderColor,
+        }
+      ]}>
+        {/* 主題圖示與背景色帶 */}
+        <View style={[styles.themeHeader, { backgroundColor: poemTheme.bgColor }]}>
+          <Text style={styles.themeIcon}>{poemTheme.icon}</Text>
+          <View style={styles.themeTags}>
+            <Text style={[styles.luckyColor, { backgroundColor: poemTheme.luckyColor + '30', borderColor: poemTheme.luckyColor }]}>
+              幸運色 <Text style={{ color: poemTheme.luckyColor, fontWeight: '700' }}>{poemTheme.luckyColorName}</Text>
+            </Text>
+            <Text style={styles.luckyNumber}>幸運數 <Text style={{ color: TempleTheme.goldLight, fontWeight: '700' }}>{poemTheme.luckyNumber}</Text></Text>
+          </View>
+        </View>
+
         {/* 籤頭 */}
         <View style={styles.poemHeader}>
-          <View style={styles.poemMeta}>
-            <Text style={styles.poemNumber}>第 {poem.number} 籤</Text>
-            <View style={[styles.levelBadge, { backgroundColor: levelColor(poem.level) + '20', borderColor: levelColor(poem.level) }]}>
-              <Text style={[styles.levelText, { color: levelColor(poem.level) }]}>{poem.level}</Text>
+          <View style={styles.poemMetaBlock}>
+            <View style={styles.poemMeta}>
+              <Text style={styles.poemNumber}>第 {poem.number} 籤</Text>
+              <View style={[styles.levelBadge, { backgroundColor: levelColor(poem.level) + '20', borderColor: levelColor(poem.level) }]}>
+                <Text style={[styles.levelText, { color: levelColor(poem.level) }]}>{poem.level}</Text>
+              </View>
             </View>
+            <Text style={styles.poemTitle}>{poem.title}</Text>
           </View>
           <Text style={styles.ganzhi}>{poem.ganzhi}</Text>
         </View>
 
-        {/* 籤詩內容 */}
+        {/* 籤詩內容 - 逐行浮現 */}
         <View style={styles.poemContentArea}>
           {poem.content.split('\n').map((line, i) => (
-            <Text key={i} style={styles.poemLine}>{line}</Text>
+            <Animated.Text
+              key={i}
+              style={[
+                styles.poemLine,
+                {
+                  opacity: lineAnims[i] || new Animated.Value(1),
+                  transform: [{
+                    translateY: (lineAnims[i] || new Animated.Value(1)).interpolate({
+                      inputRange: [0, 1], outputRange: [16, 0],
+                    }),
+                  }],
+                },
+              ]}
+            >
+              {line}
+            </Animated.Text>
           ))}
         </View>
 
         {/* 典故 */}
         {poem.story ? (
           <View style={styles.storyArea}>
-            <Text style={styles.storyLabel}>典故</Text>
+            <Text style={styles.storyLabel}>📜 典故</Text>
             <Text style={styles.storyText}>{poem.story}</Text>
           </View>
         ) : null}
 
         {/* 白話 */}
         <View style={styles.vernacularArea}>
-          <Text style={styles.vernacularLabel}>白話解釋</Text>
+          <Text style={styles.vernacularLabel}>📖 白話解釋</Text>
           <Text style={styles.vernacularText}>{poem.vernacular}</Text>
         </View>
 
@@ -116,20 +175,17 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
           </View>
         </View>
 
-        {/* 複製按鈕 */}
         <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
           <Text style={styles.copyBtnText}>{copied ? '✓ 已複製' : '📋 複製籤詩'}</Text>
         </TouchableOpacity>
       </Animated.View>
 
-      {/* AI 解籤區域 */}
+      {/* AI 解籤 */}
       {isLoading && (
         <View style={styles.aiLoading}>
           <Text style={styles.aiLoadingText}>{godName}正在為您解籤...</Text>
           <View style={styles.loadingDots}>
-            {[0, 1, 2].map(i => (
-              <View key={i} style={[styles.dot, { opacity: 0.3 + i * 0.3 }]} />
-            ))}
+            {[0, 1, 2].map(i => <View key={i} style={[styles.dot, { opacity: 0.3 + i * 0.3 }]} />)}
           </View>
         </View>
       )}
@@ -150,6 +206,16 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
         </Animated.View>
       ) : null}
 
+      {/* AI 追問 */}
+      <AskFollowUp
+        godName={godName}
+        poemContent={poem.content}
+        aiInterpretation={aiInterpretation}
+      />
+
+      {/* 社群留言 */}
+      <PoemComments poemNumber={poem.number} currentUserName={userName} />
+
       <View style={{ height: 60 }} />
     </ScrollView>
   );
@@ -159,111 +225,81 @@ function JieYueItem({ icon, label, value, highlighted }: { icon: string; label: 
   return (
     <View style={[styles.jieYueItem, highlighted && styles.jieYueItemHighlighted]}>
       <Text style={styles.jieYueIcon}>{icon}</Text>
-      <Text style={[styles.jieYueItemLabel, highlighted && styles.jieYueItemLabelHighlighted]}>{label}</Text>
-      <Text style={[styles.jieYueItemValue, highlighted && styles.jieYueItemValueHighlighted]} numberOfLines={1}>{value}</Text>
+      <Text style={[styles.jieYueItemLabel, highlighted && styles.jieYueItemLabelHL]}>{label}</Text>
+      <Text style={[styles.jieYueItemValue, highlighted && styles.jieYueItemValueHL]} numberOfLines={1}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.sm },
   poemCard: {
+    borderRadius: 16, borderWidth: 1.5,
+    marginBottom: TempleSpacing.md, overflow: 'hidden',
     backgroundColor: TempleTheme.bgCard,
-    borderRadius: 16,
-    padding: TempleSpacing.lg,
-    borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
-    marginBottom: TempleSpacing.md,
   },
+  themeHeader: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: TempleSpacing.md, paddingVertical: TempleSpacing.sm,
+    gap: TempleSpacing.sm,
+  },
+  themeIcon: { fontSize: 36 },
+  themeTags: { flex: 1, gap: 4 },
+  luckyColor: {
+    fontSize: 11, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8,
+    borderWidth: 1, alignSelf: 'flex-start',
+    color: TempleTheme.textLight,
+  },
+  luckyNumber: { fontSize: 11, color: TempleTheme.textMuted },
   poemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: TempleSpacing.lg,
-    paddingBottom: TempleSpacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '30',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.sm,
+    marginBottom: TempleSpacing.sm, paddingBottom: TempleSpacing.sm,
+    borderBottomWidth: 1, borderBottomColor: TempleTheme.goldDark + '30',
   },
+  poemMetaBlock: { flex: 1, marginRight: TempleSpacing.sm },
   poemMeta: { flexDirection: 'row', alignItems: 'center', gap: TempleSpacing.sm },
   poemNumber: { fontSize: TempleFonts.heading, fontWeight: '700', color: TempleTheme.goldLight },
+  poemTitle: { fontSize: TempleFonts.body, color: TempleTheme.textLight, fontWeight: '600', marginTop: 4 },
   levelBadge: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
   levelText: { fontSize: 12, fontWeight: '700' },
   ganzhi: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
   poemContentArea: {
-    backgroundColor: TempleTheme.bgLight,
-    padding: TempleSpacing.lg,
-    borderRadius: 12,
-    marginBottom: TempleSpacing.md,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#D2B48C',
+    backgroundColor: TempleTheme.bgLight, padding: TempleSpacing.lg,
+    marginHorizontal: TempleSpacing.md, borderRadius: 12, marginBottom: TempleSpacing.md,
+    alignItems: 'center', borderWidth: 1, borderColor: '#D2B48C',
   },
-  poemLine: { fontSize: TempleFonts.poem, lineHeight: 32, color: '#333', fontWeight: '600', letterSpacing: 2 },
+  poemLine: { fontSize: TempleFonts.poem, lineHeight: 34, color: '#2C1810', fontWeight: '700', letterSpacing: 3 },
   storyArea: {
-    marginBottom: TempleSpacing.md,
-    padding: TempleSpacing.sm,
-    backgroundColor: TempleTheme.bgDark + '40',
-    borderRadius: 8,
+    marginHorizontal: TempleSpacing.md, marginBottom: TempleSpacing.md,
+    padding: TempleSpacing.sm, backgroundColor: TempleTheme.bgDark + '40', borderRadius: 8,
   },
   storyLabel: { fontSize: TempleFonts.small, color: TempleTheme.goldLight, fontWeight: '600', marginBottom: 4 },
   storyText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, lineHeight: 20 },
-  vernacularArea: { marginBottom: TempleSpacing.md },
+  vernacularArea: { marginHorizontal: TempleSpacing.md, marginBottom: TempleSpacing.md },
   vernacularLabel: { fontSize: TempleFonts.small, color: TempleTheme.goldLight, fontWeight: '600', marginBottom: 4 },
   vernacularText: { fontSize: TempleFonts.body, color: TempleTheme.textLight, lineHeight: 24 },
-  jieYueArea: {
-    marginTop: TempleSpacing.sm,
-    paddingTop: TempleSpacing.md,
-    borderTopWidth: 1,
-    borderTopColor: TempleTheme.goldDark + '30',
-  },
+  jieYueArea: { marginHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.md, borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '30', marginBottom: TempleSpacing.sm },
   jieYueLabel: { fontSize: TempleFonts.small, color: TempleTheme.goldLight, fontWeight: '700', marginBottom: TempleSpacing.sm },
   jieYueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: TempleSpacing.xs },
-  jieYueItem: {
-    width: '30%',
-    backgroundColor: TempleTheme.bgDark + '60',
-    padding: TempleSpacing.sm,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  jieYueItemHighlighted: {
-    backgroundColor: TempleTheme.goldDark + '25',
-    borderWidth: 1.5,
-    borderColor: TempleTheme.gold,
-  },
+  jieYueItem: { width: '30%', backgroundColor: TempleTheme.bgDark + '60', padding: TempleSpacing.sm, borderRadius: 8, alignItems: 'center' },
+  jieYueItemHighlighted: { backgroundColor: TempleTheme.goldDark + '25', borderWidth: 1.5, borderColor: TempleTheme.gold },
   jieYueIcon: { fontSize: 16, marginBottom: 2 },
   jieYueItemLabel: { fontSize: 10, color: TempleTheme.textMuted, marginBottom: 2 },
-  jieYueItemLabelHighlighted: { color: TempleTheme.goldLight, fontWeight: '700' },
+  jieYueItemLabelHL: { color: TempleTheme.goldLight, fontWeight: '700' },
   jieYueItemValue: { fontSize: 10, color: TempleTheme.textLight, textAlign: 'center' },
-  jieYueItemValueHighlighted: { color: TempleTheme.goldLight, fontWeight: '600' },
-  copyBtn: {
-    marginTop: TempleSpacing.md,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: TempleTheme.gold + '50',
-  },
+  jieYueItemValueHL: { color: TempleTheme.goldLight, fontWeight: '600' },
+  copyBtn: { margin: TempleSpacing.md, paddingVertical: 10, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '50' },
   copyBtnText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
   aiLoading: { alignItems: 'center', padding: TempleSpacing.lg },
   aiLoadingText: { fontSize: TempleFonts.body, color: TempleTheme.textMuted, marginBottom: TempleSpacing.sm },
   loadingDots: { flexDirection: 'row', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: TempleTheme.goldLight },
-  aiCard: {
-    backgroundColor: TempleTheme.bgCard,
-    borderRadius: 16,
-    padding: TempleSpacing.lg,
-    borderWidth: 1.5,
-    borderColor: TempleTheme.gold,
-  },
-  aiLabel: {
-    fontSize: TempleFonts.heading,
-    fontWeight: '700',
-    color: TempleTheme.goldLight,
-    marginBottom: TempleSpacing.md,
-    textAlign: 'center',
-  },
+  aiCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, padding: TempleSpacing.lg, borderWidth: 1.5, borderColor: TempleTheme.gold },
+  aiLabel: { fontSize: TempleFonts.heading, fontWeight: '700', color: TempleTheme.goldLight, marginBottom: TempleSpacing.md, textAlign: 'center' },
   aiText: { fontSize: TempleFonts.body, color: TempleTheme.textLight, lineHeight: 28, marginBottom: 4 },
-  aiHeader: { fontWeight: '700', color: TempleTheme.goldLight, fontSize: TempleFonts.body, marginTop: TempleSpacing.sm },
+  aiHeader: { fontWeight: '700', color: TempleTheme.goldLight, marginTop: TempleSpacing.sm },
   aiBlessing: { fontWeight: '700', color: TempleTheme.gold, textAlign: 'center', marginTop: TempleSpacing.md },
   aiEmpty: { height: 4 },
 });
