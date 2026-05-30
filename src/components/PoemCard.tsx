@@ -1,12 +1,14 @@
-// 籤詩卡片 - 捲軸展開動畫 + 逐行浮現 + 籤詩配圖 + 解曰高亮 + 複製
+// 籤詩卡片 - 捲軸展開動畫 + 逐行浮現 + 籤詩配圖 + 解曰高亮 + 複製 + 圖卡分享
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Animated, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import type { Poem } from '@/data/poems/leiyushi';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { getPoemTheme, type PoemTheme } from '@/data/poemThemes';
 import { PoemComments } from './PoemComments';
 import { AskFollowUp } from './AskFollowUp';
+import { ShareCardView } from './ShareCardView';
+import { captureAndShare } from '@/services/shareCard';
 
 interface PoemCardProps {
   poem: Poem;
@@ -31,6 +33,8 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
   ).current;
 
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const shareCardRef = useRef<View>(null);
 
   useEffect(() => {
     // 重置
@@ -76,6 +80,26 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
     health: 'health', study: 'study', travel: 'travel',
   };
   const highlightKey = questionCategory ? catToKey[questionCategory] : null;
+
+  const handleShareCard = async () => {
+    if (sharing || Platform.OS === 'web') {
+      // Web 降級為文字分享
+      const text = `【${godName}靈籤】第 ${poem.number} 籤 · ${poem.title} · ${poem.level}\n${poem.ganzhi}\n\n${poem.content}\n\n— 神明占卜`;
+      await Clipboard.setStringAsync(text);
+      Alert.alert('已複製', '圖卡分享在 Web 上不支援，已複製文字版本。');
+      return;
+    }
+    if (!shareCardRef.current) return;
+    setSharing(true);
+    try {
+      const tag = (shareCardRef.current as any)._nativeTag ?? (shareCardRef.current as any).__nativeTag;
+      await captureAndShare(tag, { godName, poem, aiInterpretation });
+    } catch {
+      Alert.alert('分享失敗', '請稍後再試');
+    } finally {
+      setSharing(false);
+    }
+  };
 
   const handleCopy = async () => {
     let text = `【${godName}靈籤】第 ${poem.number} 籤 · ${poem.title} · ${poem.level}\n`;
@@ -175,9 +199,18 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
           </View>
         </View>
 
-        <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
-          <Text style={styles.copyBtnText}>{copied ? '✓ 已複製' : '📋 複製籤詩'}</Text>
-        </TouchableOpacity>
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={[styles.copyBtn, styles.actionBtnHalf]} onPress={handleCopy}>
+            <Text style={styles.copyBtnText}>{copied ? '✓ 已複製' : '📋 複製'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.shareCardBtn, styles.actionBtnHalf]} onPress={handleShareCard} disabled={sharing}>
+            <Text style={styles.shareCardBtnText}>{sharing ? '產生中…' : '🖼️ 圖卡分享'}</Text>
+          </TouchableOpacity>
+        </View>
+        {/* 隱藏的圖卡模板，供截圖 */}
+        <View style={styles.hiddenCard}>
+          <ShareCardView ref={shareCardRef} godName={godName} poem={poem} aiInterpretation={aiInterpretation} />
+        </View>
       </Animated.View>
 
       {/* AI 解籤 */}
@@ -290,8 +323,13 @@ const styles = StyleSheet.create({
   jieYueItemLabelHL: { color: TempleTheme.goldLight, fontWeight: '700' },
   jieYueItemValue: { fontSize: 10, color: TempleTheme.textLight, textAlign: 'center' },
   jieYueItemValueHL: { color: TempleTheme.goldLight, fontWeight: '600' },
-  copyBtn: { margin: TempleSpacing.md, paddingVertical: 10, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '50' },
+  actionRow: { flexDirection: 'row', gap: TempleSpacing.sm, marginHorizontal: TempleSpacing.md, marginTop: TempleSpacing.sm, marginBottom: TempleSpacing.xs },
+  actionBtnHalf: { flex: 1 },
+  copyBtn: { paddingVertical: 10, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '50' },
   copyBtnText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
+  shareCardBtn: { paddingVertical: 10, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '50', backgroundColor: TempleTheme.bgCard },
+  shareCardBtnText: { fontSize: TempleFonts.small, color: TempleTheme.gold },
+  hiddenCard: { position: 'absolute', top: -9999, left: -9999, opacity: 0 },
   aiLoading: { alignItems: 'center', padding: TempleSpacing.lg },
   aiLoadingText: { fontSize: TempleFonts.body, color: TempleTheme.textMuted, marginBottom: TempleSpacing.sm },
   loadingDots: { flexDirection: 'row', gap: 6 },

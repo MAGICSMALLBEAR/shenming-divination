@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   FAVORITES: '@divination_favorites',
   HISTORY: '@divination_history',
   SETTINGS: '@divination_settings',
+  LAST_POEM: '@divination_last_poem',
 } as const;
 
 export interface DivinationRecord {
@@ -124,4 +125,24 @@ export async function getSettings(): Promise<AppSettings | null> {
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
   await setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+}
+
+// 最後一支籤詩（供神明對話頁面取得上下文）
+export interface LastPoemContext {
+  godName: string;
+  poemContent: string;
+  poemTitle: string;
+  poemLevel: string;
+  aiInterpretation?: string;
+  question?: string;
+  timestamp: number;
+}
+
+export async function saveLastPoemContext(ctx: LastPoemContext): Promise<void> {
+  await setItem(STORAGE_KEYS.LAST_POEM, JSON.stringify(ctx));
+}
+
+export async function getLastPoemContext(): Promise<LastPoemContext | null> {
+  const data = await getItem(STORAGE_KEYS.LAST_POEM);
+  return data ? JSON.parse(data) : null;
 }

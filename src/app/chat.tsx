@@ -1,10 +1,11 @@
 // AI 多輪對話頁面 - 針對解籤內容追問
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   SafeAreaView, StatusBar, ScrollView, TextInput, ActivityIndicator,
 } from 'react-native';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { getLastPoemContext, type LastPoemContext } from '@/services/storage';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -13,6 +14,7 @@ interface Message {
 }
 
 export default function ChatScreen() {
+  const [lastPoem, setLastPoem] = useState<LastPoemContext | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -23,6 +25,21 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    getLastPoemContext().then(ctx => {
+      if (!ctx) return;
+      setLastPoem(ctx);
+      const age = Date.now() - ctx.timestamp;
+      if (age < 24 * 60 * 60 * 1000) {
+        setMessages([{
+          role: 'assistant',
+          content: `歡迎來到神明對話室 🙏\n\n我看到你剛才向【${ctx.godName}】求得：\n「${ctx.poemTitle}」（${ctx.poemLevel}）\n${ctx.question ? `所問：${ctx.question}\n` : ''}${ctx.aiInterpretation ? `\n解籤摘要：${ctx.aiInterpretation.slice(0, 100)}…` : ''}\n\n有任何疑問，請繼續追問。`,
+          timestamp: Date.now(),
+        }]);
+      }
+    });
+  }, []);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -37,10 +54,14 @@ export default function ChatScreen() {
           ? 'http://10.0.2.2:3001/api/chat'
           : 'http://localhost:3001/api/chat');
 
-      const recentMessages = messages.slice(-6).map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
+      const systemContent = lastPoem
+        ? `你是【${lastPoem.godName}】，信眾剛得到籤詩「${lastPoem.poemTitle}」（${lastPoem.poemLevel}）：「${lastPoem.poemContent}」。已解籤如下：${lastPoem.aiInterpretation || '無'}。請繼續以慈悲智慧的語氣回答信眾的追問。回應控制在200字內。`
+        : '你是慈悲的神明，以智慧語氣回答信眾的疑問，回應控制在200字內。';
+
+      const recentMessages: { role: string; content: string }[] = [
+        { role: 'system', content: systemContent },
+        ...messages.slice(-6).map(m => ({ role: m.role, content: m.content })),
+      ];
       recentMessages.push({ role: 'user', content: userMsg.content });
 
       const response = await fetch(apiUrl, {

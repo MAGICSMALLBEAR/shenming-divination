@@ -86,6 +86,29 @@ export default function StatsScreen() {
           </View>
         </View>
 
+        {/* 近期求籤紀錄 */}
+        {stats.weeklyDraws.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📅 近期求籤</Text>
+            {(() => {
+              const max = Math.max(...stats.weeklyDraws.map(d => d.count), 1);
+              return (
+                <View style={styles.weekChart}>
+                  {stats.weeklyDraws.map((d, i) => (
+                    <View key={i} style={styles.weekCol}>
+                      <Text style={styles.weekCount}>{d.count}</Text>
+                      <View style={styles.weekBarTrack}>
+                        <View style={[styles.weekBarFill, { height: `${Math.round((d.count / max) * 100)}%` }]} />
+                      </View>
+                      <Text style={styles.weekDay}>{d.day}</Text>
+                    </View>
+                  ))}
+                </View>
+              );
+            })()}
+          </View>
+        )}
+
         <View style={{ height: 60 }} />
       </ScrollView>
     </SafeAreaView>
@@ -135,4 +158,10 @@ const styles = StyleSheet.create({
   levelBarTrack: { flex: 1, height: 16, backgroundColor: TempleTheme.bgDark + '60', borderRadius: 8, overflow: 'hidden' },
   levelBarFill: { height: '100%', backgroundColor: TempleTheme.goldDark, borderRadius: 8, minWidth: 4 },
   levelCount: { width: 30, fontSize: 12, color: TempleTheme.textMuted, textAlign: 'right' },
+  weekChart: { flexDirection: 'row', alignItems: 'flex-end', gap: TempleSpacing.xs, height: 100 },
+  weekCol: { flex: 1, alignItems: 'center', height: '100%', justifyContent: 'flex-end' },
+  weekCount: { fontSize: 10, color: TempleTheme.textMuted, marginBottom: 2 },
+  weekBarTrack: { width: '70%', backgroundColor: TempleTheme.bgDark + '60', borderRadius: 4, overflow: 'hidden', minHeight: 4, justifyContent: 'flex-end' },
+  weekBarFill: { width: '100%', backgroundColor: TempleTheme.goldDark, borderRadius: 4, minHeight: 4 },
+  weekDay: { fontSize: 10, color: TempleTheme.textMuted, marginTop: 4 },
 });

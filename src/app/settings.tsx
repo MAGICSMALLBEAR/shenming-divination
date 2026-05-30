@@ -77,6 +77,7 @@ export default function SettingsScreen() {
                 { id: 6, name: '福德正神' },
                 { id: 7, name: '註生娘娘' },
                 { id: 8, name: '文昌帝君' },
+                { id: 9, name: '孔明神數' },
               ].map(god => (
                 <TouchableOpacity
                   key={god.id}

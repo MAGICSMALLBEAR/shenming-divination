@@ -15,7 +15,7 @@ import { IncenseRitual } from '@/components/IncenseRitual';
 import { StarBackground } from '@/components/StarBackground';
 import { FireworksEffect } from '@/components/FireworksEffect';
 import { ZhugeNumberInput } from '@/components/ZhugeNumberInput';
-import { t } from '@/services/i18n';
+import { addWish } from '@/services/wishTracker';
 
 export default function HomeScreen() {
   const div = useDivination();
@@ -53,7 +53,19 @@ export default function HomeScreen() {
       default: handleReset();
     }
   };
-  const handleReset = () => { setIncenseDone(false); div.reset(); };
+  const handleReset = () => { setIncenseDone(false); setWishAdded(false); div.reset(); };
+
+  const handleAddWish = async () => {
+    if (!div.drawnPoem || wishAdded) return;
+    await addWish({
+      content: div.question || '平安順心',
+      godName: div.selectedGod?.name || '神明',
+      poemNumber: div.drawnPoem.number,
+      poemSummary: div.drawnPoem.vernacular?.slice(0, 60) || div.drawnPoem.content.slice(0, 60),
+    });
+    setWishAdded(true);
+    div.showToast('已加入願望清單 🙏');
+  };
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -168,6 +180,7 @@ export default function HomeScreen() {
   };
 
   const [isSpeaking, setIsSpeaking] = React.useState(false);
+  const [wishAdded, setWishAdded] = React.useState(false);
 
   const handleSpeak = async () => {
     if (!div.drawnPoem) return;
@@ -195,6 +208,10 @@ export default function HomeScreen() {
           <TouchableOpacity style={styles.actionBtn} onPress={div.toggleFavorite}>
             <Text style={styles.actionBtnIcon}>{div.isFavorited ? '💔' : '💾'}</Text>
             <Text style={styles.actionBtnText}>{div.isFavorited ? '已收藏' : '收藏'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, wishAdded && styles.actionBtnDone]} onPress={handleAddWish} disabled={wishAdded}>
+            <Text style={styles.actionBtnIcon}>{wishAdded ? '✅' : '🙏'}</Text>
+            <Text style={styles.actionBtnText}>{wishAdded ? '已許願' : '許願'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionBtn} onPress={handleSpeak}>
             <Text style={styles.actionBtnIcon}>{isSpeaking ? '⏹️' : '🎙️'}</Text>
@@ -288,6 +305,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: TempleTheme.goldDark + '30', gap: 6,
   },
   actionBtnPrimary: { backgroundColor: TempleTheme.red, borderColor: TempleTheme.goldDark },
+  actionBtnDone: { opacity: 0.6, borderColor: TempleTheme.success + '60' },
   actionBtnIcon: { fontSize: 16 },
   actionBtnText: { fontSize: TempleFonts.small, color: TempleTheme.textLight, fontWeight: '600' },
   actionBtnTextPrimary: { color: TempleTheme.goldLight },

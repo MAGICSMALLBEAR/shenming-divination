@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import type { Poem } from '@/data/poems/leiyushi';
 import { gods } from '@/data/gods';
 import { tossJiaobei, drawPoem, drawZhugePoem, saveDivinationRecord } from '@/services/divination';
-import { addFavorite, removeFavorite, isFavorite } from '@/services/storage';
+import { addFavorite, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
 import { getAIInterpretation } from '@/services/ai';
 import type { JiaobeiResult } from '@/services/divination';
 import type { DivinationRecord } from '@/services/storage';
@@ -110,6 +110,17 @@ export function useDivination() {
     } catch {
       setAIInterpretation(null);
     }
+
+    // 儲存最後籤詩供對話頁使用
+    await saveLastPoemContext({
+      godName: god?.name || '神明',
+      poemContent: poem.content,
+      poemTitle: poem.title || '',
+      poemLevel: poem.level,
+      aiInterpretation: interpretation || undefined,
+      question,
+      timestamp: Date.now(),
+    });
 
     // 儲存紀錄
     const record = await saveDivinationRecord({
