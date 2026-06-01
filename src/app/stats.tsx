@@ -2,13 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, StatusBar, ScrollView } from 'react-native';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
-import { getStats, type Stats } from '@/services/statsService';
+import { getStats, getYearlySummary, type Stats, type YearlySummary } from '@/services/statsService';
 
 export default function StatsScreen() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [yearly, setYearly] = useState<YearlySummary | null>(null);
 
   useEffect(() => {
     getStats().then(setStats);
+    getYearlySummary().then(setYearly);
   }, []);
 
   if (!stats) {
@@ -109,11 +111,104 @@ export default function StatsScreen() {
           </View>
         )}
 
+        {/* 年度回顧 */}
+        {yearly && <YearlySummaryCard summary={yearly} />}
+
         <View style={{ height: 60 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+// ─── 年度回顧卡 ───────────────────────────────────────────────
+function YearlySummaryCard({ summary }: { summary: YearlySummary }) {
+  const luckyColor =
+    summary.luckyRate >= 50 ? TempleTheme.success :
+    summary.luckyRate >= 30 ? TempleTheme.warning : TempleTheme.danger;
+
+  const statItems = [
+    { icon: '🏛️', label: '最常拜',   value: summary.topGod?.name ?? '—',       sub: summary.topGod ? `${summary.topGod.count} 次` : '' },
+    { icon: '📝', label: '最常問',   value: summary.topCategory?.name ?? '—',   sub: summary.topCategory ? `${summary.topCategory.count} 次` : '' },
+    { icon: '🎋', label: '最常籤',   value: summary.topPoem ? `第 ${summary.topPoem.number} 籤` : '—', sub: summary.topPoem?.level ?? '' },
+    { icon: '📅', label: '最愛月份', value: summary.peakMonth ?? '—',            sub: '' },
+    { icon: '🔥', label: '最長連求', value: `${summary.longestStreak} 天`,       sub: '' },
+    { icon: '🗓️', label: '最常',     value: summary.mostActiveWeekday ?? '—',   sub: '求籤' },
+  ];
+
+  return (
+    <View style={yStyles.card}>
+      {/* 標題 */}
+      <View style={yStyles.titleRow}>
+        <Text style={yStyles.title}>✨ {summary.year} 年度回顧</Text>
+        <Text style={yStyles.totalBadge}>{summary.totalDraws} 次求籤</Text>
+      </View>
+
+      {/* 籤運占比 */}
+      <View style={yStyles.luckySection}>
+        <Text style={yStyles.luckySub}>今年吉籤率</Text>
+        <Text style={[yStyles.luckyRate, { color: luckyColor }]}>{summary.luckyRate}%</Text>
+        <View style={yStyles.luckyBarTrack}>
+          <View style={[yStyles.luckyBarFill, { width: `${summary.luckyRate}%` as any, backgroundColor: luckyColor }]} />
+        </View>
+        <Text style={yStyles.luckyDesc}>
+          {summary.luckyRate >= 60 ? '今年鴻運當頭，神明特別眷顧！' :
+           summary.luckyRate >= 40 ? '今年運勢平穩，中吉居多。' :
+           '今年多磨礪，修身積德明年更旺！'}
+        </Text>
+      </View>
+
+      <View style={yStyles.divider} />
+
+      {/* 6 格統計 */}
+      <View style={yStyles.grid}>
+        {statItems.map((item, i) => (
+          <View key={i} style={yStyles.gridItem}>
+            <Text style={yStyles.gridIcon}>{item.icon}</Text>
+            <Text style={yStyles.gridLabel}>{item.label}</Text>
+            <Text style={yStyles.gridValue} numberOfLines={1}>{item.value}</Text>
+            {item.sub ? <Text style={yStyles.gridSub}>{item.sub}</Text> : null}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const yStyles = StyleSheet.create({
+  card: {
+    backgroundColor: TempleTheme.bgCard, borderRadius: 16,
+    borderWidth: 1.5, borderColor: TempleTheme.goldDark + '50',
+    padding: TempleSpacing.md, marginBottom: TempleSpacing.md,
+    overflow: 'hidden',
+  },
+  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: TempleSpacing.md },
+  title: { fontSize: TempleFonts.body, fontWeight: '900', color: TempleTheme.goldLight, letterSpacing: 1 },
+  totalBadge: {
+    fontSize: 11, fontWeight: '700', color: TempleTheme.bgDark,
+    backgroundColor: TempleTheme.gold, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10,
+  },
+  luckySection: { alignItems: 'center', marginBottom: TempleSpacing.md },
+  luckySub: { fontSize: 11, color: TempleTheme.textMuted, marginBottom: 4 },
+  luckyRate: { fontSize: 52, fontWeight: '900', lineHeight: 58 },
+  luckyBarTrack: {
+    width: '100%', height: 8, backgroundColor: TempleTheme.bgDark + '60',
+    borderRadius: 4, overflow: 'hidden', marginTop: 6, marginBottom: 8,
+  },
+  luckyBarFill: { height: '100%', borderRadius: 4, minWidth: 4 },
+  luckyDesc: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, textAlign: 'center', fontStyle: 'italic' },
+  divider: { height: 1, backgroundColor: TempleTheme.goldDark + '20', marginBottom: TempleSpacing.md },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: TempleSpacing.sm },
+  gridItem: {
+    width: '30%', flex: 1,
+    backgroundColor: TempleTheme.bgDark + '40', borderRadius: 10,
+    padding: TempleSpacing.sm, alignItems: 'center', minWidth: 90,
+  },
+  gridIcon: { fontSize: 20, marginBottom: 2 },
+  gridLabel: { fontSize: 10, color: TempleTheme.textMuted, marginBottom: 2 },
+  gridValue: { fontSize: 13, fontWeight: '700', color: TempleTheme.goldLight, textAlign: 'center' },
+  gridSub: { fontSize: 10, color: TempleTheme.gold, marginTop: 1 },
+});
+// ─────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
