@@ -1,9 +1,10 @@
 // 求籤流程 Hook - 管理完整求籤狀態機
 import { useState, useCallback } from 'react';
 import type { Poem } from '@/data/poems/leiyushi';
+import { DRAW_ANIMATION_DEFAULT_MS, normalizeDrawAnimationDuration } from '@/constants/divination';
 import { gods } from '@/data/gods';
 import { tossJiaobei, drawPoem, drawZhugePoem, saveDivinationRecord } from '@/services/divination';
-import { addFavorite, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
+import { addFavorite, getSettings, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
 import { getAIInterpretation } from '@/services/ai';
 import type { JiaobeiResult } from '@/services/divination';
 import type { DivinationRecord } from '@/services/storage';
@@ -28,11 +29,13 @@ export function useDivination() {
   const [jiaobeiResults, setJiaobeiResults] = useState<JiaobeiResult[]>([]);
   const [zhugeNumber, setZhugeNumber] = useState<number | null>(null);
   const [drawnPoem, setDrawnPoem] = useState<Poem | null>(null);
+  const [pendingPoem, setPendingPoem] = useState<Poem | null>(null);
   const [aiInterpretation, setAIInterpretation] = useState<string | null>(null);
   const [currentRecord, setCurrentRecord] = useState<DivinationRecord | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [drawAnimationDurationMs, setDrawAnimationDurationMs] = useState(DRAW_ANIMATION_DEFAULT_MS);
 
   const selectedGod = selectedGodId ? gods.find(g => g.id === selectedGodId) : null;
 
@@ -78,17 +81,23 @@ export function useDivination() {
 
   const performDraw = useCallback(async (inputZhugeNumber?: number) => {
     if (!selectedGodId) return;
-    setStep('drawing');
-    setIsLoading(true);
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
     const god = gods.find(g => g.id === selectedGodId);
     const num = inputZhugeNumber ?? zhugeNumber;
     const poem = (god?.poemSystem === '諸葛神數' && num != null)
       ? drawZhugePoem(num)
       : drawPoem(selectedGodId);
+    const settings = await getSettings();
+    const animationDuration = normalizeDrawAnimationDuration(settings?.drawAnimationDurationMs);
+
+    setPendingPoem(poem);
+    setDrawAnimationDurationMs(animationDuration);
+    setStep('drawing');
+    setIsLoading(true);
+
+    await new Promise(resolve => setTimeout(resolve, animationDuration));
+
     setDrawnPoem(poem);
+    setPendingPoem(null);
     setStep('reveal-poem');
 
     // 開始 AI 解籤
@@ -163,6 +172,7 @@ export function useDivination() {
     setJiaobeiResults([]);
     setZhugeNumber(null);
     setDrawnPoem(null);
+    setPendingPoem(null);
     setAIInterpretation(null);
     setCurrentRecord(null);
     setIsFavorited(false);
@@ -178,11 +188,13 @@ export function useDivination() {
     userName,
     jiaobeiResults,
     drawnPoem,
+    pendingPoem,
     aiInterpretation,
     currentRecord,
     isLoading,
     isFavorited,
     toastMessage,
+    drawAnimationDurationMs,
     // actions
     goToStep,
     selectGod,

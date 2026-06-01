@@ -1,6 +1,7 @@
 // 設定頁面
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, TextInput, Alert, ScrollView } from 'react-native';
+import { DRAW_ANIMATION_PRESETS, normalizeDrawAnimationDuration } from '@/constants/divination';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { getSettings, saveSettings, type AppSettings } from '@/services/storage';
 import { getDailyPoem } from '@/services/dailyPoem';
@@ -9,7 +10,12 @@ import { getTodayLunarInfo } from '@/data/lunarCalendar';
 import { calcBazi, parseBirthYear, ZODIAC_PATRON_GOD } from '@/services/bazi';
 
 export default function SettingsScreen() {
-  const [settings, setSettings] = useState<AppSettings>({ userName: '', birthDate: '', preferredGodId: 1 });
+  const [settings, setSettings] = useState<AppSettings>({
+    userName: '',
+    birthDate: '',
+    preferredGodId: 1,
+    drawAnimationDurationMs: DRAW_ANIMATION_PRESETS[1].durationMs,
+  });
   const [saved, setSaved] = useState(false);
   const dailyPoem = getDailyPoem();
   const lunarInfo = getTodayLunarInfo();
@@ -21,7 +27,7 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     getSettings().then(s => {
-      if (s) setSettings(s);
+      if (s) setSettings(prev => ({ ...prev, ...s, drawAnimationDurationMs: normalizeDrawAnimationDuration(s.drawAnimationDurationMs) }));
     });
   }, []);
 
@@ -152,6 +158,28 @@ export default function SettingsScreen() {
               <View style={[styles.toggleKnob, settings.strictMode && styles.toggleKnobOn]} />
             </View>
           </TouchableOpacity>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>抽籤動畫長度</Text>
+            <Text style={styles.settingHint}>可依喜好調成快速、標準或更有儀式感的沉浸版本。</Text>
+            <View style={styles.durationGrid}>
+              {DRAW_ANIMATION_PRESETS.map(preset => {
+                const active = normalizeDrawAnimationDuration(settings.drawAnimationDurationMs) === preset.durationMs;
+                return (
+                  <TouchableOpacity
+                    key={preset.durationMs}
+                    style={[styles.durationCard, active && styles.durationCardActive]}
+                    onPress={() => setSettings(prev => ({ ...prev, drawAnimationDurationMs: preset.durationMs }))}
+                  >
+                    <Text style={[styles.durationTitle, active && styles.durationTitleActive]}>
+                      {preset.label} · {(preset.durationMs / 1000).toFixed(1)} 秒
+                    </Text>
+                    <Text style={[styles.durationDesc, active && styles.durationDescActive]}>{preset.description}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
         </View>
 
         {/* 通知 */}
@@ -289,6 +317,12 @@ const styles = StyleSheet.create({
     color: TempleTheme.textMuted,
     marginBottom: 6,
   },
+  settingHint: {
+    fontSize: 11,
+    color: TempleTheme.textMuted,
+    lineHeight: 18,
+    marginBottom: TempleSpacing.xs,
+  },
   input: {
     backgroundColor: TempleTheme.bgCard,
     borderWidth: 1,
@@ -315,6 +349,36 @@ const styles = StyleSheet.create({
   godChipPatron: { borderColor: TempleTheme.gold + '80', borderWidth: 1.5 },
   godChipText: { fontSize: 12, color: TempleTheme.textMuted },
   godChipTextActive: { color: TempleTheme.goldLight, fontWeight: '600' },
+  durationGrid: {
+    gap: TempleSpacing.xs,
+  },
+  durationCard: {
+    backgroundColor: TempleTheme.bgCard,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '25',
+    borderRadius: 12,
+    padding: TempleSpacing.sm,
+  },
+  durationCardActive: {
+    borderColor: TempleTheme.gold,
+    backgroundColor: TempleTheme.goldDark + '25',
+  },
+  durationTitle: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.textLight,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  durationTitleActive: {
+    color: TempleTheme.goldLight,
+  },
+  durationDesc: {
+    fontSize: 11,
+    color: TempleTheme.textMuted,
+  },
+  durationDescActive: {
+    color: TempleTheme.textGold,
+  },
   // 八字卡
   baziCard: {
     backgroundColor: TempleTheme.bgCard, borderRadius: 12, padding: TempleSpacing.md,

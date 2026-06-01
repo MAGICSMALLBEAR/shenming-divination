@@ -1,6 +1,7 @@
 // 首頁 - 神明占卜主流程
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share } from 'react-native';
+import { Image } from 'expo-image';
 import { useDivination } from '@/hooks/useDivination';
 import { GodSelector, QuestionForm } from '@/components/GodSelector';
 import { MeditationScreen } from '@/components/MeditationScreen';
@@ -156,8 +157,16 @@ export default function HomeScreen() {
           <View style={styles.fullScreen}>
             {div.selectedGod && (
               <View style={styles.selectedGodBanner}>
-                <Text style={styles.selectedGodName}>{div.selectedGod.name}</Text>
-                <Text style={styles.selectedGodDesc}>{div.selectedGod.description.slice(0, 60)}...</Text>
+                <View style={[styles.selectedGodPortrait, { borderColor: div.selectedGod.accentColor + '55' }]}>
+                  <Image source={div.selectedGod.image} style={styles.selectedGodImage} contentFit="cover" transition={200} />
+                  <View style={[styles.selectedGodPortraitOverlay, { backgroundColor: div.selectedGod.primaryColor + '18' }]} />
+                </View>
+                <View style={styles.selectedGodMeta}>
+                  <Text style={[styles.selectedGodTitle, { color: div.selectedGod.accentColor }]}>{div.selectedGod.title}</Text>
+                  <Text style={styles.selectedGodName}>{div.selectedGod.name}</Text>
+                  <Text style={[styles.selectedGodTagline, { color: div.selectedGod.accentColor }]}>{div.selectedGod.tagline}</Text>
+                  <Text style={styles.selectedGodDesc}>{div.selectedGod.description.slice(0, 60)}...</Text>
+                </View>
               </View>
             )}
             <QuestionForm onSubmit={(q, cat, name) => div.startMeditation(q, cat, name)} />
@@ -184,7 +193,7 @@ export default function HomeScreen() {
           />
         );
       case 'drawing':
-        return <DrawAnimation />;
+        return <DrawAnimation god={div.selectedGod} poemNumber={div.pendingPoem?.number} durationMs={div.drawAnimationDurationMs} />;
       case 'reveal-poem':
       case 'ai-interpret':
       case 'result':
@@ -440,10 +449,22 @@ const styles = StyleSheet.create({
   selectedGodBanner: {
     backgroundColor: TempleTheme.bgCard, marginHorizontal: TempleSpacing.md,
     marginBottom: TempleSpacing.md, padding: TempleSpacing.md, borderRadius: 12,
-    borderWidth: 1, borderColor: TempleTheme.goldDark + '40', alignItems: 'center',
+    borderWidth: 1, borderColor: TempleTheme.goldDark + '40', flexDirection: 'row', alignItems: 'center', gap: TempleSpacing.md,
   },
+  selectedGodPortrait: {
+    width: 88,
+    height: 88,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+  },
+  selectedGodImage: { width: '100%', height: '100%' },
+  selectedGodPortraitOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  selectedGodMeta: { flex: 1 },
+  selectedGodTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 },
   selectedGodName: { fontSize: TempleFonts.heading, fontWeight: '700', color: TempleTheme.goldLight },
-  selectedGodDesc: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginTop: 4, textAlign: 'center' },
+  selectedGodTagline: { fontSize: 12, fontWeight: '600', marginTop: 2, marginBottom: 4 },
+  selectedGodDesc: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginTop: 2 },
   actionBar: {
     flexDirection: 'row', justifyContent: 'center', gap: TempleSpacing.sm,
     paddingHorizontal: TempleSpacing.md, paddingVertical: TempleSpacing.sm,

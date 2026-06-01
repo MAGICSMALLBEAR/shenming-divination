@@ -1,4 +1,5 @@
 // 神明資料 - 支援的神明與籤詩系統
+import type { ImageSourcePropType } from 'react-native';
 import { leiyushiPoems } from './poems/leiyushi';
 import { jiazi60Poems } from './poems/jiazi60';
 import { zhugeShenShuPoems } from './poems/zhugeShenShu';
@@ -11,8 +12,12 @@ export interface God {
   description: string;
   poemSystem: string;     // 籤詩系統
   totalPoems: number;
-  image?: string;         // 神像圖片(可選)
+  image: ImageSourcePropType;
   blessing: string;       // 祝福語
+  tagline: string;        // 視覺標語
+  primaryColor: string;
+  accentColor: string;
+  auraColor: string;
   category: 'war' | 'compassion' | 'sea' | 'health' | 'wealth' | 'general';
 }
 
@@ -24,7 +29,12 @@ export const gods: God[] = [
     description: '三界伏魔大帝，忠義之神，掌管文武、財運與事業。信眾多為求事業發展、考試順利、財運亨通。',
     poemSystem: '雷雨師百首',
     totalPoems: 100,
+    image: require('@/assets/images/gods/guanshengdijun.png'),
     blessing: '願帝君保佑你，忠義存心，正氣參天，事業順利。',
+    tagline: '忠義正氣，護業鎮心',
+    primaryColor: '#C0392B',
+    accentColor: '#E0B04A',
+    auraColor: '#F1C27D',
     category: 'war',
   },
   {
@@ -34,7 +44,12 @@ export const gods: God[] = [
     description: '大慈大悲救苦救難，聞聲救度。信眾祈求平安、健康、求子、化解災難。',
     poemSystem: '觀音靈籤',
     totalPoems: 100,
+    image: require('@/assets/images/gods/guanyin.png'),
     blessing: '願菩薩慈悲護佑，聞聲救苦，有求必應，平安吉祥。',
+    tagline: '慈光普照，聞聲救苦',
+    primaryColor: '#D36BA1',
+    accentColor: '#F5D37A',
+    auraColor: '#F7D8E9',
     category: 'compassion',
   },
   {
@@ -44,7 +59,12 @@ export const gods: God[] = [
     description: '海上守護神，台灣最普遍的信仰。庇佑航海平安、家庭和樂、事業順遂。',
     poemSystem: '六十甲子籤',
     totalPoems: 60,
+    image: require('@/assets/images/gods/mazu.png'),
     blessing: '願媽祖娘娘庇佑，風調雨順，闔家平安，一帆風順。',
+    tagline: '聖母護航，闔境平安',
+    primaryColor: '#1A69B5',
+    accentColor: '#F2C15D',
+    auraColor: '#9BD3F5',
     category: 'sea',
   },
   {
@@ -54,7 +74,12 @@ export const gods: God[] = [
     description: '代天巡狩，驅除瘟疫與災厄。台灣南部信仰興盛，以千歲、溫王爺等最著名。',
     poemSystem: '六十甲子籤',
     totalPoems: 60,
+    image: require('@/assets/images/gods/wangye.png'),
     blessing: '願王爺千歲護佑，驅邪除瘟，保境安民，家宅平安。',
+    tagline: '代天巡狩，護境除穢',
+    primaryColor: '#7D2B36',
+    accentColor: '#D8A74E',
+    auraColor: '#D9B38C',
     category: 'general',
   },
   {
@@ -64,7 +89,12 @@ export const gods: God[] = [
     description: '醫藥之神，精通醫術。信眾祈求身體健康、疾病痊癒、藥方有效。',
     poemSystem: '雷雨師百首',
     totalPoems: 100,
+    image: require('@/assets/images/gods/baoshengdadi.png'),
     blessing: '願大帝慈悲醫治，藥到病除，身心安康，福壽綿長。',
+    tagline: '慈心濟世，保生安康',
+    primaryColor: '#2E7D32',
+    accentColor: '#E7C15B',
+    auraColor: '#A3D9A5',
     category: 'health',
   },
   {
@@ -74,7 +104,12 @@ export const gods: God[] = [
     description: '土地之神，掌管一方水土。信眾祈求家宅平安、生意興隆、出入平安。',
     poemSystem: '六十甲子籤',
     totalPoems: 60,
+    image: require('@/assets/images/gods/fudezhengshen.png'),
     blessing: '願土地公伯庇佑，家宅平安，財源廣進，出入順利。',
+    tagline: '厚德載福，招財安宅',
+    primaryColor: '#C08B2C',
+    accentColor: '#F3D47C',
+    auraColor: '#E6C68E',
     category: 'wealth',
   },
   {
@@ -84,7 +119,12 @@ export const gods: God[] = [
     description: '掌管生育與兒童守護之神。信眾祈求懷孕順產、孩子健康平安長大。',
     poemSystem: '六十甲子籤',
     totalPoems: 60,
+    image: require('@/assets/images/gods/zhushengniangniang.png'),
     blessing: '願娘娘賜福送子，懷孕順產，孩兒健康，平安長大。',
+    tagline: '送子賜福，安產護幼',
+    primaryColor: '#C85C7D',
+    accentColor: '#F3C56A',
+    auraColor: '#F2C9D7',
     category: 'compassion',
   },
   {
@@ -94,7 +134,12 @@ export const gods: God[] = [
     description: '掌管文運與功名之神。學生與考生祈求考試順利、學業進步、金榜題名。',
     poemSystem: '雷雨師百首',
     totalPoems: 100,
+    image: require('@/assets/images/gods/wenchangdijun.png'),
     blessing: '願帝君開啟智慧，文思泉湧，考試順利，金榜題名。',
+    tagline: '文運昌隆，啟智登科',
+    primaryColor: '#4169B1',
+    accentColor: '#F2C76B',
+    auraColor: '#B8C9F0',
     category: 'general',
   },
   {
@@ -104,7 +149,12 @@ export const gods: God[] = [
     description: '傳說諸葛孔明依易經創制，問卜者報一數字，依易卦64爻推算人生吉凶。',
     poemSystem: '諸葛神數',
     totalPoems: 64,
+    image: require('@/assets/images/gods/zhugewuhou.png'),
     blessing: '願智慧如諸葛，籌謀帷幄，決勝千里，謀事在人成事在天。',
+    tagline: '智略通玄，洞察天機',
+    primaryColor: '#547A63',
+    accentColor: '#D8B76A',
+    auraColor: '#B7D3C2',
     category: 'general',
   },
 ];

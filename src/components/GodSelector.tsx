@@ -1,15 +1,11 @@
 // 神明選擇卡片 - 含光暈脈衝動畫 + 守護神推薦 + 神明漢字肖像
 import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Animated } from 'react-native';
+import { Image } from 'expo-image';
 import { gods, questionCategories, type God } from '@/data/gods';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { getSettings } from '@/services/storage';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
-
-// 神明代表漢字（取代 emoji，更有廟宇感）
-const GOD_CHAR: Record<number, string> = {
-  1: '關', 2: '觀', 3: '媽', 4: '王', 5: '保', 6: '土', 7: '娘', 8: '文', 9: '孔',
-};
 
 interface GodSelectorProps {
   onSelectGod: (godId: number) => void;
@@ -27,22 +23,11 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
     });
   }, []);
 
-  const getGodColor = (god: God) => {
-    switch (god.category) {
-      case 'war':        return '#C0392B';
-      case 'compassion': return '#E91E8C';
-      case 'sea':        return '#1565C0';
-      case 'health':     return '#2E7D32';
-      case 'wealth':     return '#F9A825';
-      case 'general':    return '#6D4C41';
-    }
-  };
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>請選擇神明</Text>
       <Text style={styles.subtitle}>
-        {patronGodId ? '🌟 金色框為您的守護神明' : '誠心祈求，心誠則靈'}
+        {patronGodId ? '金色外框為您的守護神明' : '誠心祈求，心誠則靈'}
       </Text>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
@@ -51,8 +36,7 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
             <GodCard
               key={god.id}
               god={god}
-              char={GOD_CHAR[god.id] ?? '神'}
-              color={getGodColor(god)}
+              color={god.primaryColor}
               isPatron={patronGodId === god.id}
               onPress={() => onSelectGod(god.id)}
             />
@@ -63,7 +47,7 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
   );
 }
 
-function GodCard({ god, char, color, isPatron, onPress }: { god: God; char: string; color: string; isPatron: boolean; onPress: () => void }) {
+function GodCard({ god, color, isPatron, onPress }: { god: God; color: string; isPatron: boolean; onPress: () => void }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
 
@@ -114,12 +98,15 @@ function GodCard({ god, char, color, isPatron, onPress }: { god: God; char: stri
           </View>
         )}
 
-        {/* 神明漢字肖像 */}
-        <View style={[styles.godPortrait, { backgroundColor: color + '18' }]}>
-          <Text style={[styles.godChar, { color }]}>{char}</Text>
+        <View style={[styles.godPortrait, { borderColor: god.accentColor + '66' }]}>
+          <Image source={god.image} style={styles.godPortraitImage} contentFit="cover" transition={250} />
+          <View style={[styles.godPortraitOverlay, { backgroundColor: god.primaryColor + '18' }]} />
+          <View style={styles.godPortraitVignette} />
         </View>
 
+        <Text style={[styles.godTitle, { color: god.accentColor }]}>{god.title}</Text>
         <Text style={[styles.godName, { color }]}>{god.name}</Text>
+        <Text style={[styles.godTagline, { color: god.accentColor }]}>{god.tagline}</Text>
         <Text style={styles.godPoem}>{god.poemSystem} · {god.totalPoems}首</Text>
         <Text style={styles.godDesc} numberOfLines={2}>
           {god.description.slice(0, 36)}…
@@ -249,7 +236,7 @@ const styles = StyleSheet.create({
   cardWrapper: { width: '46%' },
   godCard: {
     backgroundColor: TempleTheme.bgCard, borderRadius: 16,
-    paddingHorizontal: TempleSpacing.sm, paddingVertical: TempleSpacing.md,
+    paddingHorizontal: TempleSpacing.sm, paddingTop: TempleSpacing.sm, paddingBottom: TempleSpacing.md,
     alignItems: 'center', borderWidth: 1.5, overflow: 'hidden',
   },
   godCardPatron: { borderWidth: 2 },
@@ -260,12 +247,19 @@ const styles = StyleSheet.create({
   },
   patronBadgeText: { fontSize: 9, color: '#FFF', fontWeight: '700' },
   godPortrait: {
-    width: 60, height: 60, borderRadius: 30,
-    justifyContent: 'center', alignItems: 'center',
+    width: '100%', height: 138, borderRadius: 18,
+    overflow: 'hidden', borderWidth: 1.5,
     marginBottom: TempleSpacing.sm,
   },
-  godChar: { fontSize: 32, fontWeight: '900' },
+  godPortraitImage: { width: '100%', height: '100%' },
+  godPortraitOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  godPortraitVignette: {
+    position: 'absolute', left: 0, right: 0, bottom: 0, height: '45%',
+    backgroundColor: 'rgba(26,18,16,0.35)',
+  },
+  godTitle: { fontSize: 10, fontWeight: '700', marginBottom: 4, letterSpacing: 1 },
   godName: { fontSize: TempleFonts.body, fontWeight: '700', marginBottom: 2 },
+  godTagline: { fontSize: 11, fontWeight: '600', marginBottom: 6 },
   godPoem: { fontSize: 10, color: TempleTheme.textMuted, marginBottom: TempleSpacing.xs },
   godDesc: { fontSize: 10, color: TempleTheme.textMuted, textAlign: 'center', lineHeight: 15 },
   // Form

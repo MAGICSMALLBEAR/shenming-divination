@@ -45,3 +45,6 @@ example
 # backend env
 backend/.env
 backend/node_modules/
+
+# expo web logs
+*.log

@@ -1,5 +1,6 @@
 // 本地儲存服務 - 使用 AsyncStorage 儲存收藏、歷史、設定
 import { Poem } from '@/data/poems/leiyushi';
+import { DRAW_ANIMATION_DEFAULT_MS, normalizeDrawAnimationDuration } from '@/constants/divination';
 
 const STORAGE_KEYS = {
   FAVORITES: '@divination_favorites',
@@ -117,15 +118,23 @@ export interface AppSettings {
   strictMode?: boolean;
   dailyNotification?: boolean;
   birthdayNotification?: boolean;
+  drawAnimationDurationMs?: number;
+}
+
+function normalizeSettings(settings: AppSettings): AppSettings {
+  return {
+    ...settings,
+    drawAnimationDurationMs: normalizeDrawAnimationDuration(settings.drawAnimationDurationMs ?? DRAW_ANIMATION_DEFAULT_MS),
+  };
 }
 
 export async function getSettings(): Promise<AppSettings | null> {
   const data = await getItem(STORAGE_KEYS.SETTINGS);
-  return data ? JSON.parse(data) : null;
+  return data ? normalizeSettings(JSON.parse(data)) : null;
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
-  await setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  await setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(normalizeSettings(settings)));
 }
 
 // 最後一支籤詩（供神明對話頁面取得上下文）
