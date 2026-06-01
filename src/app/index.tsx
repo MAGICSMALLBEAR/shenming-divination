@@ -18,6 +18,8 @@ import { ZhugeNumberInput } from '@/components/ZhugeNumberInput';
 import { addWish } from '@/services/wishTracker';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
 import { playResultSound } from '@/services/proceduralSound';
+import { getSettings } from '@/services/storage';
+import { calcBazi, parseBirthYear } from '@/services/bazi';
 
 export default function HomeScreen() {
   const div = useDivination();
@@ -25,7 +27,18 @@ export default function HomeScreen() {
   const [incenseDone, setIncenseDone] = React.useState(false);
   const [showFireworks, setShowFireworks] = React.useState(false);
   const [fortuneExpanded, setFortuneExpanded] = React.useState(false);
-  const fortune = React.useMemo(() => getDailyFortune(), []);
+  const [fortune, setFortune] = React.useState<DailyFortune>(() => getDailyFortune());
+
+  // 載入設定後產生個人化運勢
+  React.useEffect(() => {
+    getSettings().then(s => {
+      if (!s?.birthDate) return;
+      const year = parseBirthYear(s.birthDate);
+      if (!year) return;
+      const bazi = calcBazi(year);
+      setFortune(getDailyFortune(bazi));
+    });
+  }, []);
 
   // 抽到上上/大吉籤時觸發煙火；進入結果播放音效
   React.useEffect(() => {
@@ -265,25 +278,43 @@ export default function HomeScreen() {
 }
 
 // ─── 今日運勢折疊卡 ───────────────────────────────────────────
+const RELATION_LABEL: Record<string, { text: string; color: string }> = {
+  '今日生我': { text: '今日生我 ✦', color: TempleTheme.success },
+  '我生今日': { text: '我生今日 ◦', color: TempleTheme.warning },
+  '今日克我': { text: '今日克我 ✕', color: TempleTheme.danger },
+  '我克今日': { text: '我克今日 ◇', color: '#E67E22' },
+  '同行':     { text: '同行平穩 ＝', color: TempleTheme.textMuted },
+};
+
 function DailyFortuneCard({ fortune, expanded, onToggle }: { fortune: DailyFortune; expanded: boolean; onToggle: () => void }) {
   const SCORE_LABELS = [
     { key: 'wealth' as const, label: '財', icon: '💰' },
     { key: 'career' as const, label: '事', icon: '💼' },
-    { key: 'love' as const, label: '愛', icon: '💕' },
+    { key: 'love'   as const, label: '愛', icon: '💕' },
     { key: 'health' as const, label: '康', icon: '🏥' },
   ];
   const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
   const overallColor = fortune.overall >= 4 ? TempleTheme.success : fortune.overall >= 3 ? TempleTheme.warning : TempleTheme.danger;
+  const relation = fortune.wuxingRelation ? RELATION_LABEL[fortune.wuxingRelation] : null;
 
   return (
     <View style={fStyles.card}>
       <TouchableOpacity style={fStyles.header} onPress={onToggle} activeOpacity={0.8}>
         <View style={fStyles.headerLeft}>
-          <Text style={fStyles.title}>今日運勢</Text>
+          {/* 標題列：今日運勢 + 生肖（個人化時顯示） */}
+          <View style={fStyles.titleRow}>
+            <Text style={fStyles.title}>今日運勢</Text>
+            {fortune.isPersonalized && fortune.zodiacEmoji && (
+              <Text style={fStyles.zodiacTag}>{fortune.zodiacEmoji} 屬{fortune.zodiac}</Text>
+            )}
+          </View>
           <View style={fStyles.overallRow}>
             <Text style={[fStyles.stars, { color: overallColor }]}>{stars(fortune.overall)}</Text>
             <View style={[fStyles.colorDot, { backgroundColor: fortune.luckyColor.hex }]} />
             <Text style={fStyles.colorName}>{fortune.luckyColor.name}</Text>
+            {relation && (
+              <Text style={[fStyles.relationBadge, { color: relation.color }]}>{relation.text}</Text>
+            )}
           </View>
         </View>
         <View style={fStyles.miniScores}>
@@ -301,6 +332,15 @@ function DailyFortuneCard({ fortune, expanded, onToggle }: { fortune: DailyFortu
 
       {expanded && (
         <View style={fStyles.body}>
+          {/* 五行關係說明（個人化時） */}
+          {fortune.isPersonalized && fortune.wuxingRelation && relation && (
+            <View style={[fStyles.wuxingBanner, { borderColor: relation.color + '50' }]}>
+              <Text style={[fStyles.wuxingBannerText, { color: relation.color }]}>
+                {fortune.userWuxing}命 × 今日{fortune.wuxingToday} — {fortune.wuxingRelation}
+              </Text>
+            </View>
+          )}
+
           {SCORE_LABELS.map(({ key, label, icon }) => (
             <View key={key} style={fStyles.scoreRow}>
               <Text style={fStyles.scoreIcon}>{icon}</Text>
@@ -334,11 +374,14 @@ const fStyles = StyleSheet.create({
   },
   header: { flexDirection: 'row', alignItems: 'center', padding: TempleSpacing.sm, gap: TempleSpacing.sm },
   headerLeft: { flex: 1 },
-  title: { fontSize: 12, fontWeight: '700', color: TempleTheme.goldLight, marginBottom: 2 },
-  overallRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  title: { fontSize: 12, fontWeight: '700', color: TempleTheme.goldLight },
+  zodiacTag: { fontSize: 10, color: TempleTheme.gold, fontWeight: '600' },
+  overallRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
   stars: { fontSize: 11, letterSpacing: 1 },
   colorDot: { width: 10, height: 10, borderRadius: 5 },
   colorName: { fontSize: 10, color: TempleTheme.textMuted },
+  relationBadge: { fontSize: 9, fontWeight: '700' },
   miniScores: { flexDirection: 'row', gap: 4 },
   miniItem: { alignItems: 'center' },
   miniIcon: { fontSize: 12 },
@@ -353,6 +396,11 @@ const fStyles = StyleSheet.create({
   infoRow: { flexDirection: 'row', gap: TempleSpacing.md, marginBottom: 4 },
   infoItem: { fontSize: 11, color: TempleTheme.textLight, flex: 1 },
   advice: { fontSize: TempleFonts.small, color: TempleTheme.gold, marginTop: 6, fontStyle: 'italic', lineHeight: 18 },
+  wuxingBanner: {
+    borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
+    marginTop: TempleSpacing.sm, marginBottom: 6, alignItems: 'center',
+  },
+  wuxingBannerText: { fontSize: 11, fontWeight: '700', letterSpacing: 1 },
 });
 // ─────────────────────────────────────────────────────────────
 
