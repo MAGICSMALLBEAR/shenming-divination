@@ -2,6 +2,7 @@
 import { leiyushiPoems } from './poems/leiyushi';
 import { jiazi60Poems } from './poems/jiazi60';
 import { zhugeShenShuPoems } from './poems/zhugeShenShu';
+import { guanyinLingQianPoems } from './poems/guanyinLingQian';
 
 export interface God {
   id: number;
@@ -31,7 +32,7 @@ export const gods: God[] = [
     name: '觀世音菩薩',
     title: '觀世音菩薩',
     description: '大慈大悲救苦救難，聞聲救度。信眾祈求平安、健康、求子、化解災難。',
-    poemSystem: '雷雨師百首',
+    poemSystem: '觀音靈籤',
     totalPoems: 100,
     blessing: '願菩薩慈悲護佑，聞聲救苦，有求必應，平安吉祥。',
     category: 'compassion',
@@ -127,5 +128,6 @@ export function getPoemsByGod(godId: number) {
 
   if (god.poemSystem === '六十甲子籤') return jiazi60Poems;
   if (god.poemSystem === '諸葛神數') return zhugeShenShuPoems;
+  if (god.poemSystem === '觀音靈籤') return guanyinLingQianPoems;
   return leiyushiPoems;
 }
