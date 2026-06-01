@@ -116,6 +116,7 @@ export interface AppSettings {
   preferredGodId: number;
   strictMode?: boolean;
   dailyNotification?: boolean;
+  birthdayNotification?: boolean;
 }
 
 export async function getSettings(): Promise<AppSettings | null> {

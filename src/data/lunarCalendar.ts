@@ -119,7 +119,7 @@ const MONTHLY_DATA: Record<string, Partial<LunarDayInfo>[]> = {
     { solarDate: '8/5',  lunarMonth: 6, lunarDay: 21, yi: ['嫁娶', '祭祀', '祈福'], ji: ['訴訟'] },
     { solarDate: '8/6',  lunarMonth: 6, lunarDay: 22, yi: ['開市', '交易', '立券'], ji: ['破土', '安葬'] },
     { solarDate: '8/7',  lunarMonth: 6, lunarDay: 23, yi: ['祭祀', '出行', '會友'], ji: ['詞訟'], jieqi: '立秋' },
-    { solarDate: '8/8',  lunarMonth: 6, lunarDay: 24, yi: ['嫁娶', '開市', '入宅'], ji: ['動土'] },
+    { solarDate: '8/8',  lunarMonth: 6, lunarDay: 24, yi: ['嫁娶', '開市', '入宅'], ji: ['動土'], godBirthday: '關聖帝君聖誕' },
     { solarDate: '8/9',  lunarMonth: 6, lunarDay: 25, yi: ['祈福', '交易', '移徙'], ji: ['破土'] },
     { solarDate: '8/10', lunarMonth: 6, lunarDay: 26, yi: ['嫁娶', '祭祀', '出行'], ji: ['開倉'] },
     { solarDate: '8/11', lunarMonth: 6, lunarDay: 27, yi: ['祭祀', '祈福', '會友'], ji: ['動土', '修造'] },
@@ -155,7 +155,7 @@ const MONTHLY_DATA: Record<string, Partial<LunarDayInfo>[]> = {
     { solarDate: '9/8',  lunarMonth: 7, lunarDay: 26, yi: ['嫁娶', '開市', '入宅'], ji: ['動土'] },
     { solarDate: '9/9',  lunarMonth: 7, lunarDay: 27, yi: ['祈福', '交易', '移徙'], ji: ['破土'] },
     { solarDate: '9/10', lunarMonth: 7, lunarDay: 28, yi: ['嫁娶', '祭祀', '出行'], ji: ['開倉'] },
-    { solarDate: '9/11', lunarMonth: 7, lunarDay: 29, yi: ['祭祀', '祈福', '會友'], ji: ['動土'] },
+    { solarDate: '9/11', lunarMonth: 7, lunarDay: 29, yi: ['祭祀', '祈福', '會友'], ji: ['動土'], godBirthday: '地藏王菩薩聖誕' },
     { solarDate: '9/12', lunarMonth: 8, lunarDay: 1,  yi: ['出行', '交易', '入宅'], ji: ['安葬'] },
     { solarDate: '9/13', lunarMonth: 8, lunarDay: 2,  yi: ['嫁娶', '開市', '祈福'], ji: ['訴訟'] },
     { solarDate: '9/14', lunarMonth: 8, lunarDay: 3,  yi: ['祭祀', '祈福', '出行'], ji: ['破土'] },
@@ -232,7 +232,7 @@ const MONTHLY_DATA: Record<string, Partial<LunarDayInfo>[]> = {
     { solarDate: '11/20', lunarMonth: 10, lunarDay: 12, yi: ['嫁娶', '祭祀', '祈福'], ji: ['訴訟'] },
     { solarDate: '11/21', lunarMonth: 10, lunarDay: 13, yi: ['開市', '交易', '立券'], ji: ['破土'] },
     { solarDate: '11/22', lunarMonth: 10, lunarDay: 14, yi: ['祭祀', '出行', '會友'], ji: ['詞訟'], jieqi: '小雪' },
-    { solarDate: '11/23', lunarMonth: 10, lunarDay: 15, yi: ['嫁娶', '開市', '入宅'], ji: ['動土'] },
+    { solarDate: '11/23', lunarMonth: 10, lunarDay: 15, yi: ['嫁娶', '開市', '入宅'], ji: ['動土'], godBirthday: '財神爺聖誕・下元節' },
     { solarDate: '11/24', lunarMonth: 10, lunarDay: 16, yi: ['祈福', '交易', '移徙'], ji: ['破土'] },
     { solarDate: '11/25', lunarMonth: 10, lunarDay: 17, yi: ['嫁娶', '祭祀', '出行'], ji: ['開倉'] },
     { solarDate: '11/26', lunarMonth: 10, lunarDay: 18, yi: ['祭祀', '祈福', '會友'], ji: ['動土'] },
@@ -295,4 +295,32 @@ export function getMonthGodBirthdays(): { date: string; godName: string }[] {
   return monthData
     .filter(d => d.godBirthday)
     .map(d => ({ date: d.solarDate!, godName: d.godBirthday!.replace('聖誕', '') }));
+}
+
+// 取得指定年度全部神明聖誕（含實際 Date 物件）
+export function getAllGodBirthdays(year = new Date().getFullYear()): {
+  date: Date;
+  name: string;
+  solarDateStr: string;
+}[] {
+  const result: { date: Date; name: string; solarDateStr: string }[] = [];
+
+  for (const [monthKey, days] of Object.entries(MONTHLY_DATA)) {
+    const [y, m] = monthKey.split('-').map(Number);
+    if (y !== year) continue;
+
+    for (const day of days) {
+      if (!day.godBirthday || !day.solarDate) continue;
+      const parts = day.solarDate.split('/');
+      const mo = parseInt(parts[0], 10);
+      const d  = parseInt(parts[1], 10);
+      result.push({
+        date: new Date(year, mo - 1, d, 8, 0, 0),
+        name: day.godBirthday,
+        solarDateStr: `${mo}月${d}日`,
+      });
+    }
+  }
+
+  return result.sort((a, b) => a.date.getTime() - b.date.getTime());
 }

@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Text
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { getSettings, saveSettings, type AppSettings } from '@/services/storage';
 import { getDailyPoem } from '@/services/dailyPoem';
-import { scheduleDailyNotification, requestPermissions } from '@/services/notifications';
+import { scheduleDailyNotification, scheduleGodBirthdayNotifications, requestPermissions } from '@/services/notifications';
 import { getTodayLunarInfo } from '@/data/lunarCalendar';
 import { calcBazi, parseBirthYear, ZODIAC_PATRON_GOD } from '@/services/bazi';
 
@@ -156,7 +156,9 @@ export default function SettingsScreen() {
 
         {/* 通知 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>每日通知</Text>
+          <Text style={styles.sectionTitle}>通知設定</Text>
+
+          {/* 每日籤詩 */}
           <TouchableOpacity
             style={[styles.toggleRow, settings.dailyNotification && styles.toggleRowActive]}
             onPress={async () => {
@@ -174,6 +176,28 @@ export default function SettingsScreen() {
             </View>
             <View style={[styles.toggleSwitch, settings.dailyNotification && styles.toggleSwitchOn]}>
               <View style={[styles.toggleKnob, settings.dailyNotification && styles.toggleKnobOn]} />
+            </View>
+          </TouchableOpacity>
+
+          {/* 神明聖誕提醒 */}
+          <TouchableOpacity
+            style={[styles.toggleRow, settings.birthdayNotification && styles.toggleRowActive]}
+            onPress={async () => {
+              const newVal = !settings.birthdayNotification;
+              setSettings(prev => ({ ...prev, birthdayNotification: newVal }));
+              if (newVal) {
+                const ok = await requestPermissions();
+                if (ok) await scheduleGodBirthdayNotifications();
+                Alert.alert('神明聖誕提醒', '已排程未來 60 天內的神明聖誕前晚提醒。');
+              }
+            }}
+          >
+            <View style={styles.toggleInfo}>
+              <Text style={styles.toggleLabel}>神明聖誕提醒 🙏</Text>
+              <Text style={styles.toggleDesc}>聖誕前一晚 20:00 提醒上香祈福</Text>
+            </View>
+            <View style={[styles.toggleSwitch, settings.birthdayNotification && styles.toggleSwitchOn]}>
+              <View style={[styles.toggleKnob, settings.birthdayNotification && styles.toggleKnobOn]} />
             </View>
           </TouchableOpacity>
         </View>
