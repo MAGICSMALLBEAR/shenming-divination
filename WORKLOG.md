@@ -107,7 +107,7 @@
 | 項目 | 狀態 |
 |------|------|
 | TypeScript | ✅ 0 錯誤 |
-| Git | ✅ 已 commit，ahead of origin by 9 commits（尚未 push） |
+| Git | ✅ 已 push origin/master，共 10 commits |
 | 神明 | ✅ 9 神明（含孔明神數） |
 | 籤詩 | ✅ 雷雨師百首(100) + 觀音靈籤(獨立) + 六十甲子(60) + 諸葛神數(64) = 224+ 首 |
 | 每日運勢 | ✅ 已依生肖/五行個人化 |
@@ -126,7 +126,7 @@
 | # | 項目 | 說明 |
 |---|------|------|
 | 1 | **真實廟宇音檔** | 準備 5 個 CC0 授權 `.mp3`（toss / shengbei / draw / incense / result）放入 `assets/sounds/`，取消 `proceduralSound.ts` 中的 require comment |
-| 2 | **Push 到遠端** | `git push origin master`（9 個 commit 尚未推送） |
+| 2 | ~~**Push 到遠端**~~ | ✅ 已推送 `origin/master`（2026-06-02） |
 
 ### 🟡 下一批
 
