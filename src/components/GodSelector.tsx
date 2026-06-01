@@ -169,16 +169,6 @@ export function QuestionForm({ onSubmit }: QuestionFormProps) {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>手機號碼（選填）</Text>
-          <TextInput
-            style={styles.nameTextInput}
-            placeholder="09XX-XXX-XXX"
-            placeholderTextColor={TempleTheme.textMuted}
-            keyboardType="phone-pad"
-          />
-        </View>
-
-        <View style={styles.formGroup}>
           <Text style={styles.label}>問事類別</Text>
           <View style={styles.categoryGrid}>
             {questionCategories.map(cat => (
@@ -198,8 +188,10 @@ export function QuestionForm({ onSubmit }: QuestionFormProps) {
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>所求之事</Text>
+
+          {/* 快速選擇 chip */}
           <View style={styles.presetGrid}>
-            {['事業順利', '感情順遂', '財運亨通', '身體健康', '考試順利', '家庭和睦'].map(q => (
+            {['事業順利', '感情順遂', '財運亨通', '身體健康', '考試順利', '家庭和睦', '出行平安', '求子得子'].map(q => (
               <TouchableOpacity
                 key={q}
                 style={[styles.presetChip, question === q && styles.presetChipActive]}
@@ -211,12 +203,33 @@ export function QuestionForm({ onSubmit }: QuestionFormProps) {
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* 自由輸入框 */}
+          <View style={styles.questionInputWrapper}>
+            <TextInput
+              style={styles.questionInput}
+              value={question}
+              onChangeText={setQuestion}
+              placeholder="或直接輸入您的問題…（最多50字）"
+              placeholderTextColor={TempleTheme.textMuted}
+              maxLength={50}
+              multiline
+              numberOfLines={2}
+              textAlignVertical="top"
+            />
+            {question.length > 0 && (
+              <TouchableOpacity style={styles.questionClear} onPress={() => setQuestion('')}>
+                <Text style={styles.questionClearText}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <Text style={styles.questionCount}>{question.length} / 50</Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.submitBtn, !question && styles.submitBtnDisabled]}
-          onPress={() => question && onSubmit(question, category, userName)}
-          disabled={!question}
+          style={[styles.submitBtn, !question.trim() && styles.submitBtnDisabled]}
+          onPress={() => question.trim() && onSubmit(question.trim(), category, userName)}
+          disabled={!question.trim()}
         >
           <Text style={styles.submitBtnText}>開始求籤</Text>
         </TouchableOpacity>
@@ -276,11 +289,25 @@ const styles = StyleSheet.create({
   categoryIcon: { fontSize: 14 },
   categoryText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
   categoryTextActive: { color: TempleTheme.goldLight, fontWeight: '600' },
-  presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: TempleSpacing.xs },
+  presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: TempleSpacing.xs, marginBottom: TempleSpacing.sm },
   presetChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: TempleTheme.bgCard, borderWidth: 1, borderColor: TempleTheme.goldDark + '20' },
   presetChipActive: { backgroundColor: TempleTheme.goldDark + '30', borderColor: TempleTheme.gold },
   presetText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
   presetTextActive: { color: TempleTheme.goldLight, fontWeight: '600' },
+  questionInputWrapper: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    backgroundColor: TempleTheme.bgCard, borderRadius: 10,
+    borderWidth: 1.5, borderColor: TempleTheme.goldDark + '40',
+    paddingHorizontal: TempleSpacing.sm, paddingTop: TempleSpacing.sm, paddingBottom: TempleSpacing.xs,
+    minHeight: 64,
+  },
+  questionInput: {
+    flex: 1, fontSize: TempleFonts.body, color: TempleTheme.textLight,
+    lineHeight: 22, paddingTop: 0,
+  },
+  questionClear: { padding: 4, marginLeft: 4 },
+  questionClearText: { fontSize: 14, color: TempleTheme.textMuted },
+  questionCount: { fontSize: 11, color: TempleTheme.textMuted, textAlign: 'right', marginTop: 4 },
   submitBtn: { backgroundColor: TempleTheme.red, paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginTop: TempleSpacing.md },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#FFF', fontSize: TempleFonts.heading, fontWeight: '700', letterSpacing: 4 },
