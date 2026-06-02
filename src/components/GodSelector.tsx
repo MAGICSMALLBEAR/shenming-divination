@@ -1,6 +1,6 @@
 // 神明選擇卡片 - 含光暈脈衝動畫 + 守護神推薦 + 神明漢字肖像
 import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Animated, useWindowDimensions, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { gods, questionCategories, type God } from '@/data/gods';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
@@ -12,7 +12,17 @@ interface GodSelectorProps {
 }
 
 export function GodSelector({ onSelectGod }: GodSelectorProps) {
+  const { width } = useWindowDimensions();
   const [patronGodId, setPatronGodId] = useState<number | null>(null);
+  const isCompact = width < 420;
+  const isDesktop = width >= 1100;
+  const maxContentWidth = isDesktop ? 1120 : 760;
+  const gridWidth = Math.min(Math.max(width - TempleSpacing.xl * 2, 0), maxContentWidth);
+  const cardWidth = isDesktop
+    ? (gridWidth - TempleSpacing.sm * 2) / 3
+    : isCompact
+      ? gridWidth
+      : (gridWidth - TempleSpacing.sm) / 2;
 
   useEffect(() => {
     getSettings().then(s => {
@@ -30,7 +40,11 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
         {patronGodId ? '金色外框為您的守護神明' : '誠心祈求，心誠則靈'}
       </Text>
 
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollArea}
+        contentContainerStyle={[styles.scrollContent, { maxWidth: maxContentWidth }]}
+      >
         <View style={styles.grid}>
           {gods.map(god => (
             <GodCard
@@ -38,6 +52,8 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
               god={god}
               color={god.primaryColor}
               isPatron={patronGodId === god.id}
+              width={cardWidth}
+              cardStyle={isCompact && styles.cardWrapperCompact}
               onPress={() => onSelectGod(god.id)}
             />
           ))}
@@ -47,7 +63,7 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
   );
 }
 
-function GodCard({ god, color, isPatron, onPress }: { god: God; color: string; isPatron: boolean; onPress: () => void }) {
+function GodCard({ god, color, isPatron, onPress, width, cardStyle }: { god: God; color: string; isPatron: boolean; onPress: () => void; width: DimensionValue; cardStyle?: StyleProp<ViewStyle> }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
 
@@ -73,7 +89,7 @@ function GodCard({ god, color, isPatron, onPress }: { god: God; color: string; i
   const shadowOpacity = glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.05, 0.35] });
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.cardWrapper}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={[styles.cardWrapper, { width }, cardStyle]}>
       <Animated.View
         style={[
           styles.godCard,
@@ -121,15 +137,49 @@ interface QuestionFormProps {
 }
 
 export function QuestionForm({ onSubmit }: QuestionFormProps) {
+  const { width } = useWindowDimensions();
   const [question, setQuestion] = React.useState('');
   const [category, setCategory] = React.useState('general');
   const [userName, setUserName] = React.useState('');
+  const [noticeOpen, setNoticeOpen] = React.useState(false);
+  const isCompact = width < 420;
+  const isDesktop = width >= 1100;
+  const formMaxWidth = isDesktop ? 860 : 720;
 
   return (
     <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
-      <View style={styles.formContainer}>
+      <View style={[styles.formContainer, { maxWidth: formMaxWidth }]}>
         <Text style={styles.title}>向神明稟報</Text>
         <Text style={styles.subtitle}>誠心默念所求之事</Text>
+
+        <TouchableOpacity
+          style={[styles.noticeCard, noticeOpen && styles.noticeCardOpen]}
+          onPress={() => setNoticeOpen(v => !v)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.noticeHeader}>
+            <View>
+              <Text style={styles.noticeEyebrow}>求籤須知</Text>
+              <Text style={styles.noticeTitle}>先定心，再問事</Text>
+            </View>
+            <Text style={styles.noticeChevron}>{noticeOpen ? '▲' : '▼'}</Text>
+          </View>
+          {noticeOpen && (
+            <View style={styles.noticeBody}>
+              {[
+                '一事一問，問題越明確，籤意越容易對應。',
+                '同一件事不宜短時間反覆重求，先依籤意沉澱再行決定。',
+                '聖筊代表神明允准抽籤；笑筊多為尚未明確，陰筊則宜重新稟報或暫緩。',
+                '籤詩供文化與自我整理參考，重大醫療、法律、財務決策仍應諮詢專業人士。',
+              ].map(item => (
+                <View key={item} style={styles.noticeItem}>
+                  <Text style={styles.noticeBullet}>◆</Text>
+                  <Text style={styles.noticeText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </TouchableOpacity>
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>您的稱呼 / 姓名</Text>
@@ -140,11 +190,11 @@ export function QuestionForm({ onSubmit }: QuestionFormProps) {
             placeholder="輸入姓名或稱呼"
             placeholderTextColor={TempleTheme.textMuted}
           />
-          <View style={styles.nameButtons}>
+          <View style={[styles.nameButtons, isCompact && styles.nameButtonsCompact]}>
             {['善信', '弟子', '信女'].map(name => (
               <TouchableOpacity
                 key={name}
-                style={[styles.nameBtn, userName === name && styles.nameBtnActive]}
+                style={[styles.nameBtn, isCompact && styles.nameBtnCompact, userName === name && styles.nameBtnActive]}
                 onPress={() => setUserName(name)}
               >
                 <Text style={[styles.nameBtnText, userName === name && styles.nameBtnTextActive]}>
@@ -232,8 +282,10 @@ const styles = StyleSheet.create({
   title: { fontSize: TempleFonts.title, fontWeight: '900', color: TempleTheme.goldLight, textAlign: 'center', marginBottom: TempleSpacing.xs, letterSpacing: 4 },
   subtitle: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, textAlign: 'center', marginBottom: TempleSpacing.lg },
   scrollArea: { flex: 1 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: TempleSpacing.sm, paddingBottom: TempleSpacing.lg },
-  cardWrapper: { width: '46%' },
+  scrollContent: { width: '100%', alignSelf: 'center', paddingBottom: TempleSpacing.lg },
+  grid: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: TempleSpacing.sm, paddingBottom: TempleSpacing.lg },
+  cardWrapper: { flexGrow: 0, flexShrink: 0, width: '46%' },
+  cardWrapperCompact: { width: '100%' },
   godCard: {
     backgroundColor: TempleTheme.bgCard, borderRadius: 16,
     paddingHorizontal: TempleSpacing.sm, paddingTop: TempleSpacing.sm, paddingBottom: TempleSpacing.md,
@@ -264,7 +316,65 @@ const styles = StyleSheet.create({
   godDesc: { fontSize: 10, color: TempleTheme.textMuted, textAlign: 'center', lineHeight: 15 },
   // Form
   formScroll: { flex: 1 },
-  formContainer: { paddingHorizontal: TempleSpacing.md },
+  formContainer: { width: '100%', alignSelf: 'center', paddingHorizontal: TempleSpacing.md },
+  noticeCard: {
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '35',
+    padding: TempleSpacing.md,
+    marginBottom: TempleSpacing.md,
+  },
+  noticeCardOpen: {
+    borderColor: TempleTheme.gold + '70',
+    backgroundColor: TempleTheme.bgCard,
+  },
+  noticeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: TempleSpacing.md,
+  },
+  noticeEyebrow: {
+    fontSize: 11,
+    color: TempleTheme.textMuted,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  noticeTitle: {
+    fontSize: TempleFonts.body,
+    color: TempleTheme.goldLight,
+    fontWeight: '800',
+  },
+  noticeChevron: {
+    color: TempleTheme.gold,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  noticeBody: {
+    marginTop: TempleSpacing.md,
+    gap: TempleSpacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: TempleTheme.goldDark + '25',
+    paddingTop: TempleSpacing.md,
+  },
+  noticeItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: TempleSpacing.sm,
+  },
+  noticeBullet: {
+    color: TempleTheme.gold,
+    fontSize: 10,
+    lineHeight: 20,
+  },
+  noticeText: {
+    flex: 1,
+    color: TempleTheme.textMuted,
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
+  },
   formGroup: { marginBottom: TempleSpacing.md },
   label: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginBottom: TempleSpacing.xs },
   nameTextInput: {
@@ -272,8 +382,10 @@ const styles = StyleSheet.create({
     fontSize: TempleFonts.body, color: TempleTheme.textLight,
     borderWidth: 1, borderColor: TempleTheme.goldDark + '30', marginBottom: TempleSpacing.xs,
   },
-  nameButtons: { flexDirection: 'row', gap: TempleSpacing.xs },
+  nameButtons: { flexDirection: 'row', gap: TempleSpacing.xs, flexWrap: 'wrap' },
+  nameButtonsCompact: { justifyContent: 'space-between' },
   nameBtn: { paddingHorizontal: TempleSpacing.md, paddingVertical: TempleSpacing.xs, borderRadius: 16, backgroundColor: TempleTheme.bgCard, borderWidth: 1, borderColor: TempleTheme.goldDark + '30' },
+  nameBtnCompact: { minWidth: '31%', alignItems: 'center' },
   nameBtnActive: { backgroundColor: TempleTheme.goldDark + '30', borderColor: TempleTheme.gold },
   nameBtnText: { color: TempleTheme.textMuted, fontSize: TempleFonts.small },
   nameBtnTextActive: { color: TempleTheme.goldLight },

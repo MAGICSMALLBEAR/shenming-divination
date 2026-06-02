@@ -40,6 +40,9 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
   const revealTranslate = useRef(new Animated.Value(16)).current;
   const numberOpacity = useRef(new Animated.Value(0)).current;
   const numberScale = useRef(new Animated.Value(0.84)).current;
+  const flashAnim = useRef(new Animated.Value(0)).current;
+  const paperAnim = useRef(new Animated.Value(0)).current;
+  const flipAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [phaseIndex, setPhaseIndex] = useState(0);
 
@@ -96,6 +99,9 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
 
     numberOpacity.setValue(0);
     numberScale.setValue(0.84);
+    flashAnim.setValue(0);
+    paperAnim.setValue(0);
+    flipAnim.setValue(0);
 
     timers.push(setTimeout(() => setPhaseIndex(1), ms * 0.22));
     timers.push(setTimeout(() => setPhaseIndex(2), ms * 0.57));
@@ -118,6 +124,18 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
       ]).start();
     }, ms * 0.4));
     timers.push(setTimeout(() => {
+      Animated.sequence([
+        Animated.timing(flashAnim, { toValue: 1, duration: ms * 0.04, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(flashAnim, { toValue: 0, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]).start();
+    }, ms * 0.68));
+    timers.push(setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(paperAnim, { toValue: 1, duration: ms * 0.16, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
+        Animated.timing(flipAnim, { toValue: 1, duration: ms * 0.28, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+      ]).start();
+    }, ms * 0.6));
+    timers.push(setTimeout(() => {
       Animated.parallel([
         Animated.timing(revealOpacity, { toValue: 1, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.timing(revealTranslate, { toValue: 0, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: true }),
@@ -136,7 +154,7 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
       floatLoop.stop();
       shakeLoop.stop();
     };
-  }, [auraAnim, chosenDropAnim, chosenLiftAnim, floatAnim, ms, numberOpacity, numberScale, progressAnim, revealOpacity, revealTranslate, shakeAnim]);
+  }, [auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flipAnim, floatAnim, ms, numberOpacity, numberScale, paperAnim, progressAnim, revealOpacity, revealTranslate, shakeAnim]);
 
   const translateX = shakeAnim.interpolate({
     inputRange: [-1, 1],
@@ -173,6 +191,36 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
     outputRange: ['0%', '100%'],
   });
 
+  const flashScale = flashAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.35, 1.45],
+  });
+
+  const flashOpacity = flashAnim.interpolate({
+    inputRange: [0, 0.35, 1],
+    outputRange: [0, 0.95, 0],
+  });
+
+  const paperTranslateY = paperAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [44, 0],
+  });
+
+  const paperScale = paperAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.82, 1],
+  });
+
+  const paperOpacity = paperAnim.interpolate({
+    inputRange: [0, 0.25, 1],
+    outputRange: [0, 1, 1],
+  });
+
+  const paperRotateX = flipAnim.interpolate({
+    inputRange: [0, 0.52, 1],
+    outputRange: ['78deg', '8deg', '0deg'],
+  });
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>抽籤中</Text>
@@ -201,6 +249,27 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
               backgroundColor: auraColor + '33',
               opacity: haloOpacity,
               transform: [{ scale: haloScale }],
+            },
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.flashRing,
+            {
+              borderColor: highlightColor,
+              backgroundColor: highlightColor + '24',
+              opacity: flashOpacity,
+              transform: [{ scale: flashScale }],
+            },
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.flashCore,
+            {
+              backgroundColor: highlightColor + 'CC',
+              opacity: flashOpacity,
+              transform: [{ scale: flashScale }],
             },
           ]}
         />
@@ -283,18 +352,36 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
 
       <Animated.View
         style={[
-          styles.numberReveal,
+          styles.fortunePaper,
           {
             borderColor: highlightColor + '66',
-            opacity: numberOpacity,
-            transform: [{ scale: numberScale }],
+            opacity: paperOpacity,
+            transform: [
+              { perspective: 800 },
+              { translateY: paperTranslateY },
+              { scale: paperScale },
+              { rotateX: paperRotateX },
+            ],
           },
         ]}
       >
-        <Text style={styles.numberRevealLabel}>天定籤號</Text>
-        <Text style={[styles.numberRevealValue, { color: highlightColor }]}>
+        <View style={[styles.paperSeal, { backgroundColor: primaryColor }]}>
+          <Text style={styles.paperSealText}>籤</Text>
+        </View>
+        <Text style={styles.paperEyebrow}>天定籤號</Text>
+        <Animated.Text
+          style={[
+            styles.paperNumber,
+            {
+              color: highlightColor,
+              opacity: numberOpacity,
+              transform: [{ scale: numberScale }],
+            },
+          ]}
+        >
           第 {poemNumber ?? '?'} 籤
-        </Text>
+        </Animated.Text>
+        <View style={[styles.paperRule, { backgroundColor: highlightColor + '55' }]} />
       </Animated.View>
 
       <Animated.View
@@ -371,6 +458,19 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,
+  },
+  flashRing: {
+    position: 'absolute',
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    borderWidth: 2,
+  },
+  flashCore: {
+    position: 'absolute',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
   },
   altarGlow: {
     width: 200,
@@ -464,26 +564,56 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 999,
   },
-  numberReveal: {
-    minWidth: 170,
-    backgroundColor: 'rgba(61,43,31,0.9)',
-    borderRadius: 18,
+  fortunePaper: {
+    width: 190,
+    minHeight: 112,
+    backgroundColor: TempleTheme.bgLight,
+    borderRadius: 10,
     borderWidth: 1.5,
     paddingHorizontal: TempleSpacing.lg,
-    paddingVertical: TempleSpacing.sm,
+    paddingTop: TempleSpacing.md,
+    paddingBottom: TempleSpacing.sm,
     alignItems: 'center',
     marginBottom: TempleSpacing.md,
+    shadowColor: '#000',
+    shadowOpacity: 0.24,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
   },
-  numberRevealLabel: {
+  paperSeal: {
+    position: 'absolute',
+    top: -14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#F4D7A1',
+  },
+  paperSealText: {
+    color: TempleTheme.goldLight,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  paperEyebrow: {
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: '#7A4C20',
+    fontWeight: '800',
     letterSpacing: 2,
-    marginBottom: 4,
+    marginTop: 8,
+    marginBottom: 6,
   },
-  numberRevealValue: {
+  paperNumber: {
     fontSize: 28,
     fontWeight: '900',
     letterSpacing: 2,
+  },
+  paperRule: {
+    width: 92,
+    height: 2,
+    borderRadius: 999,
+    marginTop: TempleSpacing.sm,
   },
   revealCard: {
     width: 260,

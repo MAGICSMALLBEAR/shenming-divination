@@ -48,3 +48,6 @@ backend/node_modules/
 
 # expo web logs
 *.log
+
+# local QA artifacts
+docs/qa/

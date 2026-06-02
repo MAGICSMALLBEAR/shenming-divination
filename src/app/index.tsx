@@ -1,6 +1,6 @@
 // 首頁 - 神明占卜主流程
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { useDivination } from '@/hooks/useDivination';
 import { GodSelector, QuestionForm } from '@/components/GodSelector';
@@ -24,11 +24,16 @@ import { calcBazi, parseBirthYear } from '@/services/bazi';
 
 export default function HomeScreen() {
   const div = useDivination();
+  const { width } = useWindowDimensions();
   const [strictMode, setStrictMode] = React.useState(false);
   const [incenseDone, setIncenseDone] = React.useState(false);
   const [showFireworks, setShowFireworks] = React.useState(false);
   const [fortuneExpanded, setFortuneExpanded] = React.useState(false);
   const [fortune, setFortune] = React.useState<DailyFortune>(() => getDailyFortune());
+  const isCompact = width < 420;
+  const isTablet = width >= 768;
+  const isDesktop = width >= 1100;
+  const pageMaxWidth = isDesktop ? 1180 : isTablet ? 960 : 760;
 
   // 載入設定後產生個人化運勢
   React.useEffect(() => {
@@ -87,21 +92,21 @@ export default function HomeScreen() {
   };
 
   const renderHeader = () => (
-    <View style={styles.header}>
+    <View style={[styles.header, isCompact && styles.headerCompact]}>
       {showBack ? (
-        <TouchableOpacity style={styles.backBtnSmall} onPress={handleBack}>
+        <TouchableOpacity style={[styles.backBtnSmall, isCompact && styles.backBtnCompact]} onPress={handleBack}>
           <Text style={styles.backBtnTextSmall}>← 返回</Text>
         </TouchableOpacity>
       ) : (
-        <View style={styles.backBtnSmall} />
+        <View style={[styles.backBtnSmall, isCompact && styles.backBtnCompact]} />
       )}
       <Text style={styles.appTitle}>🏛️ 神明占卜</Text>
       {div.step !== 'select-god' ? (
-        <TouchableOpacity style={styles.backBtn} onPress={handleReset}>
+        <TouchableOpacity style={[styles.backBtn, isCompact && styles.backBtnCompact]} onPress={handleReset}>
           <Text style={styles.backBtnText}>✕ 重來</Text>
         </TouchableOpacity>
       ) : (
-        <View style={styles.backBtn} />
+        <View style={[styles.backBtn, isCompact && styles.backBtnCompact]} />
       )}
     </View>
   );
@@ -124,18 +129,20 @@ export default function HomeScreen() {
     const currentIndex = steps.findIndex(s => s.key === stepKey(div.step));
 
     return (
-      <View style={styles.stepIndicator}>
+      <View style={[styles.stepIndicator, isCompact && styles.stepIndicatorCompact]}>
         {steps.map((s, i) => (
           <View key={s.key} style={styles.stepItem}>
             <View style={[
               styles.stepDot,
+              isCompact && styles.stepDotCompact,
               i <= currentIndex && styles.stepDotActive,
               i === currentIndex && styles.stepDotCurrent,
+              i === currentIndex && isCompact && styles.stepDotCurrentCompact,
             ]}>
-              <Text style={styles.stepIcon}>{s.icon}</Text>
+              <Text style={[styles.stepIcon, isCompact && styles.stepIconCompact]}>{s.icon}</Text>
             </View>
             {i < steps.length - 1 && (
-              <View style={[styles.stepLine, i < currentIndex && styles.stepLineActive]} />
+              <View style={[styles.stepLine, isCompact && styles.stepLineCompact, i < currentIndex && styles.stepLineActive]} />
             )}
           </View>
         ))}
@@ -156,16 +163,16 @@ export default function HomeScreen() {
         return (
           <View style={styles.fullScreen}>
             {div.selectedGod && (
-              <View style={styles.selectedGodBanner}>
-                <View style={[styles.selectedGodPortrait, { borderColor: div.selectedGod.accentColor + '55' }]}>
+              <View style={[styles.selectedGodBanner, isCompact && styles.selectedGodBannerCompact]}>
+                <View style={[styles.selectedGodPortrait, isCompact && styles.selectedGodPortraitCompact, { borderColor: div.selectedGod.accentColor + '55' }]}>
                   <Image source={div.selectedGod.image} style={styles.selectedGodImage} contentFit="cover" transition={200} />
                   <View style={[styles.selectedGodPortraitOverlay, { backgroundColor: div.selectedGod.primaryColor + '18' }]} />
                 </View>
-                <View style={styles.selectedGodMeta}>
+                <View style={[styles.selectedGodMeta, isCompact && styles.selectedGodMetaCompact]}>
                   <Text style={[styles.selectedGodTitle, { color: div.selectedGod.accentColor }]}>{div.selectedGod.title}</Text>
-                  <Text style={styles.selectedGodName}>{div.selectedGod.name}</Text>
-                  <Text style={[styles.selectedGodTagline, { color: div.selectedGod.accentColor }]}>{div.selectedGod.tagline}</Text>
-                  <Text style={styles.selectedGodDesc}>{div.selectedGod.description.slice(0, 60)}...</Text>
+                  <Text style={[styles.selectedGodName, isCompact && styles.selectedGodNameCompact]}>{div.selectedGod.name}</Text>
+                  <Text style={[styles.selectedGodTagline, isCompact && styles.selectedGodTextCompact, { color: div.selectedGod.accentColor }]}>{div.selectedGod.tagline}</Text>
+                  <Text style={[styles.selectedGodDesc, isCompact && styles.selectedGodTextCompact]}>{div.selectedGod.description.slice(0, 60)}...</Text>
                 </View>
               </View>
             )}
@@ -201,9 +208,11 @@ export default function HomeScreen() {
           <PoemCard
             poem={div.drawnPoem}
             godName={div.selectedGod?.name || '神明'}
+            god={div.selectedGod}
             aiInterpretation={div.aiInterpretation}
             isLoading={div.step === 'ai-interpret' && !div.aiInterpretation}
             questionCategory={div.questionCategory}
+            question={div.question}
           />
         ) : null;
       default:
@@ -236,24 +245,24 @@ export default function HomeScreen() {
   const renderActions = () => {
     if (div.step === 'result' && div.drawnPoem) {
       return (
-        <View style={styles.actionBar}>
-          <TouchableOpacity style={styles.actionBtn} onPress={div.toggleFavorite}>
+        <View style={[styles.actionBar, isCompact && styles.actionBarCompact]}>
+          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={div.toggleFavorite}>
             <Text style={styles.actionBtnIcon}>{div.isFavorited ? '💔' : '💾'}</Text>
             <Text style={styles.actionBtnText}>{div.isFavorited ? '已收藏' : '收藏'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, wishAdded && styles.actionBtnDone]} onPress={handleAddWish} disabled={wishAdded}>
+          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet, wishAdded && styles.actionBtnDone]} onPress={handleAddWish} disabled={wishAdded}>
             <Text style={styles.actionBtnIcon}>{wishAdded ? '✅' : '🙏'}</Text>
             <Text style={styles.actionBtnText}>{wishAdded ? '已許願' : '許願'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={handleSpeak}>
+          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleSpeak}>
             <Text style={styles.actionBtnIcon}>{isSpeaking ? '⏹️' : '🎙️'}</Text>
             <Text style={styles.actionBtnText}>{isSpeaking ? '停止' : '朗讀'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={handleShare}>
+          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleShare}>
             <Text style={styles.actionBtnIcon}>📤</Text>
             <Text style={styles.actionBtnText}>分享</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, styles.actionBtnPrimary]} onPress={handleReset}>
+          <TouchableOpacity style={[styles.actionBtn, styles.actionBtnPrimary, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleReset}>
             <Text style={styles.actionBtnIcon}>🔄</Text>
             <Text style={[styles.actionBtnText, styles.actionBtnTextPrimary]}>再求一籤</Text>
           </TouchableOpacity>
@@ -271,13 +280,15 @@ export default function HomeScreen() {
         {div.step === 'meditate' || div.step === 'toss-jiaobei' ? <IncenseSmoke /> : null}
         <FireworksEffect active={showFireworks} />
         <View style={styles.container}>
-          {renderHeader()}
-          {renderStepIndicator()}
-          <View style={styles.content}>{renderContent()}</View>
-          {renderActions()}
+          <View style={[styles.pageShell, { maxWidth: pageMaxWidth }]}>
+            {renderHeader()}
+            {renderStepIndicator()}
+            <View style={styles.content}>{renderContent()}</View>
+            {renderActions()}
+          </View>
         </View>
         {div.toastMessage && (
-          <View style={styles.toast}>
+          <View style={[styles.toast, isCompact && styles.toastCompact]}>
             <Text style={styles.toastText}>{div.toastMessage}</Text>
           </View>
         )}
@@ -416,6 +427,7 @@ const fStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
   container: { flex: 1 },
+  pageShell: { flex: 1, width: '100%', alignSelf: 'center' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -425,24 +437,33 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: TempleTheme.goldDark + '20',
   },
+  headerCompact: { paddingHorizontal: 12 },
   appTitle: { fontSize: TempleFonts.heading, fontWeight: '700', color: TempleTheme.goldLight },
+  appTitleCompact: { fontSize: 17, flex: 1, marginHorizontal: 8, textAlign: 'center' },
   backBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: TempleTheme.bgCard, borderWidth: 1, borderColor: TempleTheme.goldDark + '30', minWidth: 60, alignItems: 'center' },
   backBtnText: { fontSize: 12, color: TempleTheme.textMuted },
   backBtnSmall: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, minWidth: 60, alignItems: 'center' },
   backBtnTextSmall: { fontSize: 12, color: TempleTheme.goldLight },
+  backBtnCompact: { minWidth: 52, paddingHorizontal: 8 },
+  backBtnTextCompact: { fontSize: 11 },
   stepIndicator: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
     paddingVertical: TempleSpacing.sm, paddingHorizontal: TempleSpacing.md,
   },
+  stepIndicatorCompact: { paddingHorizontal: 12 },
   stepItem: { flexDirection: 'row', alignItems: 'center' },
   stepDot: {
     width: 26, height: 26, borderRadius: 13, backgroundColor: TempleTheme.bgCard,
     justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: TempleTheme.goldDark + '30',
   },
+  stepDotCompact: { width: 24, height: 24, borderRadius: 12 },
   stepDotActive: { backgroundColor: TempleTheme.goldDark + '30', borderColor: TempleTheme.goldDark },
   stepDotCurrent: { backgroundColor: TempleTheme.red, borderColor: TempleTheme.gold, width: 30, height: 30, borderRadius: 15 },
+  stepDotCurrentCompact: { width: 28, height: 28, borderRadius: 14 },
   stepIcon: { fontSize: 11 },
+  stepIconCompact: { fontSize: 10 },
   stepLine: { width: 12, height: 1, backgroundColor: TempleTheme.goldDark + '30', marginHorizontal: 2 },
+  stepLineCompact: { width: 8 },
   stepLineActive: { backgroundColor: TempleTheme.goldDark },
   content: { flex: 1 },
   fullScreen: { flex: 1 },
@@ -451,6 +472,7 @@ const styles = StyleSheet.create({
     marginBottom: TempleSpacing.md, padding: TempleSpacing.md, borderRadius: 12,
     borderWidth: 1, borderColor: TempleTheme.goldDark + '40', flexDirection: 'row', alignItems: 'center', gap: TempleSpacing.md,
   },
+  selectedGodBannerCompact: { flexDirection: 'column', alignItems: 'center' },
   selectedGodPortrait: {
     width: 88,
     height: 88,
@@ -458,23 +480,30 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1.5,
   },
+  selectedGodPortraitCompact: { width: 110, height: 110, borderRadius: 24 },
   selectedGodImage: { width: '100%', height: '100%' },
   selectedGodPortraitOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   selectedGodMeta: { flex: 1 },
+  selectedGodMetaCompact: { alignSelf: 'stretch' },
   selectedGodTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 },
   selectedGodName: { fontSize: TempleFonts.heading, fontWeight: '700', color: TempleTheme.goldLight },
+  selectedGodNameCompact: { textAlign: 'center' },
   selectedGodTagline: { fontSize: 12, fontWeight: '600', marginTop: 2, marginBottom: 4 },
   selectedGodDesc: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginTop: 2 },
+  selectedGodTextCompact: { textAlign: 'center' },
   actionBar: {
-    flexDirection: 'row', justifyContent: 'center', gap: TempleSpacing.sm,
+    flexDirection: 'row', justifyContent: 'center', gap: TempleSpacing.sm, flexWrap: 'wrap',
     paddingHorizontal: TempleSpacing.md, paddingVertical: TempleSpacing.sm,
     borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '20', backgroundColor: TempleTheme.bgDark,
   },
+  actionBarCompact: { paddingHorizontal: 12 },
   actionBtn: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: TempleSpacing.md,
     paddingVertical: TempleSpacing.sm, borderRadius: 10, backgroundColor: TempleTheme.bgCard,
     borderWidth: 1, borderColor: TempleTheme.goldDark + '30', gap: 6,
   },
+  actionBtnCompact: { width: '100%', justifyContent: 'center' },
+  actionBtnTablet: { minWidth: 180 },
   actionBtnPrimary: { backgroundColor: TempleTheme.red, borderColor: TempleTheme.goldDark },
   actionBtnDone: { opacity: 0.6, borderColor: TempleTheme.success + '60' },
   actionBtnIcon: { fontSize: 16 },
@@ -485,5 +514,6 @@ const styles = StyleSheet.create({
     backgroundColor: TempleTheme.goldDark, paddingHorizontal: 24, paddingVertical: 10,
     borderRadius: 20, elevation: 4,
   },
+  toastCompact: { left: 16, right: 16, bottom: 88 },
   toastText: { color: '#FFF', fontSize: TempleFonts.small, fontWeight: '600' },
 });

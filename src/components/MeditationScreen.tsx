@@ -1,6 +1,6 @@
 // 冥想引導元件
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 
 interface MeditationProps {
@@ -9,10 +9,13 @@ interface MeditationProps {
 }
 
 export function MeditationScreen({ godName, onComplete }: MeditationProps) {
+  const { width } = useWindowDimensions();
   const [seconds, setSeconds] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const isCompact = width < 420;
+  const contentMaxWidth = width >= 960 ? 720 : 560;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -47,12 +50,12 @@ export function MeditationScreen({ godName, onComplete }: MeditationProps) {
   }, []);
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container, isCompact && styles.containerCompact, { opacity: fadeAnim }]}>
       <Animated.View style={[styles.glow, { transform: [{ scale: pulseAnim }] }]} />
 
-      <Text style={styles.godName}>{godName}</Text>
+      <Text style={[styles.godName, isCompact && styles.godNameCompact]}>{godName}</Text>
 
-      <View style={styles.instructionBox}>
+      <View style={[styles.instructionBox, { maxWidth: contentMaxWidth }]}>
         <Text style={styles.instructionTitle}>靜心冥想</Text>
         <Text style={styles.instructionText}>請閉上雙眼，深呼吸三次</Text>
         <Text style={styles.instructionDetail}>
@@ -74,7 +77,7 @@ export function MeditationScreen({ godName, onComplete }: MeditationProps) {
       </View>
 
       <TouchableOpacity
-        style={[styles.continueBtn, isReady && styles.continueBtnActive]}
+        style={[styles.continueBtn, isCompact && styles.continueBtnCompact, isReady && styles.continueBtnActive]}
         onPress={isReady ? onComplete : undefined}
         disabled={!isReady}
       >
@@ -93,6 +96,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: TempleSpacing.lg,
   },
+  containerCompact: {
+    paddingHorizontal: TempleSpacing.md,
+  },
   glow: {
     position: 'absolute',
     width: 200,
@@ -108,6 +114,7 @@ const styles = StyleSheet.create({
     marginBottom: TempleSpacing.xl,
     letterSpacing: 6,
   },
+  godNameCompact: { fontSize: 28, letterSpacing: 4, textAlign: 'center' },
   instructionBox: {
     backgroundColor: TempleTheme.bgCard,
     borderRadius: 16,
@@ -170,6 +177,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: TempleTheme.goldDark + '30',
   },
+  continueBtnCompact: { width: '100%', maxWidth: 320, alignItems: 'center' },
   continueBtnActive: {
     backgroundColor: TempleTheme.red,
     borderColor: TempleTheme.gold,

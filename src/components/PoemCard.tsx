@@ -1,8 +1,10 @@
 // 籤詩卡片 - 捲軸展開動畫 + 逐行浮現 + 籤詩配圖 + 解曰高亮 + 複製 + 圖卡分享
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Animated, ScrollView, TouchableOpacity, Alert, Platform, useWindowDimensions, type DimensionValue } from 'react-native';
+import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import type { Poem } from '@/data/poems/leiyushi';
+import type { God } from '@/data/gods';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { getPoemTheme, type PoemTheme } from '@/data/poemThemes';
 import { PoemComments } from './PoemComments';
@@ -17,10 +19,16 @@ interface PoemCardProps {
   isLoading?: boolean;
   questionCategory?: string;
   userName?: string;
+  god?: God | null;
+  question?: string;
 }
 
-export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionCategory, userName }: PoemCardProps) {
+export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionCategory, userName, god, question }: PoemCardProps) {
+  const { width } = useWindowDimensions();
   const poemTheme = getPoemTheme(poem.number, poem.level);
+  const isCompact = width < 480;
+  const isTablet = width >= 768;
+  const contentMaxWidth = width >= 1280 ? 1000 : isTablet ? 880 : 720;
 
   // 捲軸展開動畫
   const scrollAnim = useRef(new Animated.Value(0)).current;
@@ -79,7 +87,19 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
     career: 'career', love: 'marriage', wealth: 'wealth',
     health: 'health', study: 'study', travel: 'travel',
   };
+  const categoryLabel: Record<string, string> = {
+    career: '事業工作',
+    love: '感情姻緣',
+    wealth: '財運投資',
+    health: '健康身體',
+    study: '學業考試',
+    family: '家庭家運',
+    travel: '出行遷移',
+    general: '綜合運勢',
+  };
   const highlightKey = questionCategory ? catToKey[questionCategory] : null;
+  const godAccent = god?.accentColor || TempleTheme.goldLight;
+  const godPrimary = god?.primaryColor || TempleTheme.red;
 
   const handleShareCard = async () => {
     if (sharing || Platform.OS === 'web') {
@@ -114,7 +134,11 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      style={styles.scroll}
+      contentContainerStyle={[styles.scrollContent, { maxWidth: contentMaxWidth }]}
+    >
 
       {/* 籤詩主卡 */}
       <Animated.View style={[
@@ -125,9 +149,34 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
           borderColor: poemTheme.borderColor,
         }
       ]}>
+        {god ? (
+          <View style={[styles.godOracleHeader, isCompact && styles.godOracleHeaderCompact, { borderBottomColor: godAccent + '35' }]}>
+            <View style={[styles.godOracleImageWrap, { borderColor: godAccent + '70' }]}>
+              <Image source={god.image} style={styles.godOracleImage} contentFit="cover" transition={200} />
+              <View style={[styles.godOracleImageOverlay, { backgroundColor: godPrimary + '18' }]} />
+            </View>
+            <View style={[styles.godOracleText, isCompact && styles.godOracleTextCompact]}>
+              <Text style={[styles.godOracleEyebrow, { color: godAccent }]}>神明開示</Text>
+              <Text style={[styles.godOracleName, isCompact && styles.godOracleTextCompact]}>{god.name}</Text>
+              <Text style={[styles.godOracleTagline, isCompact && styles.godOracleTextCompact, { color: godAccent }]}>{god.tagline}</Text>
+            </View>
+          </View>
+        ) : null}
+
+        {(question || questionCategory) ? (
+          <View style={[styles.questionSummary, isCompact && styles.questionSummaryCompact]}>
+            <Text style={styles.questionSummaryLabel}>
+              {categoryLabel[questionCategory || 'general'] || '綜合運勢'}
+            </Text>
+            <Text style={styles.questionSummaryText} numberOfLines={2}>
+              {question || '誠心求問'}
+            </Text>
+          </View>
+        ) : null}
+
         {/* 主題圖示與背景色帶 */}
-        <View style={[styles.themeHeader, { backgroundColor: poemTheme.bgColor }]}>
-          <Text style={styles.themeIcon}>{poemTheme.icon}</Text>
+        <View style={[styles.themeHeader, isCompact && styles.themeHeaderCompact, { backgroundColor: poemTheme.bgColor }]}>
+          <Text style={[styles.themeIcon, isCompact && styles.themeIconCompact]}>{poemTheme.icon}</Text>
           <View style={styles.themeTags}>
             <Text style={[styles.luckyColor, { backgroundColor: poemTheme.luckyColor + '30', borderColor: poemTheme.luckyColor }]}>
               幸運色 <Text style={{ color: poemTheme.luckyColor, fontWeight: '700' }}>{poemTheme.luckyColorName}</Text>
@@ -137,7 +186,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
         </View>
 
         {/* 籤頭 */}
-        <View style={styles.poemHeader}>
+        <View style={[styles.poemHeader, isCompact && styles.poemHeaderCompact]}>
           <View style={styles.poemMetaBlock}>
             <View style={styles.poemMeta}>
               <Text style={styles.poemNumber}>第 {poem.number} 籤</Text>
@@ -147,16 +196,17 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
             </View>
             <Text style={styles.poemTitle}>{poem.title}</Text>
           </View>
-          <Text style={styles.ganzhi}>{poem.ganzhi}</Text>
+          <Text style={[styles.ganzhi, isCompact && styles.ganzhiCompact]}>{poem.ganzhi}</Text>
         </View>
 
         {/* 籤詩內容 - 逐行浮現 */}
-        <View style={styles.poemContentArea}>
+        <View style={[styles.poemContentArea, isCompact && styles.poemContentAreaCompact]}>
           {poem.content.split('\n').map((line, i) => (
             <Animated.Text
               key={i}
               style={[
                 styles.poemLine,
+                isCompact && styles.poemLineCompact,
                 {
                   opacity: lineAnims[i] || new Animated.Value(1),
                   transform: [{
@@ -199,7 +249,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
           </View>
         </View>
 
-        <View style={styles.actionRow}>
+        <View style={[styles.actionRow, isCompact && styles.actionRowCompact]}>
           <TouchableOpacity style={[styles.copyBtn, styles.actionBtnHalf]} onPress={handleCopy}>
             <Text style={styles.copyBtnText}>{copied ? '✓ 已複製' : '📋 複製'}</Text>
           </TouchableOpacity>
@@ -254,9 +304,9 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
   );
 }
 
-function JieYueItem({ icon, label, value, highlighted }: { icon: string; label: string; value: string; highlighted?: boolean }) {
+function JieYueItem({ icon, label, value, highlighted, width }: { icon: string; label: string; value: string; highlighted?: boolean; width?: DimensionValue }) {
   return (
-    <View style={[styles.jieYueItem, highlighted && styles.jieYueItemHighlighted]}>
+    <View style={[styles.jieYueItem, { width: width ?? '48%' }, highlighted && styles.jieYueItemHighlighted]}>
       <Text style={styles.jieYueIcon}>{icon}</Text>
       <Text style={[styles.jieYueItemLabel, highlighted && styles.jieYueItemLabelHL]}>{label}</Text>
       <Text style={[styles.jieYueItemValue, highlighted && styles.jieYueItemValueHL]} numberOfLines={1}>{value}</Text>
@@ -266,18 +316,93 @@ function JieYueItem({ icon, label, value, highlighted }: { icon: string; label: 
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.sm },
+  scrollContent: { width: '100%', alignSelf: 'center', paddingHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.sm },
   poemCard: {
     borderRadius: 16, borderWidth: 1.5,
     marginBottom: TempleSpacing.md, overflow: 'hidden',
     backgroundColor: TempleTheme.bgCard,
+  },
+  godOracleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: TempleSpacing.md,
+    paddingHorizontal: TempleSpacing.md,
+    paddingVertical: TempleSpacing.md,
+    borderBottomWidth: 1,
+    backgroundColor: 'rgba(26,18,16,0.34)',
+  },
+  godOracleHeaderCompact: { flexDirection: 'column', alignItems: 'center' },
+  godOracleImageWrap: {
+    width: 76,
+    height: 76,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    backgroundColor: TempleTheme.bgDark,
+  },
+  godOracleImage: {
+    width: '100%',
+    height: '100%',
+  },
+  godOracleImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  godOracleText: {
+    flex: 1,
+  },
+  godOracleTextCompact: { textAlign: 'center', alignSelf: 'stretch' },
+  godOracleEyebrow: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 3,
+  },
+  godOracleName: {
+    fontSize: TempleFonts.heading,
+    color: TempleTheme.goldLight,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+  godOracleTagline: {
+    fontSize: TempleFonts.small,
+    fontWeight: '700',
+  },
+  questionSummary: {
+    marginHorizontal: TempleSpacing.md,
+    marginTop: TempleSpacing.md,
+    marginBottom: TempleSpacing.sm,
+    paddingHorizontal: TempleSpacing.md,
+    paddingVertical: TempleSpacing.sm,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '35',
+    backgroundColor: TempleTheme.bgDark + '45',
+  },
+  questionSummaryCompact: { marginHorizontal: 12 },
+  questionSummaryLabel: {
+    color: TempleTheme.gold,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  questionSummaryText: {
+    color: TempleTheme.textLight,
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
   },
   themeHeader: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: TempleSpacing.md, paddingVertical: TempleSpacing.sm,
     gap: TempleSpacing.sm,
   },
+  themeHeaderCompact: { alignItems: 'flex-start' },
   themeIcon: { fontSize: 36 },
+  themeIconCompact: { fontSize: 30 },
   themeTags: { flex: 1, gap: 4 },
   luckyColor: {
     fontSize: 11, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8,
@@ -291,6 +416,7 @@ const styles = StyleSheet.create({
     marginBottom: TempleSpacing.sm, paddingBottom: TempleSpacing.sm,
     borderBottomWidth: 1, borderBottomColor: TempleTheme.goldDark + '30',
   },
+  poemHeaderCompact: { alignItems: 'flex-start', gap: TempleSpacing.xs },
   poemMetaBlock: { flex: 1, marginRight: TempleSpacing.sm },
   poemMeta: { flexDirection: 'row', alignItems: 'center', gap: TempleSpacing.sm },
   poemNumber: { fontSize: TempleFonts.heading, fontWeight: '700', color: TempleTheme.goldLight },
@@ -298,12 +424,15 @@ const styles = StyleSheet.create({
   levelBadge: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
   levelText: { fontSize: 12, fontWeight: '700' },
   ganzhi: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
+  ganzhiCompact: { marginTop: 4 },
   poemContentArea: {
     backgroundColor: TempleTheme.bgLight, padding: TempleSpacing.lg,
     marginHorizontal: TempleSpacing.md, borderRadius: 12, marginBottom: TempleSpacing.md,
     alignItems: 'center', borderWidth: 1, borderColor: '#D2B48C',
   },
+  poemContentAreaCompact: { padding: TempleSpacing.md, marginHorizontal: 12 },
   poemLine: { fontSize: TempleFonts.poem, lineHeight: 34, color: '#2C1810', fontWeight: '700', letterSpacing: 3 },
+  poemLineCompact: { fontSize: 16, lineHeight: 30, letterSpacing: 2 },
   storyArea: {
     marginHorizontal: TempleSpacing.md, marginBottom: TempleSpacing.md,
     padding: TempleSpacing.sm, backgroundColor: TempleTheme.bgDark + '40', borderRadius: 8,
@@ -316,7 +445,7 @@ const styles = StyleSheet.create({
   jieYueArea: { marginHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.md, borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '30', marginBottom: TempleSpacing.sm },
   jieYueLabel: { fontSize: TempleFonts.small, color: TempleTheme.goldLight, fontWeight: '700', marginBottom: TempleSpacing.sm },
   jieYueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: TempleSpacing.xs },
-  jieYueItem: { width: '30%', backgroundColor: TempleTheme.bgDark + '60', padding: TempleSpacing.sm, borderRadius: 8, alignItems: 'center' },
+  jieYueItem: { backgroundColor: TempleTheme.bgDark + '60', padding: TempleSpacing.sm, borderRadius: 8, alignItems: 'center' },
   jieYueItemHighlighted: { backgroundColor: TempleTheme.goldDark + '25', borderWidth: 1.5, borderColor: TempleTheme.gold },
   jieYueIcon: { fontSize: 16, marginBottom: 2 },
   jieYueItemLabel: { fontSize: 10, color: TempleTheme.textMuted, marginBottom: 2 },
@@ -324,6 +453,7 @@ const styles = StyleSheet.create({
   jieYueItemValue: { fontSize: 10, color: TempleTheme.textLight, textAlign: 'center' },
   jieYueItemValueHL: { color: TempleTheme.goldLight, fontWeight: '600' },
   actionRow: { flexDirection: 'row', gap: TempleSpacing.sm, marginHorizontal: TempleSpacing.md, marginTop: TempleSpacing.sm, marginBottom: TempleSpacing.xs },
+  actionRowCompact: { flexDirection: 'column', marginHorizontal: 12 },
   actionBtnHalf: { flex: 1 },
   copyBtn: { paddingVertical: 10, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '50' },
   copyBtnText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
