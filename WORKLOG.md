@@ -210,7 +210,7 @@
 | 項目 | 狀態 |
 |------|------|
 | TypeScript | ⚠️ 待驗證（大量重構後需 `tsc --noEmit` 確認） |
-| Git | ⚠️ 待 push（本次變更尚未提交） |
+| Git | ✅ 已 push origin/master（commit `2409cef`，共 15 commits） |
 | 神明 | ✅ 9 神明（含孔明神數），完整資料已建（godProfiles.ts） |
 | 神明插圖 | ✅ 9 張台式廟宇彩繪金身風 PNG 已上線 |
 | 儀式圖集 | ✅ 三風格（青銅/青瓷/朱漆）香爐空+置 sprite、擲筊平+凸面、atlas 縮圖 |
