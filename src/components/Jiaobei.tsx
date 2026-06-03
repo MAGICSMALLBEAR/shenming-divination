@@ -1,184 +1,618 @@
-// 擲筊元件 - 含 spring 彈跳動畫 + 三聖筊模式
-import React, { useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing } from 'react-native';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
-import { playTossSound, playShengbeiSound, vibrateLight } from '@/services/proceduralSound';
+﻿import React, { useMemo, useRef } from 'react';
+import { Animated, Easing, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
+
+import { ParticleEffect } from '@/components/ParticleEffect';
+import { RitualStylePicker } from '@/components/RitualStylePicker';
+import { ritualStyles, type RitualStyleKey } from '@/constants/ritual-styles';
+import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import type { JiaobeiResult } from '@/services/divination';
-import { ParticleEffect } from './ParticleEffect';
+import { playShengbeiSound, playTossSound, vibrateLight } from '@/services/proceduralSound';
 
 interface JiaobeiProps {
   onToss: () => JiaobeiResult;
   onShengbei: () => void;
   results: JiaobeiResult[];
   strictMode?: boolean;
+  ritualStyleKey: RitualStyleKey;
+  onStyleChange: (next: RitualStyleKey) => void;
 }
 
-export function Jiaobei({ onToss, onShengbei, results, strictMode }: JiaobeiProps) {
+type JiaobeiFace = 'round' | 'flat';
+
+export function Jiaobei({
+  onToss,
+  onShengbei,
+  results,
+  strictMode,
+  ritualStyleKey,
+  onStyleChange,
+}: JiaobeiProps) {
   const [isAnimating, setIsAnimating] = React.useState(false);
   const [currentResult, setCurrentResult] = React.useState<JiaobeiResult | null>(null);
   const [showParticle, setShowParticle] = React.useState(false);
-  const jumpAnim = useRef(new Animated.Value(0)).current;
+  const ritualStyle = ritualStyles[ritualStyleKey];
+
+  const tossProgress = useRef(new Animated.Value(0)).current;
+  const settleProgress = useRef(new Animated.Value(0)).current;
   const resultFade = useRef(new Animated.Value(0)).current;
-  const strictCount = results.filter(r => r === 'shengbei').length;
+  const strictCount = results.filter((result) => result === 'shengbei').length;
+
+  const landingFaces = useMemo(() => getLandingFaces(currentResult), [currentResult]);
+  const landingPose = useMemo(() => getLandingPose(currentResult), [currentResult]);
 
   const handleToss = () => {
-    if (isAnimating) return;
+    if (isAnimating) {
+      return;
+    }
+
     setIsAnimating(true);
     setCurrentResult(null);
+    setShowParticle(false);
     resultFade.setValue(0);
+    settleProgress.setValue(0);
+    tossProgress.setValue(0);
     vibrateLight();
 
-    // Spring 彈跳動畫
-    jumpAnim.setValue(0);
-    Animated.sequence([
-      Animated.timing(jumpAnim, { toValue: 1, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: false }),
-      Animated.spring(jumpAnim, { toValue: 0, friction: 4, tension: 60, useNativeDriver: false }),
-    ]).start(async () => {
+    Animated.timing(tossProgress, {
+      toValue: 1,
+      duration: 980,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(async () => {
       const result = onToss();
       setCurrentResult(result);
+      tossProgress.setValue(0);
+
       if (result === 'shengbei') {
-        await playShengbeiSound();
+        await playShengbeiSound().catch(() => {});
         setShowParticle(true);
-        setTimeout(() => setShowParticle(false), 1000);
+        setTimeout(() => setShowParticle(false), 1100);
       } else {
-        await playTossSound();
+        await playTossSound().catch(() => {});
       }
 
-      Animated.spring(resultFade, { toValue: 1, friction: 6, tension: 40, useNativeDriver: false }).start(() => {
+      Animated.parallel([
+        Animated.spring(settleProgress, {
+          toValue: 1,
+          friction: 7,
+          tension: 72,
+          useNativeDriver: false,
+        }),
+        Animated.spring(resultFade, {
+          toValue: 1,
+          friction: 7,
+          tension: 62,
+          useNativeDriver: false,
+        }),
+      ]).start(() => {
         setIsAnimating(false);
         if (result === 'shengbei' && !(strictMode && strictCount < 2)) {
-          setTimeout(onShengbei, 800);
+          setTimeout(onShengbei, 900);
         }
       });
     });
   };
 
-  const translateY = jumpAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -140, 0] });
-  const rotate = jumpAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: ['0deg', '540deg', '360deg'] });
-  const scale = jumpAnim.interpolate({ inputRange: [0, 0.3, 1], outputRange: [1, 1.15, 1] });
+  const pieceTransforms = [0, 1].map((index) => {
+    const direction = index === 0 ? -1 : 1;
+    const tossTranslateX = tossProgress.interpolate({
+      inputRange: [0, 0.2, 0.7, 1],
+      outputRange: [0, direction * 10, direction * 40, direction * 78],
+    });
+    const tossTranslateY = tossProgress.interpolate({
+      inputRange: [0, 0.25, 0.7, 1],
+      outputRange: [0, -36, -168, -6],
+    });
+    const tossRotate = tossProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', `${direction * 780}deg`],
+    });
+    const tossTilt = tossProgress.interpolate({
+      inputRange: [0, 0.4, 1],
+      outputRange: ['0deg', `${direction * 38}deg`, `${direction * 10}deg`],
+    });
 
-  const getResultInfo = (result: JiaobeiResult) => {
-    switch (result) {
-      case 'shengbei': return { text: '聖筊', emoji: '⛩️', desc: '一平一凸 · 神明應允', color: TempleTheme.success };
-      case 'xiaobei': return { text: '笑筊', emoji: '😊', desc: '兩平向上 · 請再誠心默念', color: TempleTheme.warning };
-      case 'yinbei': return { text: '陰筊', emoji: '🙏', desc: '兩凸向上 · 請再誠心祈求', color: TempleTheme.danger };
-    }
-  };
+    const settleTranslateX = settleProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [direction * 28, landingPose[index].translateX],
+    });
+    const settleTranslateY = settleProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, landingPose[index].translateY],
+    });
+    const settleRotate = settleProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [`${direction * 18}deg`, landingPose[index].rotate],
+    });
 
-  const resultInfo = currentResult ? getResultInfo(currentResult) : null;
+    return isAnimating
+      ? {
+          transform: [
+            { translateX: tossTranslateX },
+            { translateY: tossTranslateY },
+            { rotate: tossRotate },
+            { skewX: tossTilt },
+          ],
+        }
+      : {
+          transform: [
+            { translateX: settleTranslateX },
+            { translateY: settleTranslateY },
+            { rotate: settleRotate },
+          ],
+        };
+  });
+
+  const shadowTransforms = [0, 1].map((index) => {
+    const direction = index === 0 ? -1 : 1;
+    const tossShadowX = tossProgress.interpolate({
+      inputRange: [0, 0.2, 0.7, 1],
+      outputRange: [0, direction * 4, direction * 20, direction * 38],
+    });
+    const tossShadowScaleX = tossProgress.interpolate({
+      inputRange: [0, 0.35, 0.7, 1],
+      outputRange: [1, 0.82, 0.56, 0.94],
+    });
+    const tossShadowScaleY = tossProgress.interpolate({
+      inputRange: [0, 0.35, 0.7, 1],
+      outputRange: [1, 0.72, 0.34, 0.92],
+    });
+    const tossShadowOpacity = tossProgress.interpolate({
+      inputRange: [0, 0.35, 0.7, 1],
+      outputRange: [0.16, 0.12, 0.05, 0.18],
+    });
+
+    const settleShadowX = settleProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [direction * 16, landingPose[index].translateX * 0.8],
+    });
+    const settleShadowScaleX = settleProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.9, getShadowScaleX(currentResult, index)],
+    });
+    const settleShadowScaleY = settleProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.75, getShadowScaleY(currentResult, index)],
+    });
+    const settleShadowOpacity = settleProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.08, getShadowOpacity(currentResult, index)],
+    });
+
+    return isAnimating
+      ? {
+          opacity: tossShadowOpacity,
+          transform: [
+            { translateX: tossShadowX },
+            { scaleX: tossShadowScaleX },
+            { scaleY: tossShadowScaleY },
+          ],
+        }
+      : {
+          opacity: settleShadowOpacity,
+          transform: [
+            { translateX: settleShadowX },
+            { scaleX: settleShadowScaleX },
+            { scaleY: settleShadowScaleY },
+          ],
+        };
+  });
+
   const strictComplete = strictMode && strictCount >= 2 && currentResult === 'shengbei';
+  const resultInfo = currentResult ? getResultInfo(currentResult) : null;
 
   return (
     <View style={styles.container}>
       <ParticleEffect active={showParticle} type="gold" />
-      <Text style={styles.title}>擲筊請示</Text>
+
+      <Text style={styles.title}>{'\u64f2\u676f\u8acb\u793a'}</Text>
       <Text style={styles.attemptText}>
-        第 {results.length + 1} 次擲筊
-        {strictMode && <Text style={styles.strictHint}>　⛩️ {strictCount + (currentResult === 'shengbei' ? 1 : 0)}/3</Text>}
+        {`\u7b2c ${results.length + 1} \u6b21\u64f2\u676f`}
+        {strictMode ? (
+          <Text style={styles.strictHint}>{` | \u8056\u676f ${strictCount + (currentResult === 'shengbei' ? 1 : 0)}/3`}</Text>
+        ) : null}
       </Text>
+      <RitualStylePicker value={ritualStyleKey} onChange={onStyleChange} />
 
-      <View style={styles.jiaobeiArea}>
-        <Animated.View style={[styles.jiaobeiPair, { transform: [{ translateY }, { rotate }, { scale }] }]}>
-          <View style={styles.jiaobeiPiece}><Text style={styles.jiaobeiText}>聖</Text></View>
-          <View style={[styles.jiaobeiPiece, styles.jiaobeiPieceSecond]}><Text style={styles.jiaobeiText}>筊</Text></View>
-        </Animated.View>
+      <View style={styles.stage}>
+        <View style={[styles.floorGlow, { backgroundColor: ritualStyle.glowColor + '16' }]} />
+        <View style={styles.shadowPlate} />
 
-        {resultInfo && (
-          <Animated.View style={[styles.resultContainer, { opacity: resultFade, transform: [{ scale: resultFade.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }] }]}>
+        {[0, 1].map((index) => (
+          <Animated.View key={`shadow-${index}`} style={[styles.shadowWrap, shadowTransforms[index]]}>
+            <View style={styles.pieceShadow} />
+          </Animated.View>
+        ))}
+
+        {[0, 1].map((index) => (
+          <Animated.View key={index} style={[styles.pieceWrap, pieceTransforms[index]]}>
+            <JiaobeiPiece
+              face={landingFaces[index]}
+              mirrored={index === 1}
+              flying={isAnimating}
+              ritualStyleKey={ritualStyleKey}
+            />
+          </Animated.View>
+        ))}
+
+        {resultInfo ? (
+          <Animated.View
+            style={[
+              styles.resultCard,
+              {
+                opacity: resultFade,
+                transform: [
+                  {
+                    scale: resultFade.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.85, 1],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
             <Text style={styles.resultEmoji}>{resultInfo.emoji}</Text>
             <Text style={[styles.resultText, { color: resultInfo.color }]}>{resultInfo.text}</Text>
             <Text style={styles.resultDesc}>{resultInfo.desc}</Text>
-            {strictMode && strictComplete && <Text style={styles.strictCompleteText}>🎉 三聖筊圓滿！</Text>}
-            {currentResult !== 'shengbei' && !isAnimating && (
+            {strictMode && strictComplete ? (
+              <Text style={styles.strictCompleteText}>{'\u4e09\u6b21\u8056\u676f\u5df2\u6210\uff0c\u53ef\u4ee5\u8acb\u793a\u62bd\u7c64\u3002'}</Text>
+            ) : null}
+            {currentResult !== 'shengbei' && !isAnimating ? (
               <TouchableOpacity style={styles.retryBtn} onPress={handleToss}>
-                <Text style={styles.retryBtnText}>重新擲筊</Text>
+                <Text style={styles.retryBtnText}>{'\u518d\u64f2\u4e00\u6b21'}</Text>
               </TouchableOpacity>
-            )}
+            ) : null}
           </Animated.View>
-        )}
+        ) : null}
       </View>
 
-      {!currentResult && !isAnimating && (
+      {!currentResult && !isAnimating ? (
         <TouchableOpacity style={styles.tossBtn} onPress={handleToss}>
-          <Text style={styles.tossBtnText}>擲筊</Text>
+          <Text style={styles.tossBtnText}>{'\u64f2\u676f'}</Text>
         </TouchableOpacity>
-      )}
-      {strictMode && currentResult === 'shengbei' && !isAnimating && !strictComplete && (
+      ) : null}
+
+      {strictMode && currentResult === 'shengbei' && !isAnimating && !strictComplete ? (
         <TouchableOpacity style={styles.nextTossBtn} onPress={handleToss}>
-          <Text style={styles.nextTossBtnText}>繼續擲筊（{strictCount + 1}/3）</Text>
+          <Text style={styles.nextTossBtnText}>{`\u7e7c\u7e8c\u64f2\u676f ${strictCount + 2}/3`}</Text>
         </TouchableOpacity>
-      )}
-      {strictComplete && !isAnimating && (
+      ) : null}
+
+      {strictComplete && !isAnimating ? (
         <TouchableOpacity style={styles.drawBtn} onPress={onShengbei}>
-          <Text style={styles.drawBtnText}>⛩️ 抽籤</Text>
+          <Text style={styles.drawBtnText}>{'\u8056\u676f\u5df2\u6210\uff0c\u958b\u59cb\u62bd\u7c64'}</Text>
         </TouchableOpacity>
-      )}
-      {results.length > 0 && (
+      ) : null}
+
+      {results.length > 0 ? (
         <View style={styles.historyStrip}>
-          {results.map((r, i) => {
-            const info = getResultInfo(r);
+          {results.map((result, index) => {
+            const info = getResultInfo(result);
             return (
-              <View key={i} style={styles.historyItem}>
-                <Text style={styles.historyEmoji}>{i + 1}</Text>
+              <View key={`${result}-${index}`} style={styles.historyItem}>
+                <Text style={styles.historyIndex}>{index + 1}</Text>
                 <Text style={[styles.historyText, { color: info.color }]}>{info.text}</Text>
               </View>
             );
           })}
         </View>
-      )}
+      ) : null}
     </View>
   );
 }
 
+function JiaobeiPiece({
+  face,
+  mirrored,
+  flying,
+  ritualStyleKey,
+}: {
+  face: JiaobeiFace;
+  mirrored?: boolean;
+  flying?: boolean;
+  ritualStyleKey: RitualStyleKey;
+}) {
+  const palette = ritualStyles[ritualStyleKey].jiaobei;
+  const source = face === 'flat' ? palette.flatSprite : palette.roundSprite;
+
+  return (
+    <View style={[styles.jiaobeiBody, mirrored && styles.jiaobeiMirrored, flying && styles.jiaobeiFlying]}>
+      <Image source={source} style={styles.jiaobeiSprite} contentFit="contain" transition={150} />
+    </View>
+  );
+}
+
+function getLandingFaces(result: JiaobeiResult | null): [JiaobeiFace, JiaobeiFace] {
+  switch (result) {
+    case 'shengbei':
+      return ['flat', 'round'];
+    case 'xiaobei':
+      return ['round', 'round'];
+    case 'yinbei':
+      return ['flat', 'flat'];
+    default:
+      return ['round', 'round'];
+  }
+}
+
+function getLandingPose(result: JiaobeiResult | null) {
+  switch (result) {
+    case 'shengbei':
+      return [
+        { translateX: -46, translateY: 10, rotate: '-24deg' },
+        { translateX: 42, translateY: -6, rotate: '22deg' },
+      ];
+    case 'xiaobei':
+      return [
+        { translateX: -34, translateY: 2, rotate: '-8deg' },
+        { translateX: 34, translateY: 2, rotate: '8deg' },
+      ];
+    case 'yinbei':
+      return [
+        { translateX: -42, translateY: 8, rotate: '-15deg' },
+        { translateX: 40, translateY: 8, rotate: '15deg' },
+      ];
+    default:
+      return [
+        { translateX: -26, translateY: 0, rotate: '-6deg' },
+        { translateX: 26, translateY: 0, rotate: '6deg' },
+      ];
+  }
+}
+
+function getShadowScaleX(result: JiaobeiResult | null, index: number) {
+  if (result === 'shengbei') {
+    return index === 0 ? 0.9 : 1.08;
+  }
+  if (result === 'xiaobei') {
+    return 1.12;
+  }
+  if (result === 'yinbei') {
+    return 0.94;
+  }
+  return 1;
+}
+
+function getShadowScaleY(result: JiaobeiResult | null, index: number) {
+  if (result === 'shengbei') {
+    return index === 0 ? 0.72 : 0.62;
+  }
+  if (result === 'xiaobei') {
+    return 0.76;
+  }
+  if (result === 'yinbei') {
+    return 0.68;
+  }
+  return 0.74;
+}
+
+function getShadowOpacity(result: JiaobeiResult | null, index: number) {
+  if (result === 'shengbei') {
+    return index === 0 ? 0.24 : 0.18;
+  }
+  if (result === 'xiaobei') {
+    return 0.2;
+  }
+  if (result === 'yinbei') {
+    return 0.23;
+  }
+  return 0.18;
+}
+
+function getResultInfo(result: JiaobeiResult) {
+  switch (result) {
+    case 'shengbei':
+      return {
+        text: '\u8056\u676f',
+        emoji: '◎',
+        desc: '\u795e\u610f\u5141\u53ef\uff0c\u773c\u524d\u65b9\u5411\u53ef\u4ee5\u7e7c\u7e8c\u5f80\u4e0b\u8d70\u3002',
+        color: TempleTheme.success,
+      };
+    case 'xiaobei':
+      return {
+        text: '\u7b11\u676f',
+        emoji: '○',
+        desc: '\u554f\u984c\u9084\u4e0d\u5920\u660e\u78ba\uff0c\u6216\u795e\u660e\u63d0\u9192\u4f60\u5148\u518d\u60f3\u4e00\u5c64\u3002',
+        color: TempleTheme.warning,
+      };
+    case 'yinbei':
+      return {
+        text: '\u9670\u676f',
+        emoji: '△',
+        desc: '\u76ee\u524d\u4e0d\u5b9c\u7167\u539f\u8def\u5f91\u524d\u9032\uff0c\u5efa\u8b70\u5148\u505c\u4e00\u4e0b\u518d\u8acb\u793a\u3002',
+        color: TempleTheme.danger,
+      };
+  }
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', paddingHorizontal: TempleSpacing.md },
-  title: { fontSize: TempleFonts.subtitle, fontWeight: '700', color: TempleTheme.goldLight, marginBottom: TempleSpacing.xs },
-  attemptText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginBottom: TempleSpacing.lg },
-  strictHint: { color: TempleTheme.gold, fontWeight: '700' },
-  jiaobeiArea: { height: 220, justifyContent: 'center', alignItems: 'center', marginBottom: TempleSpacing.lg },
-  jiaobeiPair: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 24 },
-  jiaobeiPiece: {
-    width: 56, height: 72, backgroundColor: '#D4A76A', borderRadius: 28,
-    borderWidth: 2, borderColor: '#8B6914', justifyContent: 'center', alignItems: 'center',
-    transform: [{ rotate: '-5deg' }],
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: TempleSpacing.md,
   },
-  jiaobeiPieceSecond: { transform: [{ rotate: '5deg' }] },
-  jiaobeiText: { fontSize: 18, fontWeight: '900', color: '#5C3D1A' },
-  resultContainer: {
-    alignItems: 'center', backgroundColor: TempleTheme.bgCard,
-    paddingHorizontal: TempleSpacing.xl, paddingVertical: TempleSpacing.md,
-    borderRadius: 16, borderWidth: 1, borderColor: TempleTheme.goldDark + '40',
+  title: {
+    fontSize: TempleFonts.subtitle,
+    fontWeight: '700',
+    color: TempleTheme.goldLight,
+    marginBottom: TempleSpacing.xs,
   },
-  resultEmoji: { fontSize: 40, marginBottom: TempleSpacing.xs },
-  resultText: { fontSize: TempleFonts.subtitle, fontWeight: '900', marginBottom: TempleSpacing.xs },
-  resultDesc: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, textAlign: 'center', marginBottom: TempleSpacing.sm },
+  attemptText: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.textMuted,
+    marginBottom: TempleSpacing.md,
+  },
+  strictHint: {
+    color: TempleTheme.gold,
+    fontWeight: '700',
+  },
+  stage: {
+    width: '100%',
+    maxWidth: 420,
+    height: 320,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: TempleSpacing.lg,
+  },
+  floorGlow: {
+    position: 'absolute',
+    bottom: 84,
+    width: 260,
+    height: 88,
+    borderRadius: 44,
+  },
+  shadowPlate: {
+    position: 'absolute',
+    bottom: 96,
+    width: 180,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#00000020',
+  },
+  shadowWrap: {
+    position: 'absolute',
+    bottom: 96,
+  },
+  pieceShadow: {
+    width: 66,
+    height: 18,
+    borderRadius: 18,
+    backgroundColor: '#00000040',
+  },
+  pieceWrap: {
+    position: 'absolute',
+    bottom: 116,
+  },
+  jiaobeiBody: {
+    width: 88,
+    height: 124,
+    overflow: 'hidden',
+  },
+  jiaobeiMirrored: {
+    transform: [{ scaleX: -1 }],
+  },
+  jiaobeiFlying: {
+    shadowColor: '#000',
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+  },
+  jiaobeiSprite: {
+    width: '100%',
+    height: '100%',
+  },
+  resultCard: {
+    position: 'absolute',
+    bottom: 0,
+    alignItems: 'center',
+    backgroundColor: TempleTheme.bgCard,
+    paddingHorizontal: TempleSpacing.xl,
+    paddingVertical: TempleSpacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '40',
+  },
+  resultEmoji: {
+    fontSize: 36,
+    marginBottom: TempleSpacing.xs,
+    color: TempleTheme.goldLight,
+  },
+  resultText: {
+    fontSize: TempleFonts.subtitle,
+    fontWeight: '900',
+    marginBottom: TempleSpacing.xs,
+  },
+  resultDesc: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.textMuted,
+    textAlign: 'center',
+    marginBottom: TempleSpacing.sm,
+    lineHeight: 20,
+  },
   retryBtn: {
-    paddingHorizontal: TempleSpacing.lg, paddingVertical: TempleSpacing.sm, borderRadius: 8,
-    backgroundColor: TempleTheme.warning + '20', borderWidth: 1, borderColor: TempleTheme.warning,
+    paddingHorizontal: TempleSpacing.lg,
+    paddingVertical: TempleSpacing.sm,
+    borderRadius: 8,
+    backgroundColor: TempleTheme.warning + '20',
+    borderWidth: 1,
+    borderColor: TempleTheme.warning,
   },
-  retryBtnText: { color: TempleTheme.warning, fontWeight: '600' },
+  retryBtnText: {
+    color: TempleTheme.warning,
+    fontWeight: '600',
+  },
   tossBtn: {
-    width: 80, height: 80, borderRadius: 40, backgroundColor: TempleTheme.red,
-    justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: TempleTheme.goldDark,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: TempleTheme.red,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: TempleTheme.goldDark,
   },
-  tossBtnText: { fontSize: TempleFonts.heading, fontWeight: '900', color: TempleTheme.goldLight },
-  strictCompleteText: { fontSize: TempleFonts.small, color: TempleTheme.gold, fontWeight: '700', marginTop: TempleSpacing.xs },
+  tossBtnText: {
+    fontSize: TempleFonts.heading,
+    fontWeight: '900',
+    color: TempleTheme.goldLight,
+  },
+  strictCompleteText: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.gold,
+    fontWeight: '700',
+    marginTop: TempleSpacing.xs,
+  },
   nextTossBtn: {
-    paddingHorizontal: TempleSpacing.xl, paddingVertical: TempleSpacing.sm, borderRadius: 10,
-    backgroundColor: TempleTheme.goldDark + '30', borderWidth: 1, borderColor: TempleTheme.gold,
+    paddingHorizontal: TempleSpacing.xl,
+    paddingVertical: TempleSpacing.sm,
+    borderRadius: 10,
+    backgroundColor: TempleTheme.goldDark + '30',
+    borderWidth: 1,
+    borderColor: TempleTheme.gold,
   },
-  nextTossBtnText: { fontSize: TempleFonts.body, color: TempleTheme.goldLight, fontWeight: '700' },
+  nextTossBtnText: {
+    fontSize: TempleFonts.body,
+    color: TempleTheme.goldLight,
+    fontWeight: '700',
+  },
   drawBtn: {
-    paddingHorizontal: TempleSpacing.xxl, paddingVertical: TempleSpacing.md, borderRadius: 16,
-    backgroundColor: TempleTheme.red, borderWidth: 2, borderColor: TempleTheme.gold,
+    paddingHorizontal: TempleSpacing.xxl,
+    paddingVertical: TempleSpacing.md,
+    borderRadius: 16,
+    backgroundColor: TempleTheme.red,
+    borderWidth: 2,
+    borderColor: TempleTheme.gold,
   },
-  drawBtnText: { fontSize: TempleFonts.heading, fontWeight: '900', color: TempleTheme.goldLight },
-  historyStrip: { flexDirection: 'row', gap: TempleSpacing.md, marginTop: TempleSpacing.md },
+  drawBtnText: {
+    fontSize: TempleFonts.heading,
+    fontWeight: '900',
+    color: TempleTheme.goldLight,
+  },
+  historyStrip: {
+    flexDirection: 'row',
+    gap: TempleSpacing.md,
+    marginTop: TempleSpacing.md,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
   historyItem: {
-    alignItems: 'center', backgroundColor: TempleTheme.bgCard,
-    paddingHorizontal: TempleSpacing.sm, paddingVertical: TempleSpacing.xs,
-    borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.goldDark + '20',
+    alignItems: 'center',
+    backgroundColor: TempleTheme.bgCard,
+    paddingHorizontal: TempleSpacing.sm,
+    paddingVertical: TempleSpacing.xs,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '20',
+    minWidth: 64,
   },
-  historyEmoji: { fontSize: 12, color: TempleTheme.textMuted },
-  historyText: { fontSize: 11, fontWeight: '600' },
+  historyIndex: {
+    fontSize: 12,
+    color: TempleTheme.textMuted,
+  },
+  historyText: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
 });

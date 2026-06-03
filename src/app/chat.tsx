@@ -1,10 +1,18 @@
-// AI 多輪對話頁面 - 針對解籤內容追問
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  SafeAreaView, StatusBar, ScrollView, TextInput, ActivityIndicator,
+  ActivityIndicator,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+
+import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { getLastPoemContext, type LastPoemContext } from '@/services/storage';
 
 interface Message {
@@ -13,12 +21,31 @@ interface Message {
   timestamp: number;
 }
 
+const FALLBACK_WELCOME =
+  '我是你的解籤追問助手。你可以直接問我這支籤對感情、工作、時間點、該怎麼做，或幫你把神明給的提醒拆成更容易行動的版本。';
+
+function buildInitialAssistantMessage(lastPoem: LastPoemContext | null): string {
+  if (!lastPoem) return FALLBACK_WELCOME;
+
+  const summary = [
+    `我先接上你最近一次的籤詩脈絡。`,
+    `${lastPoem.godName} | ${lastPoem.poemTitle} | ${lastPoem.poemLevel}`,
+    lastPoem.question ? `當時問的是：${lastPoem.question}` : '',
+    lastPoem.aiInterpretation
+      ? `上次解讀摘要：${lastPoem.aiInterpretation.slice(0, 100)}${lastPoem.aiInterpretation.length > 100 ? '...' : ''}`
+      : '',
+    '你現在可以直接追問細節，我會沿著這支籤繼續幫你拆。',
+  ].filter(Boolean);
+
+  return summary.join('\n\n');
+}
+
 export default function ChatScreen() {
   const [lastPoem, setLastPoem] = useState<LastPoemContext | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: '歡迎來到神明對話室 🙏\n\n你可以針對上一支籤詩的解讀來向神明追問，或者直接訴說你的心事。\n\n我將以慈悲智慧之心為你指引方向。',
+      content: FALLBACK_WELCOME,
       timestamp: Date.now(),
     },
   ]);
@@ -27,42 +54,65 @@ export default function ChatScreen() {
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    getLastPoemContext().then(ctx => {
-      if (!ctx) return;
-      setLastPoem(ctx);
-      const age = Date.now() - ctx.timestamp;
-      if (age < 24 * 60 * 60 * 1000) {
-        setMessages([{
+    getLastPoemContext().then((context) => {
+      setLastPoem(context);
+      setMessages([
+        {
           role: 'assistant',
-          content: `歡迎來到神明對話室 🙏\n\n我看到你剛才向【${ctx.godName}】求得：\n「${ctx.poemTitle}」（${ctx.poemLevel}）\n${ctx.question ? `所問：${ctx.question}\n` : ''}${ctx.aiInterpretation ? `\n解籤摘要：${ctx.aiInterpretation.slice(0, 100)}…` : ''}\n\n有任何疑問，請繼續追問。`,
+          content: buildInitialAssistantMessage(context),
           timestamp: Date.now(),
-        }]);
-      }
+        },
+      ]);
     });
   }, []);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-    const userMsg: Message = { role: 'user', content: input.trim(), timestamp: Date.now() };
-    setMessages(prev => [...prev, userMsg]);
+  const quickPrompts = useMemo(() => {
+    if (!lastPoem) {
+      return ['這支籤大方向在提醒我什麼？', '我下一步應該先做什麼？'];
+    }
+
+    return [
+      lastPoem.question
+        ? `如果回到「${lastPoem.question}」，這支籤最重要的提醒是什麼？`
+        : '這支籤最核心的提醒是什麼？',
+      '這件事接下來一週我適合怎麼做？',
+      '這支籤裡有哪些我容易誤會的地方？',
+    ];
+  }, [lastPoem]);
+
+  const sendMessage = async (rawContent: string) => {
+    const content = rawContent.trim();
+    if (!content || isLoading) return;
+
+    const userMessage: Message = {
+      role: 'user',
+      content,
+      timestamp: Date.now(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.EXPO_PUBLIC_AI_API_URL?.replace('/api/interpret', '/api/chat')
-        || (require('react-native').Platform.OS === 'android'
+      const apiUrl =
+        process.env.EXPO_PUBLIC_AI_API_URL?.replace('/api/interpret', '/api/chat') ||
+        (Platform.OS === 'android'
           ? 'http://10.0.2.2:3001/api/chat'
           : 'http://localhost:3001/api/chat');
 
       const systemContent = lastPoem
-        ? `你是【${lastPoem.godName}】，信眾剛得到籤詩「${lastPoem.poemTitle}」（${lastPoem.poemLevel}）：「${lastPoem.poemContent}」。已解籤如下：${lastPoem.aiInterpretation || '無'}。請繼續以慈悲智慧的語氣回答信眾的追問。回應控制在200字內。`
-        : '你是慈悲的神明，以智慧語氣回答信眾的疑問，回應控制在200字內。';
+        ? `你正在延續一支籤詩的追問。神明：${lastPoem.godName}。籤題：${lastPoem.poemTitle}。籤等：${lastPoem.poemLevel}。籤文：${lastPoem.poemContent}。${lastPoem.question ? `原始問題：${lastPoem.question}。` : ''}${lastPoem.aiInterpretation ? `先前解讀：${lastPoem.aiInterpretation}。` : ''}請用溫和、具體、可行動的方式回答，避免武斷斷言。`
+        : '你是神明占卜 app 的追問助手。請延續使用者當下的問題脈絡，用溫和、具體、可行動的方式回答，避免武斷斷言。';
 
-      const recentMessages: { role: string; content: string }[] = [
+      const recentMessages = [
         { role: 'system', content: systemContent },
-        ...messages.slice(-6).map(m => ({ role: m.role, content: m.content })),
+        ...messages.slice(-6).map((message) => ({
+          role: message.role,
+          content: message.content,
+        })),
+        { role: 'user', content },
       ];
-      recentMessages.push({ role: 'user', content: userMsg.content });
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -70,26 +120,32 @@ export default function ChatScreen() {
         body: JSON.stringify({ messages: recentMessages }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setMessages(prev => [...prev, { role: 'assistant', content: data.reply, timestamp: Date.now() }]);
-      } else {
-        // 後端不可用，使用本地回覆
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: `我聽到了你的心聲 🙏\n\n「${userMsg.content}」\n\n請保持正向信念，心誠則靈。建議可回到求籤頁面向神明請示，獲得更具體的指引。`,
-          timestamp: Date.now(),
-        }]);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
+
+      const data = await response.json();
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: data.reply,
+          timestamp: Date.now(),
+        },
+      ]);
     } catch {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: `我聽到了你的心聲 🙏\n\n「${userMsg.content}」\n\n請保持正向信念，心誠則靈。多行善事、廣結善緣，自有貴人相助。`,
-        timestamp: Date.now(),
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            '我先用本地模式陪你繼續拆這支籤。你可以改問得更具體一點，例如「如果我要等，應該等多久」或「這支籤比較像提醒我先停還是先動」。',
+          timestamp: Date.now(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
     }
   };
 
@@ -97,7 +153,20 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
       <View style={styles.container}>
-        <Text style={styles.pageTitle}>神明對話</Text>
+        <Text style={styles.pageTitle}>AI 追問解籤</Text>
+
+        {lastPoem ? (
+          <View style={styles.contextCard}>
+            <Text style={styles.contextTitle}>目前追問脈絡</Text>
+            <Text style={styles.contextMain}>
+              {lastPoem.godName} | {lastPoem.poemTitle}
+            </Text>
+            <Text style={styles.contextSub}>{lastPoem.poemLevel}</Text>
+            {lastPoem.question ? (
+              <Text style={styles.contextQuestion}>原始提問：{lastPoem.question}</Text>
+            ) : null}
+          </View>
+        ) : null}
 
         <ScrollView
           ref={scrollRef}
@@ -106,22 +175,24 @@ export default function ChatScreen() {
           contentContainerStyle={styles.chatContent}
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
         >
-          {messages.map((msg, i) => (
+          {messages.map((message, index) => (
             <View
-              key={i}
+              key={`${message.timestamp}-${index}`}
               style={[
                 styles.msgBubble,
-                msg.role === 'user' ? styles.userBubble : styles.assistantBubble,
+                message.role === 'user' ? styles.userBubble : styles.assistantBubble,
               ]}
             >
-              <Text style={styles.msgRole}>{msg.role === 'user' ? '🙋 你' : '🏛️ 神明'}</Text>
-              {msg.content.split('\n').map((line, j) => (
+              <Text style={styles.msgRole}>
+                {message.role === 'user' ? '你' : '追問助手'}
+              </Text>
+              {message.content.split('\n').map((line, lineIndex) => (
                 <Text
-                  key={j}
+                  key={lineIndex}
                   style={[
                     styles.msgText,
-                    msg.role === 'user' ? styles.userText : styles.assistantText,
-                    line.trim() === '' && { height: 4 },
+                    message.role === 'user' ? styles.userText : styles.assistantText,
+                    !line.trim() && styles.msgBlankLine,
                   ]}
                 >
                   {line || ' '}
@@ -129,31 +200,46 @@ export default function ChatScreen() {
               ))}
             </View>
           ))}
-          {isLoading && (
+
+          {isLoading ? (
             <View style={styles.loading}>
               <ActivityIndicator color={TempleTheme.goldLight} size="small" />
-              <Text style={styles.loadingText}>神明思考中...</Text>
+              <Text style={styles.loadingText}>正在整理回覆...</Text>
             </View>
-          )}
+          ) : null}
         </ScrollView>
+
+        <View style={styles.quickPromptSection}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {quickPrompts.map((prompt) => (
+              <TouchableOpacity
+                key={prompt}
+                style={styles.quickPromptChip}
+                onPress={() => sendMessage(prompt)}
+                disabled={isLoading}
+              >
+                <Text style={styles.quickPromptText}>{prompt}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         <View style={styles.inputBar}>
           <TextInput
             style={styles.chatInput}
             value={input}
             onChangeText={setInput}
-            placeholder="向神明訴說你的疑問..."
+            placeholder="直接問：時間點、感情、工作、下一步..."
             placeholderTextColor={TempleTheme.textMuted}
             multiline
             maxLength={500}
-            onSubmitEditing={handleSend}
           />
           <TouchableOpacity
             style={[styles.sendBtn, (!input.trim() || isLoading) && styles.sendBtnDisabled]}
-            onPress={handleSend}
+            onPress={() => sendMessage(input)}
             disabled={!input.trim() || isLoading}
           >
-            <Text style={styles.sendBtnText}>↑</Text>
+            <Text style={styles.sendBtnText}>送出</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -165,43 +251,134 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
   container: { flex: 1, padding: TempleSpacing.md },
   pageTitle: {
-    fontSize: TempleFonts.subtitle, fontWeight: '900',
-    color: TempleTheme.goldLight, textAlign: 'center', marginBottom: TempleSpacing.md,
+    fontSize: TempleFonts.subtitle,
+    fontWeight: '900',
+    color: TempleTheme.goldLight,
+    textAlign: 'center',
+    marginBottom: TempleSpacing.md,
+  },
+  contextCard: {
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 12,
+    padding: TempleSpacing.md,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '35',
+    marginBottom: TempleSpacing.sm,
+  },
+  contextTitle: {
+    fontSize: 11,
+    color: TempleTheme.textMuted,
+    marginBottom: 6,
+  },
+  contextMain: {
+    fontSize: TempleFonts.body,
+    color: TempleTheme.goldLight,
+    fontWeight: '700',
+  },
+  contextSub: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.gold,
+    marginTop: 2,
+  },
+  contextQuestion: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.textMuted,
+    marginTop: TempleSpacing.xs,
+    lineHeight: 20,
   },
   chatList: { flex: 1 },
   chatContent: { paddingBottom: TempleSpacing.sm },
   msgBubble: {
-    borderRadius: 16, padding: TempleSpacing.md, marginBottom: TempleSpacing.sm, maxWidth: '85%',
+    borderRadius: 16,
+    padding: TempleSpacing.md,
+    marginBottom: TempleSpacing.sm,
+    maxWidth: '88%',
   },
   userBubble: {
     alignSelf: 'flex-end',
     backgroundColor: TempleTheme.goldDark + '25',
-    borderWidth: 1, borderColor: TempleTheme.goldDark + '40',
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '40',
   },
   assistantBubble: {
     alignSelf: 'flex-start',
     backgroundColor: TempleTheme.bgCard,
-    borderWidth: 1, borderColor: TempleTheme.gold + '30',
+    borderWidth: 1,
+    borderColor: TempleTheme.gold + '30',
   },
-  msgRole: { fontSize: 11, fontWeight: '700', color: TempleTheme.goldLight, marginBottom: 6 },
-  msgText: { fontSize: TempleFonts.body, lineHeight: 26 },
+  msgRole: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: TempleTheme.goldLight,
+    marginBottom: 6,
+  },
+  msgText: {
+    fontSize: TempleFonts.body,
+    lineHeight: 24,
+  },
   userText: { color: TempleTheme.textLight },
   assistantText: { color: TempleTheme.textLight },
-  loading: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: TempleSpacing.sm },
-  loadingText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
+  msgBlankLine: { height: 6 },
+  loading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: TempleSpacing.sm,
+  },
+  loadingText: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.textMuted,
+  },
+  quickPromptSection: {
+    marginTop: TempleSpacing.xs,
+    marginBottom: TempleSpacing.sm,
+  },
+  quickPromptChip: {
+    marginRight: TempleSpacing.xs,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: TempleTheme.bgCard,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '25',
+  },
+  quickPromptText: {
+    fontSize: 12,
+    color: TempleTheme.textLight,
+  },
   inputBar: {
-    flexDirection: 'row', alignItems: 'flex-end', gap: TempleSpacing.sm,
-    paddingTop: TempleSpacing.sm, borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '20',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: TempleSpacing.sm,
+    paddingTop: TempleSpacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: TempleTheme.goldDark + '20',
   },
   chatInput: {
-    flex: 1, backgroundColor: TempleTheme.bgCard, borderRadius: 12,
-    padding: TempleSpacing.sm, fontSize: TempleFonts.body, color: TempleTheme.textLight,
-    maxHeight: 80, borderWidth: 1, borderColor: TempleTheme.goldDark + '20',
+    flex: 1,
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 12,
+    padding: TempleSpacing.sm,
+    fontSize: TempleFonts.body,
+    color: TempleTheme.textLight,
+    maxHeight: 96,
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '20',
   },
   sendBtn: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: TempleTheme.goldDark,
-    justifyContent: 'center', alignItems: 'center',
+    minWidth: 64,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: TempleTheme.goldDark,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 14,
   },
   sendBtnDisabled: { opacity: 0.4 },
-  sendBtnText: { color: '#FFF', fontSize: 18, fontWeight: '700' },
+  sendBtnText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });

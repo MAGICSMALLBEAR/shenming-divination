@@ -92,6 +92,60 @@
 
 ---
 
+## 2026-06-03（今日）
+
+### 香爐空爐圖精修（三風格）
+| 檔案 | 說明 |
+|------|------|
+| `assets/images/ritual/sprites/bronze-censer-empty.png` | 青銅龍紋空爐：邊緣 solidity 0.7192→0.7410，3.8% 像素處理（邊緣平滑 + 腳座強化 + 爐口暗化） |
+| `assets/images/ritual/sprites/celadon-censer-empty.png` | 青瓷蓮紋空爐：邊緣本已最佳(0.7984)，微量處理 2.7%（腳部 detailEnhance + 爐口內壁） |
+| `assets/images/ritual/sprites/cinnabar-censer-empty.png` | 朱漆寺廟空爐：改善最大 solidity 0.7758→0.7968，5% 像素處理（爐口最大，內緣暗化最明顯） |
+| `assets/images/ritual/ai-ritual-styles.png` | 三風格儀式圖集 (1536×1024)，RitualStylePicker 縮圖用 |
+| `assets/images/ritual/sprites/*-flat.png` | 三風格擲筊平杯面 |
+| `assets/images/ritual/sprites/*-round.png` | 三風格擲筊凸杯面 |
+
+**處理項目**：
+- **邊緣** — ApproxPolyDP 輪廓平滑 + 邊緣帶 bilateral filter 去噪 + alpha 清理
+- **腳座** — 底部 15% detailEnhance 增強紋理 + medianBlur 除噪
+- **爐口內壁** — distance transform 洞口距離漸層暗化（洞口處暗 20%，12px 過渡）+ bilateral 平滑內緣
+- **整體紋理** — edgePreservingFilter 15% 柔化統一質感
+
+### 儀式系統重構
+| 檔案 | 說明 |
+|------|------|
+| `src/constants/ritual-styles.ts`（新建） | 三風格定義（bronze/celadon/cinnabar），含香爐空/置 sprite、擲筊 sprite、accent/glow/chip 色系 |
+| `src/components/RitualStylePicker.tsx`（新建） | 儀式風格選擇器，從 atlas 裁切風格縮圖，三卡左右滑選 |
+| `src/components/IncenseRitual.tsx` | 全面重構：三風格香爐捲動替換、空爐 mask viewport + sprite 顯示、灰燼爆散/壓縮反應動畫 |
+| `src/components/Jiaobei.tsx` | 擲筊全面重構：三風格 sprite 替換（pairSplit + tossRise + fallBounce 動畫）、動態著色 |
+| `src/components/PoemCard.tsx` | 接收完整神明資料，結果頁頂部顯示神像橫幅 + 問事摘要 |
+| `src/app/index.tsx` | 整合 RitualStylePicker，儀式後風格偏好存入設定，流程銜接 incenseRitual → jiaobei → drawAnimation → poemCard |
+| `src/app/wishes.tsx` | 還願功能強化 + 供品記錄 |
+| `src/app/collection.tsx` | 收藏頁重構，搜尋/篩選/排序優化 |
+| `src/app/chat.tsx` | 對話頁支援籤詩上下文，system prompt 含最後求籤資訊 |
+| `src/services/wishTracker.ts` | 願望追蹤支援供品類別與還願狀態 |
+| `src/services/notifications.ts` | 推播排程擴充，神明聖誕前提醒 |
+| `src/components/app-tabs.tsx` | 頁籤色彩跟隨當前選中風格 |
+
+### 上香插入修復（Web）
+| 問題 | 修復 |
+|------|------|
+| `dropZoneRect` null → `placeIncenseInCenser()` 靜默失敗 | scene `onLayout` 取得場景尺寸，style 已知數值計算 drop zone 位置，不再依賴 `measureInWindow` |
+| 座標系統錯配（螢幕座標當作 translate offset） | 改用場景內相對座標：手部自然位置 `(sceneW-35, sceneH-62)`，香爐口中心 `(sceneW/2, sceneH-167)`，計算位移差 |
+| 拖曳偵測失效 | `isInsideDropZone` 改用場景座標比對，以 incensePosition.\_value 即時算手部位置 |
+
+### Web 靜態匯出與開發伺服
+- `npx expo export --platform web` → `dist/` 靜態匯出
+- `serve.js` — Node.js SPA 伺服（`localhost:3000`），處理 Expo Router 客戶端路由 fallback
+- 已移除 `index.js`（多餘的 entry point，Expo Router package.json `"main": "expo-router/entry"` 已處理）
+
+### 資料層擴充
+| 檔案 | 說明 |
+|------|------|
+| `src/data/godProfiles.ts`（新建） | 9 位神明完整資料：image、tagline、各色系、管轄領域、法器、坐騎、歷史典故 |
+| `src/data/oracleCatalog.ts`（新建） | 籤詩目錄中樞：各系統籤數、綁定神明的籤詩系統對照、問事類別建議 |
+
+---
+
 ## 2026-06-02
 
 ### Commit `bbf2488` — 神明插圖上線 + DrawAnimation 重構 + 工作日誌更新
@@ -151,18 +205,20 @@
 
 ---
 
-## 目前狀態（2026-06-02）
+## 目前狀態（2026-06-03）
 
 | 項目 | 狀態 |
 |------|------|
-| TypeScript | ✅ 0 錯誤 |
-| Git | ✅ 已 push origin/master，共 14 commits |
-| 神明 | ✅ 9 神明（含孔明神數） |
+| TypeScript | ⚠️ 待驗證（大量重構後需 `tsc --noEmit` 確認） |
+| Git | ⚠️ 待 push（本次變更尚未提交） |
+| 神明 | ✅ 9 神明（含孔明神數），完整資料已建（godProfiles.ts） |
 | 神明插圖 | ✅ 9 張台式廟宇彩繪金身風 PNG 已上線 |
+| 儀式圖集 | ✅ 三風格（青銅/青瓷/朱漆）香爐空+置 sprite、擲筊平+凸面、atlas 縮圖 |
 | 抽籤動畫 | ✅ 籤筒搖動、落籤金光、籤紙翻面、真實籤號揭示、可調整動畫長度 |
 | 結果頁 | ✅ 神明開示橫幅 + 本次問事摘要 |
 | 響應式介面 | ✅ 首頁、選神、問事輸入、結果頁、冥想頁已補手機/平板/桌機版面調整 |
 | 籤詩 | ✅ 雷雨師百首(100) + 觀音靈籤(獨立) + 六十甲子(60) + 諸葛神數(64) = 224+ 首 |
+| 籤詩目錄 | ✅ oracleCatalog.ts 中樞對照系統 |
 | 每日運勢 | ✅ 已依生肖/五行個人化 |
 | 問事輸入 | ✅ 支援自由打字 + 預設 chip 並存 |
 | 求籤須知 | ✅ 選完神明後，QuestionForm 顯示可展開折疊欄 |
@@ -170,6 +226,8 @@
 | 統計頁 | ✅ 年度回顧卡已上線 |
 | 農民曆 | ✅ 2026 全年 |
 | 音效架構 | ✅ expo-av 就位，合成音運作中，等待真實音檔 |
+| 上香流程 | ✅ 三風格香爐、點香→拖曳/點擊→插香→灰燼動畫，Web 座標修復完成 |
+| 擲筊流程 | ✅ 三風格 sprite、拋擲動畫、聖筊/笑筊/陰筊判斷 |
 
 ---
 
@@ -179,44 +237,49 @@
 
 | # | 項目 | 說明 |
 |---|------|------|
-| 1 | **真實廟宇音檔** | 準備 5 個 CC0 授權 `.mp3`（toss / shengbei / draw / incense / result）放入 `assets/sounds/`，取消 `proceduralSound.ts` 中的 require comment |
-| 2 | ~~**Push 到遠端**~~ | ✅ 已推送 `origin/master`（2026-06-02） |
+| 1 | **香爐空爐圖二輪精修** | 第一輪已修邊緣/腳座/爐口，待實際跑一遍上香流程確認效果；如需再修：腳座紋路細化、爐口內壁質感統一 |
+| 2 | **TypeScript 驗證** | 本次大量重構後需 `npx tsc --noEmit` 確認零錯誤 |
+| 3 | **真實廟宇音檔** | 準備 5 個 CC0 授權 `.mp3`（toss / shengbei / draw / incense / result）放入 `assets/sounds/` |
 
 ### 🟡 下一批
 
 | # | 項目 | 說明 |
 |---|------|------|
-| 3 | ~~**神明插圖**~~ | ✅ 已完成：9 張 PNG 放入 `assets/images/gods/`，GodSelector / 選神橫幅已載入 |
-| 4 | ~~**求籤禁忌說明**~~ | ✅ 已完成：選完神明後 QuestionForm 顯示「求籤須知」折疊欄 |
-| 5 | **還願引導流程** | `wishes.tsx` 還願時加步驟引導（準備供品、稟告詞、感謝文模板） |
-| 6 | **響應式收尾** | 針對頂部分頁列、Collection/Stats/Wishes 頁面補做手機與桌機版檢查，確認所有主頁面寬度策略一致 |
-| 7 | **結果頁實機驗證** | 逐步檢查 PoemCard 在長詩文、長 AI 解釋、不同問事類別下是否仍維持可讀性與按鈕不折斷 |
-| 8 | **QA 產物整理** | 決定 `docs/qa/` 截圖是保留作驗證紀錄、搬到文件目錄，或加入 `.gitignore` 避免工作樹持續出現未追蹤檔 |
+| 4 | **還願引導流程** | `wishes.tsx` 還願時加步驟引導（準備供品、稟告詞、感謝文模板） |
+| 5 | **響應式收尾** | 針對頂部分頁列、Collection/Stats/Wishes 頁面補做手機與桌機版檢查，確認所有主頁面寬度策略一致 |
+| 6 | **結果頁實機驗證** | 逐步檢查 PoemCard 在長詩文、長 AI 解釋、不同問事類別下是否仍維持可讀性與按鈕不折斷 |
+| 7 | **QA 產物整理** | 決定 `docs/qa/` 截圖是保留作驗證紀錄、搬到文件目錄，或加入 `.gitignore` 避免工作樹持續出現未追蹤檔 |
+| 8 | **上香拖曳微調** | Web 版 drag-to-drop 目前偵測範圍可能需要微調（座標已修復但手感待實測） |
 
 ### 🟢 優化項
 
 | # | 項目 | 說明 |
 |---|------|------|
-| 6 | **背景音樂** | Settings 加「背景音樂」開關，選擇：誦經/靜心音樂/靜音 |
-| 7 | **i18n 套用** | `i18n.ts` 已建好，將 index.tsx 的硬編碼文字換成 `t()` 呼叫 |
-| 8 | **收藏匯出 PDF** | collection.tsx 加「匯出」功能，將收藏的籤詩整理成可分享的 PDF/圖片 |
-| 9 | **啟動畫面** | `app.json` 設定 splash screen，加廟宇大門圖或金色神明符文 |
+| 9 | **背景音樂** | Settings 加「背景音樂」開關，選擇：誦經/靜心音樂/靜音 |
+| 10 | **i18n 套用** | `i18n.ts` 已建好，將硬編碼文字換成 `t()` 呼叫 |
+| 11 | **收藏匯出 PDF** | collection.tsx 加「匯出」功能，將收藏的籤詩整理成可分享的 PDF/圖片 |
+| 12 | **啟動畫面** | `app.json` 設定 splash screen，加廟宇大門圖或金色神明符文 |
+| 13 | **Jiaobei sprite 精修** | 擲筊 sprite 目前也是 AI 生成，可能也需要邊緣/紋理精修 |
+
+---
+
+## 下次建議順序
+
+| 順序 | 建議事項 | 原因 |
+|------|------|------|
+| 1 | TypeScript 驗證 + 上香流程實測 | 這次重構量大，先確保零錯誤 + Web 版流程正常 |
+| 2 | 香爐空爐圖二輪精修 | 等實測確認目前效果後，針對腳座、爐口再做細修 |
+| 3 | 響應式收尾 | 版面剛調整完，趁脈絡還在補齊 collection/stats/wishes |
+| 4 | 結果頁實機驗證 | PoemCard 核心頁，確認長詩文、AI 解釋都穩定 |
 
 ---
 
 ## 架構備忘
 
 ```
-
-## 下次建議順序
-
-| 順序 | 建議事項 | 原因 |
-|------|------|------|
-| 1 | 響應式收尾 | 這批版面剛調整完，趁脈絡還在時一起補齊 `collection` / `stats` / `wishes` 最有效率 |
-| 2 | 結果頁實機驗證 | PoemCard 是核心頁，先確認長詩文、長 AI 解釋、不同問事類別都穩定再往下開功能 |
-| 3 | QA 產物整理 | 等版型驗證流程固定後，再決定 `docs/qa/` 要納入版本控管還是忽略 |
 啟動指令
-├── 前端：npx expo start --web  →  http://localhost:8081
+├── 前端（開發）：npx expo start --web  →  http://localhost:8081
+├── 前端（靜態）：npx expo export --platform web && node serve.js → http://localhost:3000
 └── 後端：cd backend && npm run dev  →  http://localhost:3001
 
 音效音檔路徑（待補）

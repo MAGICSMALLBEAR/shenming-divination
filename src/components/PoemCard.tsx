@@ -1,4 +1,4 @@
-// 籤詩卡片 - 捲軸展開動畫 + 逐行浮現 + 籤詩配圖 + 解曰高亮 + 複製 + 圖卡分享
+﻿// 籤詩卡片 - 捲軸展開動畫 + 逐行浮現 + 籤詩配圖 + 解曰高亮 + 複製 + 圖卡分享
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, ScrollView, TouchableOpacity, Alert, Platform, useWindowDimensions, type DimensionValue } from 'react-native';
 import { Image } from 'expo-image';
@@ -7,6 +7,8 @@ import type { Poem } from '@/data/poems/leiyushi';
 import type { God } from '@/data/gods';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { getPoemTheme, type PoemTheme } from '@/data/poemThemes';
+import { getGodProfile } from '@/data/godProfiles';
+import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
 import { PoemComments } from './PoemComments';
 import { AskFollowUp } from './AskFollowUp';
 import { ShareCardView } from './ShareCardView';
@@ -100,6 +102,8 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
   const highlightKey = questionCategory ? catToKey[questionCategory] : null;
   const godAccent = god?.accentColor || TempleTheme.goldLight;
   const godPrimary = god?.primaryColor || TempleTheme.red;
+  const godProfile = getGodProfile(god?.id);
+  const oracleCatalog = getOracleCatalogByGodId(god?.id);
 
   const handleShareCard = async () => {
     if (sharing || Platform.OS === 'web') {
@@ -173,6 +177,39 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
             </Text>
           </View>
         ) : null}
+
+        <View style={styles.metadataCard}>
+          <View style={styles.metadataHeader}>
+            <Text style={[styles.metadataTitle, { color: godAccent }]}>籤系統資訊</Text>
+            <Text style={styles.metadataCount}>{oracleCatalog.totalPoems} 首</Text>
+          </View>
+          <Text style={styles.metadataLabel}>{oracleCatalog.label}</Text>
+          <Text style={styles.metadataText}>{oracleCatalog.sourceNote}</Text>
+          <Text style={styles.metadataHint}>{oracleCatalog.completenessNote}</Text>
+          <View style={styles.metadataChipRow}>
+            {oracleCatalog.strengths.map((item) => (
+              <View key={item} style={[styles.metadataChip, { borderColor: godAccent + '50' }]}>
+                <Text style={[styles.metadataChipText, { color: godAccent }]}>{item}</Text>
+              </View>
+            ))}
+          </View>
+          {godProfile ? (
+            <>
+              <Text style={styles.metadataSubTitle}>神明適合請示</Text>
+              <View style={styles.metadataChipRow}>
+                {godProfile.patronages.map((item) => (
+                  <View key={item} style={styles.metadataChip}>
+                    <Text style={styles.metadataChipText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={styles.metadataSubTitle}>提問提醒</Text>
+              {godProfile.worshipTips.slice(0, 2).map((tip) => (
+                <Text key={tip} style={styles.metadataBullet}>• {tip}</Text>
+              ))}
+            </>
+          ) : null}
+        </View>
 
         {/* 主題圖示與背景色帶 */}
         <View style={[styles.themeHeader, isCompact && styles.themeHeaderCompact, { backgroundColor: poemTheme.bgColor }]}>
@@ -394,6 +431,77 @@ const styles = StyleSheet.create({
     color: TempleTheme.textLight,
     fontSize: TempleFonts.small,
     lineHeight: 20,
+  },
+  metadataCard: {
+    marginHorizontal: TempleSpacing.md,
+    marginBottom: TempleSpacing.md,
+    padding: TempleSpacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '22',
+    backgroundColor: 'rgba(27,19,17,0.66)',
+  },
+  metadataHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  metadataTitle: {
+    fontSize: TempleFonts.body,
+    fontWeight: '800',
+  },
+  metadataCount: {
+    fontSize: 12,
+    color: TempleTheme.textMuted,
+  },
+  metadataLabel: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.goldLight,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  metadataText: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: TempleTheme.textMuted,
+  },
+  metadataHint: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: TempleTheme.textMuted,
+    marginTop: 4,
+  },
+  metadataSubTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: TempleTheme.goldLight,
+    marginTop: TempleSpacing.sm,
+    marginBottom: 6,
+  },
+  metadataChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  metadataChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '20',
+    backgroundColor: TempleTheme.bgDark + '66',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  metadataChipText: {
+    fontSize: 11,
+    color: TempleTheme.textLight,
+    fontWeight: '600',
+  },
+  metadataBullet: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: TempleTheme.textMuted,
   },
   themeHeader: {
     flexDirection: 'row', alignItems: 'center',

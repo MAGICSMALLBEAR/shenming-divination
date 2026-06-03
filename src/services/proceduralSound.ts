@@ -81,6 +81,12 @@ function synthJiaobei() {
   synth('triangle', 300, 0.12, 0.2, 0.03);
 }
 
+function synthWoodClack() {
+  synth('square', 180, 0.045, 0.16);
+  synth('triangle', 120, 0.08, 0.1, 0.015);
+  synth('sine', 90, 0.12, 0.06, 0.03);
+}
+
 // 搖籤筒 — 連續短音
 function synthShaker(count = 8) {
   for (let i = 0; i < count; i++) {
@@ -95,14 +101,20 @@ function synthShaker(count = 8) {
 export async function playTossSound() {
   try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
   const played = await playNativeSound(tryRequire('toss'));
-  if (!played) synthJiaobei();
+  if (!played) {
+    synthJiaobei();
+    synthWoodClack();
+  }
 }
 
 // 聖筊 — 清磬聲 + 成功震動
 export async function playShengbeiSound() {
   try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
   const played = await playNativeSound(tryRequire('shengbei'));
-  if (!played) synthQing();
+  if (!played) {
+    synthWoodClack();
+    synthQing();
+  }
 }
 
 // 抽籤搖筒聲
@@ -116,7 +128,10 @@ export async function playDrawSound() {
 export async function playIncenseSound() {
   try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft); } catch {}
   const played = await playNativeSound(tryRequire('incense'));
-  if (!played) synthMuyu();
+  if (!played) {
+    synthMuyu();
+    synth('triangle', 220, 0.06, 0.08, 0.04);
+  }
 }
 
 // 結果揭曉 — 銅鑼聲（合成：低頻衰減）

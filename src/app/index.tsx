@@ -1,6 +1,7 @@
-// 首頁 - 神明占卜主流程
+﻿// 首頁 - 神明占卜主流程
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share, useWindowDimensions } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useDivination } from '@/hooks/useDivination';
 import { GodSelector, QuestionForm } from '@/components/GodSelector';
@@ -19,17 +20,22 @@ import { ZhugeNumberInput } from '@/components/ZhugeNumberInput';
 import { addWish } from '@/services/wishTracker';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
 import { playResultSound } from '@/services/proceduralSound';
-import { getSettings } from '@/services/storage';
+import { getLastPoemContext, getSettings } from '@/services/storage';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
+import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritual-styles';
+import { gods } from '@/data/gods';
 
 export default function HomeScreen() {
   const div = useDivination();
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const [strictMode, setStrictMode] = React.useState(false);
   const [incenseDone, setIncenseDone] = React.useState(false);
   const [showFireworks, setShowFireworks] = React.useState(false);
   const [fortuneExpanded, setFortuneExpanded] = React.useState(false);
   const [fortune, setFortune] = React.useState<DailyFortune>(() => getDailyFortune());
+  const [hasLastPoemContext, setHasLastPoemContext] = React.useState(false);
+  const [ritualStyle, setRitualStyle] = React.useState<RitualStyleKey>('bronze');
   const isCompact = width < 420;
   const isTablet = width >= 768;
   const isDesktop = width >= 1100;
@@ -64,6 +70,9 @@ export default function HomeScreen() {
       });
     });
   }, []);
+  React.useEffect(() => {
+    getLastPoemContext().then((context) => setHasLastPoemContext(Boolean(context)));
+  }, []);
 
   const canGoBack = div.step !== 'select-god' && div.step !== 'drawing' && div.step !== 'ai-interpret';
   const showBack = div.step === 'set-question' || div.step === 'meditate' || div.step === 'toss-jiaobei' || div.step === 'enter-zhuge-number';
@@ -78,6 +87,13 @@ export default function HomeScreen() {
     }
   };
   const handleReset = () => { setIncenseDone(false); setWishAdded(false); div.reset(); };
+  const handleSelectGod = (godId: number) => {
+    const god = gods.find((item) => item.id === godId);
+    if (god) {
+      setRitualStyle(getDefaultRitualStyleKey(god));
+    }
+    div.selectGod(godId);
+  };
 
   const handleAddWish = async () => {
     if (!div.drawnPoem || wishAdded) return;
@@ -156,7 +172,13 @@ export default function HomeScreen() {
         return (
           <View style={styles.fullScreen}>
             <DailyFortuneCard fortune={fortune} expanded={fortuneExpanded} onToggle={() => setFortuneExpanded(v => !v)} />
-            <GodSelector onSelectGod={div.selectGod} />
+            {hasLastPoemContext ? (
+              <TouchableOpacity style={styles.followUpShortcut} onPress={handleAskFollowUp}>
+                <Text style={styles.followUpShortcutTitle}>AI 追問解籤</Text>
+                <Text style={styles.followUpShortcutText}>延續上一次的籤詩脈絡，直接追問細節或下一步。</Text>
+              </TouchableOpacity>
+            ) : null}
+            <GodSelector onSelectGod={handleSelectGod} />
           </View>
         );
       case 'set-question':
@@ -181,7 +203,14 @@ export default function HomeScreen() {
         );
       case 'meditate':
         if (!incenseDone) {
-          return <IncenseRitual godName={div.selectedGod?.name || '神明'} onComplete={() => setIncenseDone(true)} />;
+          return (
+            <IncenseRitual
+              godName={div.selectedGod?.name || '神明'}
+              onComplete={() => setIncenseDone(true)}
+              ritualStyleKey={ritualStyle}
+              onStyleChange={setRitualStyle}
+            />
+          );
         }
         return <MeditationScreen godName={div.selectedGod?.name || '神明'} onComplete={div.finishMeditation} />;
       case 'enter-zhuge-number':
@@ -197,6 +226,8 @@ export default function HomeScreen() {
             onShengbei={div.performDraw}
             results={div.jiaobeiResults}
             strictMode={strictMode}
+            ritualStyleKey={ritualStyle}
+            onStyleChange={setRitualStyle}
           />
         );
       case 'drawing':
@@ -242,6 +273,10 @@ export default function HomeScreen() {
     await Share.share({ message: text });
   };
 
+  const handleAskFollowUp = () => {
+    router.push('/chat');
+  };
+
   const renderActions = () => {
     if (div.step === 'result' && div.drawnPoem) {
       return (
@@ -261,6 +296,10 @@ export default function HomeScreen() {
           <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleShare}>
             <Text style={styles.actionBtnIcon}>📤</Text>
             <Text style={styles.actionBtnText}>分享</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleAskFollowUp}>
+            <Text style={styles.actionBtnIcon}>AI</Text>
+            <Text style={styles.actionBtnText}>追問</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionBtn, styles.actionBtnPrimary, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleReset}>
             <Text style={styles.actionBtnIcon}>🔄</Text>
@@ -467,6 +506,26 @@ const styles = StyleSheet.create({
   stepLineActive: { backgroundColor: TempleTheme.goldDark },
   content: { flex: 1 },
   fullScreen: { flex: 1 },
+  followUpShortcut: {
+    marginHorizontal: TempleSpacing.md,
+    marginBottom: TempleSpacing.md,
+    padding: TempleSpacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '35',
+    backgroundColor: TempleTheme.bgCard,
+  },
+  followUpShortcutTitle: {
+    fontSize: TempleFonts.body,
+    fontWeight: '800',
+    color: TempleTheme.goldLight,
+    marginBottom: 4,
+  },
+  followUpShortcutText: {
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
+    color: TempleTheme.textMuted,
+  },
   selectedGodBanner: {
     backgroundColor: TempleTheme.bgCard, marginHorizontal: TempleSpacing.md,
     marginBottom: TempleSpacing.md, padding: TempleSpacing.md, borderRadius: 12,

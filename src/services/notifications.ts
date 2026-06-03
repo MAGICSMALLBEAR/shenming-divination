@@ -1,10 +1,11 @@
-// 推播通知服務 - 每日籤詩 + 神明聖誕提醒
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { getDailyPoem } from './dailyPoem';
-import { getAllGodBirthdays } from '@/data/lunarCalendar';
 
-// 設定通知 handler
+import { getAllGodBirthdays } from '@/data/lunarCalendar';
+import { getDailyPoem } from './dailyPoem';
+
+type NotificationKind = 'daily-poem' | 'god-birthday' | 'wish-reminder';
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -29,18 +30,42 @@ export async function requestPermissions(): Promise<boolean> {
   return finalStatus === 'granted';
 }
 
-// 排程所有通知（每日籤詩 + 未來 60 天內的神明聖誕）
+export async function cancelScheduledNotification(
+  notificationId?: string | null
+): Promise<void> {
+  if (!notificationId || Platform.OS === 'web') return;
+
+  try {
+    await Notifications.cancelScheduledNotificationAsync(notificationId);
+  } catch {
+    // Ignore missing / expired notification ids.
+  }
+}
+
+async function cancelNotificationsByType(types: NotificationKind[]): Promise<void> {
+  if (Platform.OS === 'web') return;
+
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    scheduled
+      .filter((item) => {
+        const type = item.content.data?.type;
+        return typeof type === 'string' && types.includes(type as NotificationKind);
+      })
+      .map((item) => Notifications.cancelScheduledNotificationAsync(item.identifier))
+  );
+}
+
 export async function scheduleDailyNotification(): Promise<void> {
   const hasPermission = await requestPermissions();
   if (!hasPermission) return;
 
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  await cancelNotificationsByType(['daily-poem', 'god-birthday']);
 
-  // 1. 每日籤詩（早上 7:30）
   const daily = getDailyPoem();
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: `🏛️ 今日籤詩 · 第 ${daily.poem.number} 籤`,
+      title: `今日神明籤詩 | 第 ${daily.poem.number} 籤`,
       body: daily.poem.content.split('\n')[0],
       data: { type: 'daily-poem', poemNumber: daily.poem.number },
     },
@@ -51,22 +76,20 @@ export async function scheduleDailyNotification(): Promise<void> {
     },
   });
 
-  // 2. 神明聖誕提醒（聖誕前一晚 20:00，未來 60 天內）
   await scheduleGodBirthdayNotifications();
 }
 
-// 排程神明聖誕提醒
 export async function scheduleGodBirthdayNotifications(): Promise<void> {
   if (Platform.OS === 'web') return;
 
-  const now = new Date();
-  const limit = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000); // 60 天後
+  await cancelNotificationsByType(['god-birthday']);
 
+  const now = new Date();
+  const limit = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
   const birthdays = getAllGodBirthdays(now.getFullYear());
 
-  for (const bday of birthdays) {
-    // 提醒時間：聖誕當天前一晚 20:00
-    const reminderDate = new Date(bday.date);
+  for (const birthday of birthdays) {
+    const reminderDate = new Date(birthday.date);
     reminderDate.setDate(reminderDate.getDate() - 1);
     reminderDate.setHours(20, 0, 0, 0);
 
@@ -75,9 +98,9 @@ export async function scheduleGodBirthdayNotifications(): Promise<void> {
     try {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: `🙏 明日 ${bday.solarDateStr} — ${bday.name}`,
-          body: '記得明日到廟裡上香祈福，恭祝神明聖誕快樂！',
-          data: { type: 'god-birthday', name: bday.name },
+          title: `明日神誕 ${birthday.solarDateStr} | ${birthday.name}`,
+          body: '記得安排參拜或向神明表達心意。',
+          data: { type: 'god-birthday', name: birthday.name },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -85,12 +108,43 @@ export async function scheduleGodBirthdayNotifications(): Promise<void> {
         },
       });
     } catch {
-      // 若排程失敗（如重複）則跳過
+      // Some devices may reject old or duplicated triggers.
     }
   }
 }
 
-// 測試通知（立即發送）
+export async function scheduleWishReminder(params: {
+  wishId: string;
+  content: string;
+  godName: string;
+  dueDate: number;
+}): Promise<string | null> {
+  if (Platform.OS === 'web') return null;
+  if (params.dueDate <= Date.now()) return null;
+
+  const hasPermission = await requestPermissions();
+  if (!hasPermission) return null;
+
+  try {
+    return await Notifications.scheduleNotificationAsync({
+      content: {
+        title: `${params.godName}提醒你回來看看這個心願`,
+        body: params.content.length > 38 ? `${params.content.slice(0, 38)}...` : params.content,
+        data: {
+          type: 'wish-reminder',
+          wishId: params.wishId,
+        },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: new Date(params.dueDate),
+      },
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function sendTestNotification(): Promise<void> {
   const hasPermission = await requestPermissions();
   if (!hasPermission) return;
@@ -98,9 +152,9 @@ export async function sendTestNotification(): Promise<void> {
   const daily = getDailyPoem();
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: `🏛️ 今日籤詩 · 第 ${daily.poem.number} 籤`,
+      title: `今日神明籤詩 | 第 ${daily.poem.number} 籤`,
       body: daily.poem.content.split('\n')[0],
-      data: { type: 'test' },
+      data: { type: 'daily-poem' },
     },
     trigger: null,
   });

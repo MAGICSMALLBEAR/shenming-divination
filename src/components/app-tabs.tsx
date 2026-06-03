@@ -1,5 +1,6 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useColorScheme } from 'react-native';
+
 import { Colors } from '@/constants/theme';
 
 export default function AppTabs() {
@@ -10,7 +11,8 @@ export default function AppTabs() {
     <NativeTabs
       backgroundColor={colors.background}
       indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
+      labelStyle={{ selected: { color: colors.text } }}
+    >
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>求籤</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
@@ -20,7 +22,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="collection">
-        <NativeTabs.Trigger.Label>收藏</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>檔案</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"
@@ -28,7 +30,15 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="wishes">
-        <NativeTabs.Trigger.Label>願望</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>心願</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="chat">
+        <NativeTabs.Trigger.Label>追問</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"
