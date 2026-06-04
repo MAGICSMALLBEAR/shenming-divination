@@ -1,13 +1,17 @@
-// 本地儲存服務 - 使用 AsyncStorage 儲存收藏、歷史、設定
-import { Poem } from '@/data/poems/leiyushi';
-import { DRAW_ANIMATION_DEFAULT_MS, normalizeDrawAnimationDuration } from '@/constants/divination';
+import type { Poem } from '@/data/poems/leiyushi';
+import {
+  DRAW_ANIMATION_DEFAULT_MS,
+  normalizeDrawAnimationDuration,
+} from '@/constants/divination';
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   FAVORITES: '@divination_favorites',
   HISTORY: '@divination_history',
   SETTINGS: '@divination_settings',
   LAST_POEM: '@divination_last_poem',
 } as const;
+
+export type VerificationStatus = 'pending' | 'matched' | 'unmatched';
 
 export interface DivinationRecord {
   id: string;
@@ -18,17 +22,57 @@ export interface DivinationRecord {
   aiInterpretation?: string;
   notes?: string;
   timestamp: number;
+  verificationStatus?: VerificationStatus;
+  verificationNotes?: string;
+  verificationUpdatedAt?: number;
+  actionPlan?: string[];
 }
 
-// 簡易 AsyncStorage 替代 (React Native AsyncStorage 的輕量封裝)
-// 在實際 React Native 環境中，使用 @react-native-async-storage/async-storage
-// 這裡提供介面一致的實作
+export interface AppSettings {
+  userName: string;
+  birthDate: string;
+  preferredGodId: number;
+  strictMode?: boolean;
+  dailyNotification?: boolean;
+  birthdayNotification?: boolean;
+  drawAnimationDurationMs?: number;
+}
+
+export interface LastPoemContext {
+  godName: string;
+  poemContent: string;
+  poemTitle: string;
+  poemLevel: string;
+  aiInterpretation?: string;
+  question?: string;
+  timestamp: number;
+}
 
 let memoryStore: Record<string, string> = {};
 
+function normalizeRecord(record: DivinationRecord): DivinationRecord {
+  return {
+    ...record,
+    verificationStatus: record.verificationStatus ?? 'pending',
+    actionPlan: Array.isArray(record.actionPlan) ? record.actionPlan : undefined,
+  };
+}
+
+function normalizeRecords(records: DivinationRecord[]): DivinationRecord[] {
+  return records.map(normalizeRecord);
+}
+
+function normalizeSettings(settings: AppSettings): AppSettings {
+  return {
+    ...settings,
+    drawAnimationDurationMs: normalizeDrawAnimationDuration(
+      settings.drawAnimationDurationMs ?? DRAW_ANIMATION_DEFAULT_MS
+    ),
+  };
+}
+
 export async function getItem(key: string): Promise<string | null> {
   try {
-    // 嘗試使用 React Native AsyncStorage
     const AsyncStorage = require('@react-native-async-storage/async-storage').default;
     return await AsyncStorage.getItem(key);
   } catch {
@@ -54,78 +98,79 @@ export async function removeItem(key: string): Promise<void> {
   }
 }
 
-// 收藏功能
 export async function getFavorites(): Promise<DivinationRecord[]> {
   const data = await getItem(STORAGE_KEYS.FAVORITES);
-  return data ? JSON.parse(data) : [];
+  return data ? normalizeRecords(JSON.parse(data)) : [];
+}
+
+export async function setFavorites(records: DivinationRecord[]): Promise<void> {
+  await setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(normalizeRecords(records)));
 }
 
 export async function addFavorite(record: DivinationRecord): Promise<void> {
   const favorites = await getFavorites();
-  favorites.unshift(record);
-  await setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites));
+  favorites.unshift(normalizeRecord(record));
+  await setFavorites(favorites);
 }
 
 export async function removeFavorite(id: string): Promise<void> {
   const favorites = await getFavorites();
-  await setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites.filter(f => f.id !== id)));
+  await setFavorites(favorites.filter((record) => record.id !== id));
 }
 
 export async function isFavorite(poemNumber: number): Promise<boolean> {
   const favorites = await getFavorites();
-  return favorites.some(f => f.poem.number === poemNumber);
+  return favorites.some((record) => record.poem.number === poemNumber);
 }
 
-// 歷史紀錄
 export async function getHistory(): Promise<DivinationRecord[]> {
   const data = await getItem(STORAGE_KEYS.HISTORY);
-  return data ? JSON.parse(data) : [];
+  return data ? normalizeRecords(JSON.parse(data)) : [];
+}
+
+export async function setHistory(records: DivinationRecord[]): Promise<void> {
+  await setItem(STORAGE_KEYS.HISTORY, JSON.stringify(normalizeRecords(records)));
 }
 
 export async function addHistory(record: DivinationRecord): Promise<void> {
   const history = await getHistory();
-  history.unshift(record);
-  // 只保留最近50筆
-  const trimmed = history.slice(0, 50);
-  await setItem(STORAGE_KEYS.HISTORY, JSON.stringify(trimmed));
+  history.unshift(normalizeRecord(record));
+  await setHistory(history.slice(0, 50));
+}
+
+export async function updateDivinationRecord(
+  id: string,
+  updates: Partial<DivinationRecord>
+): Promise<void> {
+  const history = await getHistory();
+  const favorites = await getFavorites();
+
+  const patchRecord = (records: DivinationRecord[]) =>
+    records.map((record) =>
+      record.id === id ? normalizeRecord({ ...record, ...updates }) : record
+    );
+
+  await Promise.all([setHistory(patchRecord(history)), setFavorites(patchRecord(favorites))]);
 }
 
 export async function updateNote(id: string, notes: string): Promise<void> {
-  const history = await getHistory();
-  const idx = history.findIndex(h => h.id === id);
-  if (idx !== -1) {
-    history[idx].notes = notes;
-    await setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
-  }
-  // 也更新收藏中的同一筆
-  const favorites = await getFavorites();
-  const favIdx = favorites.findIndex(f => f.id === id);
-  if (favIdx !== -1) {
-    favorites[favIdx].notes = notes;
-    await setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites));
-  }
+  await updateDivinationRecord(id, { notes });
+}
+
+export async function updateVerification(
+  id: string,
+  verificationStatus: VerificationStatus,
+  verificationNotes: string
+): Promise<void> {
+  await updateDivinationRecord(id, {
+    verificationStatus,
+    verificationNotes: verificationNotes.trim() || undefined,
+    verificationUpdatedAt: Date.now(),
+  });
 }
 
 export async function clearHistory(): Promise<void> {
   await removeItem(STORAGE_KEYS.HISTORY);
-}
-
-// 設定
-export interface AppSettings {
-  userName: string;
-  birthDate: string;
-  preferredGodId: number;
-  strictMode?: boolean;
-  dailyNotification?: boolean;
-  birthdayNotification?: boolean;
-  drawAnimationDurationMs?: number;
-}
-
-function normalizeSettings(settings: AppSettings): AppSettings {
-  return {
-    ...settings,
-    drawAnimationDurationMs: normalizeDrawAnimationDuration(settings.drawAnimationDurationMs ?? DRAW_ANIMATION_DEFAULT_MS),
-  };
 }
 
 export async function getSettings(): Promise<AppSettings | null> {
@@ -135,17 +180,6 @@ export async function getSettings(): Promise<AppSettings | null> {
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
   await setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(normalizeSettings(settings)));
-}
-
-// 最後一支籤詩（供神明對話頁面取得上下文）
-export interface LastPoemContext {
-  godName: string;
-  poemContent: string;
-  poemTitle: string;
-  poemLevel: string;
-  aiInterpretation?: string;
-  question?: string;
-  timestamp: number;
 }
 
 export async function saveLastPoemContext(ctx: LastPoemContext): Promise<void> {

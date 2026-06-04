@@ -1,5 +1,5 @@
 ﻿// 籤詩卡片 - 捲軸展開動畫 + 逐行浮現 + 籤詩配圖 + 解曰高亮 + 複製 + 圖卡分享
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, ScrollView, TouchableOpacity, Alert, Platform, useWindowDimensions, type DimensionValue } from 'react-native';
 import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
@@ -13,6 +13,9 @@ import { PoemComments } from './PoemComments';
 import { AskFollowUp } from './AskFollowUp';
 import { ShareCardView } from './ShareCardView';
 import { captureAndShare } from '@/services/shareCard';
+import { extractInterpretationSections } from '@/services/interpretation';
+import { buildActionPlan } from '@/services/actionPlan';
+import { addWish } from '@/services/wishTracker';
 
 interface PoemCardProps {
   poem: Poem;
@@ -104,6 +107,12 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
   const godPrimary = god?.primaryColor || TempleTheme.red;
   const godProfile = getGodProfile(god?.id);
   const oracleCatalog = getOracleCatalogByGodId(god?.id);
+  const aiSections = useMemo(() => extractInterpretationSections(aiInterpretation), [aiInterpretation]);
+  const actionPlan = useMemo(
+    () => buildActionPlan({ poem, questionCategory, question }),
+    [poem, questionCategory, question]
+  );
+  const [savedActionIndex, setSavedActionIndex] = useState<number | null>(null);
 
   const handleShareCard = async () => {
     if (sharing || Platform.OS === 'web') {
@@ -135,6 +144,21 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { Alert.alert('請手動選取文字複製'); }
+  };
+
+  const handleSaveActionWish = async (step: string, index: number) => {
+    try {
+      await addWish({
+        content: step,
+        godName,
+        poemNumber: poem.number,
+        poemSummary: poem.vernacular.slice(0, 60),
+      });
+      setSavedActionIndex(index);
+      setTimeout(() => setSavedActionIndex(null), 2000);
+    } catch {
+      Alert.alert('加入願望失敗', '請稍後再試一次。');
+    }
   };
 
   return (
@@ -286,6 +310,29 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
           </View>
         </View>
 
+        <View style={styles.actionPlanCard}>
+          <Text style={styles.actionPlanTitle}>今日可做的三步</Text>
+          {actionPlan.map((step, index) => (
+            <View key={step} style={styles.actionPlanRow}>
+              <View style={styles.actionPlanMeta}>
+                <Text style={styles.actionPlanIndex}>{index + 1}</Text>
+                <Text style={styles.actionPlanText}>{step}</Text>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.actionWishBtn,
+                  savedActionIndex === index && styles.actionWishBtnDone,
+                ]}
+                onPress={() => handleSaveActionWish(step, index)}
+              >
+                <Text style={styles.actionWishBtnText}>
+                  {savedActionIndex === index ? '已加入' : '設為願望'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+
         <View style={[styles.actionRow, isCompact && styles.actionRowCompact]}>
           <TouchableOpacity style={[styles.copyBtn, styles.actionBtnHalf]} onPress={handleCopy}>
             <Text style={styles.copyBtnText}>{copied ? '✓ 已複製' : '📋 複製'}</Text>
@@ -313,16 +360,16 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
       {aiInterpretation ? (
         <Animated.View style={[styles.aiCard, { opacity: aiFadeAnim }]}>
           <Text style={styles.aiLabel}>{godName}慈悲開示</Text>
-          {aiInterpretation.split('\n').map((line, i) => {
-            const isHeader = /^[【\d.]/.test(line);
-            const isBlessing = line.includes('保佑') || line.includes('祝福');
-            if (line.trim() === '') return <View key={i} style={styles.aiEmpty} />;
-            return (
-              <Text key={i} style={[styles.aiText, isHeader && styles.aiHeader, isBlessing && styles.aiBlessing]}>
-                {line}
-              </Text>
-            );
-          })}
+          {aiSections.map((section) => (
+            <View key={section.key} style={styles.aiSection}>
+              <Text style={styles.aiSectionTitle}>{section.title}</Text>
+              {section.lines.map((line) => (
+                <Text key={line} style={styles.aiText}>
+                  {line}
+                </Text>
+              ))}
+            </View>
+          ))}
         </Animated.View>
       ) : null}
 
@@ -560,6 +607,67 @@ const styles = StyleSheet.create({
   jieYueItemLabelHL: { color: TempleTheme.goldLight, fontWeight: '700' },
   jieYueItemValue: { fontSize: 10, color: TempleTheme.textLight, textAlign: 'center' },
   jieYueItemValueHL: { color: TempleTheme.goldLight, fontWeight: '600' },
+  actionPlanCard: {
+    marginHorizontal: TempleSpacing.md,
+    marginBottom: TempleSpacing.md,
+    padding: TempleSpacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '24',
+    backgroundColor: TempleTheme.bgDark + '45',
+  },
+  actionPlanTitle: {
+    fontSize: TempleFonts.body,
+    color: TempleTheme.goldLight,
+    fontWeight: '800',
+    marginBottom: 10,
+  },
+  actionPlanRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  actionPlanMeta: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  actionPlanIndex: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    overflow: 'hidden',
+    textAlign: 'center',
+    lineHeight: 22,
+    backgroundColor: TempleTheme.goldDark + '40',
+    color: TempleTheme.goldLight,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  actionPlanText: {
+    flex: 1,
+    color: TempleTheme.textLight,
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
+  },
+  actionWishBtn: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: TempleTheme.gold + '50',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  actionWishBtnDone: {
+    backgroundColor: TempleTheme.success + '18',
+    borderColor: TempleTheme.success + '70',
+  },
+  actionWishBtnText: {
+    color: TempleTheme.goldLight,
+    fontSize: 12,
+    fontWeight: '700',
+  },
   actionRow: { flexDirection: 'row', gap: TempleSpacing.sm, marginHorizontal: TempleSpacing.md, marginTop: TempleSpacing.sm, marginBottom: TempleSpacing.xs },
   actionRowCompact: { flexDirection: 'column', marginHorizontal: 12 },
   actionBtnHalf: { flex: 1 },
@@ -574,6 +682,18 @@ const styles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: TempleTheme.goldLight },
   aiCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, padding: TempleSpacing.lg, borderWidth: 1.5, borderColor: TempleTheme.gold },
   aiLabel: { fontSize: TempleFonts.heading, fontWeight: '700', color: TempleTheme.goldLight, marginBottom: TempleSpacing.md, textAlign: 'center' },
+  aiSection: {
+    marginBottom: TempleSpacing.md,
+    paddingBottom: TempleSpacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: TempleTheme.goldDark + '16',
+  },
+  aiSectionTitle: {
+    fontSize: TempleFonts.body,
+    color: TempleTheme.gold,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
   aiText: { fontSize: TempleFonts.body, color: TempleTheme.textLight, lineHeight: 28, marginBottom: 4 },
   aiHeader: { fontWeight: '700', color: TempleTheme.goldLight, marginTop: TempleSpacing.sm },
   aiBlessing: { fontWeight: '700', color: TempleTheme.gold, textAlign: 'center', marginTop: TempleSpacing.md },

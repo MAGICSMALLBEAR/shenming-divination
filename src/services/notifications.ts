@@ -56,11 +56,19 @@ async function cancelNotificationsByType(types: NotificationKind[]): Promise<voi
   );
 }
 
+export async function cancelDailyNotifications(): Promise<void> {
+  await cancelNotificationsByType(['daily-poem']);
+}
+
+export async function cancelGodBirthdayNotifications(): Promise<void> {
+  await cancelNotificationsByType(['god-birthday']);
+}
+
 export async function scheduleDailyNotification(): Promise<void> {
   const hasPermission = await requestPermissions();
   if (!hasPermission) return;
 
-  await cancelNotificationsByType(['daily-poem', 'god-birthday']);
+  await cancelDailyNotifications();
 
   const daily = getDailyPoem();
   await Notifications.scheduleNotificationAsync({
@@ -76,13 +84,12 @@ export async function scheduleDailyNotification(): Promise<void> {
     },
   });
 
-  await scheduleGodBirthdayNotifications();
 }
 
 export async function scheduleGodBirthdayNotifications(): Promise<void> {
   if (Platform.OS === 'web') return;
 
-  await cancelNotificationsByType(['god-birthday']);
+  await cancelGodBirthdayNotifications();
 
   const now = new Date();
   const limit = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);

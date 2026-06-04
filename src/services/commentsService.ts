@@ -1,7 +1,7 @@
 // 籤詩社群留言服務（本地儲存）
 import { getItem, setItem } from './storage';
 
-const COMMENTS_KEY = '@divination_comments';
+export const COMMENTS_KEY = '@divination_comments';
 
 export interface Comment {
   id: string;

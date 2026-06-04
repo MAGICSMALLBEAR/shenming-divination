@@ -1,7 +1,7 @@
 import { cancelScheduledNotification, scheduleWishReminder } from './notifications';
 import { getItem, setItem } from './storage';
 
-const WISHES_KEY = '@divination_wishes';
+export const WISHES_KEY = '@divination_wishes';
 
 export interface Wish {
   id: string;
@@ -14,12 +14,27 @@ export interface Wish {
   fulfilled: boolean;
   fulfilledAt?: number;
   gratitude?: string;
+  fulfillmentMethod?: string;
+  fulfillmentReflection?: string;
   reminderNotificationId?: string;
+}
+
+export interface FulfillWishInput {
+  gratitude: string;
+  fulfillmentMethod?: string;
+  fulfillmentReflection?: string;
 }
 
 type WishDraft = Omit<
   Wish,
-  'id' | 'createdAt' | 'fulfilled' | 'fulfilledAt' | 'gratitude' | 'reminderNotificationId'
+  | 'id'
+  | 'createdAt'
+  | 'fulfilled'
+  | 'fulfilledAt'
+  | 'gratitude'
+  | 'fulfillmentMethod'
+  | 'fulfillmentReflection'
+  | 'reminderNotificationId'
 >;
 
 function createWishId(): string {
@@ -29,6 +44,10 @@ function createWishId(): string {
 export async function getWishes(): Promise<Wish[]> {
   const data = await getItem(WISHES_KEY);
   return data ? JSON.parse(data) : [];
+}
+
+export async function setWishes(wishes: Wish[]): Promise<void> {
+  await setItem(WISHES_KEY, JSON.stringify(wishes));
 }
 
 export async function addWish(wish: WishDraft): Promise<Wish> {
@@ -41,34 +60,43 @@ export async function addWish(wish: WishDraft): Promise<Wish> {
   };
 
   if (wish.dueDate && wish.dueDate > Date.now()) {
-    newWish.reminderNotificationId = await scheduleWishReminder({
-      wishId: newWish.id,
-      content: newWish.content,
-      godName: newWish.godName,
-      dueDate: wish.dueDate,
-    }) ?? undefined;
+    newWish.reminderNotificationId =
+      (await scheduleWishReminder({
+        wishId: newWish.id,
+        content: newWish.content,
+        godName: newWish.godName,
+        dueDate: wish.dueDate,
+      })) ?? undefined;
   }
 
   wishes.unshift(newWish);
-  await setItem(WISHES_KEY, JSON.stringify(wishes));
+  await setWishes(wishes);
   return newWish;
 }
 
-export async function fulfillWish(id: string, gratitude: string): Promise<void> {
+export async function fulfillWish(
+  id: string,
+  payload: string | FulfillWishInput
+): Promise<void> {
   const wishes = await getWishes();
   const target = wishes.find((wish) => wish.id === id);
   if (!target) return;
 
+  const data: FulfillWishInput =
+    typeof payload === 'string' ? { gratitude: payload } : payload;
+
   target.fulfilled = true;
   target.fulfilledAt = Date.now();
-  target.gratitude = gratitude;
+  target.gratitude = data.gratitude.trim();
+  target.fulfillmentMethod = data.fulfillmentMethod?.trim() || undefined;
+  target.fulfillmentReflection = data.fulfillmentReflection?.trim() || undefined;
 
   if (target.reminderNotificationId) {
     await cancelScheduledNotification(target.reminderNotificationId);
     delete target.reminderNotificationId;
   }
 
-  await setItem(WISHES_KEY, JSON.stringify(wishes));
+  await setWishes(wishes);
 }
 
 export async function removeWish(id: string): Promise<void> {
@@ -79,8 +107,5 @@ export async function removeWish(id: string): Promise<void> {
     await cancelScheduledNotification(target.reminderNotificationId);
   }
 
-  await setItem(
-    WISHES_KEY,
-    JSON.stringify(wishes.filter((wish) => wish.id !== id))
-  );
+  await setWishes(wishes.filter((wish) => wish.id !== id));
 }

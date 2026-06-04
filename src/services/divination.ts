@@ -49,6 +49,7 @@ export async function saveDivinationRecord(params: {
   question: string;
   questionCategory: string;
   aiInterpretation?: string;
+  actionPlan?: string[];
 }): Promise<DivinationRecord> {
   const record: DivinationRecord = {
     id: generateId(),

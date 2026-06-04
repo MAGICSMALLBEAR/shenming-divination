@@ -22,22 +22,22 @@ interface Message {
 }
 
 const FALLBACK_WELCOME =
-  '我是你的解籤追問助手。你可以直接問我這支籤對感情、工作、時間點、該怎麼做，或幫你把神明給的提醒拆成更容易行動的版本。';
+  '把你想繼續追問的事情告訴我，我會沿著上一支籤的脈絡幫你整理重點、下一步與需要注意的地方。';
 
 function buildInitialAssistantMessage(lastPoem: LastPoemContext | null): string {
   if (!lastPoem) return FALLBACK_WELCOME;
 
-  const summary = [
-    `我先接上你最近一次的籤詩脈絡。`,
-    `${lastPoem.godName} | ${lastPoem.poemTitle} | ${lastPoem.poemLevel}`,
-    lastPoem.question ? `當時問的是：${lastPoem.question}` : '',
+  return [
+    '我已經接上你上一支籤的脈絡。',
+    `${lastPoem.godName} · ${lastPoem.poemTitle} · ${lastPoem.poemLevel}`,
+    lastPoem.question ? `你當時問的是：${lastPoem.question}` : '',
     lastPoem.aiInterpretation
-      ? `上次解讀摘要：${lastPoem.aiInterpretation.slice(0, 100)}${lastPoem.aiInterpretation.length > 100 ? '...' : ''}`
+      ? `先前解讀摘要：${lastPoem.aiInterpretation.replace(/\n+/g, ' ').slice(0, 120)}...`
       : '',
-    '你現在可以直接追問細節，我會沿著這支籤繼續幫你拆。',
-  ].filter(Boolean);
-
-  return summary.join('\n\n');
+    '你可以直接追問細節、下一步，或想確認的時間點。',
+  ]
+    .filter(Boolean)
+    .join('\n\n');
 }
 
 export default function ChatScreen() {
@@ -68,15 +68,15 @@ export default function ChatScreen() {
 
   const quickPrompts = useMemo(() => {
     if (!lastPoem) {
-      return ['這支籤大方向在提醒我什麼？', '我下一步應該先做什麼？'];
+      return ['我現在最該先做什麼？', '這件事適合主動推進嗎？', '我需要先避開什麼？'];
     }
 
     return [
       lastPoem.question
-        ? `如果回到「${lastPoem.question}」，這支籤最重要的提醒是什麼？`
-        : '這支籤最核心的提醒是什麼？',
-      '這件事接下來一週我適合怎麼做？',
-      '這支籤裡有哪些我容易誤會的地方？',
+        ? `關於「${lastPoem.question}」，我接下來最重要的一步是什麼？`
+        : '我接下來最重要的一步是什麼？',
+      '這支籤比較像提醒我保守，還是其實可以慢慢推進？',
+      '如果我要再追問一次，最值得確認的是哪個方向？',
     ];
   }, [lastPoem]);
 
@@ -90,7 +90,8 @@ export default function ChatScreen() {
       timestamp: Date.now(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
     setInput('');
     setIsLoading(true);
 
@@ -102,22 +103,30 @@ export default function ChatScreen() {
           : 'http://localhost:3001/api/chat');
 
       const systemContent = lastPoem
-        ? `你正在延續一支籤詩的追問。神明：${lastPoem.godName}。籤題：${lastPoem.poemTitle}。籤等：${lastPoem.poemLevel}。籤文：${lastPoem.poemContent}。${lastPoem.question ? `原始問題：${lastPoem.question}。` : ''}${lastPoem.aiInterpretation ? `先前解讀：${lastPoem.aiInterpretation}。` : ''}請用溫和、具體、可行動的方式回答，避免武斷斷言。`
-        : '你是神明占卜 app 的追問助手。請延續使用者當下的問題脈絡，用溫和、具體、可行動的方式回答，避免武斷斷言。';
-
-      const recentMessages = [
-        { role: 'system', content: systemContent },
-        ...messages.slice(-6).map((message) => ({
-          role: message.role,
-          content: message.content,
-        })),
-        { role: 'user', content },
-      ];
+        ? [
+            `你正在延續解讀 ${lastPoem.godName} 的籤詩。`,
+            `籤題：${lastPoem.poemTitle} / ${lastPoem.poemLevel}`,
+            `籤文：${lastPoem.poemContent}`,
+            lastPoem.question ? `原本提問：${lastPoem.question}` : '',
+            lastPoem.aiInterpretation ? `先前解讀：${lastPoem.aiInterpretation}` : '',
+            '請用溫和、具體、簡潔的方式回答，並聚焦在下一步與提醒。',
+          ]
+            .filter(Boolean)
+            .join('\n')
+        : '你是神明占卜 App 的追問助手，回答要溫和、具體、可執行。';
 
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: recentMessages }),
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: systemContent },
+            ...nextMessages.slice(-6).map((message) => ({
+              role: message.role,
+              content: message.content,
+            })),
+          ],
+        }),
       });
 
       if (!response.ok) {
@@ -139,7 +148,7 @@ export default function ChatScreen() {
         {
           role: 'assistant',
           content:
-            '我先用本地模式陪你繼續拆這支籤。你可以改問得更具體一點，例如「如果我要等，應該等多久」或「這支籤比較像提醒我先停還是先動」。',
+            '我剛剛沒有成功連上 AI，但還是可以先這樣理解：先別急著求大答案，先把你現在最在意的那一件事拆成一個小步驟，做完後再回頭看局勢會更清楚。',
           timestamp: Date.now(),
         },
       ]);
@@ -157,13 +166,13 @@ export default function ChatScreen() {
 
         {lastPoem ? (
           <View style={styles.contextCard}>
-            <Text style={styles.contextTitle}>目前追問脈絡</Text>
+            <Text style={styles.contextTitle}>目前承接的籤詩</Text>
             <Text style={styles.contextMain}>
-              {lastPoem.godName} | {lastPoem.poemTitle}
+              {lastPoem.godName} · {lastPoem.poemTitle}
             </Text>
             <Text style={styles.contextSub}>{lastPoem.poemLevel}</Text>
             {lastPoem.question ? (
-              <Text style={styles.contextQuestion}>原始提問：{lastPoem.question}</Text>
+              <Text style={styles.contextQuestion}>原問題：{lastPoem.question}</Text>
             ) : null}
           </View>
         ) : null}
@@ -184,14 +193,13 @@ export default function ChatScreen() {
               ]}
             >
               <Text style={styles.msgRole}>
-                {message.role === 'user' ? '你' : '追問助手'}
+                {message.role === 'user' ? '你' : '解籤助手'}
               </Text>
               {message.content.split('\n').map((line, lineIndex) => (
                 <Text
                   key={lineIndex}
                   style={[
                     styles.msgText,
-                    message.role === 'user' ? styles.userText : styles.assistantText,
                     !line.trim() && styles.msgBlankLine,
                   ]}
                 >
@@ -204,7 +212,7 @@ export default function ChatScreen() {
           {isLoading ? (
             <View style={styles.loading}>
               <ActivityIndicator color={TempleTheme.goldLight} size="small" />
-              <Text style={styles.loadingText}>正在整理回覆...</Text>
+              <Text style={styles.loadingText}>正在整理回應...</Text>
             </View>
           ) : null}
         </ScrollView>
@@ -229,7 +237,7 @@ export default function ChatScreen() {
             style={styles.chatInput}
             value={input}
             onChangeText={setInput}
-            placeholder="直接問：時間點、感情、工作、下一步..."
+            placeholder="直接輸入你想追問的內容..."
             placeholderTextColor={TempleTheme.textMuted}
             multiline
             maxLength={500}
@@ -315,9 +323,8 @@ const styles = StyleSheet.create({
   msgText: {
     fontSize: TempleFonts.body,
     lineHeight: 24,
+    color: TempleTheme.textLight,
   },
-  userText: { color: TempleTheme.textLight },
-  assistantText: { color: TempleTheme.textLight },
   msgBlankLine: { height: 6 },
   loading: {
     flexDirection: 'row',

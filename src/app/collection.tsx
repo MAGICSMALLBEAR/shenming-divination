@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import { questionCategories, gods } from '@/data/gods';
+import { gods, questionCategories } from '@/data/gods';
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import {
   clearHistory,
@@ -19,11 +19,22 @@ import {
   getHistory,
   removeFavorite,
   updateNote,
+  updateVerification,
   type DivinationRecord,
+  type VerificationStatus,
 } from '@/services/storage';
 
 type Tab = 'favorites' | 'history';
 type SortMode = 'newest' | 'oldest';
+
+const VERIFICATION_LABELS: Record<
+  VerificationStatus,
+  { text: string; color: string }
+> = {
+  pending: { text: '待驗證', color: TempleTheme.warning },
+  matched: { text: '已應驗', color: TempleTheme.success },
+  unmatched: { text: '不太符合', color: TempleTheme.danger },
+};
 
 function formatDate(timestamp: number): string {
   const date = new Date(timestamp);
@@ -44,6 +55,10 @@ export default function CollectionScreen() {
   const [history, setHistory] = useState<DivinationRecord[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [editingVerificationId, setEditingVerificationId] = useState<string | null>(null);
+  const [verificationNoteText, setVerificationNoteText] = useState('');
+  const [pendingVerificationStatus, setPendingVerificationStatus] =
+    useState<VerificationStatus>('pending');
   const [searchText, setSearchText] = useState('');
   const [selectedGod, setSelectedGod] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -51,10 +66,7 @@ export default function CollectionScreen() {
   const [notesOnly, setNotesOnly] = useState(false);
 
   const loadData = useCallback(async () => {
-    const [favoriteRecords, historyRecords] = await Promise.all([
-      getFavorites(),
-      getHistory(),
-    ]);
+    const [favoriteRecords, historyRecords] = await Promise.all([getFavorites(), getHistory()]);
     setFavorites(favoriteRecords);
     setHistory(historyRecords);
   }, []);
@@ -88,6 +100,7 @@ export default function CollectionScreen() {
         record.question,
         record.notes ?? '',
         record.aiInterpretation ?? '',
+        record.verificationNotes ?? '',
       ]
         .join(' ')
         .toLowerCase()
@@ -103,13 +116,33 @@ export default function CollectionScreen() {
 
   const filteredStats = useMemo(() => {
     const withNotes = filteredRecords.filter((record) => record.notes?.trim()).length;
-    const uniqueGods = new Set(filteredRecords.map((record) => record.godName)).size;
+    const matched = filteredRecords.filter((record) => record.verificationStatus === 'matched').length;
+    const tracked = filteredRecords.filter(
+      (record) => record.verificationStatus && record.verificationStatus !== 'pending'
+    ).length;
+
     return {
       count: filteredRecords.length,
       withNotes,
-      uniqueGods,
+      matched,
+      tracked,
     };
   }, [filteredRecords]);
+
+  const hasActiveFilters =
+    searchText.trim().length > 0 ||
+    selectedGod !== 'all' ||
+    selectedCategory !== 'all' ||
+    notesOnly ||
+    sortMode !== 'newest';
+
+  const resetFilters = () => {
+    setSearchText('');
+    setSelectedGod('all');
+    setSelectedCategory('all');
+    setNotesOnly(false);
+    setSortMode('newest');
+  };
 
   const handleRemoveFavorite = async (id: string) => {
     await removeFavorite(id);
@@ -117,7 +150,7 @@ export default function CollectionScreen() {
   };
 
   const handleClearHistory = () => {
-    Alert.alert('清空歷史', '歷史紀錄會全部移除，這個動作不能復原。', [
+    Alert.alert('清空歷史', '這會刪除所有求籤歷史紀錄，確定要繼續嗎？', [
       { text: '取消', style: 'cancel' },
       {
         text: '清空',
@@ -140,6 +173,89 @@ export default function CollectionScreen() {
     setEditingNoteId(null);
     setNoteText('');
     await loadData();
+  };
+
+  const handleStartVerification = (record: DivinationRecord, status: VerificationStatus) => {
+    setEditingVerificationId(record.id);
+    setPendingVerificationStatus(status);
+    setVerificationNoteText(record.verificationNotes || '');
+  };
+
+  const handleSaveVerification = async (id: string) => {
+    await updateVerification(id, pendingVerificationStatus, verificationNoteText);
+    setEditingVerificationId(null);
+    setVerificationNoteText('');
+    await loadData();
+  };
+
+  const renderVerification = (record: DivinationRecord) => {
+    const status = record.verificationStatus ?? 'pending';
+    const statusMeta = VERIFICATION_LABELS[status];
+
+    return (
+      <View style={styles.verificationCard}>
+        <View style={styles.verificationHeader}>
+          <Text style={styles.sectionTitle}>應驗追蹤</Text>
+          <View style={[styles.statusBadge, { borderColor: statusMeta.color + '60' }]}>
+            <Text style={[styles.statusBadgeText, { color: statusMeta.color }]}>
+              {statusMeta.text}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.verificationButtons}>
+          {(['pending', 'matched', 'unmatched'] as VerificationStatus[]).map((item) => (
+            <TouchableOpacity
+              key={item}
+              style={[
+                styles.verificationBtn,
+                status === item && {
+                  borderColor: VERIFICATION_LABELS[item].color,
+                  backgroundColor: VERIFICATION_LABELS[item].color + '14',
+                },
+              ]}
+              onPress={() => handleStartVerification(record, item)}
+            >
+              <Text style={styles.verificationBtnText}>{VERIFICATION_LABELS[item].text}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {record.verificationNotes ? (
+          <Text style={styles.verificationNote}>追蹤筆記：{record.verificationNotes}</Text>
+        ) : null}
+
+        {editingVerificationId === record.id ? (
+          <View style={styles.noteEditArea}>
+            <TextInput
+              style={styles.noteInput}
+              value={verificationNoteText}
+              onChangeText={setVerificationNoteText}
+              placeholder="記一下後來發生了什麼，之後回看會很有價值。"
+              placeholderTextColor={TempleTheme.textMuted}
+              multiline
+            />
+            <View style={styles.noteEditActions}>
+              <TouchableOpacity
+                onPress={() => handleSaveVerification(record.id)}
+                style={styles.noteSaveBtn}
+              >
+                <Text style={styles.noteSaveText}>儲存追蹤</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setEditingVerificationId(null);
+                  setVerificationNoteText('');
+                }}
+                style={styles.noteCancelBtn}
+              >
+                <Text style={styles.noteCancelText}>取消</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
+      </View>
+    );
   };
 
   const renderRecord = (record: DivinationRecord, isFavorite: boolean) => (
@@ -171,14 +287,25 @@ export default function CollectionScreen() {
       </View>
 
       <View style={styles.recordFooter}>
-        <Text style={styles.recordQuestion}>提問：{record.question}</Text>
+        <Text style={styles.recordQuestion}>問題：{record.question}</Text>
         {record.aiInterpretation ? (
           <Text style={styles.recordAi}>
-            AI 摘要：{record.aiInterpretation.slice(0, 90)}
+            AI 摘要：{record.aiInterpretation.replace(/\n+/g, ' ').slice(0, 90)}
             {record.aiInterpretation.length > 90 ? '...' : ''}
           </Text>
         ) : null}
+        {record.actionPlan?.length ? (
+          <View style={styles.planBlock}>
+            {record.actionPlan.map((item) => (
+              <Text key={item} style={styles.planText}>
+                • {item}
+              </Text>
+            ))}
+          </View>
+        ) : null}
       </View>
+
+      {renderVerification(record)}
 
       {editingNoteId === record.id ? (
         <View style={styles.noteEditArea}>
@@ -186,13 +313,13 @@ export default function CollectionScreen() {
             style={styles.noteInput}
             value={noteText}
             onChangeText={setNoteText}
-            placeholder="補上你當下的感受、後續結果，或提醒自己下次回來看什麼。"
+            placeholder="寫下你當時的心情、後續觀察，或這支籤對你的提醒。"
             placeholderTextColor={TempleTheme.textMuted}
             multiline
           />
           <View style={styles.noteEditActions}>
             <TouchableOpacity onPress={() => handleSaveNote(record.id)} style={styles.noteSaveBtn}>
-              <Text style={styles.noteSaveText}>儲存</Text>
+              <Text style={styles.noteSaveText}>儲存筆記</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
@@ -207,12 +334,12 @@ export default function CollectionScreen() {
         </View>
       ) : record.notes ? (
         <TouchableOpacity style={styles.noteView} onPress={() => handleStartEditNote(record)}>
-          <Text style={styles.noteViewLabel}>筆記</Text>
+          <Text style={styles.noteViewLabel}>個人筆記</Text>
           <Text style={styles.noteViewText}>{record.notes}</Text>
         </TouchableOpacity>
       ) : (
         <TouchableOpacity style={styles.addNoteBtn} onPress={() => handleStartEditNote(record)}>
-          <Text style={styles.addNoteText}>+ 補一段筆記</Text>
+          <Text style={styles.addNoteText}>+ 補一段自己的心得</Text>
         </TouchableOpacity>
       )}
 
@@ -228,7 +355,7 @@ export default function CollectionScreen() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
       <View style={styles.container}>
-        <Text style={styles.pageTitle}>求籤檔案</Text>
+        <Text style={styles.pageTitle}>求籤收藏與回顧</Text>
 
         <View style={styles.tabBar}>
           <TouchableOpacity
@@ -255,22 +382,22 @@ export default function CollectionScreen() {
             <Text style={styles.summaryLabel}>目前筆數</Text>
           </View>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{filteredStats.uniqueGods}</Text>
-            <Text style={styles.summaryLabel}>涉及神明</Text>
+            <Text style={styles.summaryValue}>{filteredStats.tracked}</Text>
+            <Text style={styles.summaryLabel}>已追蹤</Text>
           </View>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{filteredStats.withNotes}</Text>
-            <Text style={styles.summaryLabel}>附筆記</Text>
+            <Text style={styles.summaryValue}>{filteredStats.matched}</Text>
+            <Text style={styles.summaryLabel}>已應驗</Text>
           </View>
         </View>
 
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>搜</Text>
+          <Text style={styles.searchIcon}>🔎</Text>
           <TextInput
             style={styles.searchInput}
             value={searchText}
             onChangeText={setSearchText}
-            placeholder="搜尋籤號、神明、問題、筆記、AI 摘要..."
+            placeholder="搜尋籤詩、問題、筆記或 AI 解讀"
             placeholderTextColor={TempleTheme.textMuted}
           />
           {searchText ? (
@@ -282,100 +409,117 @@ export default function CollectionScreen() {
 
         <View style={styles.filterStrip}>
           <View style={styles.filterContent}>
-          <TouchableOpacity
-            style={[styles.filterChip, sortMode === 'newest' && styles.filterChipActive]}
-            onPress={() => setSortMode(sortMode === 'newest' ? 'oldest' : 'newest')}
-          >
-            <Text
-              style={[styles.filterChipText, sortMode === 'newest' && styles.filterChipTextActive]}
+            <TouchableOpacity
+              style={[styles.filterChip, sortMode === 'newest' && styles.filterChipActive]}
+              onPress={() => setSortMode(sortMode === 'newest' ? 'oldest' : 'newest')}
             >
-              {sortMode === 'newest' ? '最新優先' : '最舊優先'}
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[styles.filterChipText, sortMode === 'newest' && styles.filterChipTextActive]}
+              >
+                {sortMode === 'newest' ? '最新在前' : '最舊在前'}
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.filterChip, notesOnly && styles.filterChipActive]}
-            onPress={() => setNotesOnly((value) => !value)}
-          >
-            <Text style={[styles.filterChipText, notesOnly && styles.filterChipTextActive]}>
-              只看有筆記
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterChip, notesOnly && styles.filterChipActive]}
+              onPress={() => setNotesOnly((value) => !value)}
+            >
+              <Text style={[styles.filterChipText, notesOnly && styles.filterChipTextActive]}>
+                只看有筆記
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.filterStrip}>
           <View style={styles.filterContent}>
-          <TouchableOpacity
-            style={[styles.filterChip, selectedGod === 'all' && styles.filterChipActive]}
-            onPress={() => setSelectedGod('all')}
-          >
-            <Text style={[styles.filterChipText, selectedGod === 'all' && styles.filterChipTextActive]}>
-              全部神明
-            </Text>
-          </TouchableOpacity>
-          {availableGods.map((god) => (
             <TouchableOpacity
-              key={god.id}
-              style={[styles.filterChip, selectedGod === god.name && styles.filterChipActive]}
-              onPress={() => setSelectedGod(god.name)}
+              style={[styles.filterChip, selectedGod === 'all' && styles.filterChipActive]}
+              onPress={() => setSelectedGod('all')}
             >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  selectedGod === god.name && styles.filterChipTextActive,
-                ]}
-              >
-                {god.name}
+              <Text style={[styles.filterChipText, selectedGod === 'all' && styles.filterChipTextActive]}>
+                全部神明
               </Text>
             </TouchableOpacity>
-          ))}
+            {availableGods.map((god) => (
+              <TouchableOpacity
+                key={god.id}
+                style={[styles.filterChip, selectedGod === god.name && styles.filterChipActive]}
+                onPress={() => setSelectedGod(god.name)}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    selectedGod === god.name && styles.filterChipTextActive,
+                  ]}
+                >
+                  {god.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
         <View style={styles.filterStrip}>
           <View style={styles.filterContent}>
-          <TouchableOpacity
-            style={[styles.filterChip, selectedCategory === 'all' && styles.filterChipActive]}
-            onPress={() => setSelectedCategory('all')}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                selectedCategory === 'all' && styles.filterChipTextActive,
-              ]}
-            >
-              全部問題
-            </Text>
-          </TouchableOpacity>
-          {questionCategories.map((category) => (
             <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.filterChip,
-                selectedCategory === category.id && styles.filterChipActive,
-              ]}
-              onPress={() => setSelectedCategory(category.id)}
+              style={[styles.filterChip, selectedCategory === 'all' && styles.filterChipActive]}
+              onPress={() => setSelectedCategory('all')}
             >
               <Text
                 style={[
                   styles.filterChipText,
-                  selectedCategory === category.id && styles.filterChipTextActive,
+                  selectedCategory === 'all' && styles.filterChipTextActive,
                 ]}
               >
-                {category.name}
+                全部題型
               </Text>
             </TouchableOpacity>
-          ))}
+            {questionCategories.map((category) => (
+              <TouchableOpacity
+                key={category.id}
+                style={[
+                  styles.filterChip,
+                  selectedCategory === category.id && styles.filterChipActive,
+                ]}
+                onPress={() => setSelectedCategory(category.id)}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    selectedCategory === category.id && styles.filterChipTextActive,
+                  ]}
+                >
+                  {category.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
-        <ScrollView style={styles.list} showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
+        <ScrollView
+          style={styles.list}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        >
           {!filteredRecords.length ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>檔</Text>
-              <Text style={styles.emptyText}>這個篩選條件下還沒有資料</Text>
-              <Text style={styles.emptyHint}>可以換個神明、分類或關鍵字再看一次。</Text>
+              <Text style={styles.emptyIcon}>📜</Text>
+              <Text style={styles.emptyText}>
+                {currentRecords.length
+                  ? '目前沒有符合篩選條件的紀錄'
+                  : '目前還沒有任何求籤紀錄'}
+              </Text>
+              <Text style={styles.emptyHint}>
+                {currentRecords.length
+                  ? '可以清掉篩選條件，或換個關鍵字再找找看。'
+                  : '可以先去求一支籤，之後再回來追蹤應驗與心得。'}
+              </Text>
+              {hasActiveFilters ? (
+                <TouchableOpacity style={styles.emptyActionBtn} onPress={resetFilters}>
+                  <Text style={styles.emptyActionText}>清除篩選</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
 
@@ -608,6 +752,67 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 20,
   },
+  planBlock: {
+    marginTop: TempleSpacing.sm,
+    gap: 4,
+  },
+  planText: {
+    fontSize: 12,
+    color: TempleTheme.goldLight,
+    lineHeight: 18,
+  },
+  verificationCard: {
+    marginTop: TempleSpacing.sm,
+    padding: TempleSpacing.sm,
+    borderRadius: 10,
+    backgroundColor: TempleTheme.bgDark + '38',
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '18',
+  },
+  verificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    color: TempleTheme.goldLight,
+    fontWeight: '700',
+  },
+  statusBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  verificationButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  verificationBtn: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '24',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: TempleTheme.bgCard,
+  },
+  verificationBtnText: {
+    fontSize: 12,
+    color: TempleTheme.textLight,
+  },
+  verificationNote: {
+    marginTop: 8,
+    color: TempleTheme.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+  },
   noteEditArea: { marginTop: TempleSpacing.sm },
   noteInput: {
     backgroundColor: TempleTheme.bgDark + '40',
@@ -716,6 +921,21 @@ const styles = StyleSheet.create({
     color: TempleTheme.textMuted,
     marginTop: TempleSpacing.xs,
     opacity: 0.7,
+    textAlign: 'center',
+  },
+  emptyActionBtn: {
+    marginTop: TempleSpacing.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: TempleTheme.bgCard,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '35',
+  },
+  emptyActionText: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.goldLight,
+    fontWeight: '700',
   },
   clearBtn: {
     marginTop: TempleSpacing.lg,

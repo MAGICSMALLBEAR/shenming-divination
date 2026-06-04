@@ -6,6 +6,7 @@ import { gods } from '@/data/gods';
 import { tossJiaobei, drawPoem, drawZhugePoem, saveDivinationRecord } from '@/services/divination';
 import { addFavorite, getSettings, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
 import { getAIInterpretation } from '@/services/ai';
+import { buildActionPlan } from '@/services/actionPlan';
 import type { JiaobeiResult } from '@/services/divination';
 import type { DivinationRecord } from '@/services/storage';
 
@@ -132,12 +133,19 @@ export function useDivination() {
     });
 
     // 儲存紀錄
+    const actionPlan = buildActionPlan({
+      poem,
+      questionCategory,
+      question,
+    });
+
     const record = await saveDivinationRecord({
       godName: god?.name || '神明',
       poem,
       question,
       questionCategory,
       aiInterpretation: interpretation || undefined,
+      actionPlan,
     });
     setCurrentRecord(record);
 

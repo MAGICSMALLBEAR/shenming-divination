@@ -1,40 +1,64 @@
-// 每日運勢服務 — 依日期確定性生成，同天結果固定
-// 支援依生肖/五行個人化調整
-
 import type { BaziInfo } from './bazi';
 
-// ─── 靜態資料 ──────────────────────────────────────────────────
-const DIRECTIONS = ['東', '南', '西', '北', '東南', '東北', '西南', '西北'];
+const DIRECTIONS = ['東', '東南', '南', '西南', '西', '西北', '北', '東北'] as const;
 const LUCKY_COLORS = [
-  { name: '朱紅', hex: '#C0392B' }, { name: '琉璃藍', hex: '#2980B9' },
-  { name: '翡翠綠', hex: '#27AE60' }, { name: '金黃', hex: '#F39C12' },
-  { name: '紫羅蘭', hex: '#8E44AD' }, { name: '白玉', hex: '#BDC3C7' },
-  { name: '棗紅', hex: '#922B21' }, { name: '青碧', hex: '#1ABC9C' },
-];
+  { name: '硃砂紅', hex: '#C0392B' },
+  { name: '靛青藍', hex: '#2980B9' },
+  { name: '松柏綠', hex: '#27AE60' },
+  { name: '金杏黃', hex: '#F39C12' },
+  { name: '雲霧紫', hex: '#8E44AD' },
+  { name: '月白銀', hex: '#BDC3C7' },
+  { name: '琥珀棕', hex: '#922B21' },
+  { name: '湖水青', hex: '#1ABC9C' },
+] as const;
 const AUSPICIOUS_HOURS = [
-  '子時(23-1)', '丑時(1-3)', '寅時(3-5)', '卯時(5-7)',
-  '辰時(7-9)', '巳時(9-11)', '午時(11-13)', '未時(13-15)',
-  '申時(15-17)', '酉時(17-19)', '戌時(19-21)', '亥時(21-23)',
-];
+  '子時 (23-1)',
+  '丑時 (1-3)',
+  '寅時 (3-5)',
+  '卯時 (5-7)',
+  '辰時 (7-9)',
+  '巳時 (9-11)',
+  '午時 (11-13)',
+  '未時 (13-15)',
+  '申時 (15-17)',
+  '酉時 (17-19)',
+  '戌時 (19-21)',
+  '亥時 (21-23)',
+] as const;
 const AVOID_HOURS = [
-  '子時', '丑時', '寅時', '卯時', '辰時', '巳時',
-  '午時', '未時', '申時', '酉時', '戌時', '亥時',
-];
+  '子時',
+  '丑時',
+  '寅時',
+  '卯時',
+  '辰時',
+  '巳時',
+  '午時',
+  '未時',
+  '申時',
+  '酉時',
+  '戌時',
+  '亥時',
+] as const;
 
-// 五行循環（以日期推算今日五行）
 const WUXING_CYCLE = ['木', '火', '土', '金', '水'] as const;
-type Wuxing = typeof WUXING_CYCLE[number];
+type Wuxing = (typeof WUXING_CYCLE)[number];
 
-// 相生：key 生 value
 const GENERATES: Record<Wuxing, Wuxing> = {
-  木: '火', 火: '土', 土: '金', 金: '水', 水: '木',
-};
-// 相克：key 克 value
-const CONTROLS: Record<Wuxing, Wuxing> = {
-  木: '土', 火: '金', 土: '水', 水: '火', 金: '木',
+  木: '火',
+  火: '土',
+  土: '金',
+  金: '水',
+  水: '木',
 };
 
-// 每個五行對哪些分數有優勢（相生時加強的面向）
+const CONTROLS: Record<Wuxing, Wuxing> = {
+  木: '土',
+  火: '金',
+  土: '水',
+  金: '木',
+  水: '火',
+};
+
 const WUXING_AFFINITY: Record<Wuxing, Array<keyof ScoreSet>> = {
   木: ['career', 'study'],
   火: ['love', 'career'],
@@ -43,23 +67,69 @@ const WUXING_AFFINITY: Record<Wuxing, Array<keyof ScoreSet>> = {
   水: ['love', 'health'],
 };
 
-// 生肖特定每日建議
 const ZODIAC_TIPS: Record<string, { good: string; mid: string; bad: string }> = {
-  鼠: { good: '屬鼠者今日貴人運旺，主動出擊事半功倍。', mid: '屬鼠者宜靈活應變，不拘泥於舊法。', bad: '屬鼠者今日宜低調，避免與人正面衝突。' },
-  牛: { good: '屬牛者今日財運亨通，努力必有豐收。', mid: '屬牛者按部就班，穩紮穩打最有利。', bad: '屬牛者宜忍耐，切勿急躁做決定。' },
-  虎: { good: '屬虎者今日氣勢如虹，領導力出眾。', mid: '屬虎者收斂鋒芒，觀察時機再行動。', bad: '屬虎者今日易衝動，三思而後行。' },
-  兔: { good: '屬兔者今日人緣極佳，合作談判有利。', mid: '屬兔者以柔克剛，和氣生財。', bad: '屬兔者小心口舌是非，少說多做。' },
-  龍: { good: '屬龍者今日龍氣旺盛，事業運達頂峰。', mid: '屬龍者守住既有成果，徐圖進展。', bad: '屬龍者今日宜謙遜，避免獨斷獨行。' },
-  蛇: { good: '屬蛇者今日智慧大開，謀略無往不利。', mid: '屬蛇者以智取勝，不宜正面硬拼。', bad: '屬蛇者今日多疑易誤事，信任身邊的人。' },
-  馬: { good: '屬馬者今日奔騰四方，行動力最強。', mid: '屬馬者保持動力，但別忘了休息。', bad: '屬馬者今日緩行，躁進反而誤事。' },
-  羊: { good: '屬羊者今日溫潤得人緣，貴人相助。', mid: '屬羊者以誠感人，凡事真誠以對。', bad: '屬羊者今日敏感，勿鑽牛角尖。' },
-  猴: { good: '屬猴者今日才思敏捷，創意解決問題。', mid: '屬猴者靈活但勿浮躁，深思熟慮。', bad: '屬猴者今日易分心，專注最重要的事。' },
-  雞: { good: '屬雞者今日條理分明，效率最高。', mid: '屬雞者按計畫行事，勿貪多求快。', bad: '屬雞者今日宜放下完美主義，量力而為。' },
-  狗: { good: '屬狗者今日忠誠受信任，合作大吉。', mid: '屬狗者守望相助，有付出才有收穫。', bad: '屬狗者今日多慮，放寬心才能看清方向。' },
-  豬: { good: '屬豬者今日福氣充盈，財運自然而來。', mid: '屬豬者知足常樂，量入為出。', bad: '屬豬者今日宜節制，避免過度消費或縱慾。' },
+  鼠: {
+    good: '今天適合把握明確機會，先動一步會比猶豫更有收穫。',
+    mid: '今天宜穩中求進，別急著把所有事情一次做完。',
+    bad: '今天情緒容易受影響，先穩住節奏再做重要決定。',
+  },
+  牛: {
+    good: '今天適合踏實推進，累積會比投機來得更順。',
+    mid: '今天可以慢慢整理計畫，把最重要的一步先做好。',
+    bad: '今天不宜硬撐，先照顧身心與手上的基本盤。',
+  },
+  虎: {
+    good: '今天氣勢不錯，適合主動爭取與清楚表態。',
+    mid: '今天宜收斂鋒芒，用穩定節奏換取信任。',
+    bad: '今天容易衝過頭，先想清楚後果再出手。',
+  },
+  兔: {
+    good: '今天適合修補關係與調整節奏，柔和反而更有力量。',
+    mid: '今天宜先觀察局面，再選擇最舒服的方式前進。',
+    bad: '今天不宜勉強自己迎合外界，先把心安頓好。',
+  },
+  龍: {
+    good: '今天有帶頭與整合的優勢，適合推進重要安排。',
+    mid: '今天宜先聚焦一件核心事情，不要分散火力。',
+    bad: '今天別急著證明自己，先把基礎補穩更重要。',
+  },
+  蛇: {
+    good: '今天直覺敏銳，適合處理需要判斷力的問題。',
+    mid: '今天宜多留一手，先觀察再定案。',
+    bad: '今天容易想太多，先處理眼前最具體的一步。',
+  },
+  馬: {
+    good: '今天行動力強，適合把握短期窗口。',
+    mid: '今天宜邊做邊修正，不必一次到位。',
+    bad: '今天節奏容易亂，先排優先順序再往前。',
+  },
+  羊: {
+    good: '今天適合溫柔但堅定地推進關係與合作。',
+    mid: '今天宜照顧自己的感受，再去處理外部壓力。',
+    bad: '今天不要過度迎合，先界定自己的底線。',
+  },
+  猴: {
+    good: '今天靈活度高，適合談判、溝通與轉換策略。',
+    mid: '今天宜先整理資訊，不要太快下結論。',
+    bad: '今天容易分心，先把最重要的一件事做完。',
+  },
+  雞: {
+    good: '今天適合把細節收好，成果會比平常更穩。',
+    mid: '今天宜先確認規則與時機，再投入心力。',
+    bad: '今天不要太苛求自己，先求穩再求漂亮。',
+  },
+  狗: {
+    good: '今天適合守住承諾與價值，會有值得信任的回應。',
+    mid: '今天宜先確認自己的立場，再決定怎麼配合別人。',
+    bad: '今天容易把責任攬太多，先留一些空間給自己。',
+  },
+  豬: {
+    good: '今天適合放寬心，用平和方式會更順利。',
+    mid: '今天宜慢一點，多確認感受與方向。',
+    bad: '今天不宜逃避現實，從最簡單的一步開始就好。',
+  },
 };
 
-// ─── 介面 ──────────────────────────────────────────────────────
 interface ScoreSet {
   wealth: number;
   career: number;
@@ -71,7 +141,7 @@ interface ScoreSet {
 export interface DailyFortune {
   date: string;
   scores: ScoreSet;
-  overall: number;         // 1-5
+  overall: number;
   luckyColor: { name: string; hex: string };
   luckyDirection: string;
   luckyNumber: number;
@@ -79,145 +149,155 @@ export interface DailyFortune {
   avoidHour: string;
   advice: string;
   wuxingToday: Wuxing;
-  // 個人化欄位（有生辰時才有值）
   zodiac?: string;
   zodiacEmoji?: string;
   userWuxing?: Wuxing;
-  wuxingRelation?: '今日生我' | '我生今日' | '今日克我' | '我克今日' | '同行' | '無關';
+  wuxingRelation?: '今日生我' | '我生今日' | '今日克我' | '我克今日' | '同行' | '平衡';
   isPersonalized: boolean;
 }
 
-// ─── 工具函式 ──────────────────────────────────────────────────
 function hash(seed: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = (h * 0x01000193) >>> 0;
+  let value = 0x811c9dc5;
+  for (let index = 0; index < seed.length; index += 1) {
+    value ^= seed.charCodeAt(index);
+    value = (value * 0x01000193) >>> 0;
   }
-  return h;
+  return value;
 }
 
 function dateKey(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  const now = new Date();
+  return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
 }
 
 function baseScore(category: string): number {
   return (hash(`${dateKey()}-${category}`) % 5) + 1;
 }
 
-function pick<T>(arr: readonly T[], category: string): T {
-  return arr[hash(`${dateKey()}-${category}`) % arr.length];
+function pick<T>(list: readonly T[], category: string): T {
+  return list[hash(`${dateKey()}-${category}`) % list.length];
 }
 
 function todayWuxing(): Wuxing {
-  const d = new Date();
-  // 以 2000-01-01 為基準（甲子日，木），每天循環
-  const ref = new Date(2000, 0, 1);
-  const daysDiff = Math.floor((d.getTime() - ref.getTime()) / 86400000);
-  return WUXING_CYCLE[((daysDiff % 5) + 5) % 5];
+  const today = new Date();
+  const reference = new Date(2000, 0, 1);
+  const diff = Math.floor((today.getTime() - reference.getTime()) / 86400000);
+  return WUXING_CYCLE[((diff % 5) + 5) % 5];
 }
 
-function getRelation(userWuxing: Wuxing, dayWuxing: Wuxing): DailyFortune['wuxingRelation'] {
+function clamp(value: number): number {
+  return Math.max(1, Math.min(5, Math.round(value)));
+}
+
+function getRelation(
+  userWuxing: Wuxing,
+  dayWuxing: Wuxing
+): DailyFortune['wuxingRelation'] {
   if (dayWuxing === userWuxing) return '同行';
   if (GENERATES[dayWuxing] === userWuxing) return '今日生我';
   if (GENERATES[userWuxing] === dayWuxing) return '我生今日';
   if (CONTROLS[dayWuxing] === userWuxing) return '今日克我';
   if (CONTROLS[userWuxing] === dayWuxing) return '我克今日';
-  return '無關';
+  return '平衡';
 }
 
-function clamp(n: number): number {
-  return Math.max(1, Math.min(5, Math.round(n)));
-}
-
-// 依五行關係微調分數
-function adjustScores(base: ScoreSet, relation: DailyFortune['wuxingRelation'], userWuxing: Wuxing): ScoreSet {
-  const s = { ...base };
+function adjustScores(
+  base: ScoreSet,
+  relation: DailyFortune['wuxingRelation'],
+  userWuxing: Wuxing
+): ScoreSet {
+  const next = { ...base };
   const affinity = WUXING_AFFINITY[userWuxing];
 
   switch (relation) {
     case '今日生我':
-      // 今日五行生助我 → 所有面向 +1
-      (Object.keys(s) as Array<keyof ScoreSet>).forEach(k => { s[k] = clamp(s[k] + 1); });
+      (Object.keys(next) as Array<keyof ScoreSet>).forEach((key) => {
+        next[key] = clamp(next[key] + 1);
+      });
       break;
     case '今日克我':
-      // 今日五行克制我 → 我的優勢面向 -1
-      affinity.forEach(k => { s[k] = clamp(s[k] - 1); });
+      affinity.forEach((key) => {
+        next[key] = clamp(next[key] - 1);
+      });
       break;
     case '我生今日':
-      // 我耗氣生今日 → 財運/健康微降
-      s.wealth = clamp(s.wealth - 1);
-      s.health = clamp(s.health - 1);
+      next.wealth = clamp(next.wealth - 1);
+      next.health = clamp(next.health - 1);
       break;
     case '我克今日':
-      // 我克今日 → 略有鋒芒，但易招忌 → 愛情/合作面向 -1
-      s.love = clamp(s.love - 1);
+      next.love = clamp(next.love - 1);
       break;
-    case '同行':
-      // 同五行 → 平穩，無大波動
+    default:
       break;
   }
-  return s;
+
+  return next;
 }
 
 const GENERIC_ADVICES = {
-  good: ['諸事皆宜，可大膽行動，貴人自來。', '今日天時地利，謀事可成，宜把握良機。', '福星高照，凡事順遂，宜廣結善緣。'],
-  mid:  ['宜守中道，不急不躁，平穩中求進。', '謀事前多思量，行事穩健方能致勝。', '今日平穩，宜積蓄力量，等待時機。'],
-  bad:  ['今日諸事宜緩，靜守為上，避免衝動。', '小心謹慎，遇阻勿強行，靜待轉機。', '宜多行善事、廣積福德，助運化解。'],
+  good: [
+    '今天適合主動安排一件重要的事，越明確越容易順起來。',
+    '今天可以順勢往前推，但記得用穩定步伐取代躁進。',
+    '今天的整體氣場偏順，把想做的事落成行動最有幫助。',
+  ],
+  mid: [
+    '今天宜穩住節奏，先做好一件事，再談下一步。',
+    '今天適合觀察與微調，不必急著把所有答案一次找完。',
+    '今天保持彈性會比硬碰硬更有收穫。',
+  ],
+  bad: [
+    '今天先求穩，再求快，重要決定建議多看一輪。',
+    '今天情緒和外界影響都比較明顯，先照顧內在狀態。',
+    '今天不必勉強突破，先把手邊能穩住的事情處理好。',
+  ],
 };
 
-// ─── 主函式 ────────────────────────────────────────────────────
-
 export function getDailyFortune(bazi?: BaziInfo | null): DailyFortune {
-  const dk = dateKey();
-  const wxToday = todayWuxing();
+  const todayElement = todayWuxing();
 
-  // 基礎分數（日期決定，所有人相同）
   let scores: ScoreSet = {
     wealth: baseScore('wealth'),
     career: baseScore('career'),
-    love:   baseScore('love'),
+    love: baseScore('love'),
     health: baseScore('health'),
-    study:  baseScore('study'),
+    study: baseScore('study'),
   };
 
   let relation: DailyFortune['wuxingRelation'] | undefined;
-  let zodiacTipKey: 'good' | 'mid' | 'bad' = 'mid';
 
-  // 個人化調整
   if (bazi) {
     const userWuxing = bazi.wuxing as Wuxing;
-    relation = getRelation(userWuxing, wxToday);
+    relation = getRelation(userWuxing, todayElement);
     scores = adjustScores(scores, relation, userWuxing);
   }
 
-  const overall = clamp(Math.round((scores.wealth + scores.career + scores.love + scores.health + scores.study) / 5));
-  zodiacTipKey = overall >= 4 ? 'good' : overall >= 3 ? 'mid' : 'bad';
+  const overall = clamp(
+    Math.round(
+      (scores.wealth + scores.career + scores.love + scores.health + scores.study) / 5
+    )
+  );
+  const tipKey = overall >= 4 ? 'good' : overall >= 3 ? 'mid' : 'bad';
 
-  // 建議文：有生肖用個人化，否則用通用
-  let advice: string;
-  if (bazi && ZODIAC_TIPS[bazi.zodiac]) {
-    advice = ZODIAC_TIPS[bazi.zodiac][zodiacTipKey];
-  } else {
-    advice = pick(GENERIC_ADVICES[zodiacTipKey], 'advice');
-  }
+  const advice =
+    bazi && ZODIAC_TIPS[bazi.zodiac]
+      ? ZODIAC_TIPS[bazi.zodiac][tipKey]
+      : pick(GENERIC_ADVICES[tipKey], 'advice');
 
   return {
-    date: dk,
+    date: dateKey(),
     scores,
     overall,
     luckyColor: pick(LUCKY_COLORS, 'color'),
     luckyDirection: pick(DIRECTIONS, 'direction'),
-    luckyNumber: (hash(`${dk}-number`) % 9) + 1,
+    luckyNumber: (hash(`${dateKey()}-number`) % 9) + 1,
     auspiciousHour: pick(AUSPICIOUS_HOURS, 'auspicious'),
     avoidHour: pick(AVOID_HOURS, 'avoid'),
     advice,
-    wuxingToday: wxToday,
+    wuxingToday: todayElement,
     zodiac: bazi?.zodiac,
     zodiacEmoji: bazi?.zodiacEmoji,
     userWuxing: bazi?.wuxing as Wuxing | undefined,
     wuxingRelation: relation,
-    isPersonalized: !!bazi,
+    isPersonalized: Boolean(bazi),
   };
 }

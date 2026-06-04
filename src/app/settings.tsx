@@ -1,13 +1,36 @@
-// 設定頁面
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, TextInput, Alert, ScrollView } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+
 import { DRAW_ANIMATION_PRESETS, normalizeDrawAnimationDuration } from '@/constants/divination';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
-import { getSettings, saveSettings, type AppSettings } from '@/services/storage';
+import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { getDailyPoem } from '@/services/dailyPoem';
-import { scheduleDailyNotification, scheduleGodBirthdayNotifications, requestPermissions } from '@/services/notifications';
+import {
+  getSettings,
+  saveSettings,
+  type AppSettings,
+} from '@/services/storage';
+import {
+  cancelDailyNotifications,
+  cancelGodBirthdayNotifications,
+  requestPermissions,
+  scheduleDailyNotification,
+  scheduleGodBirthdayNotifications,
+} from '@/services/notifications';
 import { getTodayLunarInfo } from '@/data/lunarCalendar';
 import { calcBazi, parseBirthYear, ZODIAC_PATRON_GOD } from '@/services/bazi';
+import { gods } from '@/data/gods';
+import { exportBackupJson, importBackupJson } from '@/services/backup';
 
 export default function SettingsScreen() {
   const [settings, setSettings] = useState<AppSettings>({
@@ -17,18 +40,28 @@ export default function SettingsScreen() {
     drawAnimationDurationMs: DRAW_ANIMATION_PRESETS[1].durationMs,
   });
   const [saved, setSaved] = useState(false);
-  const dailyPoem = getDailyPoem();
-  const lunarInfo = getTodayLunarInfo();
+  const [backupText, setBackupText] = useState('');
+
+  const dailyPoem = useMemo(() => getDailyPoem(), []);
+  const lunarInfo = useMemo(() => getTodayLunarInfo(), []);
 
   const bazi = useMemo(() => {
     const year = parseBirthYear(settings.birthDate);
     return year ? calcBazi(year) : null;
   }, [settings.birthDate]);
 
+  const loadStoredSettings = async () => {
+    const stored = await getSettings();
+    if (!stored) return;
+    setSettings((prev) => ({
+      ...prev,
+      ...stored,
+      drawAnimationDurationMs: normalizeDrawAnimationDuration(stored.drawAnimationDurationMs),
+    }));
+  };
+
   useEffect(() => {
-    getSettings().then(s => {
-      if (s) setSettings(prev => ({ ...prev, ...s, drawAnimationDurationMs: normalizeDrawAnimationDuration(s.drawAnimationDurationMs) }));
-    });
+    loadStoredSettings();
   }, []);
 
   const handleSave = async () => {
@@ -37,236 +70,294 @@ export default function SettingsScreen() {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const handleExportBackup = async () => {
+    const raw = await exportBackupJson();
+    await Clipboard.setStringAsync(raw);
+    setBackupText(raw);
+    Alert.alert('已複製備份', '備份 JSON 已複製到剪貼簿，也顯示在下方文字框。');
+  };
+
+  const handleImportBackup = async () => {
+    if (!backupText.trim()) {
+      Alert.alert('尚未貼上內容', '請先貼上備份 JSON。');
+      return;
+    }
+
+    try {
+      await importBackupJson(backupText);
+      await loadStoredSettings();
+      setSaved(false);
+      Alert.alert('已還原備份', '設定資料已重新載入，其他頁面也會讀到新的本機資料。');
+    } catch (error) {
+      Alert.alert('還原失敗', error instanceof Error ? error.message : '請確認備份內容格式。');
+    }
+  };
+
+  const handleToggleDailyNotification = async () => {
+    const nextValue = !settings.dailyNotification;
+
+    if (!nextValue) {
+      setSettings((prev) => ({ ...prev, dailyNotification: false }));
+      await cancelDailyNotifications();
+      return;
+    }
+
+    const ok = await requestPermissions();
+    if (!ok) {
+      setSettings((prev) => ({ ...prev, dailyNotification: false }));
+      Alert.alert('無法開啟提醒', '這個平台或裝置目前沒有提供每日推播提醒。');
+      return;
+    }
+
+    await scheduleDailyNotification();
+    setSettings((prev) => ({ ...prev, dailyNotification: true }));
+    Alert.alert('提醒已開啟', '每天 7:30 會提醒你查看今日籤詩。');
+  };
+
+  const handleToggleBirthdayNotification = async () => {
+    const nextValue = !settings.birthdayNotification;
+
+    if (!nextValue) {
+      setSettings((prev) => ({ ...prev, birthdayNotification: false }));
+      await cancelGodBirthdayNotifications();
+      return;
+    }
+
+    const ok = await requestPermissions();
+    if (!ok) {
+      setSettings((prev) => ({ ...prev, birthdayNotification: false }));
+      Alert.alert('無法開啟提醒', '這個平台或裝置目前沒有提供神明聖誕提醒。');
+      return;
+    }
+
+    await scheduleGodBirthdayNotifications();
+    setSettings((prev) => ({ ...prev, birthdayNotification: true }));
+    Alert.alert('提醒已開啟', '會在未來 60 天內的聖誕日前一天提醒你。');
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.pageTitle}>設定</Text>
 
-        {/* 每日籤預覽 */}
         <View style={styles.dailyCard}>
-          <Text style={styles.dailyLabel}>今日籤詩 · {dailyPoem.date} {dailyPoem.dayOfWeek}</Text>
-          <Text style={styles.dailyContent} numberOfLines={2}>
-            第 {dailyPoem.poem.number} 籤 · {dailyPoem.poem.level} · {dailyPoem.poem.content.split('\n')[0]}
+          <Text style={styles.dailyLabel}>
+            今日籤詩 · {dailyPoem.date} {dailyPoem.dayOfWeek}
           </Text>
+          <Text style={styles.dailyContent}>
+            第 {dailyPoem.poem.number} 籤 · {dailyPoem.poem.level}
+          </Text>
+          <Text style={styles.dailyHint}>{dailyPoem.poem.content.split('\n')[0]}</Text>
         </View>
 
-        {/* 個人資訊 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>個人資訊</Text>
+          <Text style={styles.sectionTitle}>個人化設定</Text>
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>稱呼</Text>
-            <TextInput
-              style={styles.input}
-              value={settings.userName}
-              onChangeText={(text) => setSettings(prev => ({ ...prev, userName: text }))}
-              placeholder="輸入姓名或稱呼"
-              placeholderTextColor={TempleTheme.textMuted}
-            />
-          </View>
+          <FieldLabel text="稱呼" />
+          <TextInput
+            style={styles.input}
+            value={settings.userName}
+            onChangeText={(value) => setSettings((prev) => ({ ...prev, userName: value }))}
+            placeholder="輸入名字或暱稱"
+            placeholderTextColor={TempleTheme.textMuted}
+          />
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>出生年份（西元或民國）</Text>
-            <TextInput
-              style={styles.input}
-              value={settings.birthDate}
-              onChangeText={(text) => setSettings(prev => ({ ...prev, birthDate: text }))}
-              placeholder="例如：1996 或 民國85年"
-              placeholderTextColor={TempleTheme.textMuted}
-              keyboardType="default"
-            />
-          </View>
+          <FieldLabel text="出生年份" />
+          <TextInput
+            style={styles.input}
+            value={settings.birthDate}
+            onChangeText={(value) => setSettings((prev) => ({ ...prev, birthDate: value }))}
+            placeholder="例如：1996 或 民國 85"
+            placeholderTextColor={TempleTheme.textMuted}
+          />
 
-          {/* 生辰八字卡 */}
-          {bazi && (
-            <View style={[styles.baziCard, bazi.isCurrentYear && styles.baziCardWarning]}>
-              <View style={styles.baziRow}>
-                <Text style={styles.baziEmoji}>{bazi.zodiacEmoji}</Text>
-                <View style={styles.baziInfo}>
-                  <Text style={styles.baziMain}>
-                    {bazi.ganZhi}年 · 生肖{bazi.zodiac}
-                    {bazi.isCurrentYear ? '  ⚠️ 本命年' : ''}
-                  </Text>
-                  <View style={styles.baziTags}>
-                    <View style={[styles.wuxingTag, { backgroundColor: bazi.wuxingColor + '25', borderColor: bazi.wuxingColor }]}>
-                      <Text style={[styles.wuxingText, { color: bazi.wuxingColor }]}>{bazi.wuxing}命</Text>
-                    </View>
-                    <Text style={styles.baziSub}>合：{bazi.compatible.join('、')} · 沖：{bazi.clash}</Text>
-                  </View>
-                </View>
-              </View>
-              <Text style={styles.baziPatron}>
-                守護神明：{[
-                  { id: 1, name: '關聖帝君' }, { id: 2, name: '觀世音菩薩' },
-                  { id: 3, name: '媽祖' }, { id: 4, name: '王爺' },
-                  { id: 5, name: '保生大帝' }, { id: 6, name: '福德正神' },
-                  { id: 8, name: '文昌帝君' },
-                ].find(g => g.id === bazi.patronGodId)?.name ?? '觀世音菩薩'}
+          {bazi ? (
+            <View style={styles.baziCard}>
+              <Text style={styles.baziTitle}>
+                {bazi.zodiacEmoji} {bazi.ganZhi}年 · 屬{bazi.zodiac}
               </Text>
-              {bazi.isCurrentYear && (
-                <Text style={styles.baziWarning}>
-                  今年為本命年，建議多祭拜守護神明、佩戴護身符，諸事宜謹慎。
-                </Text>
-              )}
+              <Text style={styles.baziText}>五行：{bazi.wuxing}</Text>
+              <Text style={styles.baziText}>
+                守護神：{gods.find((god) => god.id === bazi.patronGodId)?.name ?? '神明'}
+              </Text>
             </View>
-          )}
+          ) : null}
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>常用神明</Text>
-            <View style={styles.godSelector}>
-              {[
-                { id: 1, name: '關聖帝君' },
-                { id: 2, name: '觀音菩薩' },
-                { id: 3, name: '媽祖' },
-                { id: 4, name: '王爺' },
-                { id: 5, name: '保生大帝' },
-                { id: 6, name: '福德正神' },
-                { id: 7, name: '註生娘娘' },
-                { id: 8, name: '文昌帝君' },
-                { id: 9, name: '孔明神數' },
-              ].map(god => {
-                const isPatron = bazi?.patronGodId === god.id;
-                return (
+          <FieldLabel text="常用神明" />
+          <View style={styles.godSelector}>
+            {gods.map((god) => {
+              const isPatron =
+                bazi && ZODIAC_PATRON_GOD[bazi.zodiac] === god.id;
+              return (
                 <TouchableOpacity
                   key={god.id}
-                  style={[styles.godChip, settings.preferredGodId === god.id && styles.godChipActive, isPatron && styles.godChipPatron]}
-                  onPress={() => setSettings(prev => ({ ...prev, preferredGodId: god.id }))}
+                  style={[
+                    styles.godChip,
+                    settings.preferredGodId === god.id && styles.godChipActive,
+                    isPatron && styles.godChipPatron,
+                  ]}
+                  onPress={() =>
+                    setSettings((prev) => ({ ...prev, preferredGodId: god.id }))
+                  }
                 >
-                  <Text style={[styles.godChipText, settings.preferredGodId === god.id && styles.godChipTextActive]}>
-                    {isPatron ? '🌟 ' : ''}{god.name}
+                  <Text
+                    style={[
+                      styles.godChipText,
+                      settings.preferredGodId === god.id && styles.godChipTextActive,
+                    ]}
+                  >
+                    {isPatron ? '守護 · ' : ''}
+                    {god.name}
                   </Text>
                 </TouchableOpacity>
-                );
-              })}
-            </View>
+              );
+            })}
           </View>
         </View>
 
-        {/* 擲筊模式 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>擲筊模式</Text>
-          <TouchableOpacity
-            style={[styles.toggleRow, settings.strictMode && styles.toggleRowActive]}
-            onPress={() => setSettings(prev => ({ ...prev, strictMode: !prev.strictMode }))}
-          >
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>三聖筊嚴格模式</Text>
-              <Text style={styles.toggleDesc}>需連續三次聖筊方可抽籤（傳統習俗）</Text>
-            </View>
-            <View style={[styles.toggleSwitch, settings.strictMode && styles.toggleSwitchOn]}>
-              <View style={[styles.toggleKnob, settings.strictMode && styles.toggleKnobOn]} />
-            </View>
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>求籤流程</Text>
+          <ToggleRow
+            label="嚴謹擲筊模式"
+            description="開啟後可以更重視擲筊結果與流程感。"
+            value={Boolean(settings.strictMode)}
+            onToggle={() =>
+              setSettings((prev) => ({ ...prev, strictMode: !prev.strictMode }))
+            }
+          />
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>抽籤動畫長度</Text>
-            <Text style={styles.settingHint}>可依喜好調成快速、標準或更有儀式感的沉浸版本。</Text>
-            <View style={styles.durationGrid}>
-              {DRAW_ANIMATION_PRESETS.map(preset => {
-                const active = normalizeDrawAnimationDuration(settings.drawAnimationDurationMs) === preset.durationMs;
-                return (
-                  <TouchableOpacity
-                    key={preset.durationMs}
-                    style={[styles.durationCard, active && styles.durationCardActive]}
-                    onPress={() => setSettings(prev => ({ ...prev, drawAnimationDurationMs: preset.durationMs }))}
-                  >
-                    <Text style={[styles.durationTitle, active && styles.durationTitleActive]}>
-                      {preset.label} · {(preset.durationMs / 1000).toFixed(1)} 秒
-                    </Text>
-                    <Text style={[styles.durationDesc, active && styles.durationDescActive]}>{preset.description}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+          <FieldLabel text="抽籤動畫長度" />
+          <View style={styles.durationGrid}>
+            {DRAW_ANIMATION_PRESETS.map((preset) => {
+              const active =
+                normalizeDrawAnimationDuration(settings.drawAnimationDurationMs) ===
+                preset.durationMs;
+
+              return (
+                <TouchableOpacity
+                  key={preset.durationMs}
+                  style={[styles.durationCard, active && styles.durationCardActive]}
+                  onPress={() =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      drawAnimationDurationMs: preset.durationMs,
+                    }))
+                  }
+                >
+                  <Text style={[styles.durationTitle, active && styles.durationTitleActive]}>
+                    {preset.label} · {(preset.durationMs / 1000).toFixed(1)} 秒
+                  </Text>
+                  <Text style={[styles.durationDesc, active && styles.durationDescActive]}>
+                    {preset.description}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
-        {/* 通知 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>通知設定</Text>
+          <Text style={styles.sectionTitle}>通知</Text>
 
-          {/* 每日籤詩 */}
-          <TouchableOpacity
-            style={[styles.toggleRow, settings.dailyNotification && styles.toggleRowActive]}
-            onPress={async () => {
-              const newVal = !settings.dailyNotification;
-              setSettings(prev => ({ ...prev, dailyNotification: newVal }));
-              if (newVal) {
-                await requestPermissions();
-                await scheduleDailyNotification();
-              }
-            }}
-          >
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>每日籤詩推播</Text>
-              <Text style={styles.toggleDesc}>每天早上 7:30 推播今日籤詩</Text>
-            </View>
-            <View style={[styles.toggleSwitch, settings.dailyNotification && styles.toggleSwitchOn]}>
-              <View style={[styles.toggleKnob, settings.dailyNotification && styles.toggleKnobOn]} />
-            </View>
-          </TouchableOpacity>
+          <ToggleRow
+            label="每日籤詩提醒"
+            description="每天 7:30 推送今日籤詩與提醒。"
+            value={Boolean(settings.dailyNotification)}
+            onToggle={handleToggleDailyNotification}
+          />
 
-          {/* 神明聖誕提醒 */}
-          <TouchableOpacity
-            style={[styles.toggleRow, settings.birthdayNotification && styles.toggleRowActive]}
-            onPress={async () => {
-              const newVal = !settings.birthdayNotification;
-              setSettings(prev => ({ ...prev, birthdayNotification: newVal }));
-              if (newVal) {
-                const ok = await requestPermissions();
-                if (ok) await scheduleGodBirthdayNotifications();
-                Alert.alert('神明聖誕提醒', '已排程未來 60 天內的神明聖誕前晚提醒。');
-              }
-            }}
-          >
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>神明聖誕提醒 🙏</Text>
-              <Text style={styles.toggleDesc}>聖誕前一晚 20:00 提醒上香祈福</Text>
-            </View>
-            <View style={[styles.toggleSwitch, settings.birthdayNotification && styles.toggleSwitchOn]}>
-              <View style={[styles.toggleKnob, settings.birthdayNotification && styles.toggleKnobOn]} />
-            </View>
-          </TouchableOpacity>
+          <ToggleRow
+            label="神明聖誕提醒"
+            description="在神明聖誕前一天晚間提醒你。"
+            value={Boolean(settings.birthdayNotification)}
+            onToggle={handleToggleBirthdayNotification}
+          />
         </View>
 
-        {/* 今日農民曆 */}
-        {lunarInfo && (
+        {lunarInfo ? (
           <View style={styles.lunarCard}>
-            <Text style={styles.lunarTitle}>📅 今日農民曆</Text>
+            <Text style={styles.sectionTitle}>今日農曆</Text>
             <Text style={styles.lunarDate}>
               農曆 {lunarInfo.lunarMonth}月{lunarInfo.lunarDay}日
-              {lunarInfo.jieqi && <Text style={styles.jieqi}> · {lunarInfo.jieqi}</Text>}
-              {lunarInfo.godBirthday && <Text style={styles.godBirthday}> · {lunarInfo.godBirthday}</Text>}
             </Text>
-            <View style={styles.lunarRow}>
-              <Text style={styles.lunarLabel}>宜：</Text>
-              <Text style={styles.lunarValue}>{lunarInfo.yi.join('、')}</Text>
-            </View>
-            <View style={styles.lunarRow}>
-              <Text style={styles.lunarLabel}>忌：</Text>
-              <Text style={styles.lunarValue}>{lunarInfo.ji.join('、')}</Text>
-            </View>
+            <Text style={styles.lunarText}>宜：{lunarInfo.yi.join('、')}</Text>
+            <Text style={styles.lunarText}>忌：{lunarInfo.ji.join('、')}</Text>
+            {lunarInfo.jieqi ? <Text style={styles.lunarText}>節氣：{lunarInfo.jieqi}</Text> : null}
+            {lunarInfo.godBirthday ? (
+              <Text style={styles.lunarText}>神明聖誕：{lunarInfo.godBirthday}</Text>
+            ) : null}
           </View>
-        )}
+        ) : null}
 
-        {/* 儲存 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>備份與還原</Text>
+          <Text style={styles.backupHint}>
+            可將資料匯出成 JSON 備份字串，之後再貼回來還原。
+          </Text>
+          <View style={styles.backupActions}>
+            <TouchableOpacity style={styles.backupBtn} onPress={handleExportBackup}>
+              <Text style={styles.backupBtnText}>匯出並複製備份</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.backupBtnSecondary} onPress={handleImportBackup}>
+              <Text style={styles.backupBtnText}>貼上內容並還原</Text>
+            </TouchableOpacity>
+          </View>
+          <TextInput
+            style={styles.backupInput}
+            value={backupText}
+            onChangeText={setBackupText}
+            placeholder="備份 JSON 會顯示在這裡，也可以手動貼上舊備份。"
+            placeholderTextColor={TempleTheme.textMuted}
+            multiline
+          />
+        </View>
+
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>{saved ? '✓ 已儲存' : '儲存設定'}</Text>
+          <Text style={styles.saveBtnText}>{saved ? '已儲存設定' : '儲存設定'}</Text>
         </TouchableOpacity>
 
-        {/* 關於 */}
         <View style={styles.aboutSection}>
-          <Text style={styles.aboutTitle}>關於神明占卜</Text>
+          <Text style={styles.aboutTitle}>關於這個版本</Text>
           <Text style={styles.aboutText}>
-            本 App 僅供文化娛樂參考，不具實際占卜效力。{'\n'}
-            籤詩內容取自傳統雷雨師百首與六十甲子籤。{'\n'}
-            願神明庇佑，心存善念即是好運。
+            目前已加入應驗追蹤、問題潤飾、神明推薦、行動清單、每日專區，以及本機備份還原。
           </Text>
         </View>
+
         <View style={{ height: 60 }} />
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function FieldLabel({ text }: { text: string }) {
+  return <Text style={styles.fieldLabel}>{text}</Text>;
+}
+
+function ToggleRow({
+  label,
+  description,
+  value,
+  onToggle,
+}: {
+  label: string;
+  description: string;
+  value: boolean;
+  onToggle: () => void | Promise<void>;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.toggleRow, value && styles.toggleRowActive]}
+      onPress={onToggle}
+    >
+      <View style={styles.toggleInfo}>
+        <Text style={styles.toggleLabel}>{label}</Text>
+        <Text style={styles.toggleDesc}>{description}</Text>
+      </View>
+      <View style={[styles.toggleSwitch, value && styles.toggleSwitchOn]}>
+        <View style={[styles.toggleKnob, value && styles.toggleKnobOn]} />
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -296,6 +387,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   dailyContent: {
+    fontSize: TempleFonts.body,
+    color: TempleTheme.goldLight,
+    fontWeight: '700',
+  },
+  dailyHint: {
+    marginTop: 6,
     fontSize: TempleFonts.small,
     color: TempleTheme.textMuted,
     lineHeight: 20,
@@ -309,19 +406,11 @@ const styles = StyleSheet.create({
     color: TempleTheme.goldLight,
     marginBottom: TempleSpacing.sm,
   },
-  fieldGroup: {
-    marginBottom: TempleSpacing.sm,
-  },
   fieldLabel: {
     fontSize: TempleFonts.small,
     color: TempleTheme.textMuted,
     marginBottom: 6,
-  },
-  settingHint: {
-    fontSize: 11,
-    color: TempleTheme.textMuted,
-    lineHeight: 18,
-    marginBottom: TempleSpacing.xs,
+    marginTop: 2,
   },
   input: {
     backgroundColor: TempleTheme.bgCard,
@@ -331,6 +420,26 @@ const styles = StyleSheet.create({
     padding: TempleSpacing.sm,
     fontSize: TempleFonts.body,
     color: TempleTheme.textLight,
+    marginBottom: TempleSpacing.sm,
+  },
+  baziCard: {
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 12,
+    padding: TempleSpacing.md,
+    marginBottom: TempleSpacing.sm,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '40',
+  },
+  baziTitle: {
+    fontSize: TempleFonts.body,
+    color: TempleTheme.goldLight,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  baziText: {
+    color: TempleTheme.textMuted,
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
   },
   godSelector: {
     flexDirection: 'row',
@@ -379,22 +488,94 @@ const styles = StyleSheet.create({
   durationDescActive: {
     color: TempleTheme.textGold,
   },
-  // 八字卡
-  baziCard: {
-    backgroundColor: TempleTheme.bgCard, borderRadius: 12, padding: TempleSpacing.md,
-    marginTop: TempleSpacing.sm, borderWidth: 1, borderColor: TempleTheme.goldDark + '40',
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 10,
+    padding: TempleSpacing.sm,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '20',
+    marginBottom: TempleSpacing.xs,
   },
-  baziCardWarning: { borderColor: '#E74C3C80' },
-  baziRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  baziEmoji: { fontSize: 36, marginRight: TempleSpacing.md },
-  baziInfo: { flex: 1 },
-  baziMain: { fontSize: TempleFonts.body, fontWeight: '700', color: TempleTheme.goldLight, marginBottom: 4 },
-  baziTags: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  wuxingTag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
-  wuxingText: { fontSize: 12, fontWeight: '700' },
-  baziSub: { fontSize: 11, color: TempleTheme.textMuted },
-  baziPatron: { fontSize: TempleFonts.small, color: TempleTheme.gold, fontWeight: '600', marginTop: 2 },
-  baziWarning: { fontSize: 11, color: '#E74C3C', marginTop: 6, lineHeight: 16 },
+  toggleRowActive: { borderColor: TempleTheme.goldDark },
+  toggleInfo: { flex: 1, marginRight: TempleSpacing.sm },
+  toggleLabel: { fontSize: TempleFonts.small, color: TempleTheme.textLight, fontWeight: '600' },
+  toggleDesc: { fontSize: 11, color: TempleTheme.textMuted, marginTop: 2 },
+  toggleSwitch: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: TempleTheme.bgDark + '80',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  toggleSwitchOn: { backgroundColor: TempleTheme.goldDark },
+  toggleKnob: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: TempleTheme.textMuted,
+  },
+  toggleKnobOn: { backgroundColor: TempleTheme.goldLight, alignSelf: 'flex-end' },
+  lunarCard: {
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 12,
+    padding: TempleSpacing.md,
+    marginBottom: TempleSpacing.md,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '20',
+  },
+  lunarDate: {
+    fontSize: TempleFonts.body,
+    color: TempleTheme.textLight,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  lunarText: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.textMuted,
+    marginBottom: 4,
+  },
+  backupHint: {
+    color: TempleTheme.textMuted,
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  backupActions: {
+    gap: TempleSpacing.xs,
+    marginBottom: TempleSpacing.sm,
+  },
+  backupBtn: {
+    backgroundColor: TempleTheme.red,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  backupBtnSecondary: {
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '25',
+  },
+  backupBtnText: {
+    color: TempleTheme.goldLight,
+    fontWeight: '700',
+  },
+  backupInput: {
+    minHeight: 160,
+    backgroundColor: TempleTheme.bgCard,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '25',
+    borderRadius: 10,
+    padding: TempleSpacing.sm,
+    color: TempleTheme.textLight,
+    textAlignVertical: 'top',
+  },
   saveBtn: {
     backgroundColor: TempleTheme.red,
     paddingVertical: 14,
@@ -422,35 +603,4 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   aboutText: { fontSize: 11, color: TempleTheme.textMuted, lineHeight: 18 },
-  // Toggle styles
-  toggleRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: TempleTheme.bgCard, borderRadius: 10, padding: TempleSpacing.sm,
-    borderWidth: 1, borderColor: TempleTheme.goldDark + '20', marginBottom: TempleSpacing.xs,
-  },
-  toggleRowActive: { borderColor: TempleTheme.goldDark },
-  toggleInfo: { flex: 1, marginRight: TempleSpacing.sm },
-  toggleLabel: { fontSize: TempleFonts.small, color: TempleTheme.textLight, fontWeight: '600' },
-  toggleDesc: { fontSize: 11, color: TempleTheme.textMuted, marginTop: 2 },
-  toggleSwitch: {
-    width: 48, height: 28, borderRadius: 14, backgroundColor: TempleTheme.bgDark + '80',
-    justifyContent: 'center', paddingHorizontal: 3,
-  },
-  toggleSwitchOn: { backgroundColor: TempleTheme.goldDark },
-  toggleKnob: {
-    width: 22, height: 22, borderRadius: 11, backgroundColor: TempleTheme.textMuted,
-  },
-  toggleKnobOn: { backgroundColor: TempleTheme.goldLight, alignSelf: 'flex-end' },
-  // Lunar calendar
-  lunarCard: {
-    backgroundColor: TempleTheme.bgCard, borderRadius: 12, padding: TempleSpacing.md,
-    marginBottom: TempleSpacing.md, borderWidth: 1, borderColor: TempleTheme.goldDark + '20',
-  },
-  lunarTitle: { fontSize: TempleFonts.small, color: TempleTheme.goldLight, fontWeight: '700', marginBottom: 6 },
-  lunarDate: { fontSize: TempleFonts.body, color: TempleTheme.textLight, fontWeight: '600', marginBottom: 8 },
-  jieqi: { color: TempleTheme.success, fontWeight: '700' },
-  godBirthday: { color: TempleTheme.redLight, fontWeight: '700' },
-  lunarRow: { flexDirection: 'row', marginBottom: 4 },
-  lunarLabel: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, width: 36 },
-  lunarValue: { fontSize: TempleFonts.small, color: TempleTheme.textLight, flex: 1 },
 });

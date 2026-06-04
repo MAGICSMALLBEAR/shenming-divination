@@ -1,8 +1,6 @@
-// AI 解籤服務 - 支援多種 LLM 後端
-// 預設使用 OpenAI 相容 API (也可用 DeepSeek 等)
 import { Platform } from 'react-native';
+import { normalizeInterpretationText } from './interpretation';
 
-// Android 模擬器用 10.0.2.2，iOS 模擬器用 localhost，實體手機需設定環境變數
 const getDefaultApiUrl = () => {
   if (Platform.OS === 'android') return 'http://10.0.2.2:3001/api/interpret';
   return 'http://localhost:3001/api/interpret';
@@ -18,6 +16,65 @@ interface AIInterpretRequest {
   poemMeaning: string;
   poemStory: string;
   poemLevel: string;
+}
+
+const categoryContext: Record<string, string> = {
+  career: '工作與事業',
+  love: '感情關係',
+  wealth: '財務與進帳',
+  health: '健康與身心',
+  study: '學業與考試',
+  family: '家庭與家運',
+  travel: '出行與變動',
+  general: '近期整體運勢',
+};
+
+function buildFallbackInterpretation(params: AIInterpretRequest): string {
+  const categoryLabel = categoryContext[params.questionCategory] ?? categoryContext.general;
+  const isPositive = params.poemLevel.includes('上') || params.poemLevel.includes('吉');
+  const isCautious = params.poemLevel.includes('下') || params.poemLevel.includes('凶');
+
+  const summary = isPositive
+    ? `${params.godName}給出的訊號偏正面，這題有機會順勢推進，但仍要踏實行動。`
+    : isCautious
+      ? `${params.godName}這次更像是在提醒你放慢腳步，先穩住再決定。`
+      : `${params.godName}給的是觀察型提示，現在最重要的是看清局勢再動。`;
+
+  const insight = `這次你問的是${categoryLabel}。籤詩白話提到「${params.poemMeaning.slice(0, 28)}」，表示事情的關鍵不只在結果，也在你的節奏與判斷。`;
+
+  const action = isPositive
+    ? '先選一個最小但清楚的行動，在三天內主動推進。'
+    : isCautious
+      ? '先整理手上的風險與不確定因素，再決定要不要往前。'
+      : '先記錄現況，讓自己知道真正卡住的是哪一個環節。';
+
+  const caution = isCautious
+    ? '不要因一時心急或外界壓力做出太快的承諾。'
+    : '避免同時分心處理太多方向，否則會把原本可解的事做亂。';
+
+  const followUp = params.question
+    ? `可以追問：「關於${params.question}，我下一步最該確認的是什麼？」`
+    : '可以追問時間點、阻礙來源，或最適合先處理的那一步。';
+
+  return normalizeInterpretationText(
+    [
+      '【一句結論】',
+      summary,
+      '',
+      '【籤意重點】',
+      insight,
+      '',
+      '【建議行動】',
+      action,
+      '',
+      '【需要留意】',
+      caution,
+      '',
+      '【適合追問】',
+      followUp,
+    ].join('\n'),
+    params.question
+  );
 }
 
 export async function getAIInterpretation(params: AIInterpretRequest): Promise<string> {
@@ -40,59 +97,15 @@ export async function getAIInterpretation(params: AIInterpretRequest): Promise<s
     }
 
     const data = await response.json();
-    return data.interpretation;
+    const rawText =
+      typeof data?.interpretation === 'string' ? data.interpretation : buildFallbackInterpretation(params);
+
+    return normalizeInterpretationText(rawText, params.question);
   } catch (error) {
-    console.warn('AI 解籤服務無法連線，使用本地解籤', error instanceof Error ? error.message : error);
-    return generateLocalInterpretation(params);
+    console.warn(
+      'AI interpretation failed, using local fallback.',
+      error instanceof Error ? error.message : error
+    );
+    return buildFallbackInterpretation(params);
   }
-}
-
-// 問事類別對應的語氣描述
-const categoryContext: Record<string, string> = {
-  career: '針對事業工作發展給予建議',
-  love: '針對感情姻緣給予建議',
-  wealth: '針對財運投資給予建議',
-  health: '針對健康身體給予建議',
-  study: '針對學業考試給予建議',
-  family: '針對家庭家運給予建議',
-  travel: '針對出行遷移給予建議',
-  general: '針對整體運勢給予綜合建議',
-};
-
-// 本地離線解籤（含吉凶自適應）
-function generateLocalInterpretation(params: AIInterpretRequest): string {
-  const { godName, poemContent, poemMeaning, poemStory, poemLevel, question, questionCategory } = params;
-  const catLabel = categoryContext[questionCategory] || '針對所求之事給予建議';
-
-  const isGood = poemLevel.includes('上') || poemLevel.includes('大吉') || poemLevel.includes('中吉');
-  const isBad = poemLevel.includes('下');
-
-  const toneOpening = isGood
-    ? `此籤為${poemLevel}，實屬吉兆！${godName}慈悲護佑，你所問之事前景光明。`
-    : isBad
-      ? `此籤為${poemLevel}，但請勿灰心。${godName}提醒你，逆境是成長的養分，心念一轉即是轉機。`
-      : `此籤為${poemLevel}，${godName}示下：一切隨緣而行，心靜自然明朗。`;
-
-  const toneAdvice = isGood
-    ? '既然天時地利，更應積極行動，把握良機。'
-    : isBad
-      ? '建議暫時守成，韜光養晦，多行善事累積福報。時機到了自然撥雲見日。'
-      : '建議保持平常心，不求速成，穩紮穩打。機會往往在你最不經意時出現。';
-
-  return `【${godName}慈悲指引】
-
-${toneOpening}
-
-1. 當前狀況點評（${catLabel}）：
-此籤所示，${poemMeaning.slice(0, 80)}...${poemStory ? `典故出自「${poemStory}」，其中的智慧正好對應你目前${question || '的情況'}。` : ''}
-
-2. 近期注意事項：
-保持心平氣和，注意身邊的人事物變化。時機未到時切勿急躁，時機一到自然水到渠成。多行善事，廣結善緣，自有貴人相助。
-
-3. 行動建議：
-${toneAdvice}遇事多向${godName}祈求，心誠則靈。
-
-${poemContent.split('\n').map(line => `　　${line}`).join('\n')}
-
-願${godName}保佑你，平安順心，心想事成！`;
 }

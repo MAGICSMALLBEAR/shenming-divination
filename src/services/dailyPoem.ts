@@ -1,58 +1,50 @@
-// 每日一籤服務 - 基於日期生成穩定的每日籤詩
 import { leiyushiPoems } from '@/data/poems/leiyushi';
 import type { Poem } from '@/data/poems/leiyushi';
 
-// 根據日期產生固定的籤號（同一天所有人看到同一支籤）
-function getDailyPoemIndex(): number {
-  const today = new Date();
-  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+function hashDate(date: Date): number {
+  const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate()
+  ).padStart(2, '0')}`;
 
-  // 簡單的 hash 函數
   let hash = 0;
-  for (let i = 0; i < dateStr.length; i++) {
-    const char = dateStr.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(index);
+    hash |= 0;
   }
-  return Math.abs(hash) % 100;
+
+  return Math.abs(hash);
+}
+
+function formatWeekday(date: Date): string {
+  return ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][date.getDay()];
 }
 
 export function getDailyPoem(): { poem: Poem; date: string; dayOfWeek: string } {
-  const index = getDailyPoemIndex();
   const today = new Date();
-  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+  const index = hashDate(today) % leiyushiPoems.length;
 
   return {
     poem: leiyushiPoems[index],
-    date: `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`,
-    dayOfWeek: `星期${weekdays[today.getDay()]}`,
+    date: `${today.getFullYear()}/${today.getMonth() + 1}/${today.getDate()}`,
+    dayOfWeek: formatWeekday(today),
   };
 }
 
-// 取得本週每日籤
 export function getWeeklyPoems(): Array<{ poem: Poem; date: string; dayOfWeek: string }> {
-  const result = [];
+  const result: Array<{ poem: Poem; date: string; dayOfWeek: string }> = [];
   const today = new Date();
-  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
 
-  for (let i = 0; i < 7; i++) {
+  for (let index = 0; index < 7; index += 1) {
     const date = new Date(today);
-    date.setDate(today.getDate() - today.getDay() + i);
-    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-    let hash = 0;
-    for (let j = 0; j < dateStr.length; j++) {
-      const char = dateStr.charCodeAt(j);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    const index = Math.abs(hash) % 100;
+    date.setDate(today.getDate() - today.getDay() + index);
+    const poemIndex = hashDate(date) % leiyushiPoems.length;
 
     result.push({
-      poem: leiyushiPoems[index],
+      poem: leiyushiPoems[poemIndex],
       date: `${date.getMonth() + 1}/${date.getDate()}`,
-      dayOfWeek: `週${weekdays[date.getDay()]}`,
+      dayOfWeek: formatWeekday(date),
     });
   }
+
   return result;
 }

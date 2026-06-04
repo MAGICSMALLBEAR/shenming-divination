@@ -198,7 +198,11 @@ export default function HomeScreen() {
                 </View>
               </View>
             )}
-            <QuestionForm onSubmit={(q, cat, name) => div.startMeditation(q, cat, name)} />
+            <QuestionForm
+              selectedGod={div.selectedGod}
+              onSwitchGod={handleSelectGod}
+              onSubmit={(q, cat, name) => div.startMeditation(q, cat, name)}
+            />
           </View>
         );
       case 'meditate':

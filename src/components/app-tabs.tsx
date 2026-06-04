@@ -21,8 +21,16 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="daily">
+        <NativeTabs.Trigger.Label>今日</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="collection">
-        <NativeTabs.Trigger.Label>檔案</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>收藏</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"
@@ -30,7 +38,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="wishes">
-        <NativeTabs.Trigger.Label>心願</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>願望</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"

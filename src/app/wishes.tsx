@@ -13,7 +13,13 @@ import {
 } from 'react-native';
 
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
-import { addWish, fulfillWish, getWishes, removeWish, type Wish } from '@/services/wishTracker';
+import {
+  addWish,
+  fulfillWish,
+  getWishes,
+  removeWish,
+  type Wish,
+} from '@/services/wishTracker';
 
 const REMINDER_OPTIONS = [
   { label: '不提醒', days: 0 },
@@ -37,9 +43,12 @@ function formatReminder(timestamp?: number): string | null {
 
 export default function WishesScreen() {
   const [wishes, setWishes] = useState<Wish[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [newContent, setNewContent] = useState('');
   const [gratitudeText, setGratitudeText] = useState('');
+  const [fulfillmentMethod, setFulfillmentMethod] = useState('');
+  const [reflectionText, setReflectionText] = useState('');
   const [fulfillingId, setFulfillingId] = useState<string | null>(null);
   const [reminderDays, setReminderDays] = useState<number>(0);
 
@@ -52,13 +61,30 @@ export default function WishesScreen() {
     loadData();
   }, [loadData]);
 
+  const resetFulfillmentForm = () => {
+    setFulfillingId(null);
+    setGratitudeText('');
+    setFulfillmentMethod('');
+    setReflectionText('');
+  };
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await loadData();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadData]);
+
   const handleAdd = async () => {
-    if (!newContent.trim()) return;
+    if (!newContent.trim()) {
+      Alert.alert('還沒寫內容', '先寫下你想持續實踐或等待實現的願望。');
+      return;
+    }
 
     const dueDate =
-      reminderDays > 0
-        ? Date.now() + reminderDays * 24 * 60 * 60 * 1000
-        : undefined;
+      reminderDays > 0 ? Date.now() + reminderDays * 24 * 60 * 60 * 1000 : undefined;
 
     await addWish({
       content: newContent.trim(),
@@ -75,32 +101,52 @@ export default function WishesScreen() {
   };
 
   const handleFulfill = async (id: string) => {
-    if (!gratitudeText.trim()) return;
-    await fulfillWish(id, gratitudeText.trim());
-    setFulfillingId(null);
-    setGratitudeText('');
+    if (!gratitudeText.trim()) {
+      Alert.alert('補一段感謝', '還願前先寫下一句感謝，之後回看會更有感。');
+      return;
+    }
+
+    await fulfillWish(id, {
+      gratitude: gratitudeText.trim(),
+      fulfillmentMethod: fulfillmentMethod.trim(),
+      fulfillmentReflection: reflectionText.trim(),
+    });
+
+    resetFulfillmentForm();
     await loadData();
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert('刪除心願', '這筆心願與提醒會一起移除，確定要刪掉嗎？', [
+    Alert.alert('刪除願望', '刪除後就無法復原，確定要移除這個願望嗎？', [
       { text: '取消', style: 'cancel' },
       {
         text: '刪除',
         style: 'destructive',
         onPress: async () => {
           await removeWish(id);
+          if (fulfillingId === id) {
+            resetFulfillmentForm();
+          }
           await loadData();
         },
       },
     ]);
   };
 
+  const handleStartFulfill = (id: string) => {
+    resetFulfillmentForm();
+    setFulfillingId(id);
+  };
+
   const activeWishes = useMemo(
     () =>
       wishes
         .filter((wish) => !wish.fulfilled)
-        .sort((a, b) => (a.dueDate ?? Number.MAX_SAFE_INTEGER) - (b.dueDate ?? Number.MAX_SAFE_INTEGER)),
+        .sort(
+          (left, right) =>
+            (left.dueDate ?? Number.MAX_SAFE_INTEGER) -
+            (right.dueDate ?? Number.MAX_SAFE_INTEGER)
+        ),
     [wishes]
   );
 
@@ -108,35 +154,42 @@ export default function WishesScreen() {
     () =>
       wishes
         .filter((wish) => wish.fulfilled)
-        .sort((a, b) => (b.fulfilledAt ?? 0) - (a.fulfilledAt ?? 0)),
+        .sort((left, right) => (right.fulfilledAt ?? 0) - (left.fulfilledAt ?? 0)),
     [wishes]
+  );
+
+  const summary = useMemo(
+    () => ({
+      active: activeWishes.length,
+      reminded: activeWishes.filter((wish) => Boolean(wish.dueDate)).length,
+      fulfilled: fulfilledWishes.length,
+    }),
+    [activeWishes, fulfilledWishes]
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
       <View style={styles.container}>
-        <Text style={styles.pageTitle}>心願清單</Text>
+        <Text style={styles.pageTitle}>願望與還願</Text>
 
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{activeWishes.length}</Text>
+            <Text style={styles.summaryValue}>{summary.active}</Text>
             <Text style={styles.summaryLabel}>進行中</Text>
           </View>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>
-              {activeWishes.filter((wish) => Boolean(wish.dueDate)).length}
-            </Text>
+            <Text style={styles.summaryValue}>{summary.reminded}</Text>
             <Text style={styles.summaryLabel}>有提醒</Text>
           </View>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{fulfilledWishes.length}</Text>
+            <Text style={styles.summaryValue}>{summary.fulfilled}</Text>
             <Text style={styles.summaryLabel}>已完成</Text>
           </View>
         </View>
 
         <TouchableOpacity style={styles.addBtn} onPress={() => setShowAdd((value) => !value)}>
-          <Text style={styles.addBtnText}>{showAdd ? '收起表單' : '+ 新增心願'}</Text>
+          <Text style={styles.addBtnText}>{showAdd ? '收起新增表單' : '+ 新增願望'}</Text>
         </TouchableOpacity>
 
         {showAdd ? (
@@ -145,7 +198,7 @@ export default function WishesScreen() {
               style={styles.addInput}
               value={newContent}
               onChangeText={setNewContent}
-              placeholder="寫下你想記住、等待或回來檢視的心願..."
+              placeholder="寫下你想持續實踐、等待實現或提醒自己的事情。"
               placeholderTextColor={TempleTheme.textMuted}
               multiline
             />
@@ -174,7 +227,7 @@ export default function WishesScreen() {
             </View>
 
             <TouchableOpacity style={styles.submitBtn} onPress={handleAdd}>
-              <Text style={styles.submitBtnText}>加入心願清單</Text>
+              <Text style={styles.submitBtnText}>加入願望清單</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -184,17 +237,17 @@ export default function WishesScreen() {
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
-              refreshing={false}
-              onRefresh={loadData}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
               tintColor={TempleTheme.gold}
             />
           }
         >
           {!activeWishes.length && !fulfilledWishes.length ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>願</Text>
-              <Text style={styles.emptyText}>目前還沒有心願</Text>
-              <Text style={styles.emptyHint}>把想持續觀察的事先留在這裡，之後比較容易回來對照。</Text>
+              <Text style={styles.emptyIcon}>🙏</Text>
+              <Text style={styles.emptyText}>目前還沒有願望紀錄</Text>
+              <Text style={styles.emptyHint}>可以從求籤結果或自己的生活計畫開始累積。</Text>
             </View>
           ) : null}
 
@@ -207,7 +260,7 @@ export default function WishesScreen() {
 
               <Text style={styles.wishContent}>{wish.content}</Text>
               {wish.poemNumber > 0 ? (
-                <Text style={styles.wishPoem}>對應籤詩：第 {wish.poemNumber} 籤</Text>
+                <Text style={styles.wishPoem}>來自第 {wish.poemNumber} 籤</Text>
               ) : null}
               {wish.dueDate ? (
                 <View style={styles.reminderRow}>
@@ -222,7 +275,23 @@ export default function WishesScreen() {
                     style={styles.gratitudeInput}
                     value={gratitudeText}
                     onChangeText={setGratitudeText}
-                    placeholder="寫下結果、感謝或你後來學到的事..."
+                    placeholder="完成後想感謝什麼？這次學到了什麼？"
+                    placeholderTextColor={TempleTheme.textMuted}
+                    multiline
+                  />
+                  <TextInput
+                    style={styles.gratitudeInput}
+                    value={fulfillmentMethod}
+                    onChangeText={setFulfillmentMethod}
+                    placeholder="你是怎麼還願或實際落地的？例如：去拜拜、回饋家人、完成計畫。"
+                    placeholderTextColor={TempleTheme.textMuted}
+                    multiline
+                  />
+                  <TextInput
+                    style={styles.gratitudeInput}
+                    value={reflectionText}
+                    onChangeText={setReflectionText}
+                    placeholder="補一段回顧，之後回來看會很有力量。"
                     placeholderTextColor={TempleTheme.textMuted}
                     multiline
                   />
@@ -231,9 +300,9 @@ export default function WishesScreen() {
                       onPress={() => handleFulfill(wish.id)}
                       style={styles.gratitudeSaveBtn}
                     >
-                      <Text style={styles.gratitudeSaveText}>完成</Text>
+                      <Text style={styles.gratitudeSaveText}>完成還願</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setFulfillingId(null)}>
+                    <TouchableOpacity onPress={resetFulfillmentForm}>
                       <Text style={styles.gratitudeCancelText}>取消</Text>
                     </TouchableOpacity>
                   </View>
@@ -241,10 +310,10 @@ export default function WishesScreen() {
               ) : (
                 <View style={styles.wishActions}>
                   <TouchableOpacity
-                    onPress={() => setFulfillingId(wish.id)}
+                    onPress={() => handleStartFulfill(wish.id)}
                     style={styles.fulfillBtn}
                   >
-                    <Text style={styles.fulfillBtnText}>標記完成</Text>
+                    <Text style={styles.fulfillBtnText}>開始還願</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => handleDelete(wish.id)}>
                     <Text style={styles.deleteBtnText}>刪除</Text>
@@ -256,7 +325,7 @@ export default function WishesScreen() {
 
           {fulfilledWishes.length ? (
             <>
-              <Text style={styles.sectionTitle}>已完成</Text>
+              <Text style={styles.sectionTitle}>已完成與還願</Text>
               {fulfilledWishes.map((wish) => (
                 <View key={wish.id} style={[styles.wishCard, styles.wishCardFulfilled]}>
                   <View style={styles.wishHeader}>
@@ -266,8 +335,14 @@ export default function WishesScreen() {
                     </Text>
                   </View>
                   <Text style={styles.wishContent}>{wish.content}</Text>
+                  {wish.fulfillmentMethod ? (
+                    <Text style={styles.fulfillmentMeta}>還願方式：{wish.fulfillmentMethod}</Text>
+                  ) : null}
                   {wish.gratitude ? (
-                    <Text style={styles.gratitudeText}>回顧：{wish.gratitude}</Text>
+                    <Text style={styles.gratitudeText}>感謝：{wish.gratitude}</Text>
+                  ) : null}
+                  {wish.fulfillmentReflection ? (
+                    <Text style={styles.reflectionText}>回顧：{wish.fulfillmentReflection}</Text>
                   ) : null}
                 </View>
               ))}
@@ -436,7 +511,7 @@ const styles = StyleSheet.create({
     borderColor: TempleTheme.goldDark + '30',
   },
   wishCardFulfilled: {
-    opacity: 0.78,
+    opacity: 0.84,
   },
   wishHeader: {
     flexDirection: 'row',
@@ -514,6 +589,7 @@ const styles = StyleSheet.create({
   },
   gratitudeForm: {
     marginTop: TempleSpacing.sm,
+    gap: TempleSpacing.xs,
   },
   gratitudeInput: {
     backgroundColor: TempleTheme.bgDark + '40',
@@ -546,11 +622,23 @@ const styles = StyleSheet.create({
   gratitudeCancelText: {
     color: TempleTheme.textMuted,
   },
+  fulfillmentMeta: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.textMuted,
+    marginTop: TempleSpacing.sm,
+    lineHeight: 20,
+  },
   gratitudeText: {
     fontSize: TempleFonts.small,
     color: TempleTheme.goldLight,
     marginTop: TempleSpacing.sm,
     fontStyle: 'italic',
+    lineHeight: 20,
+  },
+  reflectionText: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.textMuted,
+    marginTop: TempleSpacing.xs,
     lineHeight: 20,
   },
 });

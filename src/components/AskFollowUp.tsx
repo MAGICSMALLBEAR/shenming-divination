@@ -1,6 +1,13 @@
-// AI 追問元件 - 嵌入結果頁底部
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 
 interface AskFollowUpProps {
@@ -9,7 +16,10 @@ interface AskFollowUpProps {
   aiInterpretation?: string | null;
 }
 
-interface Message { role: 'user' | 'ai'; text: string }
+interface Message {
+  role: 'user' | 'ai';
+  text: string;
+}
 
 export function AskFollowUp({ godName, poemContent, aiInterpretation }: AskFollowUpProps) {
   const [expanded, setExpanded] = useState(false);
@@ -17,45 +27,68 @@ export function AskFollowUp({ godName, poemContent, aiInterpretation }: AskFollo
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const apiUrl = process.env.EXPO_PUBLIC_AI_API_URL?.replace('/api/interpret', '/api/chat')
-    || (require('react-native').Platform.OS === 'android'
+  const apiUrl =
+    process.env.EXPO_PUBLIC_AI_API_URL?.replace('/api/interpret', '/api/chat') ||
+    (require('react-native').Platform.OS === 'android'
       ? 'http://10.0.2.2:3001/api/chat'
       : 'http://localhost:3001/api/chat');
 
-  const handleAsk = async () => {
-    if (!input.trim() || isLoading) return;
-    const q = input.trim();
+  const quickPrompts = [
+    `關於這支籤，我最該先做的事是什麼？`,
+    `這支籤比較像提醒我暫緩，還是其實可以穩穩往前？`,
+    `如果我想再確認一次，最值得追問的是哪個方向？`,
+  ];
+
+  const handleAsk = async (rawInput?: string) => {
+    const question = (rawInput ?? input).trim();
+    if (!question || isLoading) return;
+
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: q }]);
+    setMessages((prev) => [...prev, { role: 'user', text: question }]);
     setIsLoading(true);
 
     try {
       const context = [
-        { role: 'system', content: `你是【${godName}】，信眾剛得到以下籤詩：「${poemContent}」。已解籤如下：${aiInterpretation || ''}。請繼續以慈悲智慧的語氣回答信眾的追問。回應請控制在150字內。` },
-        ...messages.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text })),
-        { role: 'user', content: q },
+        {
+          role: 'system',
+          content: [
+            `你正在延續解讀 ${godName} 的籤詩。`,
+            `籤文：${poemContent}`,
+            aiInterpretation ? `先前解讀：${aiInterpretation}` : '',
+            '請用溫和、具體、短而有用的方式回答，盡量給下一步。',
+          ]
+            .filter(Boolean)
+            .join('\n'),
+        },
+        ...messages.map((message) => ({
+          role: message.role === 'user' ? 'user' : 'assistant',
+          content: message.text,
+        })),
+        { role: 'user', content: question },
       ];
 
-      const resp = await fetch(apiUrl, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: context }),
       });
 
-      if (resp.ok) {
-        const data = await resp.json();
-        setMessages(prev => [...prev, { role: 'ai', text: data.reply }]);
-      } else {
+      if (!response.ok) {
         throw new Error('API error');
       }
+
+      const data = await response.json();
+      setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
     } catch {
-      // 本地後備回應
       const fallbacks = [
-        `「${q}」— 此事當以平常心對待，${godName}已在籤中給予指引，細細體會自有答案。`,
-        `信眾勿急，${godName}提示：行事需循序漸進，時機一到自然水到渠成。`,
-        `誠心祈求，${godName}庇佑。你所問之事，靜下心來思考，答案其實已在你心中。`,
+        `以這支${godName}的籤意來看，先不要急著求一次到位，先做一個最明確的小步驟會更好。`,
+        `如果你現在心裡還很亂，代表這題更需要先整理局勢，而不是立刻做大決定。`,
+        `你可以把問題再縮小一點，先問「我下一步最該確認什麼」，通常會更清楚。`,
       ];
-      setMessages(prev => [...prev, { role: 'ai', text: fallbacks[messages.length % 3] }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'ai', text: fallbacks[prev.length % fallbacks.length] },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -64,45 +97,61 @@ export function AskFollowUp({ godName, poemContent, aiInterpretation }: AskFollo
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.toggleBtn} onPress={() => setExpanded(!expanded)}>
-        <Text style={styles.toggleText}>🙏 向{godName}追問</Text>
+        <Text style={styles.toggleText}>和 {godName} 再追問一次</Text>
         <Text style={styles.toggleArrow}>{expanded ? '▲' : '▼'}</Text>
       </TouchableOpacity>
 
-      {expanded && (
+      {expanded ? (
         <View style={styles.panel}>
-          {messages.map((m, i) => (
-            <View key={i} style={[styles.bubble, m.role === 'user' ? styles.userBubble : styles.aiBubble]}>
-              <Text style={styles.bubbleRole}>{m.role === 'user' ? '🙋 你' : `🏛️ ${godName}`}</Text>
-              <Text style={styles.bubbleText}>{m.text}</Text>
+          <View style={styles.quickPromptList}>
+            {quickPrompts.map((prompt) => (
+              <TouchableOpacity
+                key={prompt}
+                style={styles.quickPromptChip}
+                onPress={() => handleAsk(prompt)}
+              >
+                <Text style={styles.quickPromptText}>{prompt}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {messages.map((message, index) => (
+            <View
+              key={`${message.role}-${index}`}
+              style={[styles.bubble, message.role === 'user' ? styles.userBubble : styles.aiBubble]}
+            >
+              <Text style={styles.bubbleRole}>
+                {message.role === 'user' ? '你' : `${godName}解讀`}
+              </Text>
+              <Text style={styles.bubbleText}>{message.text}</Text>
             </View>
           ))}
 
-          {isLoading && (
+          {isLoading ? (
             <View style={styles.loading}>
               <ActivityIndicator size="small" color={TempleTheme.goldLight} />
-              <Text style={styles.loadingText}>{godName}思考中...</Text>
+              <Text style={styles.loadingText}>{godName}正在整理回應...</Text>
             </View>
-          )}
+          ) : null}
 
           <View style={styles.inputRow}>
             <TextInput
               style={styles.input}
               value={input}
               onChangeText={setInput}
-              placeholder={`問${godName}任何事...`}
+              placeholder={`想再問 ${godName} 什麼？`}
               placeholderTextColor={TempleTheme.textMuted}
-              onSubmitEditing={handleAsk}
             />
             <TouchableOpacity
               style={[styles.askBtn, (!input.trim() || isLoading) && styles.askBtnDisabled]}
-              onPress={handleAsk}
+              onPress={() => handleAsk()}
               disabled={!input.trim() || isLoading}
             >
-              <Text style={styles.askBtnText}>問</Text>
+              <Text style={styles.askBtnText}>送出</Text>
             </TouchableOpacity>
           </View>
         </View>
-      )}
+      ) : null}
     </View>
   );
 }
@@ -110,37 +159,102 @@ export function AskFollowUp({ godName, poemContent, aiInterpretation }: AskFollo
 const styles = StyleSheet.create({
   container: { marginTop: TempleSpacing.sm },
   toggleBtn: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: TempleSpacing.sm, paddingHorizontal: TempleSpacing.md,
-    backgroundColor: TempleTheme.bgCard, borderRadius: 10,
-    borderWidth: 1, borderColor: TempleTheme.gold + '30',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: TempleSpacing.sm,
+    paddingHorizontal: TempleSpacing.md,
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: TempleTheme.gold + '30',
   },
-  toggleText: { fontSize: TempleFonts.small, color: TempleTheme.goldLight, fontWeight: '600' },
+  toggleText: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.goldLight,
+    fontWeight: '600',
+  },
   toggleArrow: { fontSize: 10, color: TempleTheme.textMuted },
   panel: {
-    marginTop: TempleSpacing.xs, backgroundColor: TempleTheme.bgCard,
-    borderRadius: 12, borderWidth: 1, borderColor: TempleTheme.gold + '20',
+    marginTop: TempleSpacing.xs,
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: TempleTheme.gold + '20',
     overflow: 'hidden',
   },
+  quickPromptList: {
+    padding: TempleSpacing.sm,
+    gap: TempleSpacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: TempleTheme.goldDark + '15',
+  },
+  quickPromptChip: {
+    borderRadius: 10,
+    backgroundColor: TempleTheme.bgDark + '50',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '20',
+  },
+  quickPromptText: {
+    color: TempleTheme.textLight,
+    fontSize: 12,
+    lineHeight: 18,
+  },
   bubble: { padding: TempleSpacing.sm, margin: TempleSpacing.xs, borderRadius: 10 },
-  userBubble: { backgroundColor: TempleTheme.goldDark + '20', alignSelf: 'flex-end', maxWidth: '80%' },
-  aiBubble: { backgroundColor: TempleTheme.bgDark + '50', alignSelf: 'flex-start', maxWidth: '90%' },
-  bubbleRole: { fontSize: 11, color: TempleTheme.goldLight, fontWeight: '700', marginBottom: 4 },
-  bubbleText: { fontSize: TempleFonts.small, color: TempleTheme.textLight, lineHeight: 20 },
-  loading: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: TempleSpacing.sm },
+  userBubble: {
+    backgroundColor: TempleTheme.goldDark + '20',
+    alignSelf: 'flex-end',
+    maxWidth: '80%',
+  },
+  aiBubble: {
+    backgroundColor: TempleTheme.bgDark + '50',
+    alignSelf: 'flex-start',
+    maxWidth: '90%',
+  },
+  bubbleRole: {
+    fontSize: 11,
+    color: TempleTheme.goldLight,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  bubbleText: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.textLight,
+    lineHeight: 20,
+  },
+  loading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: TempleSpacing.sm,
+  },
   loadingText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
   inputRow: {
-    flexDirection: 'row', padding: TempleSpacing.sm, gap: TempleSpacing.xs,
-    borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '20',
+    flexDirection: 'row',
+    padding: TempleSpacing.sm,
+    gap: TempleSpacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: TempleTheme.goldDark + '20',
   },
   input: {
-    flex: 1, backgroundColor: TempleTheme.bgDark + '40', borderRadius: 8,
-    padding: 8, fontSize: TempleFonts.small, color: TempleTheme.textLight,
+    flex: 1,
+    backgroundColor: TempleTheme.bgDark + '40',
+    borderRadius: 8,
+    padding: 8,
+    fontSize: TempleFonts.small,
+    color: TempleTheme.textLight,
   },
   askBtn: {
-    width: 40, height: 36, borderRadius: 8, backgroundColor: TempleTheme.goldDark,
-    justifyContent: 'center', alignItems: 'center',
+    minWidth: 54,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: TempleTheme.goldDark,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
   },
   askBtnDisabled: { opacity: 0.4 },
-  askBtnText: { color: '#FFF', fontWeight: '700' },
+  askBtnText: { color: '#FFF', fontWeight: '700', fontSize: 12 },
 });
