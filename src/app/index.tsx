@@ -24,6 +24,7 @@ import { getLastPoemContext, getSettings } from '@/services/storage';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritual-styles';
 import { gods } from '@/data/gods';
+import { getGodCardImage } from '@/data/godImages';
 
 export default function HomeScreen() {
   const div = useDivination();
@@ -40,6 +41,7 @@ export default function HomeScreen() {
   const isTablet = width >= 768;
   const isDesktop = width >= 1100;
   const pageMaxWidth = isDesktop ? 1180 : isTablet ? 960 : 760;
+  const selectedGodCardImage = getGodCardImage(div.selectedGod?.id);
 
   // 載入設定後產生個人化運勢
   React.useEffect(() => {
@@ -187,7 +189,9 @@ export default function HomeScreen() {
             {div.selectedGod && (
               <View style={[styles.selectedGodBanner, isCompact && styles.selectedGodBannerCompact]}>
                 <View style={[styles.selectedGodPortrait, isCompact && styles.selectedGodPortraitCompact, { borderColor: div.selectedGod.accentColor + '55' }]}>
-                  <Image source={div.selectedGod.image} style={styles.selectedGodImage} contentFit="cover" transition={200} />
+                  {selectedGodCardImage ? (
+                    <Image source={selectedGodCardImage} style={styles.selectedGodImage} contentFit="cover" transition={200} />
+                  ) : null}
                   <View style={[styles.selectedGodPortraitOverlay, { backgroundColor: div.selectedGod.primaryColor + '18' }]} />
                 </View>
                 <View style={[styles.selectedGodMeta, isCompact && styles.selectedGodMetaCompact]}>

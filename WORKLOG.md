@@ -1,292 +1,379 @@
-# 工作日誌 - 神明占卜 App
+﻿## 2026-06-05 睡前整理
+
+### 本輪主題
+- 神明新圖資產接線
+- 補齊 `soft` 柔邊版
+- 產出結果頁用 `closeup` 近景版
+
+### 已完成
+| 項目 | 狀態 | 備註 |
+|------|------|------|
+| App 改吃新神像圖 | 完成 | `GodSelector`、首頁選神後 banner 改吃 `generated/cards/*` |
+| 結果頁近景版接線 | 完成 | `PoemCard` 改吃 `generated/closeups/*`，頭像框改成直式比例 |
+| 抽籤動畫 soft 圖接線 | 完成 | `DrawAnimation` 改吃 `generated/soft/*` |
+| 其餘 7 位 soft 圖補齊 | 完成 | 新增 `baoshengdadi / fudezhengshen / mazu / wangye / wenchangdijun / zhugewuhou / zhushengniangniang` |
+| closeup 近景版一套 | 完成 | 9 位神明皆已輸出到 `assets/images/gods/generated/closeups/` |
+| 型別檢查 | 完成 | `./node_modules/.bin/tsc.cmd --noEmit` 通過 |
+
+### 這次新增 / 修改檔案
+| 檔案 | 說明 |
+|------|------|
+| `src/data/godImages.ts` | 集中管理 `card / soft / closeup` 三套圖 |
+| `src/components/GodSelector.tsx` | 神明卡改吃新 `card` 圖 |
+| `src/app/index.tsx` | 選神後 banner 改吃新 `card` 圖 |
+| `src/components/DrawAnimation.tsx` | 抽籤動畫縮圖改吃 `soft` 圖 |
+| `src/components/PoemCard.tsx` | 結果頁改吃 `closeup` 圖並調整頭像容器比例 |
+| `scripts/generate-god-derived-assets.ps1` | 從 `cards` 批次產出 `soft` 與 `closeup` |
+| `assets/images/gods/generated/soft/*` | 補齊剩餘 7 張 soft 圖 |
+| `assets/images/gods/generated/closeups/*` | 新增 9 張結果頁近景圖 |
+
+### 目前 git 狀態
+```text
+M  src/app/index.tsx
+M  src/components/DrawAnimation.tsx
+M  src/components/GodSelector.tsx
+M  src/components/PoemCard.tsx
+?? assets/images/gods/generated/
+?? scripts/generate-god-derived-assets.ps1
+?? src/data/godImages.ts
+```
+
+### 明天第一優先代辦
+1. 開 Web 或裝置實機檢查首頁神明卡、選神後 banner、結果頁頭像比例是否順眼。
+2. 如果結果頁近景太近或太高，優先微調 `scripts/generate-god-derived-assets.ps1` 內的 `$cropTopBySlug` 後重跑。
+3. 視畫面效果決定要不要把 `soft` 圖也套到其他頁面，或只保留給抽籤動畫。
+4. 補 `assets/images/gods/generated/README.md`，把 `closeups/` 與產生方式寫進去。
+
+### 待確認 / 風險
+- 這輪只做了靜態與圖片抽查，還沒完成實際瀏覽器畫面 QA。
+- `WORKLOG.md` 舊內容在終端顯示有亂碼，但檔案本身仍可讀；若明天 IDE 也顯示異常，再一起整理編碼。
+- `soft` 目前是用程式從 `card` 做羽化，不是重新 AI 生成；一致性高，但若想更夢幻可再追加 AI 版。
+
+### 明天接手指令
+```powershell
+cd c:\Users\user\Desktop\神明占卜\shenming-divination
+./node_modules/.bin/tsc.cmd --noEmit
+./scripts/generate-god-derived-assets.ps1
+```
+
+---
+# 撌乩??亥? - 蟡??? App
 
 ---
 
 ## 2026-05-31
 
-### Commit `d89f97f` — 四大核心差距補完
+### Commit `d89f97f` ???之?詨?撌株?鋆?
 
-#### 生辰八字整合
-| 檔案 | 內容 |
+#### ?劓?怠??游?
+| 瑼? | ?批捆 |
 |------|------|
-| `src/services/bazi.ts`（新建） | 生肖/天干地支/五行/相合相沖/守護神明計算；支援西元或民國年份輸入 |
-| `src/app/settings.tsx` | 生辰改為年份輸入 → 即時顯示八字卡（五行色標、本命年紅框警示）；偏好神明自動 🌟 標示守護神 |
-| `src/components/GodSelector.tsx` | 讀取生辰設定後給守護神顯示「守護」金徽章；神明漢字大字肖像（關/觀/媽/王/保/土/娘/文/孔）取代 emoji |
+| `src/services/bazi.ts`嚗撱綽? | ??/憭拙僕?唳/鈭?/?詨??豢?/摰風蟡?閮?嚗?渲正??瘞?撟港遢頛詨 |
+| `src/app/settings.tsx` | ?劓?寧撟港遢頛詨 ???單?憿舐內?怠??∴?鈭??脫???賢僑蝝?霅衣內嚗??末蟡??芸? ?? 璅內摰風蟡?|
+| `src/components/GodSelector.tsx` | 霈??颲啗身摰?蝯血?霅瑞?憿舐內??霅瑯?敺賜?嚗??慰摮之摮?????閫/慦???靽???憡???摮??誨 emoji |
 
-#### 每日運勢面板
-| 檔案 | 內容 |
+#### 瘥??Ｘ
+| 瑼? | ?批捆 |
 |------|------|
-| `src/services/dailyFortune.ts`（新建） | 財/事/愛/康五維評分（1–5星）、幸運色、方位、數字、吉時、五行 — 依日期確定性生成 |
-| `src/app/index.tsx` | 首頁 GodSelector 上方加折疊卡，預設收起，點擊展開五維評分詳情 |
+| `src/services/dailyFortune.ts`嚗撱綽? | 鞎?鈭???摨瑚?蝬剛???1?????兢??雿摮???銵???靘?Ⅱ摰抒???|
+| `src/app/index.tsx` | 擐? GodSelector 銝???嚗?閮剜韏瘀?暺?撅?鈭雁閰?閰單? |
 
-#### 音效系統升級
-| 檔案 | 內容 |
+#### ?單?蝟餌絞??
+| 瑼? | ?批捆 |
 |------|------|
-| `src/services/proceduralSound.ts` | expo-av 架構就位（音檔放 assets/sounds/ 即啟用）；合成音升級：木魚(上香)、清磬(聖筊)、竹片(擲筊)、銅鑼(結果) |
-| `src/components/IncenseRitual.tsx` | 插香時觸發木魚聲 |
-| `src/app/index.tsx` | 結果揭曉時觸發銅鑼聲 |
+| `src/services/proceduralSound.ts` | expo-av ?嗆?撠曹?嚗瑼 assets/sounds/ ?喳??剁?嚗????嚗擳?銝?)??蝤???)?姘???脩?)????蝯?) |
+| `src/components/IncenseRitual.tsx` | ???孛?潭擳 |
+| `src/app/index.tsx` | 蝯??剜??孛?潮??潸 |
 
 ---
 
-### Commit `0229510` — 補完 6 項功能缺口
-
-| # | 功能 | 實作 |
+### Commit `0229510` ??鋆? 6 ???賜撩??
+| # | ? | 撖虫? |
 |---|------|------|
-| 1 | **許願按鈕** | 結果頁 action bar 加 🙏 許願，一鍵呼叫 `addWish`；已許願顯示 ✅ |
-| 2 | **農民曆補齊** | 2026-06 ~ 12 共 7 個月×30天，含節氣、神明聖誕（中元、中秋、重陽等） |
-| 3 | **Settings 孔明神數** | 偏好神明選單補上 id:9 孔明神數 |
-| 4 | **Stats 週圖** | 直立柱狀圖，高度依最大值等比縮放 |
-| 5 | **圖卡分享** | PoemCard 加「🖼️ 圖卡分享」，Native 截圖；Web 降級複製文字 |
-| 6 | **Chat 籤詩上下文** | 求完籤自動存最後籤詩；進入對話頁 24 小時內顯示籤名/吉凶/問事，API system prompt 含籤詩內容 |
+| 1 | **閮梢???** | 蝯???action bar ???? 閮梢?嚗??萄??`addWish`嚗歇閮梢?憿舐內 ??|
+| 2 | **颲脫???朣?* | 2026-06 ~ 12 ??7 ???30憭抬??怎?瘞????隤?銝剖??葉蝘??賜?嚗?|
+| 3 | **Settings 摮?蟡** | ?末蟡??詨鋆? id:9 摮?蟡 |
+| 4 | **Stats ?勗?** | ?渡??梁???擃漲靘?憭批潛?瘥葬??|
+| 5 | **??澈** | PoemCard ??潘? ??澈??Native ?芸?嚗eb ??銴ˊ?? |
+| 6 | **Chat 蝐方帘銝???* | 瘙?蝐方???敺惜閰抬??脣撠店??24 撠??折＊蝷箇惜???/??嚗PI system prompt ?怎惜閰拙摰?|
 
 ---
 
-### Commit `2d3ba02` — 孔明神數完整流程 + TypeScript 修復
+### Commit `2d3ba02` ??摮?蟡摰瘚? + TypeScript 靽桀儔
 
-| 項目 | 內容 |
+| ? | ?批捆 |
 |------|------|
-| 孔明神數流程 | `enter-zhuge-number` FlowStep；冥想後跳擲筊改進 `ZhugeNumberInput`（廟宇風數字鍵盤）；報數 → `drawZhugePoem(n)` |
-| 諸葛神數補齊 | 第 1–64 卦完整資料（六十四卦對應易經卦象，均含白話/典故/解曰） |
-| PoemCard 升級 | 顯示卦名（title）+ 卦序（ganzhi）；複製/朗讀/分享文案含卦名 |
-| TypeScript 全清 | absoluteFillObject、RefreshControl、removeItem export、NotificationBehavior、href as const — 共 6 項 |
+| 摮?蟡瘚? | `enter-zhuge-number` FlowStep嚗?喳?頝單蝑??`ZhugeNumberInput`嚗?摰◢?詨??萇嚗??望 ??`drawZhugePoem(n)` |
+| 隢貉?蟡鋆? | 蝚?1??4 ?血??渲????剖??撠????西情嚗??怎閰??豢?/閫?嚗?|
+| PoemCard ?? | 憿舐內?血?嚗itle嚗? ?血?嚗anzhi嚗?銴ˊ/??/?澈???怠??|
+| TypeScript ?冽? | absoluteFillObject?efreshControl?emoveItem export?otificationBehavior?ref as const ????6 ??|
 
 ---
 
-## 2026-06-01（今日）
+## 2026-06-01嚗??伐?
 
-### Commit `bdbc34a` — 問事自由輸入
-| 項目 | 內容 |
+### Commit `bdbc34a` ?????芰頛詨
+| ? | ?批捆 |
 |------|------|
-| 變更 | GodSelector QuestionForm 補上 TextInput，用戶可自由打字輸入所求之事（原有 6 個 chip 預設保留並存） |
-| 狀態 | ✅ 完成 🔴#3 |
+| 霈 | GodSelector QuestionForm 鋆? TextInput嚗?嗅?芰??頛詨?瘙?鈭??? 6 ??chip ?身靽?銝血?嚗?|
+| ???| ??摰? ?#3 |
 
-### Commit `8e1e3e9` — 每日運勢依生肖/五行個人化
-| 項目 | 內容 |
+### Commit `8e1e3e9` ??瘥?靘???鈭??犖??| ? | ?批捆 |
 |------|------|
-| 變更 | dailyFortune.ts 加入生肖參數，部分類別依五行相生相剋調整分數，不再純隨機 |
-| 狀態 | ✅ 完成 🔴#4 |
+| 霈 | dailyFortune.ts ????嚗???乩?鈭??貊??詨?隤踵?嚗????冽? |
+| ???| ??摰? ?#4 |
 
-### Commit `e1fba9e` — 神明聖誕推播通知
-| 項目 | 內容 |
+### Commit `e1fba9e` ??蟡????冽?
+| ? | ?批捆 |
 |------|------|
-| 變更 | 接到 notifications.ts 排程，神明聖誕前一天推播提醒，lunarCalendar.ts 農曆神誕資料已對接 |
-| 狀態 | ✅ 完成 🟡#6 |
+| 霈 | ?亙 notifications.ts ??嚗???隤?銝憭拇?剜???lunarCalendar.ts 颲脫?蟡?鞈?撌脣???|
+| ???| ??摰? ?#6 |
 
-### Commit `292511e` — Stats 頁年度回顧卡
-| 項目 | 內容 |
+### Commit `292511e` ??Stats ?僑摨血?憿批
+| ? | ?批捆 |
 |------|------|
-| 變更 | Stats 頁底部加「年度回顧」卡：總次數、最常問的事、最常求的神、最高吉籤 |
-| 狀態 | ✅ 完成 🟡#8 |
+| 霈 | Stats ???典??僑摨血?憿扼嚗蜇甈⊥??撣詨?????撣豢?????擃?蝐?|
+| ???| ??摰? ?#8 |
 
-### Commit `4186209` — 籤詩系統全面重整
-| 項目 | 內容 |
+### Commit `4186209` ??蝐方帘蝟餌絞?券?
+| ? | ?批捆 |
 |------|------|
-| 雷雨師百首校正 | 100 首籤詩重新校對，修正錯別字與格式不一致 |
-| 觀音靈籤獨立建立 | 新建獨立 dataset，與雷雨師百首區分開來 |
+| ?琿撣怎擐甇?| 100 擐惜閰拚??唳撠?靽格迤?臬摮??澆?銝???|
+| 閫?喲?蝐斤蝡遣蝡?| ?啣遣?函? dataset嚗??琿撣怎擐???靘?|
 
-### Commit `3f251db` — 六十甲子籤全面校正
-| 項目 | 內容 |
+### Commit `3f251db` ???剖??脣?蝐文?Ｘ甇?| ? | ?批捆 |
 |------|------|
-| 六十甲子籤校正 | 60 首六十甲子籤重新校對 |
-| 狀態 | ✅ 籤詩總數更新為：雷雨師百首(100) + 觀音靈籤(獨立) + 六十甲子(60) + 諸葛神數(64) = 224+ |
+| ?剖??脣?蝐斗甇?| 60 擐?摮惜??∪? |
+| ???| ??蝐方帘蝮賣?湔?綽??琿撣怎擐?100) + 閫?喲?蝐??函?) + ?剖??脣?(60) + 隢貉?蟡(64) = 224+ |
 
 ---
 
-## 2026-06-03（今日）
+## 2026-06-03嚗??伐?
 
-### 香爐空爐圖精修（三風格）
-| 檔案 | 說明 |
+### 擐?蝛箇??移靽殷?銝◢?潘?
+| 瑼? | 隤芣? |
 |------|------|
-| `assets/images/ritual/sprites/bronze-censer-empty.png` | 青銅龍紋空爐：邊緣 solidity 0.7192→0.7410，3.8% 像素處理（邊緣平滑 + 腳座強化 + 爐口暗化） |
-| `assets/images/ritual/sprites/celadon-censer-empty.png` | 青瓷蓮紋空爐：邊緣本已最佳(0.7984)，微量處理 2.7%（腳部 detailEnhance + 爐口內壁） |
-| `assets/images/ritual/sprites/cinnabar-censer-empty.png` | 朱漆寺廟空爐：改善最大 solidity 0.7758→0.7968，5% 像素處理（爐口最大，內緣暗化最明顯） |
-| `assets/images/ritual/ai-ritual-styles.png` | 三風格儀式圖集 (1536×1024)，RitualStylePicker 縮圖用 |
-| `assets/images/ritual/sprites/*-flat.png` | 三風格擲筊平杯面 |
-| `assets/images/ritual/sprites/*-round.png` | 三風格擲筊凸杯面 |
+| `assets/images/ritual/sprites/bronze-censer-empty.png` | ??樴?蝛箇?嚗?蝺?solidity 0.7192??.7410嚗?.8% ????嚗?蝺?像皛?+ ?喳漣撘瑕? + ???嚗?|
+| `assets/images/ritual/sprites/celadon-censer-empty.png` | ??桃?蝛箇?嚗?蝺?撌脫?雿?0.7984)嚗凝????2.7%嚗??detailEnhance + ??批?嚗?|
+| `assets/images/ritual/sprites/cinnabar-censer-empty.png` | ?望?撖箏?蝛箇?嚗??憭?solidity 0.7758??.7968嚗?% ????嚗????憭改??抒楠????＊嚗?|
+| `assets/images/ritual/ai-ritual-styles.png` | 銝◢?澆?撘???(1536?1024)嚗itualStylePicker 蝮桀???|
+| `assets/images/ritual/sprites/*-flat.png` | 銝◢?潭蝑像?舫 |
+| `assets/images/ritual/sprites/*-round.png` | 銝◢?潭蝑?舫 |
 
-**處理項目**：
-- **邊緣** — ApproxPolyDP 輪廓平滑 + 邊緣帶 bilateral filter 去噪 + alpha 清理
-- **腳座** — 底部 15% detailEnhance 增強紋理 + medianBlur 除噪
-- **爐口內壁** — distance transform 洞口距離漸層暗化（洞口處暗 20%，12px 過渡）+ bilateral 平滑內緣
-- **整體紋理** — edgePreservingFilter 15% 柔化統一質感
+**???**嚗?- **?楠** ??ApproxPolyDP 頛芸?撟單? + ?楠撣?bilateral filter ?餃 + alpha 皜?
+- **?喳漣** ??摨 15% detailEnhance 憓撥蝝? + medianBlur ?文
+- **??批?** ??distance transform 瘣頝瞍詨惜??嚗??????20%嚗?2px ?腹嚗? bilateral 撟單??抒楠
+- **?湧?蝝?** ??edgePreservingFilter 15% ??蝯曹?鞈芣?
 
-### 儀式系統重構
-| 檔案 | 說明 |
+### ?撘頂蝯梢?瑽?| 瑼? | 隤芣? |
 |------|------|
-| `src/constants/ritual-styles.ts`（新建） | 三風格定義（bronze/celadon/cinnabar），含香爐空/置 sprite、擲筊 sprite、accent/glow/chip 色系 |
-| `src/components/RitualStylePicker.tsx`（新建） | 儀式風格選擇器，從 atlas 裁切風格縮圖，三卡左右滑選 |
-| `src/components/IncenseRitual.tsx` | 全面重構：三風格香爐捲動替換、空爐 mask viewport + sprite 顯示、灰燼爆散/壓縮反應動畫 |
-| `src/components/Jiaobei.tsx` | 擲筊全面重構：三風格 sprite 替換（pairSplit + tossRise + fallBounce 動畫）、動態著色 |
-| `src/components/PoemCard.tsx` | 接收完整神明資料，結果頁頂部顯示神像橫幅 + 問事摘要 |
-| `src/app/index.tsx` | 整合 RitualStylePicker，儀式後風格偏好存入設定，流程銜接 incenseRitual → jiaobei → drawAnimation → poemCard |
-| `src/app/wishes.tsx` | 還願功能強化 + 供品記錄 |
-| `src/app/collection.tsx` | 收藏頁重構，搜尋/篩選/排序優化 |
-| `src/app/chat.tsx` | 對話頁支援籤詩上下文，system prompt 含最後求籤資訊 |
-| `src/services/wishTracker.ts` | 願望追蹤支援供品類別與還願狀態 |
-| `src/services/notifications.ts` | 推播排程擴充，神明聖誕前提醒 |
-| `src/components/app-tabs.tsx` | 頁籤色彩跟隨當前選中風格 |
+| `src/constants/ritual-styles.ts`嚗撱綽? | 銝◢?澆?蝢抬?bronze/celadon/cinnabar嚗??恍??征/蝵?sprite?蝑?sprite?ccent/glow/chip ?脩頂 |
+| `src/components/RitualStylePicker.tsx`嚗撱綽? | ?撘◢?潮?嚗? atlas 鋆?憸冽蝮桀?嚗??∪椰?單???|
+| `src/components/IncenseRitual.tsx` | ?券??嚗?憸冽擐??脣??踵??征??mask viewport + sprite 憿舐內??潛???憯葬??? |
+| `src/components/Jiaobei.tsx` | ?脩??券??嚗?憸冽 sprite ?踵?嚗airSplit + tossRise + fallBounce ?嚗?????|
+| `src/components/PoemCard.tsx` | ?交摰蟡?鞈?嚗????憿舐內蟡?璈怠? + ???? |
+| `src/app/index.tsx` | ?游? RitualStylePicker嚗?撘?憸冽?末摮閮剖?嚗?蝔???incenseRitual ??jiaobei ??drawAnimation ??poemCard |
+| `src/app/wishes.tsx` | ???撘瑕? + 靘?閮? |
+| `src/app/collection.tsx` | ?嗉???瑽???/蝭拚/???芸? |
+| `src/app/chat.tsx` | 撠店??渡惜閰拐?銝?嚗ystem prompt ?急?敺?蝐方?閮?|
+| `src/services/wishTracker.ts` | 憿?餈質馱?舀靘?憿??憿???|
+| `src/services/notifications.ts` | ?冽???游?嚗???隤??? |
+| `src/components/app-tabs.tsx` | ?惜?脣蔗頝?嗅??訾葉憸冽 |
 
-### 上香插入修復（Web）
-| 問題 | 修復 |
+### 銝??靽桀儔嚗eb嚗?| ?? | 靽桀儔 |
 |------|------|
-| `dropZoneRect` null → `placeIncenseInCenser()` 靜默失敗 | scene `onLayout` 取得場景尺寸，style 已知數值計算 drop zone 位置，不再依賴 `measureInWindow` |
-| 座標系統錯配（螢幕座標當作 translate offset） | 改用場景內相對座標：手部自然位置 `(sceneW-35, sceneH-62)`，香爐口中心 `(sceneW/2, sceneH-167)`，計算位移差 |
-| 拖曳偵測失效 | `isInsideDropZone` 改用場景座標比對，以 incensePosition.\_value 即時算手部位置 |
+| `dropZoneRect` null ??`placeIncenseInCenser()` ??憭望? | scene `onLayout` ???湔撠箏站嚗tyle 撌脩?詨潸?蝞?drop zone 雿蔭嚗???鞈?`measureInWindow` |
+| 摨扳?蝟餌絞?舫?嚗撟漣璅雿?translate offset嚗?| ?寧?湔?抒撠漣璅???芰雿蔭 `(sceneW-35, sceneH-62)`嚗??銝剖? `(sceneW/2, sceneH-167)`嚗?蝞?蝘餃榆 |
+| ??菜葫憭望? | `isInsideDropZone` ?寧?湔摨扳?瘥?嚗誑 incensePosition.\_value ?單?蝞??其?蝵?|
 
-### Web 靜態匯出與開發伺服
-- `npx expo export --platform web` → `dist/` 靜態匯出
-- `serve.js` — Node.js SPA 伺服（`localhost:3000`），處理 Expo Router 客戶端路由 fallback
-- 已移除 `index.js`（多餘的 entry point，Expo Router package.json `"main": "expo-router/entry"` 已處理）
+### Web ???臬???潔撩??- `npx expo export --platform web` ??`dist/` ???臬
+- `serve.js` ??Node.js SPA 隡箸?嚗localhost:3000`嚗??? Expo Router 摰Ｘ蝡航楝??fallback
+- 撌脩宏??`index.js`嚗?擗? entry point嚗xpo Router package.json `"main": "expo-router/entry"` 撌脰???
 
-### 資料層擴充
-| 檔案 | 說明 |
+### 鞈?撅斗??| 瑼? | 隤芣? |
 |------|------|
-| `src/data/godProfiles.ts`（新建） | 9 位神明完整資料：image、tagline、各色系、管轄領域、法器、坐騎、歷史典故 |
-| `src/data/oracleCatalog.ts`（新建） | 籤詩目錄中樞：各系統籤數、綁定神明的籤詩系統對照、問事類別建議 |
+| `src/data/godProfiles.ts`嚗撱綽? | 9 雿????渲???image?agline???脩頂?恣頧????具?擉風?脣??|
+| `src/data/oracleCatalog.ts`嚗撱綽? | 蝐方帘?桅?銝剜?嚗?蝟餌絞蝐斗??摰???蝐方帘蝟餌絞撠??鈭??亙遣霅?|
 
 ---
 
 ## 2026-06-02
 
-### Commit `bbf2488` — 神明插圖上線 + DrawAnimation 重構 + 工作日誌更新
-| 項目 | 內容 |
+### Commit `bbf2488` ??蟡???銝? + DrawAnimation ?? + 撌乩??亥??湔
+| ? | ?批捆 |
 |------|------|
-| 神明插圖 | 9 位神明 PNG 已放入 `assets/images/gods/`，GodSelector 與選神橫幅改為顯示神像 |
-| 神明資料 | `gods.ts` 補上 image、tagline、primaryColor、accentColor、auraColor |
-| 抽籤動畫 | DrawAnimation 重構為神明肖像、籤筒搖動、籤枝落下、籤號揭示的完整流程 |
-| 抽籤時間 | Settings 新增短版 3.0 秒、標準 4.2 秒、沉浸 6.0 秒選項 |
-| 狀態 | ✅ 完成 🟡#3 |
+| 蟡??? | 9 雿???PNG 撌脫??`assets/images/gods/`嚗odSelector ?蟡帖撟?粹＊蝷箇???|
+| 蟡?鞈? | `gods.ts` 鋆? image?agline?rimaryColor?ccentColor?uraColor |
+| ?賜惜? | DrawAnimation ???箇????惜蝑??惜?銝惜?蝷箇?摰瘚? |
+| ?賜惜?? | Settings ?啣??剔? 3.0 蝘?皞?4.2 蝘?瘚?6.0 蝘??|
+| ???| ??摰? ?#3 |
 
-### Commit `84aad94` — 標記 Push 遠端完成，更新狀態
-| 項目 | 內容 |
+### Commit `84aad94` ??璅? Push ?垢摰?嚗?啁???| ? | ?批捆 |
 |------|------|
-| Push | 已推送遠端，工作樹乾淨 |
-| TypeScript | `tsc --noEmit` 通過 |
+| Push | 撌脫??蝡荔?撌乩?璅嫣嗾瘛?|
+| TypeScript | `tsc --noEmit` ?? |
 
-### 本次工作 — 求籤須知折疊欄
-| 項目 | 內容 |
+### ?祆活撌乩? ??瘙惜???甈?| ? | ?批捆 |
 |------|------|
-| 求籤須知 | QuestionForm 標題下新增可展開提示欄，包含一事一問、同事不短時間重求、聖筊/笑筊/陰筊意義、重大決策仍需專業建議 |
-| 狀態 | ✅ 完成 🟡#4 |
+| 瘙惜? | QuestionForm 璅?銝憓撅??內甈??銝鈭???鈭??剜???瘙?蝑?蝚?/?啁??儔??憭扳捱蝑??撠平撱箄降 |
+| ???| ??摰? ?#4 |
 
-### 本次工作 — 抽籤動畫強化
-| 項目 | 內容 |
+### ?祆活撌乩? ???賜惜?撘瑕?
+| ? | ?批捆 |
 |------|------|
-| 落籤金光 | 籤枝落下後新增金光擴散與核心閃光 |
-| 籤紙翻面 | 籤號揭示改為宣紙卡片翻面進場，顯示真實抽中籤號 |
-| 狀態 | ✅ 完成 |
+| ?賜惜?? | 蝐斗??賭?敺憓??????詨??? |
+| 蝐斤?蝧駁 | 蝐方??剔內?寧摰???∠?蝧駁?脣嚗＊蝷箇?撖行銝剔惜??|
+| ???| ??摰? |
 
-### 本次工作 — 結果頁神明開示強化
-| 項目 | 內容 |
+### ?祆活撌乩? ??蝯?????蝷箏撥??| ? | ?批捆 |
 |------|------|
-| 神明橫幅 | PoemCard 接收完整神明資料，結果頁頂部顯示神像、神名與神明標語 |
-| 問事摘要 | 籤詩結果卡新增本次問事類別與問題摘要，讓籤詩和問題脈絡連在一起 |
-| 狀態 | ✅ 完成 |
+| 蟡?璈怠? | PoemCard ?交摰蟡?鞈?嚗????憿舐內蟡?????蟡?璅? |
+| ???? | 蝐方帘蝯??⊥憓甈∪?鈭??亥?????嚗?蝐方帘??憿?蝯⊿?銝韏?|
+| ???| ??摰? |
 
-### 本次工作 — 響應式介面整理
-| 項目 | 內容 |
+### ?祆活撌乩? ???踵?撘??Ｘ??| ? | ?批捆 |
 |------|------|
-| 首頁容器 | `src/app/index.tsx` 新增 `useWindowDimensions()` 與 `pageShell`，首頁在手機、平板、桌機都有適當最大寬度 |
-| 選神與輸入 | `GodSelector` / `QuestionForm` 改為可依寬度切換單欄、雙欄與較寬版配置，手機上按鈕與輸入區不再擁擠 |
-| 結果頁 | `PoemCard` 的神明橫幅、問事摘要、解籤操作列與詩文區塊補上窄螢幕優化 |
-| 冥想頁 | `MeditationScreen` 補上手機版間距與按鈕寬度控制 |
-| 驗證 | `npx tsc --noEmit` 通過，並以本機 web 版做手機/桌機截圖檢查，輸出於 `docs/qa/` |
-| 狀態 | ✅ 完成 |
+| 擐?摰孵 | `src/app/index.tsx` ?啣? `useWindowDimensions()` ??`pageShell`嚗?????像?踴?璈??嗆?憭批祝摨?|
+| ?貊??撓??| `GodSelector` / `QuestionForm` ?寧?臭?撖砍漲???格???甈?頛祝??蝵殷???銝???頛詨?銝??? |
+| 蝯???| `PoemCard` ???帖撟?鈭?閬圾蝐斗?雿??帘??憛?銝??Ｗ??芸? |
+| ?交??| `MeditationScreen` 鋆?????頝???撖砍漲?批 |
+| 撽? | `npx tsc --noEmit` ??嚗蒂隞交璈?web ????/獢??芸?瑼Ｘ嚗撓?箸 `docs/qa/` |
+| ???| ??摰? |
 
 ---
 
-## 2026-05-29 ~ 30（前次工作階段）
+## 2026-05-29 ~ 30嚗?甈∪極雿?畾蛛?
 
-### Commit `4ee84ec` — 神明占卜 MVP 完整版
+### Commit `4ee84ec` ??蟡??? MVP 摰??
+**?詨??**嚗??湔?蝐斗?蝔I 閫?惜嚗eepSeek/OpenAI/?Ｙ??芸???嚗?頛芸?閰晞??蝑?+?????蕭頩????絞閮?銵冽???亦惜?TS ????撘??單??????怒噙瘞?嚗?026-05嚗?隤? i18n ?嗆?
 
-**核心功能**：完整求籤流程、AI 解籤（DeepSeek/OpenAI/離線自動降級）、多輪對話、收藏+筆記+搜尋、願望追蹤+還願、統計儀表板、每日籤、TTS 朗讀、程式化音效、香煙動畫、農民曆（2026-05）、多語言 i18n 架構
-
-**8 神明 + 2 籤詩系統**：雷雨師百首（100首）、六十甲子籤（60首）
+**8 蟡? + 2 蝐方帘蝟餌絞**嚗?典葦?暸?嚗?00擐???摮惜嚗?0擐?
 
 ---
 
-## 目前狀態（2026-06-03）
-
-| 項目 | 狀態 |
+## ?桀????2026-06-03嚗?
+| ? | ???|
 |------|------|
-| TypeScript | ⚠️ 待驗證（大量重構後需 `tsc --noEmit` 確認） |
-| Git | ✅ 已 push origin/master（commit `2409cef`，共 15 commits） |
-| 神明 | ✅ 9 神明（含孔明神數），完整資料已建（godProfiles.ts） |
-| 神明插圖 | ✅ 9 張台式廟宇彩繪金身風 PNG 已上線 |
-| 儀式圖集 | ✅ 三風格（青銅/青瓷/朱漆）香爐空+置 sprite、擲筊平+凸面、atlas 縮圖 |
-| 抽籤動畫 | ✅ 籤筒搖動、落籤金光、籤紙翻面、真實籤號揭示、可調整動畫長度 |
-| 結果頁 | ✅ 神明開示橫幅 + 本次問事摘要 |
-| 響應式介面 | ✅ 首頁、選神、問事輸入、結果頁、冥想頁已補手機/平板/桌機版面調整 |
-| 籤詩 | ✅ 雷雨師百首(100) + 觀音靈籤(獨立) + 六十甲子(60) + 諸葛神數(64) = 224+ 首 |
-| 籤詩目錄 | ✅ oracleCatalog.ts 中樞對照系統 |
-| 每日運勢 | ✅ 已依生肖/五行個人化 |
-| 問事輸入 | ✅ 支援自由打字 + 預設 chip 並存 |
-| 求籤須知 | ✅ 選完神明後，QuestionForm 顯示可展開折疊欄 |
-| 神明聖誕 | ✅ 推播通知已排程 |
-| 統計頁 | ✅ 年度回顧卡已上線 |
-| 農民曆 | ✅ 2026 全年 |
-| 音效架構 | ✅ expo-av 就位，合成音運作中，等待真實音檔 |
-| 上香流程 | ✅ 三風格香爐、點香→拖曳/點擊→插香→灰燼動畫，Web 座標修復完成 |
-| 擲筊流程 | ✅ 三風格 sprite、拋擲動畫、聖筊/笑筊/陰筊判斷 |
+| TypeScript | ?? 敺?霅?憭折???敺? `tsc --noEmit` 蝣箄?嚗?|
+| Git | ??撌?push origin/master嚗ommit `2409cef`嚗 15 commits嚗?|
+| 蟡? | ??9 蟡?嚗摮?蟡嚗?摰鞈?撌脣遣嚗odProfiles.ts嚗?|
+| 蟡??? | ??9 撘萄撘?摰蔗蝜芷?頨恍◢ PNG 撌脖?蝺?|
+| ?撘???| ??銝◢?潘???/?/?望?嚗??征+蝵?sprite?蝑像+?賊?tlas 蝮桀? |
+| ?賜惜? | ??蝐斤????蝐日??惜蝝蕃?Ｕ?撖衣惜?蝷箝隤踵??瑕漲 |
+| 蝯???| ??蟡??內璈怠? + ?祆活???? |
+| ?踵?撘???| ??擐??蟡?鈭撓?乓?????喲?撌脰???/撟單/獢??隤踵 |
+| 蝐方帘 | ???琿撣怎擐?100) + 閫?喲?蝐??函?) + ?剖??脣?(60) + 隢貉?蟡(64) = 224+ 擐?|
+| 蝐方帘?桅? | ??oracleCatalog.ts 銝剜?撠蝟餌絞 |
+| 瘥? | ??撌脖???/鈭??犖??|
+| ??頛詨 | ???舀?芰?? + ?身 chip 銝血? |
+| 瘙惜? | ???詨?蟡?敺?QuestionForm 憿舐內?臬????? |
+| 蟡??? | ???冽?撌脫?蝔?|
+| 蝯梯???| ??撟游漲?“?∪歇銝? |
+| 颲脫???| ??2026 ?典僑 |
+| ?單??嗆? | ??expo-av 撠曹?嚗????銝哨?蝑??祕?單? |
+| 銝?瘚? | ??銝◢?潮???擐??/暺???擐??啁?嚗eb 摨扳?靽桀儔摰? |
+| ?脩?瘚? | ??銝◢??sprite???脣??怒?蝑?蝚?/?啁??斗 |
 
 ---
 
-## 待辦清單（優先順序）
+## 敺齒皜嚗??摨?
 
-### 🔴 本週必做
-
-| # | 項目 | 說明 |
+### ? ?祇勗???
+| # | ? | 隤芣? |
 |---|------|------|
-| 1 | **香爐空爐圖二輪精修** | 第一輪已修邊緣/腳座/爐口，待實際跑一遍上香流程確認效果；如需再修：腳座紋路細化、爐口內壁質感統一 |
-| 2 | **TypeScript 驗證** | 本次大量重構後需 `npx tsc --noEmit` 確認零錯誤 |
-| 3 | **真實廟宇音檔** | 準備 5 個 CC0 授權 `.mp3`（toss / shengbei / draw / incense / result）放入 `assets/sounds/` |
+| 1 | **擐?蝛箇???頛芰移靽?* | 蝚砌?頛芸歇靽桅?蝺??喳漣/?嚗?撖阡?頝???擐?蝔Ⅱ隤???憒??耨嚗摨抒?頝舐敦????憯釭?絞銝 |
+| 2 | **TypeScript 撽?** | ?祆活憭折???敺? `npx tsc --noEmit` 蝣箄??園隤?|
+| 3 | **?祕撱??單?** | 皞? 5 ??CC0 ?? `.mp3`嚗oss / shengbei / draw / incense / result嚗??`assets/sounds/` |
 
-### 🟡 下一批
-
-| # | 項目 | 說明 |
+### ? 銝???
+| # | ? | 隤芣? |
 |---|------|------|
-| 4 | **還願引導流程** | `wishes.tsx` 還願時加步驟引導（準備供品、稟告詞、感謝文模板） |
-| 5 | **響應式收尾** | 針對頂部分頁列、Collection/Stats/Wishes 頁面補做手機與桌機版檢查，確認所有主頁面寬度策略一致 |
-| 6 | **結果頁實機驗證** | 逐步檢查 PoemCard 在長詩文、長 AI 解釋、不同問事類別下是否仍維持可讀性與按鈕不折斷 |
-| 7 | **QA 產物整理** | 決定 `docs/qa/` 截圖是保留作驗證紀錄、搬到文件目錄，或加入 `.gitignore` 避免工作樹持續出現未追蹤檔 |
-| 8 | **上香拖曳微調** | Web 版 drag-to-drop 目前偵測範圍可能需要微調（座標已修復但手感待實測） |
+| 4 | **??撘?瘚?** | `wishes.tsx` ????甇仿?撘?嚗?????????雓?璅⊥嚗?|
+| 5 | **?踵?撘撠?* | ??????ollection/Stats/Wishes ?鋆?????璈?瑼Ｘ嚗Ⅱ隤??蜓?撖砍漲蝑銝??|
+| 6 | **蝯??祕璈?霅?* | ?郊瑼Ｘ PoemCard ?券閰拇?? AI 閫??????鈭??乩??臬隞雁?霈?扯???銝???|
+| 7 | **QA ?Ｙ?渡?** | 瘙箏? `docs/qa/` ?芸??臭???撽?蝝??唳?隞嗥??????`.gitignore` ?踹?撌乩?璅寞?蝥?暹餈質馱瑼?|
+| 8 | **銝??敺株矽** | Web ??drag-to-drop ?桀??菜葫蝭??航?閬凝隤選?摨扳?撌脖耨敺拐???敺祕皜穿? |
 
-### 🟢 優化項
-
-| # | 項目 | 說明 |
+### ? ?芸???
+| # | ? | 隤芣? |
 |---|------|------|
-| 9 | **背景音樂** | Settings 加「背景音樂」開關，選擇：誦經/靜心音樂/靜音 |
-| 10 | **i18n 套用** | `i18n.ts` 已建好，將硬編碼文字換成 `t()` 呼叫 |
-| 11 | **收藏匯出 PDF** | collection.tsx 加「匯出」功能，將收藏的籤詩整理成可分享的 PDF/圖片 |
-| 12 | **啟動畫面** | `app.json` 設定 splash screen，加廟宇大門圖或金色神明符文 |
-| 13 | **Jiaobei sprite 精修** | 擲筊 sprite 目前也是 AI 生成，可能也需要邊緣/紋理精修 |
+| 9 | **??單?** | Settings ???舫璅????豢?嚗爬蝬????單?/? |
+| 10 | **i18n 憟** | `i18n.ts` 撌脣遣憟踝?撠′蝺函Ⅳ???? `t()` ?澆 |
+| 11 | **?嗉??臬 PDF** | collection.tsx ??箝??踝?撠??蝐方帘?渡???澈??PDF/?? |
+| 12 | **???恍** | `app.json` 閮剖? splash screen嚗?撱?憭折????蟡?蝚行? |
+| 13 | **Jiaobei sprite 蝎曆耨** | ?脩? sprite ?桀?銋 AI ??嚗?賭??閬?蝺?蝝?蝎曆耨 |
 
 ---
 
-## 下次建議順序
+## 銝活撱箄降??
 
-| 順序 | 建議事項 | 原因 |
+| ?? | 撱箄降鈭? | ?? |
 |------|------|------|
-| 1 | TypeScript 驗證 + 上香流程實測 | 這次重構量大，先確保零錯誤 + Web 版流程正常 |
-| 2 | 香爐空爐圖二輪精修 | 等實測確認目前效果後，針對腳座、爐口再做細修 |
-| 3 | 響應式收尾 | 版面剛調整完，趁脈絡還在補齊 collection/stats/wishes |
-| 4 | 結果頁實機驗證 | PoemCard 核心頁，確認長詩文、AI 解釋都穩定 |
+| 1 | TypeScript 撽? + 銝?瘚?撖行葫 | ?活???之嚗?蝣箔??園隤?+ Web ??蝔迤撣?|
+| 2 | 擐?蝛箇???頛芰移靽?| 蝑祕皜祉Ⅱ隤????嚗?撠摨扼?????敦靽?|
+| 3 | ?踵?撘撠?| ??矽?游?嚗??窗?鋆? collection/stats/wishes |
+| 4 | 蝯??祕璈?霅?| PoemCard ?詨???蝣箄??瑁帘?I 閫???賜帘摰?|
 
 ---
 
-## 架構備忘
+## ?嗆???
 
 ```
-啟動指令
-├── 前端（開發）：npx expo start --web  →  http://localhost:8081
-├── 前端（靜態）：npx expo export --platform web && node serve.js → http://localhost:3000
-└── 後端：cd backend && npm run dev  →  http://localhost:3001
+???誘
+??? ?垢嚗??潘?嚗px expo start --web  ?? http://localhost:8081
+??? ?垢嚗???嚗px expo export --platform web && node serve.js ??http://localhost:3000
+??? 敺垢嚗d backend && npm run dev  ?? http://localhost:3001
 
-音效音檔路徑（待補）
-└── assets/sounds/
-    ├── toss.mp3      ← 擲筊落地聲
-    ├── shengbei.mp3  ← 聖筊（清磬）
-    ├── draw.mp3      ← 抽籤搖筒聲
-    ├── incense.mp3   ← 上香（木魚）
-    └── result.mp3    ← 結果揭曉（銅鑼）
+?單??單?頝臬?嚗?鋆?
+??? assets/sounds/
+    ??? toss.mp3      ???脩??賢??    ??? shengbei.mp3  ????嚗?蝤穿?
+    ??? draw.mp3      ???賜惜????    ??? incense.mp3   ??銝?嚗擳?
+    ??? result.mp3    ??蝯??剜?嚗??潘?
 ```
+## 2026-06-05 ?∪??渡?
+
+### ?祈憚銝駁?
+- 蟡??啣?鞈?亦?
+- 鋆? `soft` ????- ?Ｗ蝯?? `closeup` 餈??
+### 撌脣???| ? | ???| ?酉 |
+|------|------|------|
+| App ?孵??啁??? | 摰? | `GodSelector`???蟡? banner ?孵? `generated/cards/*` |
+| 蝯????舐??亦? | 摰? | `PoemCard` ?孵? `generated/closeups/*`嚗???寞??游?瘥? |
+| ?賜惜? soft ?蝺?| 摰? | `DrawAnimation` ?孵? `generated/soft/*` |
+| ?園? 7 雿?soft ??朣?| 摰? | ?啣? `baoshengdadi / fudezhengshen / mazu / wangye / wenchangdijun / zhugewuhou / zhushengniangniang` |
+| closeup 餈??憟?| 摰? | 9 雿???撌脰撓?箏 `assets/images/gods/generated/closeups/` |
+| ?瑼Ｘ | 摰? | `.\node_modules\.bin\tsc.cmd --noEmit` ?? |
+
+### ?活?啣? / 靽格瑼?
+| 瑼? | 隤芣? |
+|------|------|
+| `src/data/godImages.ts` | ?葉蝞∠? `card / soft / closeup` 銝???|
+| `src/components/GodSelector.tsx` | 蟡??⊥? `card` ??|
+| `src/app/index.tsx` | ?貊?敺?banner ?孵???`card` ??|
+| `src/components/DrawAnimation.tsx` | ?賜惜?蝮桀??孵? `soft` ??|
+| `src/components/PoemCard.tsx` | 蝯????`closeup` ?蒂隤踵?剖?摰孵瘥? |
+| `scripts/generate-god-derived-assets.ps1` | 敺?`cards` ?寞活?Ｗ `soft` ??`closeup` |
+| `assets/images/gods/generated/soft/*` | 鋆??拚? 7 撘?soft ??|
+| `assets/images/gods/generated/closeups/*` | ?啣? 9 撘萇???餈??|
+
+### ?桀? git ???```text
+M  src/app/index.tsx
+M  src/components/DrawAnimation.tsx
+M  src/components/GodSelector.tsx
+M  src/components/PoemCard.tsx
+?? assets/images/gods/generated/
+?? scripts/generate-god-derived-assets.ps1
+?? src/data/godImages.ts
+```
+
+### ?予蝚砌??芸?隞?齒
+1. ??Web ??蝵桀祕璈炎?仿?????蟡? banner?????剖?瘥??臬???2. 憒?蝯????臬云餈?憭芷?嚗?凝隤?`generate-god-derived-assets.ps1` ?抒? `$cropTopBySlug` 敺?頝?3. 閬?Ｘ??捱摰?銝???`soft` ??憟?嗡??嚗??芯??策?賜惜???4. 鋆?`assets/images/gods/generated/README.md`嚗? `closeups/` ??撘神?脣??
+### 敺Ⅱ隤?/ 憸券
+- ?憚?芸?鈭??????賣嚗?瘝??祕?汗?函??QA??- `WORKLOG.md` ?摰孵蝯垢憿舐內??蝣潘?雿?獢頨思??航?嚗?予 IDE 銋＊蝷箇撣賂???韏瑟?楊蝣潦?- `soft` ?桀??舐蝔?敺?`card` ?噬??銝? AI ??嚗??湔折?嚗??交?游丐撟餃?蕭??AI ??
+### ?予?交??誘
+```powershell
+cd c:\Users\user\Desktop\蟡???\shenming-divination
+.\node_modules\.bin\tsc.cmd --noEmit
+.\scripts\generate-god-derived-assets.ps1
+```
+

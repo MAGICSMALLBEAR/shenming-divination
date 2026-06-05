@@ -14,6 +14,7 @@ import {
 import { Image } from 'expo-image';
 
 import { gods, questionCategories, type God } from '@/data/gods';
+import { getGodCardImage } from '@/data/godImages';
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { reviewQuestion, suggestQuestionDrafts } from '@/services/questionAssistant';
 import { recommendGods } from '@/services/recommendation';
@@ -101,6 +102,8 @@ function GodCard({
   onPress: () => void;
   cardStyle?: StyleProp<ViewStyle>;
 }) {
+  const cardImage = getGodCardImage(god.id);
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.86} style={[styles.cardWrapper, { width }, cardStyle]}>
       <View style={[styles.godCard, { borderColor: god.accentColor + '66' }]}>
@@ -118,7 +121,9 @@ function GodCard({
         </View>
 
         <View style={[styles.godPortrait, { borderColor: god.accentColor + '55' }]}>
-          <Image source={god.image} style={styles.godPortraitImage} contentFit="cover" transition={200} />
+          {cardImage ? (
+            <Image source={cardImage} style={styles.godPortraitImage} contentFit="cover" transition={200} />
+          ) : null}
           <View style={[styles.godPortraitOverlay, { backgroundColor: god.primaryColor + '16' }]} />
         </View>
 

@@ -6,36 +6,40 @@ import {
   TabTriggerSlotProps,
   TabListProps,
 } from 'expo-router/ui';
-import { Pressable, View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useI18n } from '@/hooks/useI18n';
 
 const tabs = [
-  { name: 'index', href: '/' as const, label: '求籤' },
-  { name: 'daily', href: '/daily' as any, label: '今日' },
-  { name: 'collection', href: '/collection' as const, label: '收藏' },
-  { name: 'wishes', href: '/wishes' as const, label: '願望' },
-  { name: 'chat', href: '/chat' as const, label: '追問' },
-  { name: 'stats', href: '/stats' as const, label: '統計' },
-  { name: 'settings', href: '/settings' as const, label: '設定' },
+  { name: 'index', href: '/' as const, labelKey: 'drawLots' },
+  { name: 'daily', href: '/daily' as any, labelKey: 'today' },
+  { name: 'collection', href: '/collection' as const, labelKey: 'collection' },
+  { name: 'wishes', href: '/wishes' as const, labelKey: 'wishes' },
+  { name: 'chat', href: '/chat' as const, labelKey: 'chat' },
+  { name: 'stats', href: '/stats' as const, labelKey: 'stats' },
+  { name: 'settings', href: '/settings' as const, labelKey: 'settings' },
 ];
 
 export default function AppTabs() {
+  const { t } = useI18n();
   return (
-    <Tabs>
-      <TabSlot style={{ height: '100%' }} />
-      <TabList asChild>
-        <CustomTabList>
-          {tabs.map((tab) => (
-            <TabTrigger key={tab.name} name={tab.name} href={tab.href} asChild>
-              <TabButton>{tab.label}</TabButton>
-            </TabTrigger>
-          ))}
-        </CustomTabList>
-      </TabList>
-    </Tabs>
+    <View style={{ flex: 1 }}>
+      <Tabs>
+        <TabList asChild>
+          <CustomTabList t={t}>
+            {tabs.map((tab) => (
+              <TabTrigger key={tab.name} name={tab.name} href={tab.href} asChild>
+                <TabButton>{t(tab.labelKey)}</TabButton>
+              </TabTrigger>
+            ))}
+          </CustomTabList>
+        </TabList>
+        <TabSlot style={{ flex: 1 }} />
+      </Tabs>
+    </View>
   );
 }
 
@@ -54,14 +58,31 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
   );
 }
 
-export function CustomTabList(props: TabListProps) {
+export function CustomTabList(props: TabListProps & { t: (key: string) => string }) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const { t, ...restProps } = props;
+
   return (
-    <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        <ThemedText type="smallBold" style={styles.brandText}>
-          神明占卜
-        </ThemedText>
-        {props.children}
+    <View {...restProps} style={[styles.tabListContainer, isMobile && { padding: Spacing.two }]}>
+      <ThemedView type="backgroundElement" style={[styles.innerContainer, isMobile && { paddingHorizontal: Spacing.three }]}>
+        {!isMobile && (
+          <ThemedText type="smallBold" style={styles.brandText}>
+            {t('appName')}
+          </ThemedText>
+        )}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.scrollContent, isMobile && { gap: 8 }]}
+        >
+          {isMobile && (
+            <ThemedText type="smallBold" style={[styles.brandTextMobile]}>
+              🏛️
+            </ThemedText>
+          )}
+          {props.children}
+        </ScrollView>
       </ThemedView>
     </View>
   );
@@ -69,12 +90,15 @@ export function CustomTabList(props: TabListProps) {
 
 const styles = StyleSheet.create({
   tabListContainer: {
-    position: 'absolute',
     width: '100%',
     padding: Spacing.three,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
+    zIndex: 10,
+    position: 'sticky',
+    top: 0,
+    backgroundColor: 'transparent',
   },
   innerContainer: {
     paddingVertical: Spacing.two,
@@ -83,10 +107,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexGrow: 1,
-    gap: 4,
     maxWidth: MaxContentWidth,
   },
-  brandText: { marginRight: 'auto' },
+  scrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  brandText: { marginRight: 'auto', paddingRight: 16 },
+  brandTextMobile: { marginRight: 8 },
   pressed: { opacity: 0.7 },
   tabButtonView: { paddingVertical: Spacing.one, paddingHorizontal: 8, borderRadius: Spacing.three },
 });

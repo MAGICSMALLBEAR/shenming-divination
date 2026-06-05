@@ -540,7 +540,7 @@ export default function CollectionScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
-  container: { flex: 1, paddingTop: TempleSpacing.sm },
+  container: { flex: 1, paddingTop: TempleSpacing.sm, width: '100%', maxWidth: 800, alignSelf: 'center' },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',

@@ -309,7 +309,7 @@ const yearlyStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
   container: { flex: 1 },
-  content: { padding: TempleSpacing.md },
+  content: { padding: TempleSpacing.md, width: '100%', maxWidth: 800, alignSelf: 'center' },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',

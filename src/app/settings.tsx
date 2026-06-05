@@ -31,13 +31,23 @@ import { getTodayLunarInfo } from '@/data/lunarCalendar';
 import { calcBazi, parseBirthYear, ZODIAC_PATRON_GOD } from '@/services/bazi';
 import { gods } from '@/data/gods';
 import { exportBackupJson, importBackupJson } from '@/services/backup';
+import { useI18n } from '@/hooks/useI18n';
+import { setLanguage, type Lang } from '@/services/i18n';
+
+const LANGUAGES: { key: Lang; label: string }[] = [
+  { key: 'zh-TW', label: '繁體中文' },
+  { key: 'en', label: 'English' },
+  { key: 'ja', label: '日本語' },
+];
 
 export default function SettingsScreen() {
+  const { t, lang } = useI18n();
   const [settings, setSettings] = useState<AppSettings>({
     userName: '',
     birthDate: '',
     preferredGodId: 1,
     drawAnimationDurationMs: DRAW_ANIMATION_PRESETS[1].durationMs,
+    language: lang,
   });
   const [saved, setSaved] = useState(false);
   const [backupText, setBackupText] = useState('');
@@ -66,6 +76,9 @@ export default function SettingsScreen() {
 
   const handleSave = async () => {
     await saveSettings(settings);
+    if (settings.language && settings.language !== lang) {
+      setLanguage(settings.language);
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -149,6 +162,31 @@ export default function SettingsScreen() {
             第 {dailyPoem.poem.number} 籤 · {dailyPoem.poem.level}
           </Text>
           <Text style={styles.dailyHint}>{dailyPoem.poem.content.split('\n')[0]}</Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>語言 / Language</Text>
+          <View style={styles.godSelector}>
+            {LANGUAGES.map((l) => (
+              <TouchableOpacity
+                key={l.key}
+                style={[
+                  styles.godChip,
+                  settings.language === l.key && styles.godChipActive,
+                ]}
+                onPress={() => setSettings((prev) => ({ ...prev, language: l.key }))}
+              >
+                <Text
+                  style={[
+                    styles.godChipText,
+                    settings.language === l.key && styles.godChipTextActive,
+                  ]}
+                >
+                  {l.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <View style={styles.section}>

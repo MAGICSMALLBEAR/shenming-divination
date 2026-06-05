@@ -2,10 +2,12 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
+import { useI18n } from '@/hooks/useI18n';
 
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const { t } = useI18n();
 
   return (
     <NativeTabs
@@ -14,7 +16,7 @@ export default function AppTabs() {
       labelStyle={{ selected: { color: colors.text } }}
     >
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>求籤</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('drawLots')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/home.png')}
           renderingMode="template"
@@ -22,7 +24,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="daily">
-        <NativeTabs.Trigger.Label>今日</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('today')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"
@@ -30,7 +32,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="collection">
-        <NativeTabs.Trigger.Label>收藏</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('collection')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"
@@ -38,7 +40,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="wishes">
-        <NativeTabs.Trigger.Label>願望</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('wishes')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"
@@ -46,7 +48,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="chat">
-        <NativeTabs.Trigger.Label>追問</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('chat')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"
@@ -54,7 +56,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="stats">
-        <NativeTabs.Trigger.Label>統計</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('stats')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"
@@ -62,7 +64,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings">
-        <NativeTabs.Trigger.Label>設定</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('settings')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"

@@ -1,4 +1,5 @@
 // 多語言服務 (i18n)
+
 export type Lang = 'zh-TW' | 'en' | 'ja';
 
 const translations: Record<string, Record<Lang, string>> = {
@@ -7,6 +8,9 @@ const translations: Record<string, Record<Lang, string>> = {
   collection: { 'zh-TW': '收藏', en: 'Collection', ja: 'お気に入り' },
   wishes: { 'zh-TW': '願望', en: 'Wishes', ja: '願い事' },
   settings: { 'zh-TW': '設定', en: 'Settings', ja: '設定' },
+  today: { 'zh-TW': '今日', en: 'Today', ja: '今日' },
+  chat: { 'zh-TW': '追問', en: 'Chat', ja: '質問する' },
+  stats: { 'zh-TW': '統計', en: 'Stats', ja: '統計' },
   selectGod: { 'zh-TW': '請選擇神明', en: 'Select Deity', ja: '神様を選んでください' },
   meditate: { 'zh-TW': '靜心冥想', en: 'Meditate', ja: '瞑想' },
   toss: { 'zh-TW': '擲筊', en: 'Toss Blocks', ja: 'おみくじを投げる' },
@@ -21,15 +25,37 @@ const translations: Record<string, Record<Lang, string>> = {
 };
 
 let currentLang: Lang = 'zh-TW';
+const listeners = new Set<(lang: Lang) => void>();
+
+export function onLanguageChange(listener: (lang: Lang) => void): () => void {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
 
 export function setLanguage(lang: Lang) {
   currentLang = lang;
+  listeners.forEach(l => l(lang));
 }
 
 export function getLanguage(): Lang {
   return currentLang;
 }
 
-export function t(key: string): string {
-  return translations[key]?.[currentLang] || translations[key]?.['zh-TW'] || key;
+export function t(key: string, params?: Record<string, string | number>): string {
+  let text = translations[key]?.[currentLang] || translations[key]?.['zh-TW'] || key;
+  if (params) {
+    Object.keys(params).forEach((k) => {
+      text = text.replace(new RegExp(`{${k}}`, 'g'), String(params[k]));
+    });
+  }
+  return text;
 }
+
+export function getTranslations() {
+  return translations;
+}
+
+export function addTranslations(newTranslations: Record<string, Record<Lang, string>>) {
+  Object.assign(translations, newTranslations);
+}
+

@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import type { Poem } from '@/data/poems/leiyushi';
 import type { God } from '@/data/gods';
+import { getGodCloseupImage } from '@/data/godImages';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { getPoemTheme, type PoemTheme } from '@/data/poemThemes';
 import { getGodProfile } from '@/data/godProfiles';
@@ -112,6 +113,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
     () => buildActionPlan({ poem, questionCategory, question }),
     [poem, questionCategory, question]
   );
+  const closeupImage = getGodCloseupImage(god?.id);
   const [savedActionIndex, setSavedActionIndex] = useState<number | null>(null);
 
   const handleShareCard = async () => {
@@ -180,7 +182,9 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
         {god ? (
           <View style={[styles.godOracleHeader, isCompact && styles.godOracleHeaderCompact, { borderBottomColor: godAccent + '35' }]}>
             <View style={[styles.godOracleImageWrap, { borderColor: godAccent + '70' }]}>
-              <Image source={god.image} style={styles.godOracleImage} contentFit="cover" transition={200} />
+              {closeupImage ? (
+                <Image source={closeupImage} style={styles.godOracleImage} contentFit="cover" transition={200} />
+              ) : null}
               <View style={[styles.godOracleImageOverlay, { backgroundColor: godPrimary + '18' }]} />
             </View>
             <View style={[styles.godOracleText, isCompact && styles.godOracleTextCompact]}>
@@ -417,9 +421,9 @@ const styles = StyleSheet.create({
   },
   godOracleHeaderCompact: { flexDirection: 'column', alignItems: 'center' },
   godOracleImageWrap: {
-    width: 76,
-    height: 76,
-    borderRadius: 16,
+    width: 92,
+    height: 116,
+    borderRadius: 20,
     borderWidth: 1.5,
     overflow: 'hidden',
     backgroundColor: TempleTheme.bgDark,

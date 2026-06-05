@@ -259,8 +259,8 @@ export function IncenseRitual({
     const handCx = sw - 35 + curX;
     const handCy = sh - 62 + curY + curLift;
 
-    // Expanded hit area for easier targeting
-    const margin = 40;
+    // Expanded hit area for easier targeting (increased for Web/Mobile ease of use)
+    const margin = 140;
     return (
       handCx >= dzX - margin &&
       handCx <= dzX + dzW + margin &&
@@ -677,6 +677,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 6,
     right: 22,
+    touchAction: 'none',
   },
   handPalm: {
     position: 'absolute',

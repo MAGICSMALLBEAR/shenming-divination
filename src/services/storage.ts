@@ -1,3 +1,4 @@
+import type { Lang } from '@/services/i18n';
 import type { Poem } from '@/data/poems/leiyushi';
 import {
   DRAW_ANIMATION_DEFAULT_MS,
@@ -32,6 +33,7 @@ export interface AppSettings {
   userName: string;
   birthDate: string;
   preferredGodId: number;
+  language?: Lang;
   strictMode?: boolean;
   dailyNotification?: boolean;
   birthdayNotification?: boolean;

@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { Image } from 'expo-image';
 import type { God } from '@/data/gods';
+import { getGodSoftImage } from '@/data/godImages';
 import { DRAW_ANIMATION_DEFAULT_MS } from '@/constants/divination';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { playDrawSound } from '@/services/proceduralSound';
@@ -50,6 +51,7 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
   const primaryColor = god?.primaryColor || TempleTheme.redLight;
   const auraColor = god?.auraColor || '#F4D39B';
   const ms = Math.max(durationMs, 2600);
+  const softImage = getGodSoftImage(god?.id);
 
   const activePhase = PHASES[phaseIndex] || PHASES[PHASES.length - 1];
   const chosenStickTranslateY = useMemo(() => (
@@ -228,8 +230,8 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
 
       <View style={styles.heroRow}>
         <View style={[styles.godChip, { borderColor: highlightColor + '55' }]}>
-          {god?.image ? (
-            <Image source={god.image} style={styles.godChipImage} contentFit="cover" transition={200} />
+          {softImage ? (
+            <Image source={softImage} style={styles.godChipImage} contentFit="cover" transition={200} />
           ) : null}
           <View style={[styles.godChipOverlay, { backgroundColor: primaryColor + '20' }]} />
         </View>
