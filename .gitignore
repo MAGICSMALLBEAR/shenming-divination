@@ -51,3 +51,5 @@ backend/node_modules/
 
 # local QA artifacts
 docs/qa/
+qa-*.png
+dist-verify/

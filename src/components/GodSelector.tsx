@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,10 +13,12 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { gods, questionCategories, type God } from '@/data/gods';
 import { getGodCardImage } from '@/data/godImages';
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { getGodProfile } from '@/data/godProfiles';
 import { reviewQuestion, suggestQuestionDrafts } from '@/services/questionAssistant';
 import { recommendGods } from '@/services/recommendation';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
@@ -35,6 +38,7 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
   const { width } = useWindowDimensions();
   const [patronGodId, setPatronGodId] = useState<number | null>(null);
   const [preferredGodId, setPreferredGodId] = useState<number | null>(null);
+  const [detailGod, setDetailGod] = useState<God | null>(null);
   const isCompact = width < 420;
   const isDesktop = width >= 1100;
   const maxContentWidth = isDesktop ? 1120 : 760;
@@ -79,10 +83,19 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
               isPreferred={preferredGodId === god.id}
               cardStyle={isCompact && styles.cardWrapperCompact}
               onPress={() => onSelectGod(god.id)}
+              onDetail={() => setDetailGod(god)}
             />
           ))}
         </View>
       </ScrollView>
+
+      {detailGod && (
+        <GodDetailModal
+          god={detailGod}
+          onClose={() => setDetailGod(null)}
+          onSelect={() => { setDetailGod(null); onSelectGod(detailGod.id); }}
+        />
+      )}
     </View>
   );
 }
@@ -93,6 +106,7 @@ function GodCard({
   isPatron,
   isPreferred,
   onPress,
+  onDetail,
   cardStyle,
 }: {
   god: God;
@@ -100,6 +114,7 @@ function GodCard({
   isPatron: boolean;
   isPreferred: boolean;
   onPress: () => void;
+  onDetail: () => void;
   cardStyle?: StyleProp<ViewStyle>;
 }) {
   const cardImage = getGodCardImage(god.id);
@@ -120,9 +135,9 @@ function GodCard({
           ) : null}
         </View>
 
-        <View style={[styles.godPortrait, { borderColor: god.accentColor + '55' }]}>
+        <View style={[styles.godPortrait, { borderColor: god.accentColor + '55', backgroundColor: god.primaryColor + '50' }]}>
           {cardImage ? (
-            <Image source={cardImage} style={styles.godPortraitImage} contentFit="cover" transition={200} />
+            <Image source={cardImage} style={styles.godPortraitImage} contentFit="cover" contentPosition="top" transition={300} />
           ) : null}
           <View style={[styles.godPortraitOverlay, { backgroundColor: god.primaryColor + '16' }]} />
         </View>
@@ -133,11 +148,124 @@ function GodCard({
         <Text style={styles.godPoem}>
           {god.poemSystem} · {god.totalPoems} 首
         </Text>
-        <Text style={styles.godDesc} numberOfLines={2}>
-          {god.description}
-        </Text>
+        <TouchableOpacity
+          style={[styles.detailBtn, { borderColor: god.accentColor + '50' }]}
+          onPress={onDetail}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.detailBtnText, { color: god.accentColor }]}>查看詳細</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
+  );
+}
+
+function GodDetailModal({ god, onClose, onSelect }: { god: God; onClose: () => void; onSelect: () => void }) {
+  const cardImage = getGodCardImage(god.id);
+  const profile = getGodProfile(god.id);
+  const { width } = useWindowDimensions();
+  const isCompact = width < 480;
+
+  return (
+    <Modal visible={true} animationType="slide" transparent={false} onRequestClose={onClose}>
+      <SafeAreaView style={modalStyles.safeArea}>
+        <View style={modalStyles.header}>
+          <TouchableOpacity onPress={onClose} style={modalStyles.closeBtn}>
+            <Text style={modalStyles.closeBtnText}>✕ 關閉</Text>
+          </TouchableOpacity>
+          <Text style={modalStyles.headerTitle}>神明詳情</Text>
+          <View style={modalStyles.spacer} />
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={modalStyles.scrollContent}>
+          {/* 大圖 */}
+          <View style={[modalStyles.heroWrap, { borderColor: god.accentColor + '66' }]}>
+            {cardImage ? (
+              <Image source={cardImage} style={modalStyles.heroImage} contentFit="cover" contentPosition="top" transition={300} />
+            ) : null}
+            <View style={[modalStyles.heroOverlay, { backgroundColor: god.primaryColor + 'BB' }]} />
+            <View style={modalStyles.heroContent}>
+              <Text style={[modalStyles.heroTitle, { color: god.accentColor }]}>{god.title}</Text>
+              <Text style={modalStyles.heroName}>{god.name}</Text>
+              <Text style={[modalStyles.heroTagline, { color: god.accentColor }]}>{god.tagline}</Text>
+            </View>
+          </View>
+
+          {/* 介紹 */}
+          <View style={modalStyles.section}>
+            <Text style={modalStyles.sectionTitle}>📖 神明介紹</Text>
+            <Text style={modalStyles.bodyText}>{god.description}</Text>
+          </View>
+
+          {/* 籤詩系統 */}
+          <View style={modalStyles.section}>
+            <Text style={modalStyles.sectionTitle}>🎋 籤詩系統</Text>
+            <View style={modalStyles.infoRow}>
+              <View style={[modalStyles.badge, { backgroundColor: god.primaryColor + '30', borderColor: god.accentColor + '50' }]}>
+                <Text style={[modalStyles.badgeText, { color: god.accentColor }]}>{god.poemSystem}</Text>
+              </View>
+              <Text style={modalStyles.muted}>共 {god.totalPoems} 首籤詩</Text>
+            </View>
+            <Text style={[modalStyles.muted, { marginTop: 8 }]}>{god.blessing}</Text>
+          </View>
+
+          {profile && (
+            <>
+              {/* 主掌範疇 */}
+              <View style={modalStyles.section}>
+                <Text style={modalStyles.sectionTitle}>🙏 主掌範疇</Text>
+                <View style={modalStyles.chipRow}>
+                  {profile.patronages.map((item) => (
+                    <View key={item} style={[modalStyles.chip, { borderColor: god.accentColor + '40', backgroundColor: god.primaryColor + '18' }]}>
+                      <Text style={[modalStyles.chipText, { color: god.accentColor }]}>{item}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* 適合問的題目 */}
+              <View style={modalStyles.section}>
+                <Text style={modalStyles.sectionTitle}>💬 適合請示</Text>
+                {profile.suitableTopics.map((tip, i) => (
+                  <Text key={i} style={modalStyles.bullet}>• {tip}</Text>
+                ))}
+              </View>
+
+              {/* 參拜提醒 */}
+              <View style={modalStyles.section}>
+                <Text style={modalStyles.sectionTitle}>🏮 提問小提醒</Text>
+                {profile.worshipTips.map((tip, i) => (
+                  <Text key={i} style={modalStyles.bullet}>• {tip}</Text>
+                ))}
+              </View>
+
+              {/* 別稱 */}
+              <View style={modalStyles.section}>
+                <Text style={modalStyles.sectionTitle}>🏷️ 別稱</Text>
+                <View style={modalStyles.chipRow}>
+                  {profile.aliases.map((alias) => (
+                    <View key={alias} style={[modalStyles.chip, { borderColor: god.accentColor + '30' }]}>
+                      <Text style={[modalStyles.chipText, { color: TempleTheme.goldLight }]}>{alias}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </>
+          )}
+
+          {/* 選神按鈕 */}
+          <TouchableOpacity
+            style={[modalStyles.selectBtn, { backgroundColor: god.primaryColor }]}
+            onPress={onSelect}
+            activeOpacity={0.85}
+          >
+            <Text style={modalStyles.selectBtnText}>向 {god.name} 求籤</Text>
+          </TouchableOpacity>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
   );
 }
 
@@ -185,10 +313,22 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod }: QuestionFor
         <Text style={styles.subtitle}>題目越聚焦，籤意越容易讀得清楚。</Text>
 
         {selectedGod ? (
-          <View style={styles.selectedCard}>
-            <Text style={styles.selectedLabel}>目前請示對象</Text>
-            <Text style={styles.selectedName}>{selectedGod.name}</Text>
-            <Text style={styles.selectedText}>{selectedGod.tagline}</Text>
+          <View style={[styles.selectedCard, { borderColor: selectedGod.accentColor + '55' }]}>
+            {getGodCardImage(selectedGod.id) ? (
+              <Image
+                source={getGodCardImage(selectedGod.id)}
+                style={styles.selectedCardBg}
+                contentFit="cover"
+                contentPosition="top"
+                transition={300}
+              />
+            ) : null}
+            <View style={[styles.selectedCardOverlay, { backgroundColor: selectedGod.primaryColor + 'CC' }]} />
+            <View style={styles.selectedCardContent}>
+              <Text style={[styles.selectedLabel, { color: selectedGod.accentColor }]}>目前請示對象</Text>
+              <Text style={styles.selectedName}>{selectedGod.name}</Text>
+              <Text style={[styles.selectedText, { color: selectedGod.accentColor }]}>{selectedGod.tagline}</Text>
+            </View>
           </View>
         ) : null}
 
@@ -373,7 +513,7 @@ const styles = StyleSheet.create({
   },
   godPortrait: {
     width: '100%',
-    height: 138,
+    aspectRatio: 2 / 3,
     borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1.5,
@@ -392,30 +532,62 @@ const styles = StyleSheet.create({
   godTagline: { fontSize: 11, fontWeight: '600', marginBottom: 6 },
   godPoem: { fontSize: 10, color: TempleTheme.textMuted, marginBottom: TempleSpacing.xs },
   godDesc: { fontSize: 10, color: TempleTheme.textMuted, lineHeight: 16 },
+  detailBtn: {
+    marginTop: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    backgroundColor: TempleTheme.bgDark + '45',
+  },
+  detailBtnText: { fontSize: 11, fontWeight: '700' },
   formScroll: { flex: 1 },
   formContainer: { width: '100%', alignSelf: 'center', paddingHorizontal: TempleSpacing.md },
   selectedCard: {
     borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: TempleTheme.goldDark + '35',
-    backgroundColor: TempleTheme.bgCard,
-    padding: TempleSpacing.md,
+    height: 140,
+    overflow: 'hidden',
     marginBottom: TempleSpacing.md,
+  },
+  selectedCardBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  selectedCardOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  selectedCardContent: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: TempleSpacing.md,
   },
   selectedLabel: {
     fontSize: 11,
     color: TempleTheme.textMuted,
+    fontWeight: '700',
+    letterSpacing: 1,
     marginBottom: 4,
   },
   selectedName: {
-    fontSize: TempleFonts.body,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '900',
     color: TempleTheme.goldLight,
+    marginBottom: 2,
   },
   selectedText: {
-    marginTop: 4,
     fontSize: TempleFonts.small,
     color: TempleTheme.textMuted,
+    fontWeight: '600',
   },
   formGroup: { marginBottom: TempleSpacing.md },
   label: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginBottom: TempleSpacing.xs },
@@ -581,4 +753,83 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2,
   },
+});
+
+const modalStyles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: TempleSpacing.md,
+    paddingVertical: TempleSpacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: TempleTheme.goldDark + '20',
+  },
+  headerTitle: { fontSize: TempleFonts.heading, fontWeight: '700', color: TempleTheme.goldLight },
+  spacer: { width: 60 },
+  closeBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: TempleTheme.bgCard,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '30',
+  },
+  closeBtnText: { fontSize: 12, color: TempleTheme.textMuted },
+  scrollContent: { paddingHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.md },
+  heroWrap: {
+    height: 220,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    marginBottom: TempleSpacing.md,
+  },
+  heroImage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  heroOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  heroContent: { flex: 1, justifyContent: 'flex-end', padding: TempleSpacing.lg },
+  heroTitle: { fontSize: 12, fontWeight: '700', letterSpacing: 2, marginBottom: 4 },
+  heroName: { fontSize: 28, fontWeight: '900', color: TempleTheme.goldLight, marginBottom: 4 },
+  heroTagline: { fontSize: 14, fontWeight: '700' },
+  section: {
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 14,
+    padding: TempleSpacing.md,
+    marginBottom: TempleSpacing.sm,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '20',
+  },
+  sectionTitle: {
+    fontSize: TempleFonts.body,
+    fontWeight: '800',
+    color: TempleTheme.goldLight,
+    marginBottom: 10,
+  },
+  bodyText: { fontSize: TempleFonts.small, color: TempleTheme.textLight, lineHeight: 22 },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
+  badge: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  badgeText: { fontSize: 12, fontWeight: '700' },
+  muted: { fontSize: 12, color: TempleTheme.textMuted, lineHeight: 20 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: TempleTheme.bgDark + '45',
+  },
+  chipText: { fontSize: 12, fontWeight: '600' },
+  bullet: { fontSize: TempleFonts.small, color: TempleTheme.textLight, lineHeight: 22, marginBottom: 4 },
+  selectBtn: {
+    marginTop: TempleSpacing.sm,
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  selectBtnText: { fontSize: TempleFonts.heading, fontWeight: '800', color: '#FFF', letterSpacing: 2 },
 });

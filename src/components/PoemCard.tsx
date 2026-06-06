@@ -183,7 +183,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
           <View style={[styles.godOracleHeader, isCompact && styles.godOracleHeaderCompact, { borderBottomColor: godAccent + '35' }]}>
             <View style={[styles.godOracleImageWrap, { borderColor: godAccent + '70' }]}>
               {closeupImage ? (
-                <Image source={closeupImage} style={styles.godOracleImage} contentFit="cover" transition={200} />
+                <Image source={closeupImage} style={styles.godOracleImage} contentFit="cover" contentPosition="top" transition={200} />
               ) : null}
               <View style={[styles.godOracleImageOverlay, { backgroundColor: godPrimary + '18' }]} />
             </View>
@@ -421,8 +421,8 @@ const styles = StyleSheet.create({
   },
   godOracleHeaderCompact: { flexDirection: 'column', alignItems: 'center' },
   godOracleImageWrap: {
-    width: 92,
-    height: 116,
+    width: 140,
+    height: 176,
     borderRadius: 20,
     borderWidth: 1.5,
     overflow: 'hidden',

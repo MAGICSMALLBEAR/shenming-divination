@@ -10,6 +10,7 @@ import { Jiaobei } from '@/components/Jiaobei';
 import { DrawAnimation } from '@/components/DrawAnimation';
 import { PoemCard } from '@/components/PoemCard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Onboarding, hasOnboarded } from '@/components/Onboarding';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { speakText, stopSpeaking } from '@/services/speech';
 import { IncenseSmoke } from '@/components/IncenseSmoke';
@@ -37,6 +38,8 @@ export default function HomeScreen() {
   const [fortune, setFortune] = React.useState<DailyFortune>(() => getDailyFortune());
   const [hasLastPoemContext, setHasLastPoemContext] = React.useState(false);
   const [ritualStyle, setRitualStyle] = React.useState<RitualStyleKey>('bronze');
+  const [showOnboarding, setShowOnboarding] = React.useState(false);
+  const [onboardingChecked, setOnboardingChecked] = React.useState(false);
   const isCompact = width < 420;
   const isTablet = width >= 768;
   const isDesktop = width >= 1100;
@@ -74,6 +77,14 @@ export default function HomeScreen() {
   }, []);
   React.useEffect(() => {
     getLastPoemContext().then((context) => setHasLastPoemContext(Boolean(context)));
+  }, []);
+
+  // 檢查是否已完成新手引導
+  React.useEffect(() => {
+    hasOnboarded().then((done) => {
+      setShowOnboarding(!done);
+      setOnboardingChecked(true);
+    });
   }, []);
 
   const canGoBack = div.step !== 'select-god' && div.step !== 'drawing' && div.step !== 'ai-interpret';
@@ -323,21 +334,27 @@ export default function HomeScreen() {
     <ErrorBoundary onReset={handleReset}>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
-        <StarBackground />
-        {div.step === 'meditate' || div.step === 'toss-jiaobei' ? <IncenseSmoke /> : null}
-        <FireworksEffect active={showFireworks} />
-        <View style={styles.container}>
-          <View style={[styles.pageShell, { maxWidth: pageMaxWidth }]}>
-            {renderHeader()}
-            {renderStepIndicator()}
-            <View style={styles.content}>{renderContent()}</View>
-            {renderActions()}
-          </View>
-        </View>
-        {div.toastMessage && (
-          <View style={[styles.toast, isCompact && styles.toastCompact]}>
-            <Text style={styles.toastText}>{div.toastMessage}</Text>
-          </View>
+        {showOnboarding ? (
+          <Onboarding onComplete={() => setShowOnboarding(false)} />
+        ) : (
+          <>
+            <StarBackground />
+            {div.step === 'meditate' || div.step === 'toss-jiaobei' ? <IncenseSmoke /> : null}
+            <FireworksEffect active={showFireworks} />
+            <View style={styles.container}>
+              <View style={[styles.pageShell, { maxWidth: pageMaxWidth }]}>
+                {renderHeader()}
+                {renderStepIndicator()}
+                <View style={styles.content}>{renderContent()}</View>
+                {renderActions()}
+              </View>
+            </View>
+            {div.toastMessage && (
+              <View style={[styles.toast, isCompact && styles.toastCompact]}>
+                <Text style={styles.toastText}>{div.toastMessage}</Text>
+              </View>
+            )}
+          </>
         )}
       </SafeAreaView>
     </ErrorBoundary>

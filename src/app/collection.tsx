@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Platform,
   SafeAreaView,
   ScrollView,
+  Share,
   StatusBar,
   StyleSheet,
   Text,
@@ -161,6 +163,50 @@ export default function CollectionScreen() {
         },
       },
     ]);
+  };
+
+  const handleExport = async () => {
+    if (!filteredRecords.length) {
+      Alert.alert('沒有紀錄', '目前沒有可匯出的籤詩紀錄。');
+      return;
+    }
+
+    const lines: string[] = [
+      '神明占卜 — 籤詩紀錄匯出',
+      `匯出時間：${new Date().toLocaleString('zh-TW')}`,
+      `共 ${filteredRecords.length} 筆`,
+      '═'.repeat(40),
+    ];
+
+    filteredRecords.forEach((record, i) => {
+      lines.push('');
+      lines.push(`【第 ${i + 1} 筆】${formatDate(record.timestamp)}`);
+      lines.push(`神明：${record.godName}`);
+      lines.push(`籤號：第 ${record.poem.number} 籤・${record.poem.title}・${record.poem.level}`);
+      if (record.question) lines.push(`問題：${record.question}`);
+      lines.push(`籤文：${record.poem.content}`);
+      if (record.poem.vernacular) lines.push(`白話：${record.poem.vernacular}`);
+      if (record.aiInterpretation) lines.push(`AI 解讀：${record.aiInterpretation.slice(0, 200)}...`);
+      if (record.notes?.trim()) lines.push(`筆記：${record.notes}`);
+      if (record.verificationStatus && record.verificationStatus !== 'pending') {
+        lines.push(`應驗：${VERIFICATION_LABELS[record.verificationStatus].text}`);
+      }
+      lines.push('─'.repeat(40));
+    });
+
+    const text = lines.join('\n');
+
+    if (Platform.OS === 'web') {
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `籤詩紀錄_${new Date().toISOString().slice(0, 10)}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      await Share.share({ message: text, title: '神明占卜籤詩紀錄' }).catch(() => {});
+    }
   };
 
   const handleStartEditNote = (record: DivinationRecord) => {
@@ -524,6 +570,12 @@ export default function CollectionScreen() {
           ) : null}
 
           {filteredRecords.map((record) => renderRecord(record, activeTab === 'favorites'))}
+
+          {filteredRecords.length > 0 ? (
+            <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
+              <Text style={styles.exportBtnText}>匯出目前 {filteredRecords.length} 筆紀錄</Text>
+            </TouchableOpacity>
+          ) : null}
 
           {activeTab === 'history' && history.length > 0 ? (
             <TouchableOpacity style={styles.clearBtn} onPress={handleClearHistory}>
@@ -936,6 +988,19 @@ const styles = StyleSheet.create({
     fontSize: TempleFonts.small,
     color: TempleTheme.goldLight,
     fontWeight: '700',
+  },
+  exportBtn: {
+    marginTop: TempleSpacing.md,
+    paddingVertical: TempleSpacing.sm,
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '40',
+    backgroundColor: TempleTheme.bgCard,
+  },
+  exportBtnText: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.goldLight,
   },
   clearBtn: {
     marginTop: TempleSpacing.lg,

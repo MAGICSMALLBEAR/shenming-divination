@@ -150,13 +150,12 @@ export async function vibrateLight() {
 
 // assets/sounds/{name}.mp3 存在時才 require；不存在時回傳 null
 function tryRequire(_name: string): any {
-  // 音檔需放置於 assets/sounds/ 目錄後取消以下 require 的 comment
-  // switch (_name) {
-  //   case 'toss':     return require('../../assets/sounds/toss.mp3');
-  //   case 'shengbei': return require('../../assets/sounds/shengbei.mp3');
-  //   case 'draw':     return require('../../assets/sounds/draw.mp3');
-  //   case 'incense':  return require('../../assets/sounds/incense.mp3');
-  //   case 'result':   return require('../../assets/sounds/result.mp3');
-  // }
-  return null; // 改用合成音效
+  switch (_name) {
+    case 'toss':     return require('../../assets/sounds/toss.mp3');
+    case 'shengbei': return require('../../assets/sounds/shengbei.mp3');
+    case 'draw':     return require('../../assets/sounds/draw.mp3');
+    case 'incense':  return require('../../assets/sounds/incense.mp3');
+    case 'result':   return require('../../assets/sounds/result.mp3');
+  }
+  return null;
 }
