@@ -297,6 +297,248 @@ export function getMonthGodBirthdays(): { date: string; godName: string }[] {
     .map(d => ({ date: d.solarDate!, godName: d.godBirthday!.replace('聖誕', '') }));
 }
 
+// 完整神明農曆聖誕資料表（15 尊）
+export interface GodBirthdayEntry {
+  godId: number;
+  name: string;
+  lunarMonth: number;
+  lunarDay: number;
+  worshipTips: string[];
+  offerings: string[];
+  prayerFor: string[];
+}
+
+export const GOD_BIRTHDAYS_LUNAR: GodBirthdayEntry[] = [
+  {
+    godId: 1, name: '關聖帝君', lunarMonth: 1, lunarDay: 13,
+    worshipTips: ['準備豬肉、花生、高粱酒', '早晨7~9點參拜效果最佳', '誠心稟報事業、官訟或財運心願'],
+    offerings: ['豬肉', '花生', '高粱酒', '壽金', '五果'],
+    prayerFor: ['事業發展', '考試功名', '財運亨通', '化解官司'],
+  },
+  {
+    godId: 2, name: '觀世音菩薩', lunarMonth: 2, lunarDay: 19,
+    worshipTips: ['素食供品最為虔誠', '心存善念、輕聲誠禱', '可持誦「南無觀世音菩薩」108遍'],
+    offerings: ['鮮花', '素果', '清茶', '香燭', '白蓮花'],
+    prayerFor: ['平安健康', '求子求嗣', '化解災厄', '感情圓滿'],
+  },
+  {
+    godId: 3, name: '媽祖', lunarMonth: 3, lunarDay: 23,
+    worshipTips: ['可備鮮花、素果、清水', '家有孕婦或出海者特別靈驗', '心誠則靈，默禱即可'],
+    offerings: ['鮮花', '素果', '清水', '壽金', '鳳梨'],
+    prayerFor: ['家庭平安', '出行順利', '航海保護', '闔家和樂'],
+  },
+  {
+    godId: 4, name: '王爺', lunarMonth: 5, lunarDay: 5,
+    worshipTips: ['可備三牲酒禮', '稟報家宅或出入安全事宜', '燒金紙時心誠最重要'],
+    offerings: ['三牲', '水果', '壽金', '刈金', '清酒'],
+    prayerFor: ['驅邪保平安', '家宅安寧', '出入平安', '化解瘟疫病災'],
+  },
+  {
+    godId: 5, name: '保生大帝', lunarMonth: 3, lunarDay: 15,
+    worshipTips: ['藥材或清茶為佳供品', '誠心祈求病痛康復或身體健康', '可攜帶藥方來祝聖'],
+    offerings: ['清茶', '素果', '鮮花', '藥草', '壽金'],
+    prayerFor: ['疾病痊癒', '身體健康', '藥方有效', '福壽綿長'],
+  },
+  {
+    godId: 6, name: '福德正神', lunarMonth: 2, lunarDay: 2,
+    worshipTips: ['每月初二、十六拜土地公最靈', '準備糕點、壽桃', '求財時可多準備刈金'],
+    offerings: ['糕點', '壽桃', '水果', '刈金', '土地公金'],
+    prayerFor: ['財源廣進', '家宅平安', '生意興隆', '出入順利'],
+  },
+  {
+    godId: 7, name: '註生娘娘', lunarMonth: 3, lunarDay: 20,
+    worshipTips: ['備鮮花、素果，心存慈悲', '已懷孕者可額外感謝', '求子時可帶紅蛋'],
+    offerings: ['鮮花', '素果', '紅蛋', '粉圓', '壽金'],
+    prayerFor: ['懷孕順產', '孩子健康', '求賜子嗣', '孩童平安長大'],
+  },
+  {
+    godId: 8, name: '文昌帝君', lunarMonth: 2, lunarDay: 3,
+    worshipTips: ['筆墨紙硯或書本為供品', '考試前攜帶準考證來祝聖', '保持心靜、誠心祈求'],
+    offerings: ['文具', '書本', '素果', '壽金', '文昌筆'],
+    prayerFor: ['考試順利', '學業進步', '金榜題名', '文思泉湧'],
+  },
+  {
+    godId: 9, name: '孔明神數', lunarMonth: 7, lunarDay: 23,
+    worshipTips: ['心中默念問題，靜心推算', '求智慧決策時最靈驗', '誠心報一數即可'],
+    offerings: ['清茶', '素果', '文房四寶', '壽金'],
+    prayerFor: ['智慧決策', '謀略分析', '突破困境', '洞察先機'],
+  },
+  {
+    godId: 10, name: '玄天上帝', lunarMonth: 3, lunarDay: 3,
+    worshipTips: ['可備素食或葷食三牲', '誠心稟報家宅安危或小人事宜', '可燃七星香'],
+    offerings: ['三牲', '素果', '清酒', '壽金', '七星香'],
+    prayerFor: ['鎮宅除煞', '小人退散', '事業穩固', '斬妖除魔'],
+  },
+  {
+    godId: 11, name: '濟公活佛', lunarMonth: 2, lunarDay: 2,
+    worshipTips: ['酒肉不避，誠心即可', '求突破困境、化解煩憂', '可輕鬆訴說心中煩惱'],
+    offerings: ['雞腿', '清酒', '水果', '壽金', '香燭'],
+    prayerFor: ['突破困境', '化解煩惱', '心開意解', '化險為夷'],
+  },
+  {
+    godId: 12, name: '三太子', lunarMonth: 9, lunarDay: 9,
+    worshipTips: ['可備麻薏、鮮花、糖果', '年輕人求事業衝刺最靈', '活潑誠心即可'],
+    offerings: ['麻薏', '糖果', '鮮花', '壽金', '刈金'],
+    prayerFor: ['事業衝刺', '突破難關', '身體健康', '創意靈感'],
+  },
+  {
+    godId: 13, name: '月下老人', lunarMonth: 8, lunarDay: 15,
+    worshipTips: ['中秋月圓夜祭拜最靈驗', '備鮮花、紅豆湯、芋頭', '誠心稟報感情心願'],
+    offerings: ['鮮花', '紅豆湯', '芋頭', '月餅', '紅線'],
+    prayerFor: ['良緣早成', '感情和合', '婚姻美滿', '相思解惑'],
+  },
+  {
+    godId: 14, name: '城隍爺', lunarMonth: 5, lunarDay: 11,
+    worshipTips: ['備三牲酒禮，誠心稟報', '官司或是非紛爭時特別靈驗', '心存正義最重要'],
+    offerings: ['三牲', '水果', '清酒', '壽金', '刈金'],
+    prayerFor: ['官司順利', '是非分明', '冤屈昭雪', '消災解厄'],
+  },
+  {
+    godId: 15, name: '呂洞賓', lunarMonth: 4, lunarDay: 14,
+    worshipTips: ['清茶素果為佳', '求考試、健康或感情均可', '心清如水最相應'],
+    offerings: ['清茶', '素果', '鮮花', '壽金', '香燭'],
+    prayerFor: ['考試功名', '身體健康', '感情順遂', '智慧清明'],
+  },
+];
+
+// 農曆日→公曆日期的粗略換算（用固定偏移，精確版需天文計算）
+// 這裡用今年農曆月比對，回傳近似公曆月份（每年差約21~51天不等）
+const LUNAR_TO_SOLAR_APPROX_OFFSET_DAYS = 29; // 農曆比公曆早約29天（平均值）
+
+// 推算「近似公曆日期」：農曆 M 月 D 日 ≈ 公曆 (M+1) 月 D 日（粗略）
+function approxSolarFromLunar(year: number, lunarMonth: number, lunarDay: number): Date {
+  // 農曆通常比公曆晚 1-2 個月，這裡用 +1 個月粗略換算
+  const approxMonth = lunarMonth + 1;
+  if (approxMonth > 12) {
+    return new Date(year + 1, 0, lunarDay);
+  }
+  return new Date(year, approxMonth - 1, lunarDay);
+}
+
+// 今日推薦禮拜的神明
+export function getTodayRecommendedGod(): {
+  godId: number;
+  name: string;
+  reason: string;
+  isSpecialDay: boolean;
+  worshipTips: string[];
+  offerings: string[];
+  prayerFor: string[];
+} {
+  const today = new Date();
+  const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  const dayIndex = today.getDate() - 1;
+  const monthData = MONTHLY_DATA[key];
+  const todayData = monthData?.[dayIndex];
+
+  // 檢查今天是否有神明聖誕
+  if (todayData?.godBirthday) {
+    const birthdayName = todayData.godBirthday;
+    const match = GOD_BIRTHDAYS_LUNAR.find(g =>
+      birthdayName.includes(g.name) || g.name.includes(birthdayName.replace('聖誕', ''))
+    );
+    if (match) {
+      return {
+        godId: match.godId,
+        name: match.name,
+        reason: `今日是${match.name}聖誕，是與祂特別有緣的吉日！`,
+        isSpecialDay: true,
+        worshipTips: match.worshipTips,
+        offerings: match.offerings,
+        prayerFor: match.prayerFor,
+      };
+    }
+  }
+
+  // 根據農曆日推薦（初一、十五拜土地公；初二、十六也拜土地公）
+  const lunarDay = todayData?.lunarDay ?? today.getDate();
+  if (lunarDay === 1 || lunarDay === 15 || lunarDay === 2 || lunarDay === 16) {
+    const fuDe = GOD_BIRTHDAYS_LUNAR.find(g => g.godId === 6)!;
+    return {
+      godId: 6,
+      name: '福德正神',
+      reason: `農曆${lunarDay}日是拜土地公的吉日，求財求平安最靈驗。`,
+      isSpecialDay: false,
+      worshipTips: fuDe.worshipTips,
+      offerings: fuDe.offerings,
+      prayerFor: fuDe.prayerFor,
+    };
+  }
+
+  // 根據星期推薦
+  const weekday = today.getDay();
+  const weekdayGodMap: Record<number, number> = {
+    0: 2,  // 週日 → 觀世音菩薩
+    1: 1,  // 週一 → 關聖帝君
+    2: 8,  // 週二 → 文昌帝君
+    3: 5,  // 週三 → 保生大帝
+    4: 3,  // 週四 → 媽祖
+    5: 6,  // 週五 → 福德正神
+    6: 13, // 週六 → 月下老人
+  };
+  const recommendedGodId = weekdayGodMap[weekday] ?? 1;
+  const entry = GOD_BIRTHDAYS_LUNAR.find(g => g.godId === recommendedGodId)!;
+  const weekdayNames = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+
+  return {
+    godId: entry.godId,
+    name: entry.name,
+    reason: `${weekdayNames[weekday]}是禮拜${entry.name}的好日子，祈求${entry.prayerFor[0]}最靈驗。`,
+    isSpecialDay: false,
+    worshipTips: entry.worshipTips,
+    offerings: entry.offerings,
+    prayerFor: entry.prayerFor,
+  };
+}
+
+// 取得近期神明聖誕（未來 N 天的近似日期）
+export function getUpcomingGodBirthdays(daysAhead: number = 60): {
+  godId: number;
+  name: string;
+  lunarDateStr: string;
+  approxSolarDate: string;
+  daysUntil: number;
+  offerings: string[];
+}[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const year = today.getFullYear();
+  const results: {
+    godId: number;
+    name: string;
+    lunarDateStr: string;
+    approxSolarDate: string;
+    daysUntil: number;
+    offerings: string[];
+  }[] = [];
+
+  for (const entry of GOD_BIRTHDAYS_LUNAR) {
+    for (const y of [year, year + 1]) {
+      const approx = approxSolarFromLunar(y, entry.lunarMonth, entry.lunarDay);
+      approx.setHours(0, 0, 0, 0);
+      const diff = Math.round((approx.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (diff >= 0 && diff <= daysAhead) {
+        results.push({
+          godId: entry.godId,
+          name: entry.name,
+          lunarDateStr: `農曆${entry.lunarMonth}月${entry.lunarDay}日`,
+          approxSolarDate: `${approx.getMonth() + 1}/${approx.getDate()}（約）`,
+          daysUntil: diff,
+          offerings: entry.offerings,
+        });
+        break;
+      }
+    }
+  }
+
+  return results.sort((a, b) => a.daysUntil - b.daysUntil);
+}
+
+// 取得特定神明的祭拜建議
+export function getGodWorshipInfo(godId: number): GodBirthdayEntry | null {
+  return GOD_BIRTHDAYS_LUNAR.find(g => g.godId === godId) ?? null;
+}
+
 // 取得指定年度全部神明聖誕（含實際 Date 物件）
 export function getAllGodBirthdays(year = new Date().getFullYear()): {
   date: Date;
@@ -306,7 +548,7 @@ export function getAllGodBirthdays(year = new Date().getFullYear()): {
   const result: { date: Date; name: string; solarDateStr: string }[] = [];
 
   for (const [monthKey, days] of Object.entries(MONTHLY_DATA)) {
-    const [y, m] = monthKey.split('-').map(Number);
+    const [y] = monthKey.split('-').map(Number);
     if (y !== year) continue;
 
     for (const day of days) {

@@ -3,7 +3,7 @@ import express from 'express';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 const PORT = Number(process.env.PORT || '3001');
 
@@ -51,6 +51,29 @@ function getAIConfig(): AIConfig {
 
 function hasUsableApiKey(config: AIConfig): boolean {
   return Boolean(config.apiKey && !config.apiKey.startsWith('sk-your-'));
+}
+
+// 各神明的 AI 顧問人格設定
+const GOD_PERSONALITIES: Record<string, string> = {
+  '關聖帝君': '你是關聖帝君的解籤使者，語氣剛正威嚴、忠義凜然，言辭直接有力，如武將發號施令。說話不繞彎子，指出問題核心，鼓勵信眾以忠義之心面對困境，強調正氣、誠信與行動力。',
+  '觀世音菩薩': '你是觀世音菩薩的解籤使者，語氣大慈大悲、溫柔包容，如母親安撫孩子般溫暖。說話充滿慈悲與理解，不批評、不評判，引導信眾放下執著，以善念待人，強調內心的平靜與慈悲。',
+  '媽祖': '你是媽祖娘娘的解籤使者，語氣親切如鄰家長輩，溫暖務實、接地氣。說話如媽媽叮嚀孩子，關心家庭、出行與日常，強調照顧好身邊的人，注重實際可行的建議。',
+  '月下老人': '你是月下老人的解籤使者，語氣浪漫詩意、含蓄優雅，如老詩人談論緣分。說話充滿暗示與隱喻，引導信眾思考緣分的奧妙，強調緣分天定、順其自然，帶有一絲神祕的浪漫氣息。',
+  '文昌帝君': '你是文昌帝君的解籤使者，語氣嚴謹學術、鼓勵積極，如恩師指導學生。說話邏輯清晰，重視努力與方法，分析問題有條有理，強調知識、勤奮與正確的學習方法，給予具體的改進方向。',
+  '濟公活佛': '你是濟公師父的解籤使者，語氣幽默風趣、禪機妙語，如老頑童點化迷路人。說話夾帶笑意，用詼諧方式道破玄機，打破信眾的執念，強調放下執著、隨緣自在，偶爾說出讓人拍案叫絕的話。',
+  '保生大帝': '你是保生大帝的解籤使者，語氣如醫師般務實關懷，注重健康與身心平衡。說話直接告知問題所在，給予具體的保健建議，強調身體照護、規律作息，以及「防患未然」的醫者智慧。',
+  '福德正神': '你是土地公的解籤使者，語氣親切樸實、接地氣，如鄰里老伯伯的叮嚀。說話簡單易懂，不說大道理，重視日常積累與小小善念，強調勤勞實在、腳踏實地，財運與平安靠自己一步一步累積。',
+  '王爺': '你是王爺千歲的解籤使者，語氣威嚴正氣、雷厲風行，如巡察的欽差大臣。說話威風凜凜，直指問題，不允許拖延與推托，強調規矩、正氣與迅速行動，對邪氣小人零容忍。',
+  '孔明神數': '你是諸葛武侯的解籤使者，語氣縝密謀略、邏輯推演，如軍師分析戰情。說話擅長分析局勢，提出多種可能性與對策，強調「知己知彼，百戰不殆」，引導信眾從多角度思考問題。',
+  '玄天上帝': '你是玄天上帝的解籤使者，語氣剛正威嚴、除魔護道，如鎮守天門的神將。說話充滿正義感，堅決驅除一切負面影響，強調信眾要心存正念、遠離邪惡，以七星之力護佑正道。',
+  '三太子': '你是三太子哪吒的解籤使者，語氣活潑熱情、充滿衝勁，如年輕的英雄鼓舞隊友。說話帶有少年的直率與熱血，鼓勵信眾勇敢嘗試、積極行動，強調只要敢衝敢拼，沒有翻不過的山。',
+  '城隍爺': '你是城隍爺的解籤使者，語氣公正嚴明、明察秋毫，如包青天斷案。說話鐵面無私，指出問題的是非對錯，強調公平正義，告誡信眾「善有善報，惡有惡報」，以清明的眼光看清局勢。',
+  '呂洞賓': '你是孚佑帝君的解籤使者，語氣瀟灑出塵、道家哲理，如得道仙人的點化。說話充滿道家智慧，善用比喻與哲理，引導信眾超越世俗執念，強調「順其自然、以柔克剛」的人生哲學。',
+  '註生娘娘': '你是註生娘娘的解籤使者，語氣溫柔母愛、呵護關懷，如慈母守護孩子。說話充滿溫柔與關愛，特別關心家庭與孩子，強調用愛與耐心陪伴，給予信眾如母親般的安慰與鼓勵。',
+};
+
+function getGodPersonality(godName: string): string {
+  return GOD_PERSONALITIES[godName] ?? `你是 ${godName} 的解籤使者，語氣溫和、具體、帶安定感。`;
 }
 
 async function callLLM(config: AIConfig, messages: ChatMessage[]): Promise<string> {
@@ -180,8 +203,9 @@ app.post('/api/interpret', async (req, res) => {
         general: '近期整體運勢',
       }[questionCategory || 'general'] || '近期整體運勢';
 
+    const personality = getGodPersonality(godName);
     const systemPrompt = [
-      `你是 ${godName} 的解籤助手，語氣溫和、具體、帶安定感。`,
+      personality,
       `使用者稱呼：${userName || '信眾'}`,
       '請直接輸出以下五段，標題必須完全一致：',
       '【一句結論】',
@@ -190,7 +214,7 @@ app.post('/api/interpret', async (req, res) => {
       '【需要留意】',
       '【適合追問】',
       '不要輸出 JSON，也不要寫前言。',
-      '每段 1 到 3 句即可，重點放在可理解與可執行。',
+      '每段 1 到 3 句即可，重點放在可理解與可執行，同時維持該神明的語氣特色。',
     ].join('\n');
 
     const userPrompt = [
@@ -230,7 +254,7 @@ app.post('/api/interpret', async (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { messages } = req.body as { messages?: ChatMessage[] };
+    const { messages, godName } = req.body as { messages?: ChatMessage[]; godName?: string };
     if (!messages || !Array.isArray(messages)) {
       res.status(400).json({ error: '缺少 messages 陣列' });
       return;
@@ -246,12 +270,13 @@ app.post('/api/chat', async (req, res) => {
       return;
     }
 
+    const personality = godName ? getGodPersonality(godName) : '你是神明占卜 App 的追問助手，語氣溫和、具體。';
     const systemPrompt: ChatMessage = {
       role: 'system',
       content: [
-        '你是神明占卜 App 的追問助手。',
-        '回答要溫和、具體、避免神神叨叨。',
-        '優先幫使用者整理下一步、提醒與判斷角度。',
+        personality,
+        '現在用戶在追問解籤結果，請以該神明的語氣特色回應追問。',
+        '回答具體、避免神神叨叨，優先幫使用者整理下一步、提醒與判斷角度。',
         '盡量控制在 180 字內，除非使用者要求更詳細。',
       ].join('\n'),
     };
@@ -264,6 +289,121 @@ app.post('/api/chat', async (req, res) => {
       reply:
         '我剛剛沒有順利拿到 AI 回覆。先這樣抓重點：別急著求一次到位，先把眼前最在意的那件事拆成一個小步驟去做。',
       provider: 'fallback',
+    });
+  }
+});
+
+// 拍照解籤：辨識籤詩圖片，回傳籤號與籤系統
+app.post('/api/vision', async (req, res) => {
+  try {
+    const { imageBase64, mimeType = 'image/jpeg' } = req.body as {
+      imageBase64?: string;
+      mimeType?: string;
+    };
+
+    if (!imageBase64) {
+      res.status(400).json({ error: '缺少 imageBase64 欄位' });
+      return;
+    }
+
+    const config = getAIConfig();
+    if (!hasUsableApiKey(config)) {
+      res.json({
+        success: false,
+        error: '尚未設定 AI API Key，無法辨識圖片。',
+        provider: 'fallback',
+      });
+      return;
+    }
+
+    const visionPrompt = [
+      '請仔細辨識這張籤詩圖片，分析以下資訊：',
+      '1. 籤號（數字，例如：第18籤、18、十八等形式）',
+      '2. 籤系統（請從以下選項判斷：雷雨師百首、觀音靈籤、六十甲子籤、諸葛神數、二十八宿靈籤）',
+      '3. 籤等（例如：上上、上吉、中平、下下等）',
+      '4. 籤文前幾個字（如有看到）',
+      '',
+      '請以 JSON 格式回傳，格式如下：',
+      '{"poemNumber": 數字或null, "poemSystem": "系統名稱或null", "poemLevel": "籤等或null", "poemTextHint": "籤文前幾字或null", "confidence": "high/medium/low", "notes": "其他說明"}',
+      '如果圖片不夠清晰或無法辨識籤詩，請在 notes 中說明原因。',
+    ].join('\n');
+
+    const response = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: visionPrompt },
+              {
+                type: 'image_url',
+                image_url: { url: `data:${mimeType};base64,${imageBase64}`, detail: 'high' },
+              },
+            ],
+          },
+        ],
+        max_tokens: 500,
+        temperature: 0.2,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      // 如果 model 不支援 vision，回傳友好錯誤
+      if (response.status === 400 || response.status === 422) {
+        res.json({
+          success: false,
+          error: '目前使用的 AI 模型不支援圖片辨識，請改用支援 vision 的模型（如 gpt-4o）。',
+          provider: config.provider,
+        });
+        return;
+      }
+      throw new Error(`Vision API error (${response.status}): ${errorText}`);
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const rawContent = data.choices?.[0]?.message?.content ?? '';
+
+    // 嘗試解析 JSON
+    const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      res.json({
+        success: false,
+        error: '無法解析 AI 回覆格式',
+        rawContent,
+        provider: config.provider,
+      });
+      return;
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]) as {
+      poemNumber?: number | null;
+      poemSystem?: string | null;
+      poemLevel?: string | null;
+      poemTextHint?: string | null;
+      confidence?: string;
+      notes?: string;
+    };
+
+    res.json({
+      success: true,
+      ...parsed,
+      provider: config.provider,
+    });
+  } catch (error) {
+    console.error('Vision API error:', error);
+    res.json({
+      success: false,
+      error: error instanceof Error ? error.message : '圖片辨識失敗',
+      provider: 'error',
     });
   }
 });
