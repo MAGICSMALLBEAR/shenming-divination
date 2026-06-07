@@ -16,6 +16,7 @@ import { useI18n } from '@/hooks/useI18n';
 const tabs = [
   { name: 'index', href: '/' as const, labelKey: 'drawLots' },
   { name: 'daily', href: '/daily' as any, labelKey: 'today' },
+  { name: 'temple', href: '/temple' as any, labelKey: 'temple' },
   { name: 'collection', href: '/collection' as const, labelKey: 'collection' },
   { name: 'wishes', href: '/wishes' as const, labelKey: 'wishes' },
   { name: 'chat', href: '/chat' as const, labelKey: 'chat' },

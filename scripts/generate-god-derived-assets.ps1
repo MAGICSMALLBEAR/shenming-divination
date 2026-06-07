@@ -103,27 +103,52 @@ $closeupDir = Join-Path $root 'assets\images\gods\generated\closeups'
 New-Item -ItemType Directory -Force -Path $softDir | Out-Null
 New-Item -ItemType Directory -Force -Path $closeupDir | Out-Null
 
+function Test-DerivedImageCurrent {
+  param(
+    [Parameter(Mandatory=$true)][string]$SourcePath,
+    [Parameter(Mandatory=$true)][string]$OutputPath,
+    [Parameter(Mandatory=$true)][int]$ExpectedWidth,
+    [Parameter(Mandatory=$true)][int]$ExpectedHeight
+  )
+
+  if (-not (Test-Path $OutputPath)) {
+    return $false
+  }
+
+  try {
+    $image = [System.Drawing.Image]::FromFile($OutputPath)
+    if ($image.Width -ne $ExpectedWidth -or $image.Height -ne $ExpectedHeight) {
+      return $false
+    }
+  }
+  finally {
+    if ($image) {
+      $image.Dispose()
+    }
+  }
+
+  $sourceItem = Get-Item $SourcePath
+  $outputItem = Get-Item $OutputPath
+  return $outputItem.LastWriteTimeUtc -ge $sourceItem.LastWriteTimeUtc
+}
+
 $cropTopBySlug = @{
   'baoshengdadi' = 140
+  'chenghuangye' = 128
   'fudezhengshen' = 150
   'guanshengdijun' = 132
   'guanyin' = 120
+  'jigonghuofo' = 118
+  'lvdongbin' = 126
   'mazu' = 128
+  'santaizi' = 120
   'wangye' = 126
   'wenchangdijun' = 128
+  'xuantianshangdi' = 126
+  'yuexialaoren' = 118
   'zhugewuhou' = 132
   'zhushengniangniang' = 118
 }
-
-$missingSoftOnly = @(
-  'baoshengdadi',
-  'fudezhengshen',
-  'mazu',
-  'wangye',
-  'wenchangdijun',
-  'zhugewuhou',
-  'zhushengniangniang'
-)
 
 foreach ($cardFile in Get-ChildItem $cardDir -Filter '*-card.png') {
   $slug = $cardFile.BaseName -replace '-card$', ''
@@ -131,12 +156,23 @@ foreach ($cardFile in Get-ChildItem $cardDir -Filter '*-card.png') {
   $closeupPath = Join-Path $closeupDir "$slug-closeup.png"
   $cropTop = if ($cropTopBySlug.ContainsKey($slug)) { [int]$cropTopBySlug[$slug] } else { 128 }
 
-  if ($missingSoftOnly -contains $slug -and -not (Test-Path $softPath)) {
+  try {
+    $cardImage = [System.Drawing.Image]::FromFile($cardFile.FullName)
+    $cardWidth = $cardImage.Width
+    $cardHeight = $cardImage.Height
+  }
+  finally {
+    if ($cardImage) {
+      $cardImage.Dispose()
+    }
+  }
+
+  if (-not (Test-DerivedImageCurrent $cardFile.FullName $softPath $cardWidth $cardHeight)) {
     [GodImageDeriver]::SaveSoft($cardFile.FullName, $softPath, 150)
     Write-Output "soft:$slug"
   }
 
-  if (-not (Test-Path $closeupPath)) {
+  if (-not (Test-DerivedImageCurrent $cardFile.FullName $closeupPath 1024 1280)) {
     [GodImageDeriver]::SaveCloseup($cardFile.FullName, $closeupPath, $cropTop, 0.8, 1024, 1280)
     Write-Output "closeup:$slug"
   }

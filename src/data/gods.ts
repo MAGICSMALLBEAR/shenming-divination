@@ -4,6 +4,7 @@ import { leiyushiPoems } from './poems/leiyushi';
 import { jiazi60Poems } from './poems/jiazi60';
 import { zhugeShenShuPoems } from './poems/zhugeShenShu';
 import { guanyinLingQianPoems } from './poems/guanyinLingQian';
+import { ershibaxiuPoems } from './poems/ershibaxiu';
 
 export interface God {
   id: number;
@@ -157,6 +158,96 @@ export const gods: God[] = [
     auraColor: '#B7D3C2',
     category: 'general',
   },
+  {
+    id: 10,
+    name: '玄天上帝',
+    title: '北極玄天上帝',
+    description: '鎮守北方天門，腳踏龜蛇、手持七星伏魔劍。道號真武大帝，主掌斬妖除魔、消災解厄、鎮宅平安。信眾祈求事業穩固、小人退散、家運昌隆。',
+    poemSystem: '二十八宿靈籤',
+    totalPoems: 28,
+    image: require('@/assets/images/gods/generated/cards/xuantianshangdi-card.png'),
+    blessing: '願上帝公七星護佑，龜蛇鎮煞，妖邪退散，家宅平安，事業穩固如山。',
+    tagline: '腳踏龜蛇，鎮煞伏魔',
+    primaryColor: '#2C1B4D',
+    accentColor: '#C9A84C',
+    auraColor: '#4A3080',
+    category: 'war',
+  },
+  {
+    id: 11,
+    name: '濟公活佛',
+    title: '濟公活佛',
+    description: '南宋高僧道濟禪師，形象破帽破扇破鞋，不受戒律拘束。以顛狂不羈之姿行走人間，專解疑難雜症，以幽默智慧化解煩憂。信眾求突破困境、化險為夷、心開意解。',
+    poemSystem: '雷雨師百首',
+    totalPoems: 100,
+    image: require('@/assets/images/gods/generated/cards/jigonghuofo-card.png'),
+    blessing: '願濟公師父慈悲點化，嬉笑怒罵皆智慧，煩惱執著都放下，一切隨緣自在。',
+    tagline: '顛狂濟世，破迷開悟',
+    primaryColor: '#6B3A2A',
+    accentColor: '#F0C75E',
+    auraColor: '#C4956A',
+    category: 'general',
+  },
+  {
+    id: 12,
+    name: '三太子',
+    title: '中壇元帥',
+    description: '托塔天王李靖第三子哪吒三太子，手持乾坤圈、火尖槍，腳踏風火輪。少年英雄，剛猛直率，活潑熱情。信眾祈求事業衝刺、創意靈感、突破難關、身體健康。',
+    poemSystem: '六十甲子籤',
+    totalPoems: 60,
+    image: require('@/assets/images/gods/generated/cards/santaizi-card.png'),
+    blessing: '願三太子風火神威加持，勇猛精進不退縮，突破眼前的關卡，看見新的風景。',
+    tagline: '風火少年，衝破難關',
+    primaryColor: '#D93025',
+    accentColor: '#F4A261',
+    auraColor: '#F28B82',
+    category: 'war',
+  },
+  {
+    id: 13,
+    name: '月下老人',
+    title: '月下老人',
+    description: '手持天下姻緣簿與紅絲線，專司人間男女婚姻。傳說月下老人以紅線繫住有緣男女的腳，千里姻緣一線牽。信眾祈求良緣、感情和合、婚姻美滿。',
+    poemSystem: '六十甲子籤',
+    totalPoems: 60,
+    image: require('@/assets/images/gods/generated/cards/yuexialaoren-card.png'),
+    blessing: '願月老慈悲牽紅線，良緣早成，心意相通，有情人終成眷屬。',
+    tagline: '紅線牽緣，良人可期',
+    primaryColor: '#C95B73',
+    accentColor: '#F7C5CC',
+    auraColor: '#FADADD',
+    category: 'compassion',
+  },
+  {
+    id: 14,
+    name: '城隍爺',
+    title: '城隍爺',
+    description: '陰間司法神，掌理地方陰陽兩界事務，明察秋毫、賞善罰惡。職司保境安民、懲奸除惡。信眾祈求官司順利、是非分明、冤屈昭雪、消災解厄。',
+    poemSystem: '雷雨師百首',
+    totalPoems: 100,
+    image: require('@/assets/images/gods/generated/cards/chenghuangye-card.png'),
+    blessing: '願城隍爺明鏡高懸，善有善報，冤屈得雪，是非分明，正義伸張。',
+    tagline: '明鏡高懸，善惡分明',
+    primaryColor: '#1A1A2E',
+    accentColor: '#C9A84C',
+    auraColor: '#2D2D44',
+    category: 'war',
+  },
+  {
+    id: 15,
+    name: '呂洞賓',
+    title: '孚佑帝君',
+    description: '八仙中最著名的一位，道教全真派祖師，號純陽子。文武雙全，精通劍術、醫術與丹道。信眾祈求考試功名、身體健康、化解感情糾葛。',
+    poemSystem: '雷雨師百首',
+    totalPoems: 100,
+    image: require('@/assets/images/gods/generated/cards/lvdongbin-card.png'),
+    blessing: '願孚佑帝君純陽正氣加持，智慧清明，劍斬煩惱，功成名就，身心康泰。',
+    tagline: '一劍斬煩惱，妙筆點功名',
+    primaryColor: '#2D5F7C',
+    accentColor: '#E8D5B0',
+    auraColor: '#6BAAC4',
+    category: 'general',
+  },
 ];
 
 // 問事類別
@@ -179,5 +270,6 @@ export function getPoemsByGod(godId: number) {
   if (god.poemSystem === '六十甲子籤') return jiazi60Poems;
   if (god.poemSystem === '諸葛神數') return zhugeShenShuPoems;
   if (god.poemSystem === '觀音靈籤') return guanyinLingQianPoems;
+  if (god.poemSystem === '二十八宿靈籤') return ershibaxiuPoems;
   return leiyushiPoems;
 }

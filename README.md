@@ -1,56 +1,82 @@
-# Welcome to your Expo app 👋
+# Shenming Divination
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A Taiwanese temple-inspired divination app built with Expo Router and React Native.
 
-## Get started
+The app guides users through a ritual-style flow: choose a deity, write a question, prepare with incense, cast jiaobei or enter a Zhuge number, draw an oracle poem, then save, reflect, verify, and follow up with AI-assisted interpretation.
 
-1. Install dependencies
+## Current Feature Set
 
-   ```bash
-   npm install
-   ```
+- 15 deity profiles with generated card, soft, and close-up portrait assets.
+- Multiple oracle systems, including Leiyu Shi, Jiazi 60, Guanyin Lingqian, Zhuge Shenshu, and Ershibaxiu.
+- Ritual flow with incense, jiaobei, drawing animation, sound, and result presentation.
+- AI interpretation and follow-up chat context.
+- Favorites, history, notes, verification status, wishes, daily fortune, and usage stats.
+- Web/PWA-oriented Expo app structure with local API routes for AI interpretation.
 
-2. Start the app
+## Project Structure
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+src/app/                 Expo Router screens
+src/components/          Ritual, cards, selectors, and shared UI
+src/data/                Deity data, image maps, poem catalogs
+src/services/            Storage, AI, divination, sharing, stats, notifications
+assets/images/gods/      Source and generated deity portraits
+assets/sounds/           Ritual sound effects
+api/                     Vercel-style serverless AI endpoints
+backend/                 Optional local backend server
+scripts/                 Asset and maintenance scripts
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Setup
 
-### Other setup steps
+```powershell
+npm install
+npx expo start
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+For web:
 
-## Learn more
+```powershell
+npm run web
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+For a static web export:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```powershell
+npm run export:web
+```
 
-## Join the community
+## Checks
 
-Join our community of developers creating universal apps.
+```powershell
+npx tsc --noEmit
+npm run lint
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+If `npm run lint` reports missing ESLint packages, install the Expo lint dependencies:
+
+```powershell
+npm install --save-dev eslint eslint-config-expo
+```
+
+## Generated Deity Assets
+
+Each deity has three generated PNG variants:
+
+```text
+assets/images/gods/generated/cards/<slug>-card.png
+assets/images/gods/generated/soft/<slug>-soft.png
+assets/images/gods/generated/closeups/<slug>-closeup.png
+```
+
+Regenerate derived `soft` and `closeups` images after changing a card:
+
+```powershell
+.\scripts\generate-god-derived-assets.ps1
+```
+
+The script only rebuilds derived images when they are missing, stale, or have invalid dimensions.
+
+## AI Configuration
+
+The app can run with fallback interpretation, but AI features need provider credentials configured in the environment or deployment platform. See `src/services/ai.ts`, `api/interpret.js`, and `backend/src/server.ts` for provider-specific behavior.

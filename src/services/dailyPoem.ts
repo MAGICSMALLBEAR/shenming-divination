@@ -30,8 +30,8 @@ export function getDailyPoem(): { poem: Poem; date: string; dayOfWeek: string } 
   };
 }
 
-export function getWeeklyPoems(): Array<{ poem: Poem; date: string; dayOfWeek: string }> {
-  const result: Array<{ poem: Poem; date: string; dayOfWeek: string }> = [];
+export function getWeeklyPoems(): { poem: Poem; date: string; dayOfWeek: string }[] {
+  const result: { poem: Poem; date: string; dayOfWeek: string }[] = [];
   const today = new Date();
 
   for (let index = 0; index < 7; index += 1) {

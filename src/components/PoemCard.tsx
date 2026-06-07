@@ -1,13 +1,13 @@
-﻿// 籤詩卡片 - 捲軸展開動畫 + 逐行浮現 + 籤詩配圖 + 解曰高亮 + 複製 + 圖卡分享
+// 籤詩卡片 - 捲軸展開動畫 + 逐行浮現 + 籤詩配圖 + 解曰高亮 + 複製 + 圖卡分享
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, ScrollView, TouchableOpacity, Alert, Platform, useWindowDimensions, type DimensionValue } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, ScrollView, TouchableOpacity, Alert, Platform, useWindowDimensions, type DimensionValue } from 'react-native';
 import { Image } from 'expo-image';
 import * as Clipboard from 'expo-clipboard';
 import type { Poem } from '@/data/poems/leiyushi';
 import type { God } from '@/data/gods';
 import { getGodCloseupImage } from '@/data/godImages';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
-import { getPoemTheme, type PoemTheme } from '@/data/poemThemes';
+import { getPoemTheme } from '@/data/poemThemes';
 import { getGodProfile } from '@/data/godProfiles';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
 import { PoemComments } from './PoemComments';
@@ -17,6 +17,7 @@ import { captureAndShare } from '@/services/shareCard';
 import { extractInterpretationSections } from '@/services/interpretation';
 import { buildActionPlan } from '@/services/actionPlan';
 import { addWish } from '@/services/wishTracker';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 interface PoemCardProps {
   poem: Poem;
@@ -29,8 +30,19 @@ interface PoemCardProps {
   question?: string;
 }
 
+const REVEAL_DUST = [
+  { left: '12%', top: '16%', delay: 0, size: 5 },
+  { left: '28%', top: '11%', delay: 0.16, size: 3 },
+  { left: '46%', top: '18%', delay: 0.32, size: 4 },
+  { left: '64%', top: '10%', delay: 0.08, size: 5 },
+  { left: '82%', top: '17%', delay: 0.24, size: 3 },
+  { left: '18%', top: '42%', delay: 0.38, size: 4 },
+  { left: '74%', top: '44%', delay: 0.48, size: 5 },
+] as const;
+
 export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionCategory, userName, god, question }: PoemCardProps) {
   const { width } = useWindowDimensions();
+  const reducedMotion = useReducedMotion();
   const poemTheme = getPoemTheme(poem.number, poem.level);
   const isCompact = width < 480;
   const isTablet = width >= 768;
@@ -40,6 +52,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
   const scrollAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const aiFadeAnim = useRef(new Animated.Value(0)).current;
+  const dustAnim = useRef(new Animated.Value(0)).current;
 
   // 逐行浮現
   const lineAnims = useRef(
@@ -54,7 +67,25 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
     // 重置
     scrollAnim.setValue(0);
     fadeAnim.setValue(0);
+    dustAnim.setValue(0);
     lineAnims.forEach(a => a.setValue(0));
+
+    if (reducedMotion) {
+      scrollAnim.setValue(1);
+      fadeAnim.setValue(1);
+      lineAnims.forEach(a => a.setValue(1));
+      return;
+    }
+
+    const dustLoop = Animated.loop(
+      Animated.timing(dustAnim, {
+        toValue: 1,
+        duration: 2800,
+        easing: Easing.inOut(Easing.sin),
+        useNativeDriver: true,
+      })
+    );
+    dustLoop.start();
 
     // 1. 卡片淡入
     Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: false }).start();
@@ -71,14 +102,20 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
         )
       ).start();
     });
-  }, [poem.number]);
+
+    return () => dustLoop.stop();
+  }, [poem.number, dustAnim, fadeAnim, lineAnims, reducedMotion, scrollAnim]);
 
   useEffect(() => {
     if (aiInterpretation) {
       aiFadeAnim.setValue(0);
+      if (reducedMotion) {
+        aiFadeAnim.setValue(1);
+        return;
+      }
       Animated.timing(aiFadeAnim, { toValue: 1, duration: 800, useNativeDriver: false }).start();
     }
-  }, [aiInterpretation]);
+  }, [aiFadeAnim, aiInterpretation, reducedMotion]);
 
   const cardScale = scrollAnim.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] });
   const cardOpacity = scrollAnim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] });
@@ -179,6 +216,38 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
           borderColor: poemTheme.borderColor,
         }
       ]}>
+        {!reducedMotion ? (
+        <View pointerEvents="none" style={styles.revealDustLayer}>
+          {REVEAL_DUST.map((item) => {
+            const opacity = dustAnim.interpolate({
+              inputRange: [0, item.delay, item.delay + 0.26, 1],
+              outputRange: [0, 0, 0.9, 0],
+            });
+            const translateY = dustAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [-10, 44],
+            });
+
+            return (
+              <Animated.View
+                key={`${item.left}-${item.top}`}
+                style={[
+                  styles.revealDust,
+                  {
+                    left: item.left,
+                    top: item.top,
+                    width: item.size,
+                    height: item.size,
+                    borderRadius: item.size / 2,
+                    opacity,
+                    transform: [{ translateY }],
+                  },
+                ]}
+              />
+            );
+          })}
+        </View>
+        ) : null}
         {god ? (
           <View style={[styles.godOracleHeader, isCompact && styles.godOracleHeaderCompact, { borderBottomColor: godAccent + '35' }]}>
             <View style={[styles.godOracleImageWrap, { borderColor: godAccent + '70' }]}>
@@ -266,6 +335,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
 
         {/* 籤詩內容 - 逐行浮現 */}
         <View style={[styles.poemContentArea, isCompact && styles.poemContentAreaCompact]}>
+          <View style={styles.scrollRodTop} />
           {poem.content.split('\n').map((line, i) => (
             <Animated.Text
               key={i}
@@ -285,6 +355,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
               {line}
             </Animated.Text>
           ))}
+          <View style={styles.scrollRodBottom} />
         </View>
 
         {/* 典故 */}
@@ -409,6 +480,23 @@ const styles = StyleSheet.create({
     borderRadius: 16, borderWidth: 1.5,
     marginBottom: TempleSpacing.md, overflow: 'hidden',
     backgroundColor: TempleTheme.bgCard,
+    position: 'relative',
+  },
+  revealDustLayer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 2,
+  },
+  revealDust: {
+    position: 'absolute',
+    backgroundColor: TempleTheme.goldLight,
+    shadowColor: TempleTheme.goldLight,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.75,
+    shadowRadius: 8,
   },
   godOracleHeader: {
     flexDirection: 'row',
@@ -590,6 +678,24 @@ const styles = StyleSheet.create({
     alignItems: 'center', borderWidth: 1, borderColor: '#D2B48C',
   },
   poemContentAreaCompact: { padding: TempleSpacing.md, marginHorizontal: 12 },
+  scrollRodTop: {
+    alignSelf: 'stretch',
+    height: 7,
+    borderRadius: 999,
+    marginBottom: TempleSpacing.md,
+    backgroundColor: '#8A5A2B',
+    borderWidth: 1,
+    borderColor: '#C89B4A',
+  },
+  scrollRodBottom: {
+    alignSelf: 'stretch',
+    height: 7,
+    borderRadius: 999,
+    marginTop: TempleSpacing.md,
+    backgroundColor: '#8A5A2B',
+    borderWidth: 1,
+    borderColor: '#C89B4A',
+  },
   poemLine: { fontSize: TempleFonts.poem, lineHeight: 34, color: '#2C1810', fontWeight: '700', letterSpacing: 3 },
   poemLineCompact: { fontSize: 16, lineHeight: 30, letterSpacing: 2 },
   storyArea: {

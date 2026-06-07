@@ -59,7 +59,7 @@ const CONTROLS: Record<Wuxing, Wuxing> = {
   水: '火',
 };
 
-const WUXING_AFFINITY: Record<Wuxing, Array<keyof ScoreSet>> = {
+const WUXING_AFFINITY: Record<Wuxing, (keyof ScoreSet)[]> = {
   木: ['career', 'study'],
   火: ['love', 'career'],
   土: ['health', 'wealth'],
@@ -211,7 +211,7 @@ function adjustScores(
 
   switch (relation) {
     case '今日生我':
-      (Object.keys(next) as Array<keyof ScoreSet>).forEach((key) => {
+      (Object.keys(next) as (keyof ScoreSet)[]).forEach((key) => {
         next[key] = clamp(next[key] + 1);
       });
       break;

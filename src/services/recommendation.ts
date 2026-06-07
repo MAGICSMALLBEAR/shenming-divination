@@ -8,7 +8,7 @@ export interface GodRecommendation {
   reason: string;
 }
 
-const CATEGORY_MATCH: Record<string, Array<God['category']>> = {
+const CATEGORY_MATCH: Record<string, God['category'][]> = {
   career: ['war', 'general'],
   love: ['compassion', 'general'],
   wealth: ['wealth', 'general'],
@@ -45,39 +45,39 @@ export function recommendGods(options: RecommendGodOptions): GodRecommendation[]
 
       if (preferredCategories.includes(god.category)) {
         score += 4;
-        reasons.push('符合這次問題方向');
+        reasons.push('符合這次提問方向');
       }
 
       if (options.preferredGodId === god.id) {
         score += 2;
-        reasons.push('是你的常用神明');
+        reasons.push('是你偏好的神明');
       }
 
       if (patronGodId === god.id) {
         score += 3;
-        reasons.push('和你的命盤守護緣分較深');
+        reasons.push('與你的生年守護較合');
       }
 
       const usedCount = historyCount.get(god.id) ?? 0;
       if (usedCount > 0) {
         score += Math.min(usedCount, 3);
-        reasons.push(`你過去曾請示 ${usedCount} 次`);
+        reasons.push(`過去請示過 ${usedCount} 次`);
       }
 
       if (options.questionCategory === 'travel' && god.category === 'sea') {
         score += 2;
-        reasons.push('特別適合出行與遠行題目');
+        reasons.push('適合出行與平安方向');
       }
 
       if (options.questionCategory === 'love' && god.category === 'compassion') {
         score += 2;
-        reasons.push('更偏向安定關係與情感提問');
+        reasons.push('適合感情與人際修復');
       }
 
       return {
         god,
         score,
-        reason: reasons.slice(0, 2).join('，') || '可作為這次的請示對象',
+        reason: reasons.slice(0, 2).join('，') || '適合先靜心請示，整理當下方向',
       };
     })
     .sort((left, right) => right.score - left.score)

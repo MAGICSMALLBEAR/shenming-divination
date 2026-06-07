@@ -3,8 +3,10 @@ import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'rea
 
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { getStats, getYearlySummary, type Stats, type YearlySummary } from '@/services/statsService';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 export default function StatsScreen() {
+  const layout = useResponsiveLayout();
   const [stats, setStats] = useState<Stats | null>(null);
   const [yearly, setYearly] = useState<YearlySummary | null>(null);
 
@@ -27,7 +29,13 @@ export default function StatsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
+        ]}
+      >
         <Text style={styles.pageTitle}>你的求籤統計</Text>
 
         <View style={styles.kpiRow}>
@@ -41,28 +49,30 @@ export default function StatsScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>應驗追蹤</Text>
-          <View style={styles.verificationRow}>
-            <StatPill label="待驗證" value={stats.verification.pending} color={TempleTheme.warning} />
-            <StatPill label="已應驗" value={stats.verification.matched} color={TempleTheme.success} />
-            <StatPill label="不太符合" value={stats.verification.unmatched} color={TempleTheme.danger} />
+        <View style={[styles.sectionGrid, layout.isDesktop && styles.sectionGridDesktop]}>
+          <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
+            <Text style={styles.sectionTitle}>應驗追蹤</Text>
+            <View style={styles.verificationRow}>
+              <StatPill label="待驗證" value={stats.verification.pending} color={TempleTheme.warning} />
+              <StatPill label="已應驗" value={stats.verification.matched} color={TempleTheme.success} />
+              <StatPill label="不太符合" value={stats.verification.unmatched} color={TempleTheme.danger} />
+            </View>
           </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>最常請示的神明</Text>
-          <View style={styles.highlightRow}>
-            <Text style={styles.highlightName}>{stats.topGod.name}</Text>
-            <Text style={styles.highlightCount}>{stats.topGod.count} 次</Text>
+          <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
+            <Text style={styles.sectionTitle}>最常請示的神明</Text>
+            <View style={styles.highlightRow}>
+              <Text style={styles.highlightName}>{stats.topGod.name}</Text>
+              <Text style={styles.highlightCount}>{stats.topGod.count} 次</Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>最常詢問的題型</Text>
-          <View style={styles.highlightRow}>
-            <Text style={styles.highlightName}>{stats.topCategory.name}</Text>
-            <Text style={styles.highlightCount}>{stats.topCategory.count} 次</Text>
+          <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
+            <Text style={styles.sectionTitle}>最常詢問的題型</Text>
+            <View style={styles.highlightRow}>
+              <Text style={styles.highlightName}>{stats.topCategory.name}</Text>
+              <Text style={styles.highlightCount}>{stats.topCategory.count} 次</Text>
+            </View>
           </View>
         </View>
 
@@ -309,7 +319,7 @@ const yearlyStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
   container: { flex: 1 },
-  content: { padding: TempleSpacing.md, width: '100%', maxWidth: 800, alignSelf: 'center' },
+  content: { paddingVertical: TempleSpacing.md, width: '100%', alignSelf: 'center' },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
@@ -343,6 +353,18 @@ const styles = StyleSheet.create({
     marginBottom: TempleSpacing.md,
     borderWidth: 1,
     borderColor: TempleTheme.goldDark + '20',
+  },
+  sectionGrid: {},
+  sectionGridDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: TempleSpacing.md,
+    marginBottom: TempleSpacing.md,
+  },
+  sectionGridItem: {
+    flex: 1,
+    minWidth: 300,
+    marginBottom: 0,
   },
   sectionTitle: {
     fontSize: TempleFonts.body,

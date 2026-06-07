@@ -5,7 +5,6 @@ import * as Haptics from 'expo-haptics';
 
 // ─── Native 音檔（放於 assets/sounds/） ───────────────────────
 // 若音檔不存在則靜默降級為合成音
-let avLoaded = false;
 let SoundLib: any = null;
 
 async function getSound(require_path: any): Promise<any | null> {

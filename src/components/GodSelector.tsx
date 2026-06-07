@@ -7,7 +7,6 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  useWindowDimensions,
   type DimensionValue,
   type StyleProp,
   type ViewStyle,
@@ -23,6 +22,7 @@ import { reviewQuestion, suggestQuestionDrafts } from '@/services/questionAssist
 import { recommendGods } from '@/services/recommendation';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getHistory, getSettings } from '@/services/storage';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 interface GodSelectorProps {
   onSelectGod: (godId: number) => void;
@@ -35,19 +35,18 @@ interface QuestionFormProps {
 }
 
 export function GodSelector({ onSelectGod }: GodSelectorProps) {
-  const { width } = useWindowDimensions();
+  const layout = useResponsiveLayout();
   const [patronGodId, setPatronGodId] = useState<number | null>(null);
   const [preferredGodId, setPreferredGodId] = useState<number | null>(null);
   const [detailGod, setDetailGod] = useState<God | null>(null);
-  const isCompact = width < 420;
-  const isDesktop = width >= 1100;
-  const maxContentWidth = isDesktop ? 1120 : 760;
-  const gridWidth = Math.min(Math.max(width - TempleSpacing.xl * 2, 0), maxContentWidth);
-  const cardWidth = isDesktop
-    ? (gridWidth - TempleSpacing.sm * 2) / 3
-    : isCompact
+  const isCompact = layout.width < 420;
+  const columns = layout.isWideDesktop ? 4 : layout.isDesktop ? 3 : isCompact ? 1 : 2;
+  const maxContentWidth = layout.isWideDesktop ? 1180 : layout.contentMaxWidth;
+  const gridWidth = Math.min(Math.max(layout.width - layout.gutter * 2, 0), maxContentWidth);
+  const cardWidth =
+    columns === 1
       ? gridWidth
-      : (gridWidth - TempleSpacing.sm) / 2;
+      : (gridWidth - TempleSpacing.sm * (columns - 1)) / columns;
 
   useEffect(() => {
     getSettings().then((settings) => {
@@ -163,8 +162,6 @@ function GodCard({
 function GodDetailModal({ god, onClose, onSelect }: { god: God; onClose: () => void; onSelect: () => void }) {
   const cardImage = getGodCardImage(god.id);
   const profile = getGodProfile(god.id);
-  const { width } = useWindowDimensions();
-  const isCompact = width < 480;
 
   return (
     <Modal visible={true} animationType="slide" transparent={false} onRequestClose={onClose}>
@@ -270,15 +267,14 @@ function GodDetailModal({ god, onClose, onSelect }: { god: God; onClose: () => v
 }
 
 export function QuestionForm({ onSubmit, selectedGod, onSwitchGod }: QuestionFormProps) {
-  const { width } = useWindowDimensions();
+  const layout = useResponsiveLayout();
   const [question, setQuestion] = useState('');
   const [category, setCategory] = useState('general');
   const [userName, setUserName] = useState('');
   const [settingsBirthDate, setSettingsBirthDate] = useState('');
   const [preferredGodId, setPreferredGodId] = useState<number | null>(null);
   const [history, setHistory] = useState<Awaited<ReturnType<typeof getHistory>>>([]);
-  const isDesktop = width >= 1100;
-  const formMaxWidth = isDesktop ? 860 : 720;
+  const formMaxWidth = layout.narrowMaxWidth;
 
   useEffect(() => {
     Promise.all([getSettings(), getHistory()]).then(([settings, records]) => {

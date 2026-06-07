@@ -4,7 +4,7 @@ import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
-interface Burst {
+interface BurstConfig {
   x: number;
   y: number;
   colors: string[];
@@ -15,7 +15,7 @@ interface FireworksEffectProps {
   active: boolean;
 }
 
-const BURSTS_CONFIG: Burst[] = [
+const BURSTS_CONFIG: BurstConfig[] = [
   { x: 0.25, y: 0.25, colors: ['#FFD700', '#FFA500', '#FF6347'], delay: 0 },
   { x: 0.75, y: 0.20, colors: ['#FF69B4', '#FF1493', '#C71585'], delay: 300 },
   { x: 0.50, y: 0.15, colors: ['#00BFFF', '#1E90FF', '#4169E1'], delay: 150 },
@@ -29,7 +29,7 @@ export function FireworksEffect({ active }: FireworksEffectProps) {
   return (
     <View style={styles.container} pointerEvents="none">
       {BURSTS_CONFIG.map((b, i) => (
-        <Burst key={i} config={b} />
+        <BurstView key={i} config={b} />
       ))}
     </View>
   );
@@ -37,7 +37,7 @@ export function FireworksEffect({ active }: FireworksEffectProps) {
 
 const SPARK_COUNT = 16;
 
-function Burst({ config }: { config: Burst }) {
+function BurstView({ config }: { config: BurstConfig }) {
   const sparks = useMemo(() =>
     Array.from({ length: SPARK_COUNT }, (_, i) => ({
       angle: (i / SPARK_COUNT) * Math.PI * 2,

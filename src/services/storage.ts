@@ -4,6 +4,12 @@ import {
   DRAW_ANIMATION_DEFAULT_MS,
   normalizeDrawAnimationDuration,
 } from '@/constants/divination';
+import {
+  normalizeDrawAnimationMode,
+  normalizeDrawAnimationStyleKey,
+  type DrawAnimationMode,
+  type DrawAnimationStyleKey,
+} from '@/constants/draw-animation-styles';
 
 export const STORAGE_KEYS = {
   FAVORITES: '@divination_favorites',
@@ -38,6 +44,8 @@ export interface AppSettings {
   dailyNotification?: boolean;
   birthdayNotification?: boolean;
   drawAnimationDurationMs?: number;
+  drawAnimationMode?: DrawAnimationMode;
+  drawAnimationStyleKey?: DrawAnimationStyleKey;
 }
 
 export interface LastPoemContext {
@@ -70,6 +78,8 @@ function normalizeSettings(settings: AppSettings): AppSettings {
     drawAnimationDurationMs: normalizeDrawAnimationDuration(
       settings.drawAnimationDurationMs ?? DRAW_ANIMATION_DEFAULT_MS
     ),
+    drawAnimationMode: normalizeDrawAnimationMode(settings.drawAnimationMode),
+    drawAnimationStyleKey: normalizeDrawAnimationStyleKey(settings.drawAnimationStyleKey),
   };
 }
 

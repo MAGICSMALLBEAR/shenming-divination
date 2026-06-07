@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import { useColorScheme, View, Text, StyleSheet } from 'react-native';
+import { useColorScheme } from 'react-native';
 import AppTabs from '@/components/app-tabs';
 import { getSettings } from '@/services/storage';
 import { setLanguage } from '@/services/i18n';

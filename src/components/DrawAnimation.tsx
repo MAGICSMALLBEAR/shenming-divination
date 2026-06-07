@@ -5,10 +5,16 @@ import { Image } from 'expo-image';
 import type { God } from '@/data/gods';
 import { getGodSoftImage } from '@/data/godImages';
 import { DRAW_ANIMATION_DEFAULT_MS } from '@/constants/divination';
+import {
+  drawAnimationStyles,
+  getDrawAnimationRitualStyle,
+  type DrawAnimationStyleKey,
+} from '@/constants/draw-animation-styles';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { playDrawSound } from '@/services/proceduralSound';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
-const STICKS: ReadonlyArray<{ left: number; rotate: string; height: number; selected?: boolean }> = [
+const STICKS: readonly { left: number; rotate: string; height: number; selected?: boolean }[] = [
   { left: 8, rotate: '-12deg', height: 112 },
   { left: 24, rotate: '-6deg', height: 124 },
   { left: 42, rotate: '-2deg', height: 132 },
@@ -29,9 +35,16 @@ interface DrawAnimationProps {
   god?: God | null;
   poemNumber?: number | null;
   durationMs?: number;
+  styleKey?: DrawAnimationStyleKey;
 }
 
-export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEFAULT_MS }: DrawAnimationProps) {
+export function DrawAnimation({
+  god,
+  poemNumber,
+  durationMs = DRAW_ANIMATION_DEFAULT_MS,
+  styleKey = 'bronze',
+}: DrawAnimationProps) {
+  const reducedMotion = useReducedMotion();
   const auraAnim = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
@@ -50,6 +63,9 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
   const highlightColor = god?.accentColor || TempleTheme.goldLight;
   const primaryColor = god?.primaryColor || TempleTheme.redLight;
   const auraColor = god?.auraColor || '#F4D39B';
+  const drawStyle = drawAnimationStyles[styleKey];
+  const ritualStyle = getDrawAnimationRitualStyle(styleKey);
+  const motion = drawStyle.motion;
   const ms = Math.max(durationMs, 2600);
   const softImage = getGodSoftImage(god?.id);
 
@@ -58,17 +74,35 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
     Animated.add(
       chosenLiftAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, -58],
+        outputRange: [0, motion.liftDistance],
       }),
       chosenDropAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, 108],
+        outputRange: [0, motion.dropDistance],
       })
     )
   ), [chosenDropAnim, chosenLiftAnim]);
 
   useEffect(() => {
     playDrawSound();
+    if (reducedMotion) {
+      setPhaseIndex(PHASES.length - 1);
+      auraAnim.setValue(0.45);
+      shakeAnim.setValue(0);
+      floatAnim.setValue(0);
+      chosenLiftAnim.setValue(1);
+      chosenDropAnim.setValue(1);
+      revealOpacity.setValue(1);
+      revealTranslate.setValue(0);
+      numberOpacity.setValue(1);
+      numberScale.setValue(1);
+      flashAnim.setValue(0);
+      paperAnim.setValue(1);
+      flipAnim.setValue(1);
+      progressAnim.setValue(1);
+      return;
+    }
+
     const timers: ReturnType<typeof setTimeout>[] = [];
     const auraLoop = Animated.loop(
       Animated.sequence([
@@ -84,10 +118,10 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
     );
     const shakeLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(shakeAnim, { toValue: 1, duration: 95, easing: Easing.linear, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -1, duration: 95, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: true }),
       ]),
-      { iterations: 10 }
+      { iterations: motion.shakeIterations }
     );
 
     auraLoop.start();
@@ -156,11 +190,11 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
       floatLoop.stop();
       shakeLoop.stop();
     };
-  }, [auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flipAnim, floatAnim, ms, numberOpacity, numberScale, paperAnim, progressAnim, revealOpacity, revealTranslate, shakeAnim]);
+  }, [auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flipAnim, floatAnim, motion.dropDistance, motion.liftDistance, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim]);
 
   const translateX = shakeAnim.interpolate({
     inputRange: [-1, 1],
-    outputRange: [-18, 18],
+    outputRange: [-motion.shakeAmplitude, motion.shakeAmplitude],
   });
 
   const rotate = shakeAnim.interpolate({
@@ -180,7 +214,7 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
 
   const altarFloat = floatAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -6],
+    outputRange: [0, -motion.floatDistance],
   });
 
   const chosenStickRotate = chosenDropAnim.interpolate({
@@ -195,7 +229,7 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
 
   const flashScale = flashAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.35, 1.45],
+    outputRange: [0.35, motion.flashScale],
   });
 
   const flashOpacity = flashAnim.interpolate({
@@ -220,13 +254,18 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
 
   const paperRotateX = flipAnim.interpolate({
     inputRange: [0, 0.52, 1],
-    outputRange: ['78deg', '8deg', '0deg'],
+    outputRange: [motion.paperRotateStart, '8deg', '0deg'],
   });
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>抽籤中</Text>
       <Text style={styles.subtitle}>{activePhase}</Text>
+      <View style={[styles.styleBadge, { borderColor: ritualStyle.chipColor + '66' }]}>
+        <Text style={[styles.styleBadgeText, { color: ritualStyle.chipColor }]}>
+          {drawStyle.label}
+        </Text>
+      </View>
 
       <View style={styles.heroRow}>
         <View style={[styles.godChip, { borderColor: highlightColor + '55' }]}>
@@ -240,6 +279,7 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
           <Text style={[styles.godBlessing, { color: highlightColor }]}>
             {god?.tagline || '神籤將現'}
           </Text>
+          <Text style={styles.styleSummary}>{drawStyle.summary}</Text>
         </View>
       </View>
 
@@ -277,6 +317,12 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
         />
 
         <Animated.View style={[styles.altarGlow, { transform: [{ translateY: altarFloat }] }]}>
+          <Image
+            source={ritualStyle.censer.placedSprite}
+            style={styles.censerSprite}
+            contentFit="contain"
+            transition={200}
+          />
           <View style={styles.stickShadowRow}>
             {STICKS.map((stick, index) => (
               <View
@@ -297,12 +343,13 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
             style={[
               styles.qiantong,
               {
-                borderColor: highlightColor + '88',
+                backgroundColor: ritualStyle.censer.body,
+                borderColor: ritualStyle.censer.border,
                 transform: [{ translateX }, { rotate }, { translateY: altarFloat }],
               },
             ]}
           >
-            <View style={styles.qiantongLip} />
+            <View style={[styles.qiantongLip, { backgroundColor: ritualStyle.censer.lip }]} />
             <View style={styles.sticksRow}>
               {STICKS.map((stick, index) => {
                 const isSelected = Boolean(stick.selected);
@@ -320,18 +367,18 @@ export function DrawAnimation({ god, poemNumber, durationMs = DRAW_ANIMATION_DEF
                       {
                         left: stick.left,
                         height: stick.height,
-                        backgroundColor: isSelected ? highlightColor : '#E8D7B2',
-                        borderColor: isSelected ? highlightColor : '#B08A54',
+                        backgroundColor: isSelected ? ritualStyle.censer.accent : '#E8D7B2',
+                        borderColor: isSelected ? highlightColor : ritualStyle.censer.baseBorder,
                       },
                       animatedStyle,
                     ]}
                   >
-                    <View style={[styles.stickTip, { backgroundColor: isSelected ? primaryColor : '#AF5C2E' }]} />
+                    <View style={[styles.stickTip, { backgroundColor: isSelected ? primaryColor : ritualStyle.censer.ornament }]} />
                   </Animated.View>
                 );
               })}
             </View>
-            <Text style={styles.qiantongText}>籤</Text>
+            <Text style={[styles.qiantongText, { color: ritualStyle.censer.accent }]}>籤</Text>
           </Animated.View>
         </Animated.View>
       </View>
@@ -419,7 +466,20 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: TempleFonts.small,
     color: TempleTheme.textMuted,
+    marginBottom: TempleSpacing.sm,
+  },
+  styleBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    backgroundColor: TempleTheme.bgCard,
     marginBottom: TempleSpacing.lg,
+  },
+  styleBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   heroRow: {
     flexDirection: 'row',
@@ -447,6 +507,12 @@ const styles = StyleSheet.create({
   godBlessing: {
     fontSize: TempleFonts.small,
     fontWeight: '600',
+  },
+  styleSummary: {
+    color: TempleTheme.textMuted,
+    fontSize: 11,
+    lineHeight: 17,
+    marginTop: 4,
   },
   animationStage: {
     width: 280,
@@ -479,6 +545,13 @@ const styles = StyleSheet.create({
     height: 210,
     justifyContent: 'flex-end',
     alignItems: 'center',
+  },
+  censerSprite: {
+    position: 'absolute',
+    bottom: -28,
+    width: 230,
+    height: 160,
+    opacity: 0.96,
   },
   stickShadowRow: {
     position: 'absolute',

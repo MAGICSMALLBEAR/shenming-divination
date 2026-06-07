@@ -1,6 +1,5 @@
-// 分享籤詩圖卡服務 - 使用 ViewShot 截圖 + Share
-import { captureRef } from 'react-native-view-shot';
 import { Share, Platform } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
 import type { Poem } from '@/data/poems/leiyushi';
 
 interface ShareCardData {
@@ -9,8 +8,27 @@ interface ShareCardData {
   aiInterpretation?: string | null;
 }
 
-// 從 View ref 截圖並分享
+function buildShareMessage(data: ShareCardData): string {
+  const lines = [
+    `【${data.godName}靈籤】第 ${data.poem.number} 籤 · ${data.poem.title} · ${data.poem.level}`,
+    data.poem.ganzhi,
+    '',
+    data.poem.content,
+    '',
+    `白話：${data.poem.vernacular}`,
+  ];
+
+  if (data.aiInterpretation) {
+    lines.push('', `開示摘要：${data.aiInterpretation.slice(0, 120)}${data.aiInterpretation.length > 120 ? '...' : ''}`);
+  }
+
+  lines.push('', '神明占卜');
+  return lines.join('\n');
+}
+
 export async function captureAndShare(viewRef: number, data: ShareCardData): Promise<void> {
+  const message = buildShareMessage(data);
+
   try {
     const uri = await captureRef(viewRef, {
       format: 'png',
@@ -18,20 +36,15 @@ export async function captureAndShare(viewRef: number, data: ShareCardData): Pro
       result: 'tmpfile',
     });
 
-    const message = `【${data.godName}靈籤】第 ${data.poem.number} 籤 · ${data.poem.level}\n\n${data.poem.content.split('\n').join(' ')}\n\n— 神明占卜`;
-
     await Share.share(
       Platform.OS === 'ios'
         ? { url: uri, message }
-        : { url: uri, message: `${message}\n下載神明占卜 App 獲得更多指引` },
+        : { url: uri, message: `${message}\n\n由神明占卜 App 產生` },
     );
   } catch (error: any) {
     if (error?.message !== 'User did not share') {
-      console.warn('分享失敗:', error);
-      // 降級為純文字分享
-      await Share.share({
-        message: `【${data.godName}靈籤】第 ${data.poem.number} 籤 · ${data.poem.level}\n\n${data.poem.content}\n\n— 神明占卜`,
-      });
+      console.warn('Share card failed:', error);
+      await Share.share({ message });
     }
   }
 }

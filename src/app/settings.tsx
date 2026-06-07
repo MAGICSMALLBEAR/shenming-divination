@@ -11,8 +11,14 @@ import {
   View,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { Image } from 'expo-image';
 
 import { DRAW_ANIMATION_PRESETS, normalizeDrawAnimationDuration } from '@/constants/divination';
+import {
+  drawAnimationStyleOrder,
+  drawAnimationStyles,
+  getDrawAnimationRitualStyle,
+} from '@/constants/draw-animation-styles';
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { getDailyPoem } from '@/services/dailyPoem';
 import {
@@ -33,6 +39,7 @@ import { gods } from '@/data/gods';
 import { exportBackupJson, importBackupJson } from '@/services/backup';
 import { useI18n } from '@/hooks/useI18n';
 import { setLanguage, type Lang } from '@/services/i18n';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 const LANGUAGES: { key: Lang; label: string }[] = [
   { key: 'zh-TW', label: '繁體中文' },
@@ -41,12 +48,15 @@ const LANGUAGES: { key: Lang; label: string }[] = [
 ];
 
 export default function SettingsScreen() {
-  const { t, lang } = useI18n();
+  const { lang } = useI18n();
+  const layout = useResponsiveLayout();
   const [settings, setSettings] = useState<AppSettings>({
     userName: '',
     birthDate: '',
     preferredGodId: 1,
     drawAnimationDurationMs: DRAW_ANIMATION_PRESETS[1].durationMs,
+    drawAnimationMode: 'random',
+    drawAnimationStyleKey: 'bronze',
     language: lang,
   });
   const [saved, setSaved] = useState(false);
@@ -151,7 +161,13 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
+        ]}
+      >
         <Text style={styles.pageTitle}>設定</Text>
 
         <View style={styles.dailyCard}>
@@ -164,51 +180,52 @@ export default function SettingsScreen() {
           <Text style={styles.dailyHint}>{dailyPoem.poem.content.split('\n')[0]}</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>語言 / Language</Text>
-          <View style={styles.godSelector}>
-            {LANGUAGES.map((l) => (
-              <TouchableOpacity
-                key={l.key}
-                style={[
-                  styles.godChip,
-                  settings.language === l.key && styles.godChipActive,
-                ]}
-                onPress={() => setSettings((prev) => ({ ...prev, language: l.key }))}
-              >
-                <Text
+        <View style={[styles.sectionGrid, layout.isDesktop && styles.sectionGridDesktop]}>
+          <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
+            <Text style={styles.sectionTitle}>語言 / Language</Text>
+            <View style={styles.godSelector}>
+              {LANGUAGES.map((l) => (
+                <TouchableOpacity
+                  key={l.key}
                   style={[
-                    styles.godChipText,
-                    settings.language === l.key && styles.godChipTextActive,
+                    styles.godChip,
+                    settings.language === l.key && styles.godChipActive,
                   ]}
+                  onPress={() => setSettings((prev) => ({ ...prev, language: l.key }))}
                 >
-                  {l.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.godChipText,
+                      settings.language === l.key && styles.godChipTextActive,
+                    ]}
+                  >
+                    {l.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>個人化設定</Text>
+          <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
+            <Text style={styles.sectionTitle}>個人化設定</Text>
 
-          <FieldLabel text="稱呼" />
-          <TextInput
-            style={styles.input}
-            value={settings.userName}
-            onChangeText={(value) => setSettings((prev) => ({ ...prev, userName: value }))}
-            placeholder="輸入名字或暱稱"
-            placeholderTextColor={TempleTheme.textMuted}
-          />
+            <FieldLabel text="稱呼" />
+            <TextInput
+              style={styles.input}
+              value={settings.userName}
+              onChangeText={(value) => setSettings((prev) => ({ ...prev, userName: value }))}
+              placeholder="輸入名字或暱稱"
+              placeholderTextColor={TempleTheme.textMuted}
+            />
 
-          <FieldLabel text="出生年份" />
-          <TextInput
-            style={styles.input}
-            value={settings.birthDate}
-            onChangeText={(value) => setSettings((prev) => ({ ...prev, birthDate: value }))}
-            placeholder="例如：1996 或 民國 85"
-            placeholderTextColor={TempleTheme.textMuted}
-          />
+            <FieldLabel text="出生年份" />
+            <TextInput
+              style={styles.input}
+              value={settings.birthDate}
+              onChangeText={(value) => setSettings((prev) => ({ ...prev, birthDate: value }))}
+              placeholder="例如：1996 或 民國 85"
+              placeholderTextColor={TempleTheme.textMuted}
+            />
 
           {bazi ? (
             <View style={styles.baziCard}>
@@ -222,39 +239,40 @@ export default function SettingsScreen() {
             </View>
           ) : null}
 
-          <FieldLabel text="常用神明" />
-          <View style={styles.godSelector}>
-            {gods.map((god) => {
-              const isPatron =
-                bazi && ZODIAC_PATRON_GOD[bazi.zodiac] === god.id;
-              return (
-                <TouchableOpacity
-                  key={god.id}
-                  style={[
-                    styles.godChip,
-                    settings.preferredGodId === god.id && styles.godChipActive,
-                    isPatron && styles.godChipPatron,
-                  ]}
-                  onPress={() =>
-                    setSettings((prev) => ({ ...prev, preferredGodId: god.id }))
-                  }
-                >
-                  <Text
+            <FieldLabel text="常用神明" />
+            <View style={styles.godSelector}>
+              {gods.map((god) => {
+                const isPatron =
+                  bazi && ZODIAC_PATRON_GOD[bazi.zodiac] === god.id;
+                return (
+                  <TouchableOpacity
+                    key={god.id}
                     style={[
-                      styles.godChipText,
-                      settings.preferredGodId === god.id && styles.godChipTextActive,
+                      styles.godChip,
+                      settings.preferredGodId === god.id && styles.godChipActive,
+                      isPatron && styles.godChipPatron,
                     ]}
+                    onPress={() =>
+                      setSettings((prev) => ({ ...prev, preferredGodId: god.id }))
+                    }
                   >
-                    {isPatron ? '守護 · ' : ''}
-                    {god.name}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+                    <Text
+                      style={[
+                        styles.godChipText,
+                        settings.preferredGodId === god.id && styles.godChipTextActive,
+                      ]}
+                    >
+                      {isPatron ? '守護 · ' : ''}
+                      {god.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         </View>
 
-        <View style={styles.section}>
+        <View style={[styles.section, layout.isDesktop && styles.fullWidthSection]}>
           <Text style={styles.sectionTitle}>求籤流程</Text>
           <ToggleRow
             label="嚴謹擲筊模式"
@@ -293,9 +311,73 @@ export default function SettingsScreen() {
               );
             })}
           </View>
+
+          <FieldLabel text="抽籤筒動畫風格" />
+          <View style={styles.animationModeRow}>
+            {[
+              { key: 'random', label: '隨機輪播', desc: '每次求籤自動換一種香爐與籤筒動畫。' },
+              { key: 'fixed', label: '固定風格', desc: '永遠使用下方指定的一種抽籤格式。' },
+            ].map((mode) => {
+              const active = settings.drawAnimationMode === mode.key;
+
+              return (
+                <TouchableOpacity
+                  key={mode.key}
+                  style={[styles.animationModeCard, active && styles.animationModeCardActive]}
+                  onPress={() =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      drawAnimationMode: mode.key as AppSettings['drawAnimationMode'],
+                    }))
+                  }
+                >
+                  <Text style={[styles.animationModeTitle, active && styles.animationModeTitleActive]}>
+                    {mode.label}
+                  </Text>
+                  <Text style={styles.animationModeDesc}>{mode.desc}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={styles.drawStyleGrid}>
+            {drawAnimationStyleOrder.map((key) => {
+              const style = drawAnimationStyles[key];
+              const ritualStyle = getDrawAnimationRitualStyle(key);
+              const active = settings.drawAnimationStyleKey === key;
+
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.drawStyleCard,
+                    { borderColor: active ? ritualStyle.chipColor : TempleTheme.goldDark + '25' },
+                    active && styles.drawStyleCardActive,
+                  ]}
+                  onPress={() =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      drawAnimationMode: 'fixed',
+                      drawAnimationStyleKey: key,
+                    }))
+                  }
+                >
+                  <Image
+                    source={ritualStyle.censer.placedSprite}
+                    style={styles.drawStyleImage}
+                    contentFit="contain"
+                  />
+                  <Text style={[styles.drawStyleTitle, { color: ritualStyle.chipColor }]}>
+                    {style.label}
+                  </Text>
+                  <Text style={styles.drawStyleText}>{style.summary}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
-        <View style={styles.section}>
+        <View style={[styles.section, layout.isDesktop && styles.fullWidthSection]}>
           <Text style={styles.sectionTitle}>通知</Text>
 
           <ToggleRow
@@ -333,7 +415,7 @@ export default function SettingsScreen() {
           <Text style={styles.backupHint}>
             可將資料匯出成 JSON 備份字串，之後再貼回來還原。
           </Text>
-          <View style={styles.backupActions}>
+          <View style={[styles.backupActions, layout.isDesktop && styles.backupActionsDesktop]}>
             <TouchableOpacity style={styles.backupBtn} onPress={handleExportBackup}>
               <Text style={styles.backupBtnText}>匯出並複製備份</Text>
             </TouchableOpacity>
@@ -402,7 +484,7 @@ function ToggleRow({
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
   container: { flex: 1 },
-  content: { padding: TempleSpacing.md },
+  content: { width: '100%', alignSelf: 'center', paddingVertical: TempleSpacing.md },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
@@ -437,6 +519,28 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: TempleSpacing.md,
+  },
+  sectionGrid: {},
+  sectionGridDesktop: {
+    flexDirection: 'row',
+    gap: TempleSpacing.md,
+    alignItems: 'flex-start',
+  },
+  sectionGridItem: {
+    flex: 1,
+    minWidth: 320,
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '22',
+    padding: TempleSpacing.md,
+  },
+  fullWidthSection: {
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '22',
+    padding: TempleSpacing.md,
   },
   sectionTitle: {
     fontSize: TempleFonts.body,
@@ -498,8 +602,12 @@ const styles = StyleSheet.create({
   godChipTextActive: { color: TempleTheme.goldLight, fontWeight: '600' },
   durationGrid: {
     gap: TempleSpacing.xs,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   durationCard: {
+    flex: 1,
+    minWidth: 190,
     backgroundColor: TempleTheme.bgCard,
     borderWidth: 1,
     borderColor: TempleTheme.goldDark + '25',
@@ -525,6 +633,70 @@ const styles = StyleSheet.create({
   },
   durationDescActive: {
     color: TempleTheme.textGold,
+  },
+  animationModeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: TempleSpacing.xs,
+    marginBottom: TempleSpacing.sm,
+  },
+  animationModeCard: {
+    flex: 1,
+    minWidth: 180,
+    backgroundColor: TempleTheme.bgCard,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '24',
+    borderRadius: 12,
+    padding: TempleSpacing.sm,
+  },
+  animationModeCardActive: {
+    borderColor: TempleTheme.gold,
+    backgroundColor: TempleTheme.goldDark + '22',
+  },
+  animationModeTitle: {
+    color: TempleTheme.textLight,
+    fontSize: TempleFonts.small,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  animationModeTitleActive: {
+    color: TempleTheme.goldLight,
+  },
+  animationModeDesc: {
+    color: TempleTheme.textMuted,
+    fontSize: 11,
+    lineHeight: 17,
+  },
+  drawStyleGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: TempleSpacing.sm,
+  },
+  drawStyleCard: {
+    flex: 1,
+    minWidth: 190,
+    backgroundColor: TempleTheme.bgCard,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: TempleSpacing.sm,
+  },
+  drawStyleCardActive: {
+    backgroundColor: TempleTheme.goldDark + '18',
+  },
+  drawStyleImage: {
+    width: '100%',
+    height: 86,
+    marginBottom: 6,
+  },
+  drawStyleTitle: {
+    fontSize: TempleFonts.small,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+  drawStyleText: {
+    color: TempleTheme.textMuted,
+    fontSize: 11,
+    lineHeight: 17,
   },
   toggleRow: {
     flexDirection: 'row',
@@ -586,13 +758,18 @@ const styles = StyleSheet.create({
     gap: TempleSpacing.xs,
     marginBottom: TempleSpacing.sm,
   },
+  backupActionsDesktop: {
+    flexDirection: 'row',
+  },
   backupBtn: {
+    flex: 1,
     backgroundColor: TempleTheme.red,
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
   },
   backupBtnSecondary: {
+    flex: 1,
     backgroundColor: TempleTheme.bgCard,
     borderRadius: 10,
     paddingVertical: 10,

@@ -1,9 +1,7 @@
 // 金色粒子爆炸特效 - 聖筊 / 上上籤觸發
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, StyleSheet, Animated, Dimensions } from 'react-native';
-import { TempleTheme } from '@/constants/temple-theme';
+import { View, StyleSheet, Animated } from 'react-native';
 
-const { width, height } = Dimensions.get('window');
 const PARTICLE_COUNT = 24;
 
 interface Particle {

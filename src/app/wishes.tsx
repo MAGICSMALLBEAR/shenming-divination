@@ -20,6 +20,7 @@ import {
   removeWish,
   type Wish,
 } from '@/services/wishTracker';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 const REMINDER_OPTIONS = [
   { label: '不提醒', days: 0 },
@@ -42,6 +43,7 @@ function formatReminder(timestamp?: number): string | null {
 }
 
 export default function WishesScreen() {
+  const layout = useResponsiveLayout();
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
@@ -170,7 +172,12 @@ export default function WishesScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
+        ]}
+      >
         <Text style={styles.pageTitle}>願望與還願</Text>
 
         <View style={styles.summaryRow}>
@@ -234,7 +241,10 @@ export default function WishesScreen() {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            layout.isDesktop && styles.listContentDesktop,
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -252,7 +262,10 @@ export default function WishesScreen() {
           ) : null}
 
           {activeWishes.map((wish) => (
-            <View key={wish.id} style={styles.wishCard}>
+            <View
+              key={wish.id}
+              style={[styles.wishCard, layout.isDesktop && styles.wishCardDesktop]}
+            >
               <View style={styles.wishHeader}>
                 <View style={styles.wishStatus} />
                 <Text style={styles.wishDate}>建立於 {formatDate(wish.createdAt)}</Text>
@@ -327,7 +340,14 @@ export default function WishesScreen() {
             <>
               <Text style={styles.sectionTitle}>已完成與還願</Text>
               {fulfilledWishes.map((wish) => (
-                <View key={wish.id} style={[styles.wishCard, styles.wishCardFulfilled]}>
+                <View
+                  key={wish.id}
+                  style={[
+                    styles.wishCard,
+                    styles.wishCardFulfilled,
+                    layout.isDesktop && styles.wishCardDesktop,
+                  ]}
+                >
                   <View style={styles.wishHeader}>
                     <View style={styles.wishStatusFulfilled} />
                     <Text style={styles.wishDate}>
@@ -358,7 +378,7 @@ export default function WishesScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
-  container: { flex: 1, padding: TempleSpacing.md, width: '100%', maxWidth: 800, alignSelf: 'center' },
+  container: { flex: 1, paddingVertical: TempleSpacing.md, width: '100%', alignSelf: 'center' },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
@@ -467,7 +487,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   listContent: {},
+  listContentDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: TempleSpacing.md,
+    alignItems: 'flex-start',
+  },
   emptyState: {
+    width: '100%',
     alignItems: 'center',
     paddingVertical: TempleSpacing.xxl * 2,
   },
@@ -496,6 +523,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   sectionTitle: {
+    width: '100%',
     fontSize: TempleFonts.body,
     fontWeight: '700',
     color: TempleTheme.goldLight,
@@ -509,6 +537,10 @@ const styles = StyleSheet.create({
     marginBottom: TempleSpacing.sm,
     borderWidth: 1,
     borderColor: TempleTheme.goldDark + '30',
+  },
+  wishCardDesktop: {
+    width: '48.8%',
+    marginBottom: 0,
   },
   wishCardFulfilled: {
     opacity: 0.84,

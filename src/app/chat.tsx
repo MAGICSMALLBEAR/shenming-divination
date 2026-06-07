@@ -14,6 +14,7 @@ import {
 
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { getLastPoemContext, type LastPoemContext } from '@/services/storage';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -41,6 +42,7 @@ function buildInitialAssistantMessage(lastPoem: LastPoemContext | null): string 
 }
 
 export default function ChatScreen() {
+  const layout = useResponsiveLayout();
   const [lastPoem, setLastPoem] = useState<LastPoemContext | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -161,7 +163,12 @@ export default function ChatScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          { maxWidth: layout.narrowMaxWidth, paddingHorizontal: layout.gutter },
+        ]}
+      >
         <Text style={styles.pageTitle}>AI 追問解籤</Text>
 
         {lastPoem ? (
@@ -189,6 +196,7 @@ export default function ChatScreen() {
               key={`${message.timestamp}-${index}`}
               style={[
                 styles.msgBubble,
+                layout.isDesktop && styles.msgBubbleDesktop,
                 message.role === 'user' ? styles.userBubble : styles.assistantBubble,
               ]}
             >
@@ -257,7 +265,7 @@ export default function ChatScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
-  container: { flex: 1, padding: TempleSpacing.md },
+  container: { flex: 1, width: '100%', alignSelf: 'center', paddingVertical: TempleSpacing.md },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
@@ -301,6 +309,9 @@ const styles = StyleSheet.create({
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,
     maxWidth: '88%',
+  },
+  msgBubbleDesktop: {
+    maxWidth: '74%',
   },
   userBubble: {
     alignSelf: 'flex-end',

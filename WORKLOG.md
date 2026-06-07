@@ -377,3 +377,151 @@ cd c:\Users\user\Desktop\蟡???\shenming-divination
 .\scripts\generate-god-derived-assets.ps1
 ```
 
+---
+
+## 2026-06-07 New Deity Portrait Assets
+
+### Completed
+- Generated final portrait cards for the six newly added deities: `xuantianshangdi`, `jigonghuofo`, `santaizi`, `yuexialaoren`, `chenghuangye`, and `lvdongbin`.
+- Replaced the previous placeholder PNGs under `assets/images/gods/generated/cards/`.
+- Regenerated the matching `soft/` and `closeups/` variants for those six deities.
+- Standardized all card portraits to `1024x1536`.
+- Updated `assets/images/gods/generated/README.md` to document all 15 deity image sets.
+- Updated `scripts/generate-god-derived-assets.ps1` so derived assets only regenerate when missing, stale, or dimensionally invalid.
+
+### Verification
+- `npx tsc --noEmit` passed.
+- `.\scripts\generate-god-derived-assets.ps1` ran cleanly after the incremental regeneration change.
+- Checked all card images in `assets/images/gods/generated/cards/`; every card is `1024x1536`.
+- `npm run lint` could not complete because Expo tried to auto-create an ESLint config and hit `ECONNREFUSED 127.0.0.1:9`; this is unrelated to the image assets.
+
+### Notes
+- Existing data-file changes in `src/data/godImages.ts`, `src/data/godProfiles.ts`, `src/data/gods.ts`, and `src/data/poems/ershibaxiu.ts` were preserved.
+
+---
+
+## 2026-06-07 Product Polish Pass
+
+### Completed
+- Replaced the default Expo README with project-specific setup, structure, checks, AI, and generated-asset notes.
+- Added ESLint support with `eslint` and `eslint-config-expo`, plus `eslint.config.js`.
+- Disabled the React Compiler lint rules that currently conflict with the app's React Native Animated/ref patterns so lint can be used as a practical daily check.
+- Filled the new deity `image` fields in `src/data/gods.ts` with the generated card portraits.
+- Rebuilt `src/services/actionPlan.ts` with readable, category-aware Chinese action suggestions.
+- Rebuilt `src/services/recommendation.ts` with readable recommendation reasons.
+- Rebuilt `src/services/shareCard.ts` and `src/components/ShareCardView.tsx` with clean share text and share-card labels.
+- Upgraded result sharing to include vernacular text, AI summary, and action steps.
+- Added a result-page `回訪` action that opens `collection?tab=history`.
+- Added route-param support in `collection.tsx` so the collection page can open directly on history.
+- Added homepage cards for `今日適合請示` and `有一支籤等待回訪`.
+- Added a small `今日修行` prompt inside the expanded daily fortune card.
+
+### Verification
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed with warnings only.
+- `npm run export:web` passed and generated 9 static routes under ignored `dist/`.
+
+### Follow-Up Debt
+- Lint still reports warnings for unused imports, Unicode BOMs, hook dependency arrays, and legacy `require()` imports.
+- `npm install` reported 11 moderate vulnerabilities. No automatic `npm audit fix` was run because it may alter dependency versions broadly.
+
+---
+
+## 2026-06-07 Lint Cleanup Pass
+
+### Completed
+- Ran `npx expo lint --fix` to remove auto-fixable formatting and style warnings.
+- Removed unused imports/state/variables from `_layout.tsx`, `index.tsx`, `settings.tsx`, `GodSelector.tsx`, `ParticleEffect.tsx`, `PoemCard.tsx`, `proceduralSound.ts`, and `lunarCalendar.ts`.
+- Renamed the fireworks burst type/component pair to avoid `no-redeclare`.
+- Updated `eslint.config.js` to keep React Native Animated/ref patterns and dynamic `require()` fallbacks from creating noisy lint output.
+
+### Verification
+- `npm run lint` passed with zero warnings.
+- `npx tsc --noEmit` passed.
+- `npm run export:web` passed and exported 9 static routes.
+
+### Remaining Debt
+- `npm install` previously reported 11 moderate vulnerabilities. Still not auto-fixed because `npm audit fix` may change dependency versions broadly.
+
+---
+
+## 2026-06-07 Ritual Animation Pass
+
+### Completed
+- Added a deity entrance banner animation after god selection: card fade-in, portrait scale-up, gold aura, and rising incense smoke.
+- Upgraded the poem reveal presentation with floating gold dust and scroll rods around the poem text area.
+- Added a breathing gold-frame animation to the pending review card on the home screen.
+- Added a soft shimmer and press-scale animation to the daily deity recommendation card.
+- Added a wish completion overlay with red binding threads, a gold-lit seal, and sparks after adding a wish.
+
+### Verification
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed with zero warnings.
+- `npm run export:web` passed and exported 9 static routes.
+
+---
+
+## 2026-06-07 Reduced Motion Support
+
+### Completed
+- Added `useReducedMotion` using React Native `AccessibilityInfo`.
+- Disabled or simplified the new home-screen ritual animations when system reduced motion is enabled.
+- Disabled the poem reveal gold dust loop and reveal transitions under reduced motion.
+- Added a reduced-motion fallback for the draw animation so the result state is shown without shaking, pulsing, or flip motion.
+
+### Verification
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed with zero warnings.
+- `npm run export:web` passed and exported 9 static routes.
+
+---
+
+## 2026-06-07 Responsive Layout Pass
+
+### Completed
+- Added `useResponsiveLayout` to centralize phone, tablet, desktop, and wide-desktop breakpoints.
+- Updated the home screen and deity selector to use shared responsive width rules; wide desktop deity grids can show four columns.
+- Updated the daily page so fortune and daily poem cards become a two-column hero layout on desktop.
+- Updated the stats page with wider content and desktop section grouping.
+- Updated collection/history and wishes pages with desktop two-column card layouts while preserving single-column mobile reading.
+- Updated settings with desktop-friendly section grids, responsive duration cards, and side-by-side backup actions.
+- Updated chat with a narrower desktop reading width and smaller message bubble max-width.
+
+### Verification
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed with zero warnings.
+- `npm run export:web` passed and exported 9 static routes.
+
+---
+
+## 2026-06-07 Draw Animation Style Switcher
+
+### Completed
+- Added a draw-animation style system with three visual/motion presets: bronze dragon censer, celadon lotus censer, and cinnabar temple censer.
+- Updated the draw animation to render the selected censer image, matching vessel colors, style badge, style summary, and style-specific shake/lift/flash timing.
+- Added settings for draw animation mode: random rotation on every draw or fixed user-selected style.
+- Added three selectable style cards in Settings with censer preview images.
+- Persisted and normalized the new draw-animation mode and style settings.
+
+### Verification
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed with zero warnings.
+- `npm run export:web` passed and exported 9 static routes.
+
+---
+
+## 2026-06-07 Virtual Temple Pass
+
+### Completed
+- Added a new Temple tab/page for the virtual deity hall.
+- Added per-deity temple cards with generated deity artwork and active light, flower, and prayer counts.
+- Added light offering and flower offering actions, with local records and expiry windows.
+- Added deity-specific prayer flows with custom titles, offering copy, light names, flower names, and guided prayer prompts.
+- Added recent temple offering history on the Temple page.
+- Added local temple record storage and included temple records in backup/export data.
+
+### Verification
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed with zero warnings.
+- `npm run export:web` passed and exported 10 static routes including `/temple`.
+

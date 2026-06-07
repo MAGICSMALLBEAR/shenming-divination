@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   PanResponder,
@@ -250,11 +250,11 @@ export function IncenseRitual({
     const dzH = 82;
 
     // Current incense center in scene coords (natural pos + current drag offset)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const curX = (incensePosition.x as any)._value as number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const curY = (incensePosition.y as any)._value as number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const curLift = (incenseLift as any)._value as number;
     const handCx = sw - 35 + curX;
     const handCy = sh - 62 + curY + curLift;

@@ -5,6 +5,7 @@ export type Lang = 'zh-TW' | 'en' | 'ja';
 const translations: Record<string, Record<Lang, string>> = {
   appName: { 'zh-TW': '神明占卜', en: 'Divine Oracle', ja: '神様占い' },
   drawLots: { 'zh-TW': '求籤', en: 'Draw Lots', ja: 'おみくじ' },
+  temple: { 'zh-TW': '神明殿', en: 'Temple', ja: '神殿' },
   collection: { 'zh-TW': '收藏', en: 'Collection', ja: 'お気に入り' },
   wishes: { 'zh-TW': '願望', en: 'Wishes', ja: '願い事' },
   settings: { 'zh-TW': '設定', en: 'Settings', ja: '設定' },
@@ -58,4 +59,3 @@ export function getTranslations() {
 export function addTranslations(newTranslations: Record<string, Record<Lang, string>>) {
   Object.assign(translations, newTranslations);
 }
-

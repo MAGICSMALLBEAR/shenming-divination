@@ -12,9 +12,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
 import { gods, questionCategories } from '@/data/gods';
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import {
   clearHistory,
   getFavorites,
@@ -52,6 +54,8 @@ function normalizeText(value: string): string {
 }
 
 export default function CollectionScreen() {
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const layout = useResponsiveLayout();
   const [activeTab, setActiveTab] = useState<Tab>('favorites');
   const [favorites, setFavorites] = useState<DivinationRecord[]>([]);
   const [history, setHistory] = useState<DivinationRecord[]>([]);
@@ -76,6 +80,12 @@ export default function CollectionScreen() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (params.tab === 'history' || params.tab === 'favorites') {
+      setActiveTab(params.tab);
+    }
+  }, [params.tab]);
 
   const currentRecords = activeTab === 'favorites' ? favorites : history;
 
@@ -305,7 +315,10 @@ export default function CollectionScreen() {
   };
 
   const renderRecord = (record: DivinationRecord, isFavorite: boolean) => (
-    <View key={record.id} style={styles.recordCard}>
+    <View
+      key={record.id}
+      style={[styles.recordCard, layout.isDesktop && styles.recordCardDesktop]}
+    >
       <View style={styles.recordHeader}>
         <View style={styles.recordMeta}>
           <Text style={styles.recordGod}>{record.godName}</Text>
@@ -400,7 +413,12 @@ export default function CollectionScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
+        ]}
+      >
         <Text style={styles.pageTitle}>求籤收藏與回顧</Text>
 
         <View style={styles.tabBar}>
@@ -546,7 +564,10 @@ export default function CollectionScreen() {
         <ScrollView
           style={styles.list}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            layout.isDesktop && styles.listContentDesktop,
+          ]}
         >
           {!filteredRecords.length ? (
             <View style={styles.emptyState}>
@@ -592,7 +613,7 @@ export default function CollectionScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
-  container: { flex: 1, paddingTop: TempleSpacing.sm, width: '100%', maxWidth: 800, alignSelf: 'center' },
+  container: { flex: 1, paddingTop: TempleSpacing.sm, width: '100%', alignSelf: 'center' },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
@@ -604,7 +625,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: TempleSpacing.sm,
-    paddingHorizontal: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,
   },
   tab: {
@@ -630,7 +650,6 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     gap: TempleSpacing.sm,
-    paddingHorizontal: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,
   },
   summaryCard: {
@@ -660,7 +679,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: TempleTheme.goldDark + '20',
     paddingHorizontal: TempleSpacing.sm,
-    marginHorizontal: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,
   },
   searchIcon: {
@@ -683,7 +701,6 @@ const styles = StyleSheet.create({
     marginBottom: TempleSpacing.xs,
   },
   filterContent: {
-    paddingHorizontal: TempleSpacing.md,
     gap: TempleSpacing.xs,
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -709,7 +726,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   list: { flex: 1 },
-  listContent: { paddingHorizontal: TempleSpacing.md },
+  listContent: {},
+  listContentDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: TempleSpacing.md,
+    alignItems: 'flex-start',
+  },
   recordCard: {
     backgroundColor: TempleTheme.bgCard,
     borderRadius: 12,
@@ -717,6 +740,10 @@ const styles = StyleSheet.create({
     marginBottom: TempleSpacing.sm,
     borderWidth: 1,
     borderColor: TempleTheme.goldDark + '30',
+  },
+  recordCardDesktop: {
+    width: '48.8%',
+    marginBottom: 0,
   },
   recordHeader: {
     flexDirection: 'row',
@@ -949,6 +976,7 @@ const styles = StyleSheet.create({
     color: TempleTheme.danger,
   },
   emptyState: {
+    width: '100%',
     alignItems: 'center',
     paddingVertical: TempleSpacing.xxl * 2,
   },
@@ -990,6 +1018,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   exportBtn: {
+    width: '100%',
     marginTop: TempleSpacing.md,
     paddingVertical: TempleSpacing.sm,
     alignItems: 'center',
@@ -1003,6 +1032,7 @@ const styles = StyleSheet.create({
     color: TempleTheme.goldLight,
   },
   clearBtn: {
+    width: '100%',
     marginTop: TempleSpacing.lg,
     paddingVertical: TempleSpacing.sm,
     alignItems: 'center',

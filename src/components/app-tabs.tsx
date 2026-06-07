@@ -31,6 +31,14 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="temple">
+        <NativeTabs.Trigger.Label>{t('temple')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="collection">
         <NativeTabs.Trigger.Label>{t('collection')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

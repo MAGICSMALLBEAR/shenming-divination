@@ -6,8 +6,10 @@ import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
 import { getDailyPoem, getWeeklyPoems } from '@/services/dailyPoem';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getSettings } from '@/services/storage';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 export default function DailyScreen() {
+  const layout = useResponsiveLayout();
   const [fortune, setFortune] = useState<DailyFortune>(() => getDailyFortune());
 
   useEffect(() => {
@@ -25,35 +27,43 @@ export default function DailyScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
+        ]}
+      >
         <Text style={styles.pageTitle}>今日專區</Text>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>今日運勢</Text>
-          <Text style={styles.bigValue}>{'★'.repeat(fortune.overall)}{'☆'.repeat(5 - fortune.overall)}</Text>
-          <Text style={styles.subtitle}>
-            幸運色：{fortune.luckyColor.name} · 幸運數：{fortune.luckyNumber}
-          </Text>
-          <Text style={styles.subtitle}>
-            吉位：{fortune.luckyDirection} · 吉時：{fortune.auspiciousHour}
-          </Text>
-          <Text style={styles.advice}>{fortune.advice}</Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>今日籤詩</Text>
-          <Text style={styles.poemMeta}>
-            {todayPoem.date} · {todayPoem.dayOfWeek}
-          </Text>
-          <Text style={styles.poemTitle}>
-            第 {todayPoem.poem.number} 籤 · {todayPoem.poem.level}
-          </Text>
-          {todayPoem.poem.content.split('\n').map((line) => (
-            <Text key={line} style={styles.poemLine}>
-              {line}
+        <View style={[styles.heroGrid, layout.isDesktop && styles.heroGridDesktop]}>
+          <View style={[styles.card, layout.isDesktop && styles.heroCard]}>
+            <Text style={styles.cardTitle}>今日運勢</Text>
+            <Text style={styles.bigValue}>{'★'.repeat(fortune.overall)}{'☆'.repeat(5 - fortune.overall)}</Text>
+            <Text style={styles.subtitle}>
+              幸運色：{fortune.luckyColor.name} · 幸運數：{fortune.luckyNumber}
             </Text>
-          ))}
-          <Text style={styles.poemMeaning}>{todayPoem.poem.vernacular}</Text>
+            <Text style={styles.subtitle}>
+              吉位：{fortune.luckyDirection} · 吉時：{fortune.auspiciousHour}
+            </Text>
+            <Text style={styles.advice}>{fortune.advice}</Text>
+          </View>
+
+          <View style={[styles.card, layout.isDesktop && styles.heroCard]}>
+            <Text style={styles.cardTitle}>今日籤詩</Text>
+            <Text style={styles.poemMeta}>
+              {todayPoem.date} · {todayPoem.dayOfWeek}
+            </Text>
+            <Text style={styles.poemTitle}>
+              第 {todayPoem.poem.number} 籤 · {todayPoem.poem.level}
+            </Text>
+            {todayPoem.poem.content.split('\n').map((line) => (
+              <Text key={line} style={styles.poemLine}>
+                {line}
+              </Text>
+            ))}
+            <Text style={styles.poemMeaning}>{todayPoem.poem.vernacular}</Text>
+          </View>
         </View>
 
         <View style={styles.card}>
@@ -83,7 +93,7 @@ export default function DailyScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
   container: { flex: 1 },
-  content: { padding: TempleSpacing.md },
+  content: { width: '100%', alignSelf: 'center', paddingVertical: TempleSpacing.md },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
@@ -98,6 +108,14 @@ const styles = StyleSheet.create({
     borderColor: TempleTheme.goldDark + '24',
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
+  },
+  heroGrid: {},
+  heroGridDesktop: {
+    flexDirection: 'row',
+    gap: TempleSpacing.md,
+  },
+  heroCard: {
+    flex: 1,
   },
   cardTitle: {
     color: TempleTheme.goldLight,
