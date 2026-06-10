@@ -32,6 +32,8 @@ import {
 import { speakGodBlessing, stopSpeaking, isCurrentlySpeaking } from '@/services/speech';
 import { getBlessingText } from '@/services/speech';
 import { PhotoDivination } from '@/components/PhotoDivination';
+import { PremiumPaywall } from '@/components/PremiumPaywall';
+import { canUseFeature, isPremiumActive } from '@/services/premiumService';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -59,6 +61,14 @@ export default function TempleScreen() {
   const [isSpeakingBlessing, setIsSpeakingBlessing] = useState(false);
   const [shownBlessing, setShownBlessing] = useState<string | null>(null);
   const [showBirthdayPanel, setShowBirthdayPanel] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallFeature, setPaywallFeature] = useState('線上長明燈');
+  const [longLightActive, setLongLightActive] = useState<Record<number, boolean>>({});
+  const [premiumActive, setPremiumActive] = useState(false);
+
+  useEffect(() => {
+    isPremiumActive().then(setPremiumActive);
+  }, []);
   const todayRec = useMemo(() => getTodayRecommendedGod(), []);
   const upcomingBirthdays = useMemo(() => getUpcomingGodBirthdays(60), []);
 
@@ -124,6 +134,26 @@ export default function TempleScreen() {
     });
     await loadRecords();
     flashAction(`${selectedFlow.lightName}已點亮，願光明照路。`);
+  };
+
+  const handleLongLight = async () => {
+    const allowed = await canUseFeature('online_candle');
+    if (!allowed) {
+      setPaywallFeature('線上長明燈');
+      setShowPaywall(true);
+      return;
+    }
+    await addTempleRecord({
+      godId: selectedGod.id,
+      godName: selectedGod.name,
+      type: 'light',
+      title: '長明燈',
+      content: `為${selectedGod.name}點上長明燈，燈火不滅，福光庇護30日。`,
+      expiresAt: Date.now() + 30 * DAY_MS,
+    });
+    setLongLightActive(prev => ({ ...prev, [selectedGod.id]: true }));
+    await loadRecords();
+    flashAction(`${selectedGod.name}的長明燈已點亮，福光庇護30日！`);
   };
 
   const handleFlower = async () => {
@@ -348,6 +378,37 @@ export default function TempleScreen() {
           </View>
         ) : null}
 
+        {/* 線上長明燈（Premium 功能） */}
+        <View style={styles.longLightCard}>
+          <View style={styles.longLightHeader}>
+            <Text style={styles.longLightTitle}>🕯 線上長明燈</Text>
+            {!premiumActive && (
+              <View style={styles.premiumBadge}>
+                <Text style={styles.premiumBadgeText}>👑 Premium</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.longLightDesc}>
+            點亮長明燈，讓{selectedGod.name}的福光守護你 30 天。
+            長明燈會記錄在你的供奉紀錄中，隨時可以查看。
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.longLightBtn,
+              longLightActive[selectedGod.id] && styles.longLightBtnActive,
+            ]}
+            onPress={handleLongLight}
+          >
+            <Text style={styles.longLightBtnText}>
+              {longLightActive[selectedGod.id]
+                ? '✓ 長明燈已點亮'
+                : premiumActive
+                  ? '點亮長明燈（30天）'
+                  : '升級解鎖長明燈'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.historyCard}>
           <Text style={styles.sectionTitle}>最近供奉紀錄</Text>
           {!recentRecords.length ? (
@@ -374,6 +435,12 @@ export default function TempleScreen() {
       <PhotoDivination
         visible={showPhotoDiv}
         onClose={() => setShowPhotoDiv(false)}
+      />
+      <PremiumPaywall
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        featureName={paywallFeature}
+        onActivated={() => { setPremiumActive(true); setShowPaywall(false); }}
       />
     </SafeAreaView>
   );
@@ -904,6 +971,56 @@ const styles = StyleSheet.create({
     fontSize: TempleFonts.small,
     fontWeight: '800',
   },
+  // 線上長明燈
+  longLightCard: {
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: TempleTheme.goldDark + '55',
+    backgroundColor: TempleTheme.bgCard,
+    padding: TempleSpacing.md,
+    marginBottom: TempleSpacing.md,
+    marginTop: 4,
+  },
+  longLightHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  longLightTitle: {
+    color: TempleTheme.gold,
+    fontWeight: '900',
+    fontSize: TempleFonts.body,
+  },
+  premiumBadge: {
+    backgroundColor: TempleTheme.goldDark + '33',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: TempleTheme.gold + '55',
+  },
+  premiumBadgeText: { color: TempleTheme.gold, fontSize: 11, fontWeight: '700' },
+  longLightDesc: {
+    color: TempleTheme.textMuted,
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  longLightBtn: {
+    backgroundColor: TempleTheme.goldDark + '44',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: TempleTheme.gold + '66',
+  },
+  longLightBtnActive: {
+    backgroundColor: '#2d5a2d55',
+    borderColor: '#4caf5066',
+  },
+  longLightBtnText: { color: TempleTheme.gold, fontWeight: '700', fontSize: TempleFonts.body },
+
   historyCard: {
     borderRadius: 18,
     borderWidth: 1,

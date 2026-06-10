@@ -18,6 +18,7 @@ const tabs = [
   { name: 'daily', href: '/daily' as any, labelKey: 'today' },
   { name: 'temple', href: '/temple' as any, labelKey: 'temple' },
   { name: 'map', href: '/map' as any, label: '廟宇' },
+  { name: 'consult', href: '/consult' as any, label: '諮詢' },
   { name: 'collection', href: '/collection' as const, labelKey: 'collection' },
   { name: 'wishes', href: '/wishes' as const, labelKey: 'wishes' },
   { name: 'chat', href: '/chat' as const, labelKey: 'chat' },

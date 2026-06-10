@@ -40,6 +40,15 @@ import { exportBackupJson, importBackupJson } from '@/services/backup';
 import { useI18n } from '@/hooks/useI18n';
 import { setLanguage, type Lang } from '@/services/i18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { PremiumPaywall } from '@/components/PremiumPaywall';
+import {
+  isPremiumActive,
+  getPremiumStatus,
+  cancelPlan,
+  SUBSCRIPTION_PLANS,
+  type PremiumPlan,
+} from '@/services/premiumService';
+import { THEME_LABELS, type ThemeMode } from '@/constants/themes';
 
 const LANGUAGES: { key: Lang; label: string }[] = [
   { key: 'zh-TW', label: '繁體中文' },
@@ -61,6 +70,16 @@ export default function SettingsScreen() {
   });
   const [saved, setSaved] = useState(false);
   const [backupText, setBackupText] = useState('');
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [premiumActive, setPremiumActive] = useState(false);
+  const [premiumPlan, setPremiumPlan] = useState<PremiumPlan>('free');
+
+  useEffect(() => {
+    getPremiumStatus().then(s => {
+      setPremiumPlan(s.plan);
+      isPremiumActive().then(setPremiumActive);
+    });
+  }, []);
 
   const dailyPoem = useMemo(() => getDailyPoem(), []);
   const lunarInfo = useMemo(() => getTodayLunarInfo(), []);
@@ -433,9 +452,75 @@ export default function SettingsScreen() {
           />
         </View>
 
+        {/* Premium 訂閱 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>👑 Premium 訂閱</Text>
+          {premiumActive ? (
+            <View style={styles.premiumActiveCard}>
+              <Text style={styles.premiumActiveTitle}>
+                ✓ 你是 Premium 會員（{SUBSCRIPTION_PLANS.find(p => p.id === premiumPlan)?.name ?? ''}）
+              </Text>
+              <Text style={styles.premiumActiveDesc}>解鎖所有功能，享受完整命理體驗</Text>
+              <TouchableOpacity
+                style={styles.premiumCancelBtn}
+                onPress={async () => {
+                  await cancelPlan();
+                  setPremiumActive(false);
+                  setPremiumPlan('free');
+                }}
+              >
+                <Text style={styles.premiumCancelBtnText}>取消訂閱</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.premiumFreeCard}>
+              <Text style={styles.premiumFreeTitle}>目前為免費版</Text>
+              <Text style={styles.premiumFreeDesc}>每日 3 次求籤・基礎 AI 解析</Text>
+              <TouchableOpacity style={styles.premiumUpgradeBtn} onPress={() => setShowPaywall(true)}>
+                <Text style={styles.premiumUpgradeBtnText}>升級 Premium — 解鎖完整功能</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* 主題設定 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🎨 外觀主題</Text>
+          <View style={styles.godSelector}>
+            {(Object.entries(THEME_LABELS) as [ThemeMode, string][]).map(([mode, label]) => (
+              <TouchableOpacity
+                key={mode}
+                style={[
+                  styles.godChip,
+                  (settings.theme ?? 'dark') === mode && styles.godChipActive,
+                ]}
+                onPress={() => setSettings(prev => ({ ...prev, theme: mode }))}
+              >
+                <Text style={[
+                  styles.godChipText,
+                  (settings.theme ?? 'dark') === mode && styles.godChipTextActive,
+                ]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={styles.themeNote}>* 淺色主題仍在優化中，部分頁面可能顯示深色</Text>
+        </View>
+
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
           <Text style={styles.saveBtnText}>{saved ? '已儲存設定' : '儲存設定'}</Text>
         </TouchableOpacity>
+
+        <PremiumPaywall
+          visible={showPaywall}
+          onClose={() => setShowPaywall(false)}
+          onActivated={() => {
+            setShowPaywall(false);
+            setPremiumActive(true);
+            getPremiumStatus().then(s => setPremiumPlan(s.plan));
+          }}
+        />
 
         <View style={styles.aboutSection}>
           <Text style={styles.aboutTitle}>關於這個版本</Text>
@@ -791,6 +876,46 @@ const styles = StyleSheet.create({
     color: TempleTheme.textLight,
     textAlignVertical: 'top',
   },
+  // Premium styles
+  premiumActiveCard: {
+    backgroundColor: '#2d5a2d55',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#4caf5066',
+    padding: TempleSpacing.md,
+    gap: 6,
+  },
+  premiumActiveTitle: { color: '#81c784', fontWeight: '800', fontSize: TempleFonts.body },
+  premiumActiveDesc: { color: '#a5d6a7', fontSize: TempleFonts.small },
+  premiumCancelBtn: {
+    marginTop: 8,
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '44',
+  },
+  premiumCancelBtnText: { color: TempleTheme.textMuted, fontSize: 13 },
+  premiumFreeCard: {
+    backgroundColor: TempleTheme.bgMedium,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '33',
+    padding: TempleSpacing.md,
+    gap: 6,
+  },
+  premiumFreeTitle: { color: TempleTheme.textLight, fontWeight: '700', fontSize: TempleFonts.body },
+  premiumFreeDesc: { color: TempleTheme.textMuted, fontSize: TempleFonts.small },
+  premiumUpgradeBtn: {
+    marginTop: 8,
+    backgroundColor: TempleTheme.gold,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  premiumUpgradeBtnText: { color: TempleTheme.bgDark, fontWeight: '900', fontSize: TempleFonts.body },
+  themeNote: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 6 },
+
   saveBtn: {
     backgroundColor: TempleTheme.red,
     paddingVertical: 14,

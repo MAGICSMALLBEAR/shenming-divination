@@ -63,6 +63,14 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="consult">
+        <NativeTabs.Trigger.Label>諮詢</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="chat">
         <NativeTabs.Trigger.Label>{t('chat')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

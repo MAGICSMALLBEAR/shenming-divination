@@ -46,6 +46,7 @@ export interface AppSettings {
   drawAnimationDurationMs?: number;
   drawAnimationMode?: DrawAnimationMode;
   drawAnimationStyleKey?: DrawAnimationStyleKey;
+  theme?: 'dark' | 'light' | 'system';  // P4: 主題模式
 }
 
 export interface LastPoemContext {
