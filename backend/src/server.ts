@@ -408,6 +408,115 @@ app.post('/api/vision', async (req, res) => {
   }
 });
 
+// 合婚分析：給兩人的八字（出生年份）與生肖，AI 分析合婚相性
+app.post('/api/bazi/match', async (req, res) => {
+  try {
+    const {
+      person1Name, person1BirthYear, person1Zodiac, person1Wuxing,
+      person2Name, person2BirthYear, person2Zodiac, person2Wuxing,
+    } = req.body as Record<string, string>;
+
+    const config = getAIConfig();
+    if (!hasUsableApiKey(config)) {
+      res.json({
+        analysis: `${person1Name || '甲方'}（${person1Zodiac}/${person1Wuxing}）與${person2Name || '乙方'}（${person2Zodiac}/${person2Wuxing}）的合婚分析需要 AI 服務，請先設定 API Key。`,
+        compatibility: 3,
+        provider: 'fallback',
+      });
+      return;
+    }
+
+    const systemPrompt = `你是一位精通傳統命理的合婚分析師，擅長以四柱八字、生肖三合六合、五行相生相剋分析兩人感情相性。
+語氣溫和、客觀，既說明優勢，也點出需要磨合的地方。
+分析長度控制在 300 字內，分三段：【相性總評】【優勢之處】【需要磨合】，最後給出 1-5 的相性分數（JSON 格式）。`;
+
+    const userPrompt = `
+甲方：${person1Name || '甲方'}，${person1BirthYear}年生，生肖${person1Zodiac}，五行${person1Wuxing}
+乙方：${person2Name || '乙方'}，${person2BirthYear}年生，生肖${person2Zodiac}，五行${person2Wuxing}
+
+請以傳統命理角度分析兩人的合婚相性，最後以 JSON 格式輸出：{"compatibility": 數字}`.trim();
+
+    const rawAnalysis = await callLLM(config, [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ]);
+
+    const jsonMatch = rawAnalysis.match(/\{[^}]*"compatibility"\s*:\s*(\d)[^}]*\}/);
+    const compatibility = jsonMatch ? parseInt(jsonMatch[1], 10) : 3;
+    const analysis = rawAnalysis.replace(/\{[^}]*"compatibility"[^}]*\}/g, '').trim();
+
+    res.json({ analysis, compatibility, provider: config.provider });
+  } catch (error) {
+    console.error('Match API error:', error);
+    res.json({
+      analysis: '合婚分析暫時無法取得，請稍後再試。',
+      compatibility: 3,
+      provider: 'error',
+    });
+  }
+});
+
+// 擇日服務：根據事項類型、大致月份、相關生肖，AI 推薦吉日
+app.post('/api/择日', async (req, res) => {
+  try {
+    const {
+      eventType,    // 婚禮、入宅、開業、出行、安床...
+      preferMonth,  // 希望的月份（1-12）
+      year = '2026',
+      zodiac1,      // 當事人生肖
+      zodiac2,      // （可選）另一方生肖
+      notes,        // 其他說明
+    } = req.body as Record<string, string>;
+
+    const config = getAIConfig();
+    if (!hasUsableApiKey(config)) {
+      res.json({
+        recommendation: `${eventType || '所求事項'}的擇日建議需要 AI 服務，請先設定 API Key。一般而言，農曆初一、十五是拜拜好日子；天德、月德日是公認吉日。`,
+        suggestedDates: [],
+        provider: 'fallback',
+      });
+      return;
+    }
+
+    const systemPrompt = `你是擅長傳統擇日學的命理師，精通黃曆宜忌、十二建除、神煞吉凶。
+根據使用者提供的事項類型與月份，推薦 3-5 個適合的日期，並說明理由。
+格式：先列出【推薦日期】（每行一個：日期 + 說明），再寫【總體建議】。
+以 JSON 結尾：{"suggestedDates": ["MM/DD", ...]}`;
+
+    const userPrompt = `
+事項類型：${eventType || '一般吉事'}
+希望月份：${year}年${preferMonth || '近期'}月
+當事人生肖：${zodiac1 || '未提供'}${zodiac2 ? `，${zodiac2}` : ''}
+其他說明：${notes || '無'}
+
+請推薦適合的日期，避開衝煞日和不宜日。`.trim();
+
+    const rawResult = await callLLM(config, [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ]);
+
+    const jsonMatch = rawResult.match(/\{[^}]*"suggestedDates"[^}]*\}/s);
+    let suggestedDates: string[] = [];
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]) as { suggestedDates?: string[] };
+        suggestedDates = parsed.suggestedDates ?? [];
+      } catch { /* ignore */ }
+    }
+    const recommendation = rawResult.replace(/\{[^}]*"suggestedDates"[^}]*\}/s, '').trim();
+
+    res.json({ recommendation, suggestedDates, provider: config.provider });
+  } catch (error) {
+    console.error('擇日 API error:', error);
+    res.json({
+      recommendation: '擇日服務暫時無法取得，請稍後再試。',
+      suggestedDates: [],
+      provider: 'error',
+    });
+  }
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -415,9 +524,12 @@ app.get('/api/health', (_req, res) => {
 app.listen(PORT, () => {
   const config = getAIConfig();
   console.log(`神明占卜 API 已啟動：http://localhost:${PORT}`);
-  console.log(`Interpret endpoint: POST http://localhost:${PORT}/api/interpret`);
-  console.log(`Chat endpoint: POST http://localhost:${PORT}/api/chat`);
-  console.log(`Health endpoint: GET http://localhost:${PORT}/api/health`);
+  console.log(`Interpret: POST http://localhost:${PORT}/api/interpret`);
+  console.log(`Chat:      POST http://localhost:${PORT}/api/chat`);
+  console.log(`Vision:    POST http://localhost:${PORT}/api/vision`);
+  console.log(`合婚:      POST http://localhost:${PORT}/api/bazi/match`);
+  console.log(`擇日:      POST http://localhost:${PORT}/api/择日`);
+  console.log(`Health:    GET  http://localhost:${PORT}/api/health`);
   console.log(
     hasUsableApiKey(config)
       ? `AI provider: ${config.provider} (${config.model})`

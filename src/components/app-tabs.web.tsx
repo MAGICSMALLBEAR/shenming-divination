@@ -17,6 +17,7 @@ const tabs = [
   { name: 'index', href: '/' as const, labelKey: 'drawLots' },
   { name: 'daily', href: '/daily' as any, labelKey: 'today' },
   { name: 'temple', href: '/temple' as any, labelKey: 'temple' },
+  { name: 'map', href: '/map' as any, label: '廟宇' },
   { name: 'collection', href: '/collection' as const, labelKey: 'collection' },
   { name: 'wishes', href: '/wishes' as const, labelKey: 'wishes' },
   { name: 'chat', href: '/chat' as const, labelKey: 'chat' },
@@ -33,7 +34,7 @@ export default function AppTabs() {
           <CustomTabList t={t}>
             {tabs.map((tab) => (
               <TabTrigger key={tab.name} name={tab.name} href={tab.href} asChild>
-                <TabButton>{t(tab.labelKey)}</TabButton>
+                <TabButton>{'label' in tab ? tab.label : t(tab.labelKey!)}</TabButton>
               </TabTrigger>
             ))}
           </CustomTabList>

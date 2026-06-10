@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import {
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
@@ -7,22 +15,50 @@ import { getDailyPoem, getWeeklyPoems } from '@/services/dailyPoem';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getSettings } from '@/services/storage';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { getTodayFullLunarInfo, getCurrentShiChen, getAuspiciousHours } from '@/data/lunarFullCalendar';
+import { getTodayFestival, getUpcomingFestivals } from '@/data/festivals';
+import { getYearFortune, getMonthFortune, type YearFortune, type MonthFortune } from '@/services/yearFortune';
+import type { BaziInfo } from '@/services/bazi';
 
 export default function DailyScreen() {
   const layout = useResponsiveLayout();
   const [fortune, setFortune] = useState<DailyFortune>(() => getDailyFortune());
+  const [bazi, setBazi] = useState<BaziInfo | null>(null);
+  const [yearFortune, setYearFortune] = useState<YearFortune | null>(null);
+  const [monthFortune, setMonthFortune] = useState<MonthFortune | null>(null);
+  const [showShiChen, setShowShiChen] = useState(false);
+  const [showYearDetail, setShowYearDetail] = useState(false);
+  const [activeMonthTab, setActiveMonthTab] = useState(new Date().getMonth() + 1);
+
+  const lunarInfo = useMemo(() => getTodayFullLunarInfo(), []);
+  const todayFestival = useMemo(() => getTodayFestival(), []);
+  const upcomingFestivals = useMemo(() => getUpcomingFestivals(30), []);
 
   useEffect(() => {
     getSettings().then((settings) => {
       if (!settings?.birthDate) return;
       const year = parseBirthYear(settings.birthDate);
       if (!year) return;
-      setFortune(getDailyFortune(calcBazi(year)));
+      const baziInfo = calcBazi(year);
+      setBazi(baziInfo);
+      setFortune(getDailyFortune(baziInfo));
+      setYearFortune(getYearFortune(baziInfo));
+      setMonthFortune(getMonthFortune(baziInfo, new Date().getMonth() + 1));
     });
   }, []);
 
   const todayPoem = useMemo(() => getDailyPoem(), []);
   const weeklyPoems = useMemo(() => getWeeklyPoems(), []);
+
+  const currentShiChen = lunarInfo ? getCurrentShiChen(lunarInfo.shiChen) : null;
+  const auspiciousHours = lunarInfo ? getAuspiciousHours(lunarInfo.shiChen) : [];
+
+  const selectedMonthFortune = useMemo(() => {
+    if (!bazi) return null;
+    return getMonthFortune(bazi, activeMonthTab);
+  }, [bazi, activeMonthTab]);
+
+  const SCORE_STARS = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -36,10 +72,135 @@ export default function DailyScreen() {
       >
         <Text style={styles.pageTitle}>今日專區</Text>
 
+        {/* 今日農民曆 */}
+        {lunarInfo && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>📅 今日農民曆</Text>
+            <View style={styles.lunarRow}>
+              <View style={styles.lunarItem}>
+                <Text style={styles.lunarLabel}>農曆</Text>
+                <Text style={styles.lunarValue}>{lunarInfo.lunarDate}</Text>
+              </View>
+              <View style={styles.lunarItem}>
+                <Text style={styles.lunarLabel}>干支</Text>
+                <Text style={styles.lunarValue}>{lunarInfo.ganZhi}</Text>
+              </View>
+              <View style={styles.lunarItem}>
+                <Text style={styles.lunarLabel}>五行納音</Text>
+                <Text style={styles.lunarValue}>{lunarInfo.wuxingNaYin}</Text>
+              </View>
+              <View style={styles.lunarItem}>
+                <Text style={styles.lunarLabel}>沖煞</Text>
+                <Text style={[styles.lunarValue, { color: '#e57373' }]}>{lunarInfo.chongSha}</Text>
+              </View>
+            </View>
+
+            <View style={styles.yiJiRow}>
+              <View style={styles.yiBlock}>
+                <Text style={styles.yiLabel}>宜</Text>
+                <Text style={styles.yiText}>{lunarInfo.yi.join('　')}</Text>
+              </View>
+              <View style={styles.jiBlock}>
+                <Text style={styles.jiLabel}>忌</Text>
+                <Text style={styles.jiText}>{lunarInfo.ji.join('　')}</Text>
+              </View>
+            </View>
+
+            <View style={styles.godsRow}>
+              <Text style={styles.godsLabel}>吉神：</Text>
+              <Text style={styles.godsText}>{lunarInfo.auspiciousGods.join('　')}</Text>
+            </View>
+            <View style={styles.godsRow}>
+              <Text style={[styles.godsLabel, { color: '#e57373' }]}>凶神：</Text>
+              <Text style={[styles.godsText, { color: '#e57373aa' }]}>{lunarInfo.inauspiciousGods.join('　')}</Text>
+            </View>
+
+            {/* 當前時辰 */}
+            {currentShiChen && (
+              <View style={styles.shiChenCurrent}>
+                <Text style={styles.shiChenCurrentLabel}>
+                  當前時辰：{currentShiChen.name}時（{currentShiChen.timeRange}）
+                  {currentShiChen.auspicious ? ' 🟡 吉時' : ' ⚫ 平時'}
+                </Text>
+                <Text style={styles.shiChenCurrentSub}>
+                  宜：{currentShiChen.yi.join('、')}
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.toggleBtn}
+              onPress={() => setShowShiChen(v => !v)}
+            >
+              <Text style={styles.toggleBtnText}>
+                {showShiChen ? '▲ 收起十二時辰' : '▼ 展開十二時辰'}
+              </Text>
+            </TouchableOpacity>
+
+            {showShiChen && (
+              <View style={styles.shiChenGrid}>
+                {lunarInfo.shiChen.map(sc => (
+                  <View
+                    key={sc.name}
+                    style={[
+                      styles.shiChenCell,
+                      sc.auspicious && styles.shiChenCellAuspicious,
+                    ]}
+                  >
+                    <Text style={styles.shiChenName}>{sc.name}時</Text>
+                    <Text style={styles.shiChenTime}>{sc.timeRange}</Text>
+                    <Text style={styles.shiChenWx}>{sc.wuxing}</Text>
+                    <Text style={[styles.shiChenStatus, sc.auspicious && { color: TempleTheme.gold }]}>
+                      {sc.auspicious ? '吉' : '平'}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* 今日節慶 */}
+        {todayFestival && (
+          <View style={[styles.card, { borderColor: todayFestival.color + '60' }]}>
+            <Text style={styles.cardTitle}>🎊 今日節慶：{todayFestival.name}</Text>
+            <Text style={styles.festivalDesc}>{todayFestival.description}</Text>
+            <Text style={styles.festivalGuide}>🙏 {todayFestival.worshipGuide}</Text>
+            <View style={styles.offeringsRow}>
+              <Text style={styles.offeringsLabel}>供品：</Text>
+              <Text style={styles.offeringsText}>{todayFestival.offerings.slice(0, 5).join('、')}</Text>
+            </View>
+            <View style={styles.offeringsRow}>
+              <Text style={styles.offeringsLabel}>祈求：</Text>
+              <Text style={styles.offeringsText}>{todayFestival.prayerFor.join('、')}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* 近期節慶預覽（若今日無特定節慶） */}
+        {!todayFestival && upcomingFestivals.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>📆 近期節慶</Text>
+            {upcomingFestivals.slice(0, 3).map(f => (
+              <View key={f.id} style={styles.upcomingFestRow}>
+                <View style={[styles.festDot, { backgroundColor: f.color }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.upcomingFestName}>{f.name}</Text>
+                  <Text style={styles.upcomingFestDate}>{f.solarDate}{f.lunarDate ? `（${f.lunarDate}）` : ''}</Text>
+                </View>
+                <Text style={styles.upcomingFestDays}>
+                  {Math.ceil((new Date(f.solarDate).getTime() - new Date().getTime()) / 86400000)} 天後
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={[styles.heroGrid, layout.isDesktop && styles.heroGridDesktop]}>
+          {/* 今日運勢 */}
           <View style={[styles.card, layout.isDesktop && styles.heroCard]}>
             <Text style={styles.cardTitle}>今日運勢</Text>
-            <Text style={styles.bigValue}>{'★'.repeat(fortune.overall)}{'☆'.repeat(5 - fortune.overall)}</Text>
+            <Text style={styles.bigValue}>{SCORE_STARS(fortune.overall)}</Text>
             <Text style={styles.subtitle}>
               幸運色：{fortune.luckyColor.name} · 幸運數：{fortune.luckyNumber}
             </Text>
@@ -49,6 +210,7 @@ export default function DailyScreen() {
             <Text style={styles.advice}>{fortune.advice}</Text>
           </View>
 
+          {/* 今日籤詩 */}
           <View style={[styles.card, layout.isDesktop && styles.heroCard]}>
             <Text style={styles.cardTitle}>今日籤詩</Text>
             <Text style={styles.poemMeta}>
@@ -66,6 +228,108 @@ export default function DailyScreen() {
           </View>
         </View>
 
+        {/* 流年/流月運勢（需有生辰資料） */}
+        {yearFortune ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              🌟 {bazi?.zodiac}年生人 · 2026丙午年運勢
+            </Text>
+            <View style={styles.yearScoreRow}>
+              <Text style={styles.yearScore}>{SCORE_STARS(yearFortune.overallScore)}</Text>
+              <Text style={styles.yearOverview}>{yearFortune.overview}</Text>
+            </View>
+
+            <TouchableOpacity onPress={() => setShowYearDetail(v => !v)}>
+              <Text style={styles.toggleBtnText}>
+                {showYearDetail ? '▲ 收起年運詳情' : '▼ 展開年運詳情'}
+              </Text>
+            </TouchableOpacity>
+
+            {showYearDetail && (
+              <>
+                <View style={styles.dimensionGrid}>
+                  {[
+                    { label: '事業', data: yearFortune.career },
+                    { label: '財運', data: yearFortune.wealth },
+                    { label: '感情', data: yearFortune.love },
+                    { label: '健康', data: yearFortune.health },
+                    { label: '家庭', data: yearFortune.family },
+                  ].map(item => (
+                    <View key={item.label} style={styles.dimensionCell}>
+                      <Text style={styles.dimLabel}>{item.label}</Text>
+                      <Text style={styles.dimScore}>{SCORE_STARS(item.data.score)}</Text>
+                      <Text style={styles.dimSummary}>{item.data.summary}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View style={styles.luckyRow}>
+                  <Text style={styles.luckyLabel}>吉月：</Text>
+                  <Text style={styles.luckyValue}>{yearFortune.luckyMonths.map(m => `${m}月`).join('　')}</Text>
+                </View>
+                <View style={styles.luckyRow}>
+                  <Text style={styles.luckyLabel}>幸運色：</Text>
+                  <Text style={styles.luckyValue}>{yearFortune.luckyColors.join('　')}</Text>
+                </View>
+                <Text style={styles.yearAdvice}>{yearFortune.advice}</Text>
+                <Text style={styles.yearBlessing}>{yearFortune.blessing}</Text>
+              </>
+            )}
+
+            {/* 流月選擇器 */}
+            <Text style={[styles.cardTitle, { marginTop: 16, marginBottom: 8 }]}>流月運勢</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.monthTabRow}
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.monthTab, activeMonthTab === m && styles.monthTabActive]}
+                  onPress={() => setActiveMonthTab(m)}
+                >
+                  <Text style={[styles.monthTabText, activeMonthTab === m && styles.monthTabTextActive]}>
+                    {m}月
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {selectedMonthFortune && (
+              <View style={styles.monthDetail}>
+                <View style={styles.monthScoreRow}>
+                  <Text style={styles.monthGanZhi}>{selectedMonthFortune.monthGanZhi}</Text>
+                  <Text style={styles.monthScore}>{SCORE_STARS(selectedMonthFortune.overallScore)}</Text>
+                </View>
+                <Text style={styles.monthOverview}>{selectedMonthFortune.overview}</Text>
+                <View style={styles.monthDimRow}>
+                  {[
+                    { label: '事業', data: selectedMonthFortune.career },
+                    { label: '財運', data: selectedMonthFortune.wealth },
+                    { label: '感情', data: selectedMonthFortune.love },
+                    { label: '健康', data: selectedMonthFortune.health },
+                  ].map(item => (
+                    <View key={item.label} style={styles.monthDimCell}>
+                      <Text style={styles.monthDimLabel}>{item.label}</Text>
+                      <Text style={styles.monthDimStars}>{SCORE_STARS(item.data.score)}</Text>
+                      <Text style={styles.monthDimTip}>{item.data.tip}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.monthAdvice}>{selectedMonthFortune.advice}</Text>
+              </View>
+            )}
+          </View>
+        ) : (
+          <View style={[styles.card, styles.noBaziCard]}>
+            <Text style={styles.noBaziText}>
+              💡 前往「設定」填入生辰年份，即可查看個人流年/流月運勢！
+            </Text>
+          </View>
+        )}
+
+        {/* 本週籤詩節奏 */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>本週籤詩節奏</Text>
           {weeklyPoems.map((item) => (
@@ -110,13 +374,8 @@ const styles = StyleSheet.create({
     marginBottom: TempleSpacing.md,
   },
   heroGrid: {},
-  heroGridDesktop: {
-    flexDirection: 'row',
-    gap: TempleSpacing.md,
-  },
-  heroCard: {
-    flex: 1,
-  },
+  heroGridDesktop: { flexDirection: 'row', gap: TempleSpacing.md },
+  heroCard: { flex: 1 },
   cardTitle: {
     color: TempleTheme.goldLight,
     fontWeight: '800',
@@ -139,27 +398,196 @@ const styles = StyleSheet.create({
     color: TempleTheme.textLight,
     lineHeight: 22,
   },
-  poemMeta: {
-    color: TempleTheme.textMuted,
-    fontSize: TempleFonts.small,
+  poemMeta: { color: TempleTheme.textMuted, fontSize: TempleFonts.small, marginBottom: 6 },
+  poemTitle: { color: TempleTheme.goldLight, fontWeight: '700', marginBottom: 10 },
+  poemLine: { color: TempleTheme.textLight, lineHeight: 24, fontSize: TempleFonts.body },
+  poemMeaning: { marginTop: 12, color: TempleTheme.textMuted, lineHeight: 22, fontSize: TempleFonts.small },
+
+  // 農民曆
+  lunarRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 12,
+  },
+  lunarItem: {
+    minWidth: 80,
+    backgroundColor: TempleTheme.goldDark + '18',
+    borderRadius: 8,
+    padding: 8,
+    alignItems: 'center',
+    flex: 1,
+  },
+  lunarLabel: { color: TempleTheme.textMuted, fontSize: 11, marginBottom: 4 },
+  lunarValue: { color: TempleTheme.goldLight, fontWeight: '700', fontSize: 13 },
+  yiJiRow: { flexDirection: 'row', gap: 12, marginBottom: 10 },
+  yiBlock: {
+    flex: 1,
+    backgroundColor: '#2d5a2d33',
+    borderRadius: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#4caf5044',
+  },
+  jiBlock: {
+    flex: 1,
+    backgroundColor: '#5a2d2d33',
+    borderRadius: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#e5737344',
+  },
+  yiLabel: { color: '#81c784', fontWeight: '800', marginBottom: 4, fontSize: 12 },
+  jiLabel: { color: '#e57373', fontWeight: '800', marginBottom: 4, fontSize: 12 },
+  yiText: { color: '#a5d6a7', fontSize: 12, lineHeight: 18 },
+  jiText: { color: '#ef9a9a', fontSize: 12, lineHeight: 18 },
+  godsRow: { flexDirection: 'row', marginBottom: 4 },
+  godsLabel: { color: TempleTheme.gold, fontSize: 12, fontWeight: '700', width: 44 },
+  godsText: { color: TempleTheme.textMuted, fontSize: 12, flex: 1 },
+  shiChenCurrent: {
+    backgroundColor: TempleTheme.goldDark + '22',
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 10,
     marginBottom: 6,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '44',
   },
-  poemTitle: {
-    color: TempleTheme.goldLight,
-    fontWeight: '700',
-    marginBottom: 10,
+  shiChenCurrentLabel: { color: TempleTheme.gold, fontWeight: '700', fontSize: 13 },
+  shiChenCurrentSub: { color: TempleTheme.textMuted, fontSize: 12, marginTop: 2 },
+  toggleBtn: { marginTop: 8 },
+  toggleBtnText: { color: TempleTheme.gold, fontSize: 13, fontWeight: '600' },
+  shiChenGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 10,
   },
-  poemLine: {
-    color: TempleTheme.textLight,
-    lineHeight: 24,
-    fontSize: TempleFonts.body,
+  shiChenCell: {
+    width: '23%',
+    backgroundColor: TempleTheme.bgDark + 'aa',
+    borderRadius: 8,
+    padding: 6,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '22',
   },
-  poemMeaning: {
+  shiChenCellAuspicious: {
+    borderColor: TempleTheme.gold + '60',
+    backgroundColor: TempleTheme.goldDark + '18',
+  },
+  shiChenName: { color: TempleTheme.textLight, fontWeight: '700', fontSize: 12 },
+  shiChenTime: { color: TempleTheme.textMuted, fontSize: 10, marginTop: 2 },
+  shiChenWx: { color: TempleTheme.textMuted, fontSize: 10 },
+  shiChenStatus: { fontSize: 11, fontWeight: '700', marginTop: 2, color: TempleTheme.textMuted },
+
+  // 節慶
+  festivalDesc: { color: TempleTheme.textLight, fontSize: TempleFonts.small, lineHeight: 20, marginBottom: 8 },
+  festivalGuide: { color: TempleTheme.gold, fontSize: TempleFonts.small, marginBottom: 8, fontWeight: '600' },
+  offeringsRow: { flexDirection: 'row', marginBottom: 4 },
+  offeringsLabel: { color: TempleTheme.textMuted, fontSize: 12, width: 40 },
+  offeringsText: { color: TempleTheme.textLight, fontSize: 12, flex: 1 },
+  upcomingFestRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: TempleTheme.goldDark + '14',
+    gap: 10,
+  },
+  festDot: { width: 10, height: 10, borderRadius: 5 },
+  upcomingFestName: { color: TempleTheme.goldLight, fontWeight: '700', fontSize: 13 },
+  upcomingFestDate: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 2 },
+  upcomingFestDays: { color: TempleTheme.gold, fontWeight: '700', fontSize: 12 },
+
+  // 流年
+  yearScoreRow: { marginBottom: 10 },
+  yearScore: { color: TempleTheme.gold, fontSize: 20, fontWeight: '900', marginBottom: 6 },
+  yearOverview: { color: TempleTheme.textLight, fontSize: TempleFonts.small, lineHeight: 20 },
+  dimensionGrid: { gap: 10, marginTop: 12 },
+  dimensionCell: {
+    backgroundColor: TempleTheme.bgDark + 'aa',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '22',
+  },
+  dimLabel: { color: TempleTheme.gold, fontWeight: '800', fontSize: 13, marginBottom: 4 },
+  dimScore: { color: TempleTheme.goldLight, fontSize: 16, marginBottom: 6 },
+  dimSummary: { color: TempleTheme.textMuted, fontSize: 12, lineHeight: 18 },
+  luckyRow: { flexDirection: 'row', marginTop: 10 },
+  luckyLabel: { color: TempleTheme.textMuted, fontSize: 12, width: 56 },
+  luckyValue: { color: TempleTheme.goldLight, fontSize: 12, flex: 1 },
+  yearAdvice: {
     marginTop: 12,
-    color: TempleTheme.textMuted,
-    lineHeight: 22,
+    color: TempleTheme.textLight,
     fontSize: TempleFonts.small,
+    lineHeight: 20,
+    padding: 10,
+    backgroundColor: TempleTheme.goldDark + '18',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: TempleTheme.gold,
   },
+  yearBlessing: {
+    marginTop: 8,
+    color: TempleTheme.textMuted,
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+
+  // 流月
+  monthTabRow: { gap: 6, paddingBottom: 4 },
+  monthTab: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '40',
+  },
+  monthTabActive: {
+    backgroundColor: TempleTheme.goldDark + '55',
+    borderColor: TempleTheme.gold,
+  },
+  monthTabText: { color: TempleTheme.textMuted, fontSize: 13 },
+  monthTabTextActive: { color: TempleTheme.gold, fontWeight: '700' },
+  monthDetail: {
+    marginTop: 12,
+    backgroundColor: TempleTheme.bgDark + 'aa',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '22',
+  },
+  monthScoreRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  monthGanZhi: { color: TempleTheme.gold, fontWeight: '800', fontSize: 14 },
+  monthScore: { color: TempleTheme.goldLight, fontSize: 14 },
+  monthOverview: { color: TempleTheme.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 10 },
+  monthDimRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
+  monthDimCell: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: TempleTheme.goldDark + '18',
+    borderRadius: 6,
+    padding: 6,
+  },
+  monthDimLabel: { color: TempleTheme.gold, fontWeight: '700', fontSize: 11, marginBottom: 2 },
+  monthDimStars: { color: TempleTheme.goldLight, fontSize: 12, marginBottom: 2 },
+  monthDimTip: { color: TempleTheme.textMuted, fontSize: 10, lineHeight: 14 },
+  monthAdvice: {
+    color: TempleTheme.textLight,
+    fontSize: 12,
+    lineHeight: 18,
+    padding: 8,
+    backgroundColor: TempleTheme.goldDark + '14',
+    borderRadius: 6,
+  },
+
+  noBaziCard: { alignItems: 'center' },
+  noBaziText: { color: TempleTheme.textMuted, fontSize: TempleFonts.small, lineHeight: 22, textAlign: 'center' },
+
+  // 週詩
   weekRow: {
     flexDirection: 'row',
     gap: 12,
@@ -167,30 +595,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: TempleTheme.goldDark + '14',
   },
-  weekMeta: {
-    width: 72,
-  },
-  weekDate: {
-    color: TempleTheme.goldLight,
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  weekDay: {
-    color: TempleTheme.textMuted,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  weekContent: {
-    flex: 1,
-  },
-  weekPoemTitle: {
-    color: TempleTheme.textLight,
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  weekPoemText: {
-    color: TempleTheme.textMuted,
-    fontSize: 12,
-  },
+  weekMeta: { width: 72 },
+  weekDate: { color: TempleTheme.goldLight, fontWeight: '700', fontSize: 12 },
+  weekDay: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 2 },
+  weekContent: { flex: 1 },
+  weekPoemTitle: { color: TempleTheme.textLight, fontSize: 12, fontWeight: '700', marginBottom: 4 },
+  weekPoemText: { color: TempleTheme.textMuted, fontSize: 12 },
 });
