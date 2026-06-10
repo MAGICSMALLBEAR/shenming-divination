@@ -2,7 +2,6 @@
 import React, { forwardRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { TempleTheme } from '@/constants/temple-theme';
 import { getGodCardImage } from '@/data/godImages';
 import type { Poem } from '@/data/poems/leiyushi';
 
@@ -101,6 +100,8 @@ export const UpgradedShareCard = forwardRef<View, Props>((props, ref) => {
     </View>
   );
 });
+
+UpgradedShareCard.displayName = 'UpgradedShareCard';
 
 // 生成分享文字（各模板共用，帶 hashtag）
 export function buildEnhancedShareText(props: Props): string {
