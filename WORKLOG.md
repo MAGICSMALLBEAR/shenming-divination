@@ -1,4 +1,99 @@
-﻿## 2026-06-05 睡前整理
+﻿## 2026-06-10 P1 ~ P4 市場差距全面補足
+
+### 本輪主題
+根據競品分析識別四類市場缺口，逐一實作：P1 基礎缺口 → P2 留存缺口 → P3 商業化缺口 → P4 質感缺口
+
+---
+
+### P1 完成（基礎缺口）
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 農曆完整版 | `src/data/lunarFullCalendar.ts` | 12時辰宜忌、沖煞生肖、五行納音、神煞 |
+| 廟宇地圖 | `src/data/temples.ts` + `src/app/map.tsx` | 台灣20座廟宇、GPS定位、城市篩選、外部導航 |
+| Firebase 架構 | `src/services/firebaseConfig.ts` + `authService.ts` + `cloudSync.ts` | 匿名登入＋Firestore 雲端同步，未填寫 API key 時自動降級 |
+
+### P2 完成（留存缺口）
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 節慶行事曆 | `src/data/festivals.ts` | 16個台灣節慶 + 拜拜指南 |
+| 流年/流月運勢 | `src/services/yearFortune.ts` | 12生肖 × 丙午年年運 + 12個月月運 |
+| 完整八字命理 | `src/services/baziAdvanced.ts` | 四柱、十神、大運起算、納音五行 |
+| AI 合婚/擇日 | `backend/src/server.ts` | 新增 `POST /api/bazi/match` 和 `POST /api/择日` |
+| 日曆頁升級 | `src/app/daily.tsx` | 整合農民曆/節慶/流年5維度/流月12分頁 |
+
+### P3 完成（商業化缺口）
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| Freemium 訂閱 | `src/services/premiumService.ts` | 月/年/終身三方案，免費版每日3次，AsyncStorage 模擬 |
+| 升級彈窗 | `src/components/PremiumPaywall.tsx` | 方案選擇 + 功能對比表 + 法律備注 |
+| 線上長明燈 | `src/app/temple.tsx`（更新） | 30天長明燈（Premium限定），未升級彈出 Paywall |
+| 真人諮詢頁 | `src/app/consult.tsx` | 4位命理師、預約流程UI、FAQ |
+| 設定頁訂閱 | `src/app/settings.tsx`（更新） | 訂閱狀態顯示/升級/取消 |
+
+### P4 完成（質感缺口）
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 完整 Onboarding | `src/app/onboarding.tsx` | 4步引導（歡迎→生辰→守護神→通知），首次安裝自動觸發 |
+| App Store 評分 | `src/services/reviewService.ts` | 求到好籤（5次後）自動請求 expo-store-review |
+| 深/淺色主題 | `src/constants/themes.ts` | 廟宇夜色/宣紙米白/跟隨系統 三選項 |
+| 分享圖卡升級 | `src/components/UpgradedShareCard.tsx` | 廟宇金/節慶紅/宣紙白 三種精美模板 |
+
+### 新增導航頁
+| Tab | 路由 | 功能 |
+|-----|------|------|
+| 廟宇 | `/map` | 廟宇搜尋 + 定位 + 導航 |
+| 諮詢 | `/consult` | 真人命理師預約 |
+
+### Git
+- `feat: P1+P2 功能完整實作`（15個檔案）
+- `feat: P3+P4 商業化與質感升級`（13個檔案）
+- Push：✅ `origin/master` 已同步
+
+---
+
+## 未來代辦清單
+
+### 🔴 高優先（上架前必須）
+
+| # | 項目 | 說明 | 指令/備注 |
+|---|------|------|-----------|
+| 1 | **Firebase 接入** | 到 console.firebase.google.com 建立專案，填入 `src/services/firebaseConfig.ts` | 填完後雲端同步自動生效 |
+| 2 | **expo-store-review 安裝** | reviewService.ts 架構已完備，缺 package | `npx expo install expo-store-review` |
+| 3 | **IAP 真實付款** | premiumService.ts 架構已建好，接入 RevenueCat 或 Expo IAP | 目前 AsyncStorage 模擬，不能收費 |
+| 4 | **淺色主題全頁面套用** | themes.ts 已建，AppSettings.theme 已存，但各頁面仍用 TempleTheme | 逐頁把 `getThemeColors()` 替換 `TempleTheme` |
+
+### 🟡 中優先（品質提升）
+
+| # | 項目 | 說明 |
+|---|------|------|
+| 5 | **廟宇資料擴充** | 目前 20 座，補到 50+ 座（含各縣市代表性廟宇） |
+| 6 | **廟宇評論/照片** | `temples.ts` 加 `photos[]` + `userRatings` 欄位 |
+| 7 | **合婚/擇日 UI 頁面** | 後端 endpoint 已建，前端還沒有專頁（目前只有 chat 可問） |
+| 8 | **流年流月 2027 資料** | `yearFortune.ts` 目前只有 2026 丙午年，明年前補 |
+| 9 | **八字完整顯示頁** | `baziAdvanced.ts` 已計算，沒有專頁呈現四柱/大運圖表 |
+
+### 🟢 低優先（長期優化）
+
+| # | 項目 | 說明 |
+|---|------|------|
+| 10 | **npm 漏洞修復** | `npm audit` 回報 11 個中等漏洞，需評估 `npm audit fix` 影響 |
+| 11 | **Widget 支援** | Expo SDK 56 原生 widget 支援有限，待 SDK 57+ 評估 |
+| 12 | **離線快取策略** | Firebase 資料、AI 解籤結果加入 offline-first 快取 |
+| 13 | **後端部署** | `backend/` 目前只跑本機，需部署到 Fly.io 或 Railway |
+
+---
+
+### 接手指令
+```powershell
+cd c:\Users\user\Desktop\神明占卜\shenming-divination
+.\node_modules\.bin\tsc.cmd --noEmit   # 型別檢查
+npx expo start --web                   # 啟動前端（http://localhost:8081）
+cd backend; npm run dev                # 啟動後端（http://localhost:3001）
+```
+
+---
+
+## 2026-06-05 睡前整理
 
 ### 本輪主題
 - 神明新圖資產接線
