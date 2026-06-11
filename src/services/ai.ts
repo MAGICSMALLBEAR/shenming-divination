@@ -7,6 +7,22 @@ const getDefaultApiUrl = () => {
   return 'http://localhost:3001/api/interpret';
 };
 
+// Read user-configured AI server URL + API key from AsyncStorage
+async function getAiConfig(): Promise<{ url: string; apiKey?: string }> {
+  try {
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    const raw = await AsyncStorage.getItem('@divination_settings');
+    if (raw) {
+      const settings = JSON.parse(raw);
+      return {
+        url: settings.aiServerUrl || process.env.EXPO_PUBLIC_AI_API_URL || getDefaultApiUrl(),
+        apiKey: settings.aiApiKey || undefined,
+      };
+    }
+  } catch {}
+  return { url: process.env.EXPO_PUBLIC_AI_API_URL || getDefaultApiUrl() };
+}
+
 interface AIInterpretRequest {
   godName: string;
   userName: string;
@@ -83,15 +99,18 @@ export async function getAIInterpretation(params: AIInterpretRequest): Promise<s
   const cached = await getCachedInterpretation(params.godName, params.poemNumber, params.questionCategory);
   if (cached) return cached;
 
-  const apiUrl = process.env.EXPO_PUBLIC_AI_API_URL || getDefaultApiUrl();
+  const { url: apiUrl, apiKey } = await getAiConfig();
 
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['X-Api-Key'] = apiKey;
+
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(params),
       signal: controller.signal,
     });

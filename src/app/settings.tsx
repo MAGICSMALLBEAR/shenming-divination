@@ -471,6 +471,33 @@ export default function SettingsScreen() {
           </View>
         ) : null}
 
+        {/* AI 設定 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>AI 解籤設定</Text>
+          <Text style={styles.backupHint}>
+            可自訂 AI 伺服器網址，或直接填入 API Key 讓 App 繞過後端直連 AI（需支援 Anthropic/OpenAI 相容 API）。
+          </Text>
+          <TextInput
+            style={styles.aiInput}
+            value={(settings as any).aiServerUrl || ''}
+            onChangeText={v => setSettings(prev => ({ ...prev, aiServerUrl: v || undefined }) as any)}
+            placeholder="AI 伺服器網址（選填）"
+            placeholderTextColor={TempleTheme.textMuted}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TextInput
+            style={styles.aiInput}
+            value={(settings as any).aiApiKey || ''}
+            onChangeText={v => setSettings(prev => ({ ...prev, aiApiKey: v || undefined }) as any)}
+            placeholder="API Key（選填，例如 sk-ant-...）"
+            placeholderTextColor={TempleTheme.textMuted}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>備份與還原</Text>
           <Text style={styles.backupHint}>
@@ -908,6 +935,11 @@ const styles = StyleSheet.create({
     color: TempleTheme.goldLight,
     fontWeight: '700',
   },
+  aiInput: {
+    backgroundColor: TempleTheme.bgCard, borderWidth: 1, borderColor: TempleTheme.goldDark + '40',
+    borderRadius: 10, padding: TempleSpacing.sm, color: TempleTheme.textLight,
+    fontSize: TempleFonts.small, marginBottom: TempleSpacing.sm,
+  } as any,
   backupInput: {
     minHeight: 160,
     backgroundColor: TempleTheme.bgCard,

@@ -57,6 +57,8 @@ export interface AppSettings {
   theme?: 'dark' | 'light' | 'system';  // P4: 主題模式
   familyMembers?: FamilyMember[];
   ambientSound?: boolean;
+  aiServerUrl?: string;
+  aiApiKey?: string;
 }
 
 export interface LastPoemContext {

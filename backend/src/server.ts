@@ -76,12 +76,13 @@ function getGodPersonality(godName: string): string {
   return GOD_PERSONALITIES[godName] ?? `你是 ${godName} 的解籤使者，語氣溫和、具體、帶安定感。`;
 }
 
-async function callLLM(config: AIConfig, messages: ChatMessage[]): Promise<string> {
+async function callLLM(config: AIConfig, messages: ChatMessage[], clientApiKey?: string): Promise<string> {
+  const effectiveKey = clientApiKey || config.apiKey;
   const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.apiKey}`,
+      Authorization: `Bearer ${effectiveKey}`,
     },
     body: JSON.stringify({
       model: config.model,
@@ -176,8 +177,9 @@ app.post('/api/interpret', async (req, res) => {
     }
 
     const config = getAIConfig();
+    const clientApiKey = req.headers['x-api-key'] as string | undefined;
 
-    if (!hasUsableApiKey(config)) {
+    if (!hasUsableApiKey(config) && !clientApiKey) {
       res.json({
         interpretation: buildStructuredFallback({
           godName,
@@ -230,7 +232,7 @@ app.post('/api/interpret', async (req, res) => {
     const interpretation = await callLLM(config, [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
-    ]);
+    ], clientApiKey);
 
     res.json({ interpretation, provider: config.provider });
   } catch (error) {
