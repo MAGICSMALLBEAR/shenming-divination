@@ -16,7 +16,15 @@ export const STORAGE_KEYS = {
   HISTORY: '@divination_history',
   SETTINGS: '@divination_settings',
   LAST_POEM: '@divination_last_poem',
+  FAMILY_MEMBERS: '@divination_family_members',
 } as const;
+
+export interface FamilyMember {
+  id: string;
+  name: string;
+  relation: string;  // 例：媽媽、爸爸、兄弟
+  birthDate?: string;
+}
 
 export type VerificationStatus = 'pending' | 'matched' | 'unmatched';
 
@@ -47,6 +55,8 @@ export interface AppSettings {
   drawAnimationMode?: DrawAnimationMode;
   drawAnimationStyleKey?: DrawAnimationStyleKey;
   theme?: 'dark' | 'light' | 'system';  // P4: 主題模式
+  familyMembers?: FamilyMember[];
+  ambientSound?: boolean;
 }
 
 export interface LastPoemContext {
@@ -202,4 +212,25 @@ export async function saveLastPoemContext(ctx: LastPoemContext): Promise<void> {
 export async function getLastPoemContext(): Promise<LastPoemContext | null> {
   const data = await getItem(STORAGE_KEYS.LAST_POEM);
   return data ? JSON.parse(data) : null;
+}
+
+export async function getFamilyMembers(): Promise<FamilyMember[]> {
+  const data = await getItem(STORAGE_KEYS.FAMILY_MEMBERS);
+  return data ? JSON.parse(data) : [];
+}
+
+export async function saveFamilyMembers(members: FamilyMember[]): Promise<void> {
+  await setItem(STORAGE_KEYS.FAMILY_MEMBERS, JSON.stringify(members));
+}
+
+export async function addFamilyMember(member: Omit<FamilyMember, 'id'>): Promise<FamilyMember> {
+  const members = await getFamilyMembers();
+  const newMember: FamilyMember = { ...member, id: `fam_${Date.now()}` };
+  await saveFamilyMembers([...members, newMember]);
+  return newMember;
+}
+
+export async function removeFamilyMember(id: string): Promise<void> {
+  const members = await getFamilyMembers();
+  await saveFamilyMembers(members.filter(m => m.id !== id));
 }

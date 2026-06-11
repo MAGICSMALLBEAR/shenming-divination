@@ -63,6 +63,14 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="oracle">
+        <NativeTabs.Trigger.Label>多元占卜</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="consult">
         <NativeTabs.Trigger.Label>諮詢</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
@@ -89,6 +97,14 @@ export default function AppTabs() {
 
       <NativeTabs.Trigger name="bazi">
         <NativeTabs.Trigger.Label>八字</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="ziwei">
+        <NativeTabs.Trigger.Label>紫微斗數</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"

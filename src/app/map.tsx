@@ -1,6 +1,7 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Linking,
   Platform,
   SafeAreaView,
@@ -12,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import {
@@ -23,6 +25,56 @@ import {
 } from '@/data/temples';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
+const CHECKIN_KEY = '@temple_checkins';
+const CHECKIN_RADIUS_KM = 0.3;  // 300m
+
+interface CheckInRecord {
+  templeId: string;
+  templeName: string;
+  timestamp: number;
+}
+
+const REVIEWS_KEY = '@temple_reviews';
+
+interface TempleReview {
+  id: string;
+  templeId: string;
+  author: string;
+  rating: number;   // 1-5
+  text: string;
+  timestamp: number;
+}
+
+async function loadReviews(templeId: string): Promise<TempleReview[]> {
+  try {
+    const raw = await AsyncStorage.getItem(`${REVIEWS_KEY}:${templeId}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+async function saveReview(review: TempleReview): Promise<TempleReview[]> {
+  const existing = await loadReviews(review.templeId);
+  const updated = [review, ...existing];
+  await AsyncStorage.setItem(`${REVIEWS_KEY}:${review.templeId}`, JSON.stringify(updated));
+  return updated;
+}
+
+async function loadCheckIns(): Promise<CheckInRecord[]> {
+  try {
+    const raw = await AsyncStorage.getItem(CHECKIN_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveCheckIn(record: CheckInRecord): Promise<CheckInRecord[]> {
+  const existing = await loadCheckIns();
+  const updated = [record, ...existing];
+  await AsyncStorage.setItem(CHECKIN_KEY, JSON.stringify(updated));
+  return updated;
+}
+
 export default function MapScreen() {
   const layout = useResponsiveLayout();
   const [search, setSearch] = useState('');
@@ -31,6 +83,63 @@ export default function MapScreen() {
   const [userLng, setUserLng] = useState<number | null>(null);
   const [locating, setLocating] = useState(false);
   const [selectedTemple, setSelectedTemple] = useState<Temple | null>(null);
+  const [checkIns, setCheckIns] = useState<CheckInRecord[]>([]);
+  const [checkingIn, setCheckingIn] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<TempleReview[]>([]);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewAuthor, setReviewAuthor] = useState('訪客');
+
+  useEffect(() => {
+    loadCheckIns().then(setCheckIns);
+  }, []);
+
+  const getCheckInCount = (templeId: string) =>
+    checkIns.filter(c => c.templeId === templeId).length;
+
+  const lastCheckInDate = (templeId: string) => {
+    const last = checkIns.find(c => c.templeId === templeId);
+    if (!last) return null;
+    return new Date(last.timestamp).toLocaleDateString('zh-TW');
+  };
+
+  useEffect(() => {
+    if (!selectedTemple) { setReviews([]); return; }
+    loadReviews(selectedTemple.id).then(setReviews);
+  }, [selectedTemple?.id]);
+
+  const handleAddReview = async () => {
+    if (!selectedTemple || !reviewText.trim()) return;
+    const review: TempleReview = {
+      id: `rev_${Date.now()}`,
+      templeId: selectedTemple.id,
+      author: reviewAuthor.trim() || '訪客',
+      rating: reviewRating,
+      text: reviewText.trim(),
+      timestamp: Date.now(),
+    };
+    const updated = await saveReview(review);
+    setReviews(updated);
+    setReviewText('');
+  };
+
+  const handleCheckIn = async (temple: Temple) => {
+    if (userLat === null || userLng === null) {
+      Alert.alert('需要定位', '請先點擊「📍 定位」按鈕取得您的位置。');
+      return;
+    }
+    const dist = calcDistanceKm(userLat, userLng, temple.lat, temple.lng);
+    if (dist > CHECKIN_RADIUS_KM) {
+      Alert.alert('距離太遠', `您距離 ${temple.name} 還有 ${(dist * 1000).toFixed(0)} 公尺，需在 300 公尺以內才能打卡。`);
+      return;
+    }
+    setCheckingIn(temple.id);
+    const record: CheckInRecord = { templeId: temple.id, templeName: temple.name, timestamp: Date.now() };
+    const updated = await saveCheckIn(record);
+    setCheckIns(updated);
+    setCheckingIn(null);
+    Alert.alert('打卡成功 🙏', `已成功在 ${temple.name} 打卡！\n累計打卡 ${updated.filter(c => c.templeId === temple.id).length} 次。`);
+  };
 
   const cities = ['全部', ...getAllCities()];
 
@@ -150,10 +259,19 @@ export default function MapScreen() {
               <View style={styles.cardTitleRow}>
                 <Text style={styles.templeName}>{temple.name}</Text>
                 <Text style={styles.templeCity}>{temple.city}</Text>
+                {getCheckInCount(temple.id) > 0 && (
+                  <View style={styles.checkInBadge}>
+                    <Text style={styles.checkInBadgeText}>打卡 {getCheckInCount(temple.id)}</Text>
+                  </View>
+                )}
               </View>
               {userLat !== null && userLng !== null && (
-                <Text style={styles.distanceText}>
+                <Text style={[
+                  styles.distanceText,
+                  calcDistanceKm(userLat, userLng, temple.lat, temple.lng) <= CHECKIN_RADIUS_KM && styles.distanceNear,
+                ]}>
                   {calcDistanceKm(userLat, userLng, temple.lat, temple.lng).toFixed(1)} km
+                  {calcDistanceKm(userLat, userLng, temple.lat, temple.lng) <= CHECKIN_RADIUS_KM ? ' ✓ 可打卡' : ''}
                 </Text>
               )}
             </View>
@@ -179,12 +297,56 @@ export default function MapScreen() {
                   <Text style={styles.detailFounded}>🏛 建廟：{temple.founded}</Text>
                 )}
                 <Text style={styles.detailDesc}>{temple.description}</Text>
-                <TouchableOpacity
-                  style={styles.mapBtn}
-                  onPress={() => handleOpenMap(temple)}
-                >
-                  <Text style={styles.mapBtnText}>🗺 開啟地圖導航</Text>
-                </TouchableOpacity>
+                <View style={styles.detailBtnRow}>
+                  <TouchableOpacity
+                    style={styles.mapBtn}
+                    onPress={() => handleOpenMap(temple)}
+                  >
+                    <Text style={styles.mapBtnText}>🗺 導航</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.checkInBtn, checkingIn === temple.id && { opacity: 0.6 }]}
+                    onPress={() => handleCheckIn(temple)}
+                    disabled={checkingIn === temple.id}
+                  >
+                    <Text style={styles.checkInBtnText}>
+                      {checkingIn === temple.id ? '打卡中…' : '📍 廟宇打卡'}
+                    </Text>
+                    {lastCheckInDate(temple.id) ? (
+                      <Text style={styles.checkInLastDate}>上次：{lastCheckInDate(temple.id)}</Text>
+                    ) : null}
+                  </TouchableOpacity>
+                </View>
+              {/* 評論區 */}
+              <View style={styles.reviewSection}>
+                <Text style={styles.reviewTitle}>廟宇評論</Text>
+                {reviews.map(r => (
+                  <View key={r.id} style={styles.reviewItem}>
+                    <View style={styles.reviewHeader}>
+                      <Text style={styles.reviewAuthor}>{r.author}</Text>
+                      <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</Text>
+                      <Text style={styles.reviewDate}>{new Date(r.timestamp).toLocaleDateString('zh-TW')}</Text>
+                    </View>
+                    <Text style={styles.reviewText}>{r.text}</Text>
+                  </View>
+                ))}
+                {reviews.length === 0 && <Text style={styles.noReviews}>還沒有評論，來第一個留言吧！</Text>}
+                <View style={styles.reviewForm}>
+                  <View style={styles.reviewRatingRow}>
+                    <Text style={styles.reviewLabel}>評分：</Text>
+                    {[1,2,3,4,5].map(n => (
+                      <TouchableOpacity key={n} onPress={() => setReviewRating(n)}>
+                        <Text style={[styles.reviewStar, n <= reviewRating && styles.reviewStarActive]}>★</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <TextInput style={styles.reviewInput} value={reviewAuthor} onChangeText={setReviewAuthor} placeholder="您的名字" placeholderTextColor={TempleTheme.textMuted} />
+                  <TextInput style={[styles.reviewInput, { minHeight: 56 }] as any} value={reviewText} onChangeText={setReviewText} placeholder="留下您對這座廟宇的感想…" placeholderTextColor={TempleTheme.textMuted} multiline maxLength={200} />
+                  <TouchableOpacity style={styles.reviewSubmitBtn} onPress={handleAddReview} disabled={!reviewText.trim()}>
+                    <Text style={styles.reviewSubmitText}>發佈評論</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
               </View>
             )}
           </TouchableOpacity>
@@ -369,7 +531,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 12,
   },
+  detailBtnRow: { flexDirection: 'row', gap: 8, marginTop: TempleSpacing.sm },
   mapBtn: {
+    flex: 1,
     backgroundColor: TempleTheme.goldDark + '44',
     borderRadius: 10,
     paddingVertical: 10,
@@ -382,6 +546,44 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: TempleFonts.body,
   },
+  checkInBtn: {
+    flex: 1,
+    backgroundColor: TempleTheme.red + '33',
+    borderRadius: 10,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: TempleTheme.redLight + '80',
+  },
+  checkInBtnText: { color: TempleTheme.redLight, fontWeight: '700', fontSize: TempleFonts.body },
+  checkInLastDate: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 2 },
+  checkInBadge: {
+    backgroundColor: TempleTheme.red,
+    borderRadius: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 7,
+    marginLeft: 6,
+  },
+  checkInBadgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
+  distanceNear: { color: TempleTheme.success },
+  // 評論
+  reviewSection: { marginTop: TempleSpacing.md, borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '30', paddingTop: TempleSpacing.sm },
+  reviewTitle: { color: TempleTheme.textGold, fontWeight: 'bold', fontSize: TempleFonts.small, marginBottom: TempleSpacing.sm },
+  reviewItem: { marginBottom: TempleSpacing.sm, padding: TempleSpacing.sm, backgroundColor: TempleTheme.bgMedium, borderRadius: 8 },
+  reviewHeader: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 4 },
+  reviewAuthor: { color: TempleTheme.textLight, fontWeight: 'bold', fontSize: 12, flex: 1 },
+  reviewStars: { color: TempleTheme.goldLight, fontSize: 12 },
+  reviewDate: { color: TempleTheme.textMuted, fontSize: 11 },
+  reviewText: { color: TempleTheme.textMuted, fontSize: 12, lineHeight: 16 },
+  noReviews: { color: TempleTheme.textMuted, fontSize: 12, fontStyle: 'italic', marginBottom: TempleSpacing.sm },
+  reviewForm: { gap: 8 },
+  reviewRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  reviewLabel: { color: TempleTheme.textMuted, fontSize: 12 },
+  reviewStar: { fontSize: 22, color: TempleTheme.bgMedium },
+  reviewStarActive: { color: TempleTheme.goldLight },
+  reviewInput: { backgroundColor: TempleTheme.bgDark, borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '40', padding: 8, color: TempleTheme.textLight, fontSize: 12 },
+  reviewSubmitBtn: { backgroundColor: TempleTheme.gold + '33', borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: TempleTheme.gold + '60' },
+  reviewSubmitText: { color: TempleTheme.gold, fontWeight: 'bold', fontSize: 12 },
   emptyCard: {
     backgroundColor: TempleTheme.bgCard,
     borderRadius: 14,

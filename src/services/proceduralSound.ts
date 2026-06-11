@@ -147,6 +147,101 @@ export async function vibrateLight() {
   try { const { Vibration } = require('react-native'); Vibration.vibrate(30); } catch {}
 }
 
+// ─── 廟宇環境背景音（合成） ──────────────────────────────────
+let ambientNodes: { stop: () => void }[] = [];
+let ambientInterval: ReturnType<typeof setInterval> | null = null;
+let ambientEnabled = false;
+
+function createAmbientDrone() {
+  const c = ctx();
+  if (!c) return null;
+  const gain = c.createGain();
+  gain.gain.setValueAtTime(0.04, c.currentTime);
+  gain.connect(c.destination);
+
+  // 低頻嗡鳴 (廟宇鐘聲基礎音)
+  const osc1 = c.createOscillator();
+  osc1.type = 'sine';
+  osc1.frequency.value = 82.4;
+  osc1.connect(gain);
+  osc1.start();
+
+  // 泛音
+  const osc2 = c.createOscillator();
+  osc2.type = 'sine';
+  osc2.frequency.value = 164.8;
+  const gain2 = c.createGain();
+  gain2.gain.value = 0.018;
+  osc2.connect(gain2);
+  gain2.connect(c.destination);
+  osc2.start();
+
+  return {
+    stop: () => {
+      try { osc1.stop(); osc2.stop(); } catch {}
+      try { gain.disconnect(); gain2.disconnect(); } catch {}
+    },
+  };
+}
+
+function playAmbientBell() {
+  const c = ctx();
+  if (!c) return;
+  const freqs = [440, 528, 660];
+  freqs.forEach((f, i) => {
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.06, c.currentTime + i * 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 3 + i * 0.02);
+    g.connect(c.destination);
+    const o = c.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = f;
+    o.connect(g);
+    o.start(c.currentTime + i * 0.02);
+    o.stop(c.currentTime + 3 + i * 0.02);
+  });
+}
+
+export async function startAmbientSound() {
+  if (Platform.OS !== 'web') {
+    // Native: loop incense sound softly at lower volume
+    try {
+      if (!SoundLib) {
+        const { Audio } = require('expo-av');
+        await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+        SoundLib = Audio;
+      }
+      const { sound } = await SoundLib.Sound.createAsync(
+        require('../../assets/sounds/incense.mp3'),
+        { shouldPlay: true, isLooping: true, volume: 0.3 }
+      );
+      ambientNodes.push({ stop: () => sound.unloadAsync().catch(() => {}) });
+    } catch {}
+    return;
+  }
+  stopAmbientSound();
+  ambientEnabled = true;
+  const drone = createAmbientDrone();
+  if (drone) ambientNodes.push(drone);
+  // Ring a bell every 18-30 seconds
+  ambientInterval = setInterval(() => {
+    if (!ambientEnabled) return;
+    playAmbientBell();
+  }, 22000);
+  // First bell after 3s
+  setTimeout(playAmbientBell, 3000);
+}
+
+export function stopAmbientSound() {
+  ambientEnabled = false;
+  ambientNodes.forEach(n => { try { n.stop(); } catch {} });
+  ambientNodes = [];
+  if (ambientInterval) {
+    clearInterval(ambientInterval);
+    ambientInterval = null;
+  }
+}
+
 // assets/sounds/{name}.mp3 存在時才 require；不存在時回傳 null
 function tryRequire(_name: string): any {
   switch (_name) {

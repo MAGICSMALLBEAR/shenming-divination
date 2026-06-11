@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { gods, type God } from '@/data/gods';
 import { getGodCardImage, getGodSoftImage } from '@/data/godImages';
@@ -429,6 +430,9 @@ export default function TempleScreen() {
           ))}
         </View>
 
+        {/* 線上法事委辦 */}
+        <RitualBookingSection />
+
         <View style={{ height: 60 }} />
       </ScrollView>
 
@@ -445,6 +449,140 @@ export default function TempleScreen() {
     </SafeAreaView>
   );
 }
+
+// ─── 線上法事委辦 ──────────────────────────────────────────────────────────
+const RITUAL_SERVICES = [
+  { id: 'anTaiSui', name: '安太歲', desc: '化解當年沖煞太歲，保佑平安順遂。', price: 'NT$ 1,200' },
+  { id: 'buYun', name: '補運改運', desc: '補足先天運勢不足，扭轉低谷困境。', price: 'NT$ 2,400' },
+  { id: 'guangMing', name: '點光明燈', desc: '為自己或家人點燈，照亮前途運程。', price: 'NT$ 800' },
+  { id: 'qiFu', name: '祈福法會', desc: '年度集體祈福法會，廣積福田。', price: 'NT$ 600' },
+  { id: 'jieXie', name: '解厄消災', desc: '化解流年凶星，消除不良氣場。', price: 'NT$ 1,800' },
+];
+
+const RITUAL_BOOKING_KEY = '@ritual_bookings';
+
+interface RitualBooking {
+  id: string;
+  serviceId: string;
+  serviceName: string;
+  name: string;
+  phone: string;
+  date: string;
+  timestamp: number;
+  status: 'pending' | 'confirmed';
+}
+
+function RitualBookingSection() {
+  const [selectedService, setSelectedService] = useState<typeof RITUAL_SERVICES[0] | null>(null);
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [date, setDate] = useState('');
+  const [bookings, setBookings] = useState<RitualBooking[]>([]);
+  const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(RITUAL_BOOKING_KEY).then(raw => {
+      if (raw) setBookings(JSON.parse(raw));
+    }).catch(() => {});
+  }, []);
+
+  const handleBook = async () => {
+    if (!selectedService || !name.trim() || !date.trim()) {
+      Alert.alert('請填寫完整', '請選擇法事項目並填寫姓名與日期。');
+      return;
+    }
+    const booking: RitualBooking = {
+      id: `bk_${Date.now()}`,
+      serviceId: selectedService.id,
+      serviceName: selectedService.name,
+      name: name.trim(),
+      phone: phone.trim(),
+      date: date.trim(),
+      timestamp: Date.now(),
+      status: 'confirmed',
+    };
+    const updated = [booking, ...bookings];
+    await AsyncStorage.setItem(RITUAL_BOOKING_KEY, JSON.stringify(updated));
+    setBookings(updated);
+    setName(''); setPhone(''); setDate(''); setSelectedService(null); setShowForm(false);
+    Alert.alert('預約成功 🙏', `${booking.serviceName} 已預約，廟方將於 24 小時內確認。\n\n姓名：${booking.name}\n日期：${booking.date}`);
+  };
+
+  return (
+    <View style={rb.container}>
+      <Text style={rb.title}>線上法事委辦</Text>
+      <Text style={rb.subtitle}>選擇所需法事，填寫資料後提交，廟方將聯繫確認。</Text>
+      <View style={rb.serviceList}>
+        {RITUAL_SERVICES.map(svc => (
+          <TouchableOpacity
+            key={svc.id}
+            style={[rb.serviceCard, selectedService?.id === svc.id && rb.serviceCardActive]}
+            onPress={() => { setSelectedService(svc); setShowForm(true); }}
+          >
+            <View style={rb.serviceRow}>
+              <Text style={rb.serviceName}>{svc.name}</Text>
+              <Text style={rb.servicePrice}>{svc.price}</Text>
+            </View>
+            <Text style={rb.serviceDesc}>{svc.desc}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      {showForm && selectedService && (
+        <View style={rb.form}>
+          <Text style={rb.formTitle}>預約 {selectedService.name}</Text>
+          <TextInput style={rb.input} value={name} onChangeText={setName} placeholder="姓名（必填）" placeholderTextColor={TempleTheme.textMuted} />
+          <TextInput style={rb.input} value={phone} onChangeText={setPhone} placeholder="聯絡電話（選填）" placeholderTextColor={TempleTheme.textMuted} keyboardType="phone-pad" />
+          <TextInput style={rb.input} value={date} onChangeText={setDate} placeholder="希望日期（如：2026-07-15）" placeholderTextColor={TempleTheme.textMuted} />
+          <View style={rb.formBtns}>
+            <TouchableOpacity style={rb.cancelBtn} onPress={() => { setShowForm(false); setSelectedService(null); }}>
+              <Text style={rb.cancelBtnText}>取消</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={rb.submitBtn} onPress={handleBook}>
+              <Text style={rb.submitBtnText}>確認預約</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+      {bookings.length > 0 && (
+        <View style={rb.bookingList}>
+          <Text style={rb.bookingListTitle}>我的預約記錄</Text>
+          {bookings.slice(0, 3).map(b => (
+            <View key={b.id} style={rb.bookingItem}>
+              <Text style={rb.bookingName}>{b.serviceName} · {b.name}</Text>
+              <Text style={rb.bookingDate}>{b.date}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const rb = StyleSheet.create({
+  container: { marginHorizontal: TempleSpacing.xs, marginBottom: TempleSpacing.md, backgroundColor: TempleTheme.bgCard, borderRadius: 14, borderWidth: 1, borderColor: TempleTheme.redLight + '40', padding: TempleSpacing.md },
+  title: { fontSize: TempleFonts.heading, fontWeight: 'bold', color: TempleTheme.redLight, marginBottom: 4 },
+  subtitle: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginBottom: TempleSpacing.md },
+  serviceList: { gap: 8 },
+  serviceCard: { backgroundColor: TempleTheme.bgMedium, borderRadius: 10, borderWidth: 1, borderColor: TempleTheme.redLight + '30', padding: TempleSpacing.sm },
+  serviceCardActive: { borderColor: TempleTheme.redLight, backgroundColor: TempleTheme.red + '22' },
+  serviceRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  serviceName: { color: TempleTheme.textLight, fontWeight: 'bold', fontSize: TempleFonts.body },
+  servicePrice: { color: TempleTheme.goldLight, fontSize: TempleFonts.small, fontWeight: '600' },
+  serviceDesc: { color: TempleTheme.textMuted, fontSize: 12 },
+  form: { marginTop: TempleSpacing.md, gap: 8 },
+  formTitle: { color: TempleTheme.textGold, fontWeight: 'bold', fontSize: TempleFonts.body, marginBottom: 4 },
+  input: { backgroundColor: TempleTheme.bgDark, borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '50', padding: 10, color: TempleTheme.textLight, fontSize: TempleFonts.body } as any,
+  formBtns: { flexDirection: 'row', gap: 8 },
+  cancelBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.textMuted, alignItems: 'center' },
+  cancelBtnText: { color: TempleTheme.textMuted, fontSize: TempleFonts.body },
+  submitBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: TempleTheme.red, alignItems: 'center' },
+  submitBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: TempleFonts.body },
+  bookingList: { marginTop: TempleSpacing.md, borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '30', paddingTop: TempleSpacing.sm },
+  bookingListTitle: { color: TempleTheme.textGold, fontWeight: 'bold', fontSize: TempleFonts.small, marginBottom: 6 },
+  bookingItem: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
+  bookingName: { color: TempleTheme.textLight, fontSize: 12 },
+  bookingDate: { color: TempleTheme.textMuted, fontSize: 12 },
+});
 
 function TempleGodCard({
   god,

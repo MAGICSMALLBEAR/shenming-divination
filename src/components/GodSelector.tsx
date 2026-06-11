@@ -32,6 +32,7 @@ interface QuestionFormProps {
   onSubmit: (question: string, category: string, userName: string) => void;
   selectedGod?: God | null;
   onSwitchGod?: (godId: number) => void;
+  forWhom?: string;
 }
 
 export function GodSelector({ onSelectGod }: GodSelectorProps) {
@@ -266,7 +267,7 @@ function GodDetailModal({ god, onClose, onSelect }: { god: God; onClose: () => v
   );
 }
 
-export function QuestionForm({ onSubmit, selectedGod, onSwitchGod }: QuestionFormProps) {
+export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: QuestionFormProps) {
   const layout = useResponsiveLayout();
   const [question, setQuestion] = useState('');
   const [category, setCategory] = useState('general');
@@ -306,6 +307,11 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod }: QuestionFor
     <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
       <View style={[styles.formContainer, { maxWidth: formMaxWidth }]}>
         <Text style={styles.title}>整理你的問題</Text>
+        {forWhom ? (
+          <View style={styles.forWhomBanner}>
+            <Text style={styles.forWhomText}>🙏 代替 <Text style={styles.forWhomName}>{forWhom}</Text> 求籤</Text>
+          </View>
+        ) : null}
         <Text style={styles.subtitle}>題目越聚焦，籤意越容易讀得清楚。</Text>
 
         {selectedGod ? (
@@ -467,6 +473,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: TempleSpacing.lg,
   },
+  forWhomBanner: {
+    backgroundColor: TempleTheme.bgCard, borderRadius: 10, borderWidth: 1, borderColor: TempleTheme.gold,
+    paddingVertical: 6, paddingHorizontal: 14, alignSelf: 'center', marginBottom: TempleSpacing.sm,
+  },
+  forWhomText: { color: TempleTheme.textLight, fontSize: TempleFonts.small },
+  forWhomName: { color: TempleTheme.textGold, fontWeight: 'bold' },
   scrollArea: { flex: 1 },
   scrollContent: { width: '100%', alignSelf: 'center', paddingBottom: TempleSpacing.lg },
   grid: {

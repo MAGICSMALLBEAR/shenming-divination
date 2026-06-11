@@ -35,6 +35,7 @@ import {
   scheduleGodBirthdayNotifications,
   scheduleFortuneWidgetNotification,
 } from '@/services/notifications';
+import { startAmbientSound, stopAmbientSound } from '@/services/proceduralSound';
 import { getTodayLunarInfo } from '@/data/lunarCalendar';
 import { calcBazi, parseBirthYear, ZODIAC_PATRON_GOD } from '@/services/bazi';
 import { gods } from '@/data/gods';
@@ -440,6 +441,18 @@ export default function SettingsScreen() {
             description="每天 08:00 推送節氣、神諭與宜忌，在通知中心提供類 Widget 體驗。"
             value={Boolean((settings as any).fortuneWidget)}
             onToggle={handleToggleFortuneWidget}
+          />
+
+          <ToggleRow
+            label="廟宇環境音效"
+            description="冥想與求籤步驟播放低頻鐘鳴環境音，營造廟宇氛圍。"
+            value={Boolean(settings.ambientSound)}
+            onToggle={async () => {
+              const next = !settings.ambientSound;
+              setSettings(prev => ({ ...prev, ambientSound: next }));
+              await saveSettings({ ...settings, ambientSound: next });
+              if (next) startAmbientSound(); else stopAmbientSound();
+            }}
           />
         </View>
 

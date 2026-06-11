@@ -1,6 +1,6 @@
 // 首頁 - 神明占卜主流程
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share, Animated, Easing, type ImageSourcePropType } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share, Animated, Easing, Modal, TextInput, ScrollView, type ImageSourcePropType } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useDivination } from '@/hooks/useDivination';
@@ -22,8 +22,8 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { addWish } from '@/services/wishTracker';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
-import { playResultSound } from '@/services/proceduralSound';
-import { getHistory, getLastPoemContext, getSettings, type DivinationRecord } from '@/services/storage';
+import { playResultSound, startAmbientSound, stopAmbientSound } from '@/services/proceduralSound';
+import { getHistory, getLastPoemContext, getSettings, getFamilyMembers, addFamilyMember, removeFamilyMember, type DivinationRecord, type FamilyMember } from '@/services/storage';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritual-styles';
 import { gods, type God } from '@/data/gods';
@@ -53,6 +53,11 @@ export default function HomeScreen() {
   const [dailyRecommendation, setDailyRecommendation] = React.useState<GodRecommendation | null>(null);
   const [pendingReview, setPendingReview] = React.useState<DivinationRecord | null>(null);
   const [showCrossCompare, setShowCrossCompare] = React.useState(false);
+  const [familyMembers, setFamilyMembers] = React.useState<FamilyMember[]>([]);
+  const [selectedPerson, setSelectedPerson] = React.useState<FamilyMember | null>(null);
+  const [showAddFamily, setShowAddFamily] = React.useState(false);
+  const [newFamName, setNewFamName] = React.useState('');
+  const [newFamRelation, setNewFamRelation] = React.useState('');
   const solarTerm = React.useMemo(() => getCurrentSolarTerm(), []);
 
   // 搖手機求籤：在擲筊步驟偵測搖動
@@ -93,6 +98,20 @@ export default function HomeScreen() {
       }
     }
   }, [div.step, div.drawnPoem]);
+
+  // 環境音效：冥想 / 擲筊步驟啟動，其他步驟停止
+  React.useEffect(() => {
+    const ambientSteps = ['meditate', 'toss-jiaobei'];
+    getSettings().then(s => {
+      if (!s?.ambientSound) return;
+      if (ambientSteps.includes(div.step)) {
+        startAmbientSound().catch(() => {});
+      } else {
+        stopAmbientSound();
+      }
+    });
+    return () => stopAmbientSound();
+  }, [div.step]);
   React.useEffect(() => {
     import('@/services/storage').then(({ getSettings }) => {
       getSettings().then(s => {
@@ -127,6 +146,25 @@ export default function HomeScreen() {
       setShowOnboarding(!done);
     });
   }, []);
+
+  React.useEffect(() => {
+    getFamilyMembers().then(setFamilyMembers);
+  }, []);
+
+  const handleAddFamilyMember = async () => {
+    if (!newFamName.trim()) return;
+    const member = await addFamilyMember({ name: newFamName.trim(), relation: newFamRelation.trim() || '家人' });
+    setFamilyMembers(prev => [...prev, member]);
+    setNewFamName('');
+    setNewFamRelation('');
+    setShowAddFamily(false);
+  };
+
+  const handleRemoveFamilyMember = async (id: string) => {
+    await removeFamilyMember(id);
+    setFamilyMembers(prev => prev.filter(m => m.id !== id));
+    if (selectedPerson?.id === id) setSelectedPerson(null);
+  };
 
   const showBack = div.step === 'set-question' || div.step === 'meditate' || div.step === 'toss-jiaobei' || div.step === 'enter-zhuge-number';
 
@@ -226,6 +264,13 @@ export default function HomeScreen() {
       case 'select-god':
         return (
           <View style={styles.fullScreen}>
+            <ForWhomSelector
+              familyMembers={familyMembers}
+              selectedPerson={selectedPerson}
+              onSelect={setSelectedPerson}
+              onAddPress={() => setShowAddFamily(true)}
+              onRemove={handleRemoveFamilyMember}
+            />
             <DailyFortuneCard fortune={fortune} expanded={fortuneExpanded} onToggle={() => setFortuneExpanded(v => !v)} />
             {dailyRecommendation ? (
               <DailyGodRecommendationCard
@@ -260,6 +305,7 @@ export default function HomeScreen() {
             <QuestionForm
               selectedGod={div.selectedGod}
               onSwitchGod={handleSelectGod}
+              forWhom={selectedPerson ? `${selectedPerson.relation} ${selectedPerson.name}` : undefined}
               onSubmit={(q, cat, name) => div.startMeditation(q, cat, name)}
             />
           </View>
@@ -382,6 +428,20 @@ export default function HomeScreen() {
     await Share.share({ message: text });
   };
 
+  const isGoodFortune = div.drawnPoem?.level && (
+    div.drawnPoem.level.includes('上') ||
+    div.drawnPoem.level.includes('大吉') ||
+    div.drawnPoem.level.includes('吉')
+  );
+
+  const handleShareBlessing = async () => {
+    if (!div.drawnPoem) return;
+    const godName = div.selectedGod?.name || '神明';
+    const line1 = div.drawnPoem.content.split('\n')[0] || div.drawnPoem.content.slice(0, 30);
+    const blessing = `🌸 ${godName} 賜福祝卡 🌸\n\n好消息！我在神明占卜求得吉籤：\n\n【第 ${div.drawnPoem.number} 籤 · ${div.drawnPoem.title}】\n"${line1}"\n\n願此福氣也能帶給你 ✨\n祝你諸事順心，好運連連！\n\n— 由神明占卜送出 🏛️`;
+    await Share.share({ message: blessing });
+  };
+
   const handleAskFollowUp = () => {
     router.push('/chat');
   };
@@ -410,6 +470,12 @@ export default function HomeScreen() {
             <Text style={styles.actionBtnIcon}>📤</Text>
             <Text style={styles.actionBtnText}>分享</Text>
           </TouchableOpacity>
+          {isGoodFortune ? (
+            <TouchableOpacity style={[styles.actionBtn, styles.actionBtnBlessing, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleShareBlessing}>
+              <Text style={styles.actionBtnIcon}>🌸</Text>
+              <Text style={styles.actionBtnText}>送祝福</Text>
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleReviewRecord}>
             <Text style={styles.actionBtnIcon}>🧭</Text>
             <Text style={styles.actionBtnText}>回訪</Text>
@@ -440,6 +506,23 @@ export default function HomeScreen() {
             {div.step === 'meditate' || div.step === 'toss-jiaobei' ? <IncenseSmoke /> : null}
             <FireworksEffect active={showFireworks} />
             <WishBindEffect active={showWishBind && !reducedMotion} />
+            <Modal visible={showAddFamily} transparent animationType="fade" onRequestClose={() => setShowAddFamily(false)}>
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalCard}>
+                  <Text style={styles.modalTitle}>新增家人成員</Text>
+                  <TextInput style={styles.modalInput} value={newFamName} onChangeText={setNewFamName} placeholder="姓名" placeholderTextColor={TempleTheme.textMuted} />
+                  <TextInput style={styles.modalInput} value={newFamRelation} onChangeText={setNewFamRelation} placeholder="關係（媽媽、爸爸…）" placeholderTextColor={TempleTheme.textMuted} />
+                  <View style={styles.modalBtnRow}>
+                    <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowAddFamily(false)}>
+                      <Text style={styles.modalCancelText}>取消</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.modalConfirmBtn} onPress={handleAddFamilyMember}>
+                      <Text style={styles.modalConfirmText}>確認新增</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
             <View style={styles.container}>
               <View style={[styles.pageShell, { maxWidth: pageMaxWidth }]}>
                 {renderHeader()}
@@ -459,6 +542,62 @@ export default function HomeScreen() {
     </ErrorBoundary>
   );
 }
+
+// ─── 為誰求籤選擇器 ───────────────────────────────────────────
+function ForWhomSelector({
+  familyMembers,
+  selectedPerson,
+  onSelect,
+  onAddPress,
+  onRemove,
+}: {
+  familyMembers: FamilyMember[];
+  selectedPerson: FamilyMember | null;
+  onSelect: (m: FamilyMember | null) => void;
+  onAddPress: () => void;
+  onRemove: (id: string) => void;
+}) {
+  const isSelf = selectedPerson === null;
+  return (
+    <View style={famStyle.row}>
+      <Text style={famStyle.label}>為誰求籤：</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={famStyle.chips}>
+        <TouchableOpacity
+          style={[famStyle.chip, isSelf && famStyle.chipActive]}
+          onPress={() => onSelect(null)}
+        >
+          <Text style={[famStyle.chipText, isSelf && famStyle.chipTextActive]}>自己</Text>
+        </TouchableOpacity>
+        {familyMembers.map((m) => (
+          <TouchableOpacity
+            key={m.id}
+            style={[famStyle.chip, selectedPerson?.id === m.id && famStyle.chipActive]}
+            onPress={() => onSelect(m)}
+            onLongPress={() => onRemove(m.id)}
+          >
+            <Text style={[famStyle.chipText, selectedPerson?.id === m.id && famStyle.chipTextActive]}>
+              {m.relation} {m.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity style={famStyle.addBtn} onPress={onAddPress}>
+          <Text style={famStyle.addBtnText}>＋</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+  );
+}
+const famStyle = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: TempleSpacing.md, paddingVertical: 6, backgroundColor: TempleTheme.bgMedium },
+  label: { color: TempleTheme.textMuted, fontSize: 13, marginRight: 6, flexShrink: 0 },
+  chips: { flexDirection: 'row', gap: 6, alignItems: 'center' },
+  chip: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: TempleTheme.gold },
+  chipActive: { backgroundColor: TempleTheme.gold },
+  chipText: { color: TempleTheme.gold, fontSize: 13 },
+  chipTextActive: { color: TempleTheme.bgDark, fontWeight: 'bold' },
+  addBtn: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: TempleTheme.goldDark },
+  addBtnText: { color: TempleTheme.goldDark, fontSize: 16, lineHeight: 20 },
+});
 
 // ─── 今日運勢折疊卡 ───────────────────────────────────────────
 function SelectedGodEntranceBanner({
@@ -1188,4 +1327,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: TempleTheme.goldLight,
   },
+  // 新增家人 Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, padding: 24, width: '100%', maxWidth: 360, borderWidth: 1, borderColor: TempleTheme.gold },
+  modalTitle: { fontSize: TempleFonts.heading, color: TempleTheme.textGold, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
+  modalInput: { backgroundColor: TempleTheme.bgMedium, borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold, padding: 10, color: TempleTheme.textLight, fontSize: TempleFonts.body, marginBottom: 10 } as any,
+  modalBtnRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  modalCancelBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.textMuted, alignItems: 'center' },
+  modalCancelText: { color: TempleTheme.textMuted, fontSize: TempleFonts.body },
+  modalConfirmBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: TempleTheme.gold, alignItems: 'center' },
+  modalConfirmText: { color: TempleTheme.bgDark, fontSize: TempleFonts.body, fontWeight: 'bold' },
+  actionBtnBlessing: { borderColor: '#E879A0', backgroundColor: '#E879A033' },
 });

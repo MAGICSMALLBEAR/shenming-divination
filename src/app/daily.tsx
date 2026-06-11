@@ -5,9 +5,11 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
@@ -29,6 +31,27 @@ export default function DailyScreen() {
   const [showShiChen, setShowShiChen] = useState(false);
   const [showYearDetail, setShowYearDetail] = useState(false);
   const [activeMonthTab, setActiveMonthTab] = useState(new Date().getMonth() + 1);
+  const [moodEmoji, setMoodEmoji] = useState('');
+  const [moodNote, setMoodNote] = useState('');
+  const [moodSaved, setMoodSaved] = useState(false);
+
+  const todayKey = useMemo(() => `@mood_${new Date().toISOString().slice(0, 10)}`, []);
+
+  useEffect(() => {
+    AsyncStorage.getItem(todayKey).then(raw => {
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      setMoodEmoji(saved.emoji || '');
+      setMoodNote(saved.note || '');
+      setMoodSaved(true);
+    }).catch(() => {});
+  }, [todayKey]);
+
+  const handleSaveMood = async () => {
+    if (!moodEmoji) return;
+    await AsyncStorage.setItem(todayKey, JSON.stringify({ emoji: moodEmoji, note: moodNote, timestamp: Date.now() }));
+    setMoodSaved(true);
+  };
 
   const lunarInfo = useMemo(() => getTodayFullLunarInfo(), []);
   const todayFestival = useMemo(() => getTodayFestival(), []);
@@ -348,6 +371,43 @@ export default function DailyScreen() {
           ))}
         </View>
 
+        {/* 今日心情日記 */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>今日心情日記</Text>
+          <Text style={styles.sectionSubtitle}>記錄今天的感受，與天地神明共振。</Text>
+          <View style={styles.moodRow}>
+            {['😊', '😌', '😐', '😟', '😩'].map(emoji => (
+              <TouchableOpacity
+                key={emoji}
+                style={[styles.moodBtn, moodEmoji === emoji && styles.moodBtnActive]}
+                onPress={() => { setMoodEmoji(emoji); setMoodSaved(false); }}
+              >
+                <Text style={styles.moodEmoji}>{emoji}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {moodEmoji ? (
+            <>
+              <TextInput
+                style={styles.moodInput}
+                value={moodNote}
+                onChangeText={t => { setMoodNote(t); setMoodSaved(false); }}
+                placeholder="今天有什麼想說的…（可選）"
+                placeholderTextColor={TempleTheme.textMuted}
+                multiline
+                maxLength={120}
+              />
+              <TouchableOpacity
+                style={[styles.moodSaveBtn, moodSaved && styles.moodSaveBtnDone]}
+                onPress={handleSaveMood}
+                disabled={moodSaved}
+              >
+                <Text style={styles.moodSaveBtnText}>{moodSaved ? '✓ 已記錄' : '記錄心情'}</Text>
+              </TouchableOpacity>
+            </>
+          ) : null}
+        </View>
+
         <View style={{ height: 60 }} />
       </ScrollView>
     </SafeAreaView>
@@ -601,4 +661,19 @@ const styles = StyleSheet.create({
   weekContent: { flex: 1 },
   weekPoemTitle: { color: TempleTheme.textLight, fontSize: 12, fontWeight: '700', marginBottom: 4 },
   weekPoemText: { color: TempleTheme.textMuted, fontSize: 12 },
+  // 心情日記
+  sectionTitle: { color: TempleTheme.textGold, fontWeight: 'bold', fontSize: TempleFonts.body, marginBottom: 4 },
+  sectionSubtitle: { color: TempleTheme.textMuted, fontSize: TempleFonts.small, marginBottom: 10 },
+  moodRow: { flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 12 },
+  moodBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent', backgroundColor: TempleTheme.bgMedium },
+  moodBtnActive: { borderColor: TempleTheme.goldLight, backgroundColor: TempleTheme.bgCard },
+  moodEmoji: { fontSize: 26 },
+  moodInput: {
+    backgroundColor: TempleTheme.bgMedium, borderRadius: 10, borderWidth: 1,
+    borderColor: TempleTheme.gold + '50', padding: 10, color: TempleTheme.textLight,
+    fontSize: TempleFonts.small, minHeight: 48, marginBottom: 10,
+  } as any,
+  moodSaveBtn: { backgroundColor: TempleTheme.bgMedium, borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold, paddingVertical: 8, alignItems: 'center' },
+  moodSaveBtnDone: { borderColor: TempleTheme.success, backgroundColor: TempleTheme.success + '22' },
+  moodSaveBtnText: { color: TempleTheme.textGold, fontSize: TempleFonts.small, fontWeight: 'bold' },
 });
