@@ -3,8 +3,9 @@ import { Platform } from 'react-native';
 
 import { getAllGodBirthdays } from '@/data/lunarCalendar';
 import { getDailyPoem } from './dailyPoem';
+import { getCurrentSolarTerm, getNextSolarTerm } from './solarTerms';
 
-type NotificationKind = 'daily-poem' | 'god-birthday' | 'wish-reminder';
+type NotificationKind = 'daily-poem' | 'god-birthday' | 'wish-reminder' | 'fortune-widget';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -150,6 +151,66 @@ export async function scheduleWishReminder(params: {
   } catch {
     return null;
   }
+}
+
+/**
+ * 每日運勢通知 — Widget 替代方案
+ * Expo SDK 56 不支援原生 Widget，改以每天 08:00 發送富文字通知
+ * 包含當日節氣、籤詩頭句、行事宜忌，讓鎖定螢幕/通知中心有類 Widget 體驗
+ * Widget 原生支援預計在 Expo SDK 57+ (expo-widgets) 實作
+ */
+export async function scheduleFortuneWidgetNotification(): Promise<void> {
+  if (Platform.OS === 'web') return;
+
+  const hasPermission = await requestPermissions();
+  if (!hasPermission) return;
+
+  // Cancel any existing fortune-widget notifications
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    scheduled
+      .filter((item) => item.content.data?.type === 'fortune-widget')
+      .map((item) => Notifications.cancelScheduledNotificationAsync(item.identifier))
+  );
+
+  const daily = getDailyPoem();
+  const solarTerm = getCurrentSolarTerm();
+  const next = getNextSolarTerm();
+
+  const solarLine = solarTerm
+    ? `【${solarTerm.name}】宜${solarTerm.auspicious} · 忌${solarTerm.avoid}`
+    : next
+    ? `距${next.term.name}還有 ${next.daysUntil} 天`
+    : '';
+
+  const poemLine = daily.poem.content.split('\n')[0];
+
+  const title = solarTerm
+    ? `☀️ ${solarTerm.name} · 今日神諭`
+    : `🏮 今日神明籤詩 · 第 ${daily.poem.number} 籤`;
+
+  const body = [poemLine, solarLine].filter(Boolean).join('\n');
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      data: {
+        type: 'fortune-widget',
+        poemNumber: daily.poem.number,
+        solarTermName: solarTerm?.name ?? null,
+      },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: 8,
+      minute: 0,
+    },
+  });
+}
+
+export async function cancelFortuneWidgetNotification(): Promise<void> {
+  await cancelNotificationsByType(['fortune-widget']);
 }
 
 export async function sendTestNotification(): Promise<void> {

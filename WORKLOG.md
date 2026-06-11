@@ -51,6 +51,53 @@
 
 ---
 
+## 2026-06-11 高/中/低影響力功能全面完成
+
+### 本輪主題
+根據競品分析新增搖機求籤、節氣提示、跨神比對、社群交流（高影響）→ 廟宇擴充50+、2027年運、合婚擇日UI、八字命盤頁（中影響）→ 離線快取、Widget替代、後端部署配置（低影響）
+
+### 高影響力功能（已完成）
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 搖手機求籤 | `src/hooks/useShakeDetector.ts` | Accelerometer閾值2.8G，cooldown 1200ms，web平台跳過 |
+| 節氣提示 | `src/services/solarTerms.ts` | 24節氣2026完整資料，五行/宜/忌，顯示於求籤結果頁 |
+| 跨神明比對 | `src/components/CrossTempleComparison.tsx` | 隨機3位其他神明籤詩對照，可展開 |
+| 社群交流 | `src/app/community.tsx` | Firebase Firestore + AsyncStorage fallback，按讚/貼文/時間戳 |
+
+### 中影響力功能（已完成）
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 廟宇擴充50+ | `src/data/temples.ts` | 20→50+座，新增Temple介面欄位：userRating/reviewCount/photos/website/parking |
+| 2027丁未年運 | `src/services/yearFortune.ts` | 12生肖完整年運+月運，三合亥卯未/六合午未/沖丑/刑戌/害子 |
+| 合婚擇日UI | `src/app/fate.tsx` | 合婚八字配對 + 擇日選吉，呼叫後端 `/api/bazi/match` 和 `/api/择日` |
+| 八字命盤頁 | `src/app/bazi.tsx` | 四柱表/五行分佈條/大運時間軸，呼叫 `calculateFullBazi()` |
+
+### 低影響力功能（已完成）
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| AI 離線快取 | `src/services/offlineCache.ts` | AsyncStorage快取，key=神名+籤號+問題類別，TTL 7天，最多50條 |
+| Widget 替代方案 | `src/services/notifications.ts` | 新增 `scheduleFortuneWidgetNotification()`，每天08:00推送節氣+神諭 |
+| Widget 設定開關 | `src/app/settings.tsx` | 通知區塊新增「每日運勢看板」Toggle |
+| 後端部署設定 | `backend/Dockerfile` + `backend/fly.toml` | Node 20 Alpine，部署到 Fly.io nrt(東京)區域 |
+| npm 漏洞說明 | 見下方說明 | 11個中等漏洞全在 Expo 內部包，非本專案可修 |
+
+### npm 安全性漏洞說明（技術債記錄）
+`npm audit` 回報 11 個 moderate 漏洞，追蹤來源：
+- 全部在 `@expo/config-plugins` → `@expo/config` 依賴鏈
+- `expo-splash-screen`、`expo-modules-core` 等 Expo SDK 56 內部套件
+- **不能用 `npm audit fix`**（safe mode 無修復路徑）
+- **不能用 `npm audit fix --force`**（breaking changes，會破壞 SDK 相容性）
+- **處理方式**：等 Expo SDK 57 升級時一併解決；上架前如 Apple/Google 要求，可於 AppStore Connect 說明為第三方 SDK 上游問題
+
+### 新增導航頁
+| Tab | 路由 | 功能 |
+|-----|------|------|
+| 交流 | `/community` | 社群討論版 |
+| 合婚擇日 | `/fate` | 合婚配對 + 擇日選吉 |
+| 八字 | `/bazi` | 八字命盤詳細頁 |
+
+---
+
 ## 未來代辦清單
 
 ### 🔴 高優先（上架前必須）
@@ -66,20 +113,16 @@
 
 | # | 項目 | 說明 |
 |---|------|------|
-| 5 | **廟宇資料擴充** | 目前 20 座，補到 50+ 座（含各縣市代表性廟宇） |
-| 6 | **廟宇評論/照片** | `temples.ts` 加 `photos[]` + `userRatings` 欄位 |
-| 7 | **合婚/擇日 UI 頁面** | 後端 endpoint 已建，前端還沒有專頁（目前只有 chat 可問） |
-| 8 | **流年流月 2027 資料** | `yearFortune.ts` 目前只有 2026 丙午年，明年前補 |
-| 9 | **八字完整顯示頁** | `baziAdvanced.ts` 已計算，沒有專頁呈現四柱/大運圖表 |
+| 5 | **後端正式部署** | `backend/Dockerfile` + `fly.toml` 已建好，執行 `fly launch` 部署到 Fly.io；更新前端 `EXPO_PUBLIC_AI_API_URL` |
+| 6 | **Firebase Community** | community.tsx 已實作 Firestore 路徑，填入真實 API key 後自動生效 |
 
 ### 🟢 低優先（長期優化）
 
 | # | 項目 | 說明 |
 |---|------|------|
-| 10 | **npm 漏洞修復** | `npm audit` 回報 11 個中等漏洞，需評估 `npm audit fix` 影響 |
-| 11 | **Widget 支援** | Expo SDK 56 原生 widget 支援有限，待 SDK 57+ 評估 |
-| 12 | **離線快取策略** | Firebase 資料、AI 解籤結果加入 offline-first 快取 |
-| 13 | **後端部署** | `backend/` 目前只跑本機，需部署到 Fly.io 或 Railway |
+| 7 | **npm 漏洞** | 等 Expo SDK 57 升級時一併解決，詳見上方說明 |
+| 8 | **原生 Widget** | Expo SDK 57+ expo-widgets 套件，屆時將現有 `scheduleFortuneWidgetNotification()` 資料層升接原生 Widget UI |
+| 9 | **Firebase 資料離線快取** | AI 解籤已有 offlineCache.ts，Firebase 讀寫另需 Firestore offline persistence 設定 |
 
 ---
 

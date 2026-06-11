@@ -29,9 +29,11 @@ import {
 import {
   cancelDailyNotifications,
   cancelGodBirthdayNotifications,
+  cancelFortuneWidgetNotification,
   requestPermissions,
   scheduleDailyNotification,
   scheduleGodBirthdayNotifications,
+  scheduleFortuneWidgetNotification,
 } from '@/services/notifications';
 import { getTodayLunarInfo } from '@/data/lunarCalendar';
 import { calcBazi, parseBirthYear, ZODIAC_PATRON_GOD } from '@/services/bazi';
@@ -175,6 +177,26 @@ export default function SettingsScreen() {
     await scheduleGodBirthdayNotifications();
     setSettings((prev) => ({ ...prev, birthdayNotification: true }));
     Alert.alert('提醒已開啟', '會在未來 60 天內的聖誕日前一天提醒你。');
+  };
+
+  const handleToggleFortuneWidget = async () => {
+    const nextValue = !(settings as any).fortuneWidget;
+
+    if (!nextValue) {
+      await cancelFortuneWidgetNotification();
+      setSettings((prev) => ({ ...prev, fortuneWidget: false } as any));
+      return;
+    }
+
+    const ok = await requestPermissions();
+    if (!ok) {
+      Alert.alert('無法開啟提醒', '請在系統設定中允許通知權限。');
+      return;
+    }
+
+    await scheduleFortuneWidgetNotification();
+    setSettings((prev) => ({ ...prev, fortuneWidget: true } as any));
+    Alert.alert('每日運勢通知已開啟', '每天 08:00 會推送今日節氣、神諭與宜忌，讓通知中心成為你的運勢看板。');
   };
 
   return (
@@ -411,6 +433,13 @@ export default function SettingsScreen() {
             description="在神明聖誕前一天晚間提醒你。"
             value={Boolean(settings.birthdayNotification)}
             onToggle={handleToggleBirthdayNotification}
+          />
+
+          <ToggleRow
+            label="每日運勢看板（Widget 替代）"
+            description="每天 08:00 推送節氣、神諭與宜忌，在通知中心提供類 Widget 體驗。"
+            value={Boolean((settings as any).fortuneWidget)}
+            onToggle={handleToggleFortuneWidget}
           />
         </View>
 

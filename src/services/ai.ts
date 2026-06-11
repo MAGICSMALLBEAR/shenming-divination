@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { normalizeInterpretationText } from './interpretation';
+import { getCachedInterpretation, setCachedInterpretation } from './offlineCache';
 
 const getDefaultApiUrl = () => {
   if (Platform.OS === 'android') return 'http://10.0.2.2:3001/api/interpret';
@@ -78,6 +79,10 @@ function buildFallbackInterpretation(params: AIInterpretRequest): string {
 }
 
 export async function getAIInterpretation(params: AIInterpretRequest): Promise<string> {
+  // Cache-first: return cached result immediately if available
+  const cached = await getCachedInterpretation(params.godName, params.poemNumber, params.questionCategory);
+  if (cached) return cached;
+
   const apiUrl = process.env.EXPO_PUBLIC_AI_API_URL || getDefaultApiUrl();
 
   try {
@@ -100,7 +105,12 @@ export async function getAIInterpretation(params: AIInterpretRequest): Promise<s
     const rawText =
       typeof data?.interpretation === 'string' ? data.interpretation : buildFallbackInterpretation(params);
 
-    return normalizeInterpretationText(rawText, params.question);
+    const result = normalizeInterpretationText(rawText, params.question);
+    // Only cache successful AI responses (not local fallbacks)
+    if (typeof data?.interpretation === 'string') {
+      await setCachedInterpretation(params.godName, params.poemNumber, params.questionCategory, result);
+    }
+    return result;
   } catch (error) {
     console.warn(
       'AI interpretation failed, using local fallback.',
