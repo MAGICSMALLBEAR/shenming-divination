@@ -311,7 +311,7 @@ export default function HomeScreen() {
       case 'ai-interpret':
       case 'result':
         return div.drawnPoem ? (
-          <View>
+          <View style={{ flex: 1 }}>
             {/* 節氣提示 */}
             <View style={styles.solarTermBadge}>
               <Text style={styles.solarTermText}>

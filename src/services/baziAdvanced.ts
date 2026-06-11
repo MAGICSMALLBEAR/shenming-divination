@@ -163,12 +163,12 @@ function getMonthPillar(year: number, month: number): Pillar {
   };
 }
 
-// 日柱計算（以 2026-01-01 = 甲戌 為基準）
+// 日柱計算（以 2026-01-01 = 乙未 為基準，index=31，依 1900-01-31=甲子 JDN 推算）
 function getDayPillar(year: number, month: number, day: number): Pillar {
   const base = new Date(2026, 0, 1);
   const target = new Date(year, month - 1, day);
   const diff = Math.round((target.getTime() - base.getTime()) / 86400000);
-  const BASE_INDEX = 10; // 甲戌=10
+  const BASE_INDEX = 31; // 乙未=31
   const gzIndex = ((BASE_INDEX + diff) % 60 + 60) % 60;
   const gz = GAN_ZHI_60[gzIndex];
   return {
