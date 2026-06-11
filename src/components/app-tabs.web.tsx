@@ -14,21 +14,12 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useI18n } from '@/hooks/useI18n';
 
 const tabs = [
-  { name: 'index', href: '/' as const, labelKey: 'drawLots' },
-  { name: 'daily', href: '/daily' as any, labelKey: 'today' },
-  { name: 'temple', href: '/temple' as any, labelKey: 'temple' },
-  { name: 'map', href: '/map' as any, label: '廟宇' },
-  { name: 'oracle', href: '/oracle' as any, label: '多元占卜' },
-  { name: 'consult', href: '/consult' as any, label: '諮詢' },
-  { name: 'community', href: '/community' as any, label: '交流' },
-  { name: 'fate', href: '/fate' as any, label: '合婚擇日' },
-  { name: 'bazi', href: '/bazi' as any, label: '八字' },
-  { name: 'ziwei', href: '/ziwei' as any, label: '紫微斗數' },
-  { name: 'collection', href: '/collection' as const, labelKey: 'collection' },
-  { name: 'wishes', href: '/wishes' as const, labelKey: 'wishes' },
-  { name: 'chat', href: '/chat' as const, labelKey: 'chat' },
-  { name: 'stats', href: '/stats' as const, labelKey: 'stats' },
-  { name: 'settings', href: '/settings' as const, labelKey: 'settings' },
+  { name: 'index', href: '/' as const, labelKey: 'drawLots', icon: '🏛️' },
+  { name: 'daily', href: '/daily' as any, labelKey: 'today', icon: '📅' },
+  { name: 'temple', href: '/temple' as any, labelKey: 'temple', icon: '🪔' },
+  { name: 'collection', href: '/collection' as const, labelKey: 'collection', icon: '💾' },
+  { name: 'more', href: '/more' as any, label: '更多', icon: '🔮' },
+  { name: 'settings', href: '/settings' as const, labelKey: 'settings', icon: '⚙️' },
 ];
 
 export default function AppTabs() {
@@ -40,7 +31,9 @@ export default function AppTabs() {
           <CustomTabList t={t}>
             {tabs.map((tab) => (
               <TabTrigger key={tab.name} name={tab.name} href={tab.href} asChild>
-                <TabButton>{'label' in tab ? tab.label : t(tab.labelKey!)}</TabButton>
+                <TabButton>
+                  <ThemedText type="small">{'label' in tab ? tab.label : t(tab.labelKey!)}</ThemedText>
+                </TabButton>
               </TabTrigger>
             ))}
           </CustomTabList>
@@ -56,7 +49,7 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
     <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
         type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
-        style={styles.tabButtonView}
+        style={[styles.tabButtonView, isFocused && styles.tabButtonActive]}
       >
         <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
           {children}
@@ -74,18 +67,18 @@ export function CustomTabList(props: TabListProps & { t: (key: string) => string
   return (
     <View {...restProps} style={[styles.tabListContainer, isMobile && { padding: Spacing.two }]}>
       <ThemedView type="backgroundElement" style={[styles.innerContainer, isMobile && { paddingHorizontal: Spacing.three }]}>
-        {!isMobile && (
-          <ThemedText type="smallBold" style={styles.brandText}>
-            {t('appName')}
-          </ThemedText>
-        )}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.scrollContent, isMobile && { gap: 8 }]}
+          contentContainerStyle={[styles.scrollContent, isMobile && { gap: 6 }]}
         >
+          {!isMobile && (
+            <ThemedText type="smallBold" style={styles.brandText}>
+              {t('appName')}
+            </ThemedText>
+          )}
           {isMobile && (
-            <ThemedText type="smallBold" style={[styles.brandTextMobile]}>
+            <ThemedText type="smallBold" style={styles.brandTextMobile}>
               🏛️
             </ThemedText>
           )}
@@ -110,7 +103,7 @@ const styles = StyleSheet.create({
   },
   innerContainer: {
     paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.five,
+    paddingHorizontal: Spacing.four,
     borderRadius: Spacing.five,
     flexDirection: 'row',
     alignItems: 'center',
@@ -121,9 +114,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
+    justifyContent: 'center',
   },
+  pressed: { opacity: 0.7 },
+  tabButtonView: { paddingVertical: Spacing.one, paddingHorizontal: 10, borderRadius: Spacing.three },
+  tabButtonActive: { borderWidth: 1, borderColor: '#C9A96E44' },
   brandText: { marginRight: 'auto', paddingRight: 16 },
   brandTextMobile: { marginRight: 8 },
-  pressed: { opacity: 0.7 },
-  tabButtonView: { paddingVertical: Spacing.one, paddingHorizontal: 8, borderRadius: Spacing.three },
 });

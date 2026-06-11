@@ -559,7 +559,7 @@ function RitualBookingSection() {
 }
 
 const rb = StyleSheet.create({
-  container: { marginHorizontal: TempleSpacing.xs, marginBottom: TempleSpacing.md, backgroundColor: TempleTheme.bgCard, borderRadius: 14, borderWidth: 1, borderColor: TempleTheme.redLight + '40', padding: TempleSpacing.md },
+  container: { marginHorizontal: TempleSpacing.xs, marginBottom: TempleSpacing.md, backgroundColor: TempleTheme.bgCard, borderRadius: 16, borderWidth: 1, borderColor: TempleTheme.redLight + '40', padding: TempleSpacing.md },
   title: { fontSize: TempleFonts.heading, fontWeight: 'bold', color: TempleTheme.redLight, marginBottom: 4 },
   subtitle: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginBottom: TempleSpacing.md },
   serviceList: { gap: 8 },

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -89,6 +89,14 @@ export default function MapScreen() {
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewAuthor, setReviewAuthor] = useState('訪客');
+  const [toastMsg, setToastMsg] = useState('');
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = useCallback((msg: string) => {
+    setToastMsg(msg);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastMsg(''), 2500);
+  }, []);
 
   useEffect(() => {
     loadCheckIns().then(setCheckIns);
@@ -121,6 +129,7 @@ export default function MapScreen() {
     const updated = await saveReview(review);
     setReviews(updated);
     setReviewText('');
+    showToast('✅ 評論已發佈');
   };
 
   const handleCheckIn = async (temple: Temple) => {
@@ -360,6 +369,11 @@ export default function MapScreen() {
 
         <View style={{ height: 60 }} />
       </ScrollView>
+      {toastMsg ? (
+        <View style={styles.toast}>
+          <Text style={styles.toastText}>{toastMsg}</Text>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -448,7 +462,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: TempleTheme.bgCard,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: TempleTheme.goldDark + '24',
     padding: TempleSpacing.md,
@@ -594,4 +608,10 @@ const styles = StyleSheet.create({
     color: TempleTheme.textMuted,
     fontSize: TempleFonts.body,
   },
+  toast: {
+    position: 'absolute', bottom: 100, alignSelf: 'center',
+    backgroundColor: TempleTheme.goldDark, paddingHorizontal: 20, paddingVertical: 8,
+    borderRadius: 20, elevation: 6,
+  },
+  toastText: { color: '#FFF', fontSize: TempleFonts.small, fontWeight: '600' },
 });

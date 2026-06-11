@@ -122,7 +122,7 @@ export default function OnboardingScreen() {
       preferredGodId: selectedGodId ?? patronGodId ?? settings.preferredGodId,
     });
     await AsyncStorage.setItem(ONBOARDING_DONE_KEY, '1');
-    router.replace('/');
+    router.replace('/' as never);
   };
 
   const step = STEPS[currentStep];

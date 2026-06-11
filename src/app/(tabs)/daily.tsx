@@ -31,6 +31,12 @@ export default function DailyScreen() {
   const [showShiChen, setShowShiChen] = useState(false);
   const [showYearDetail, setShowYearDetail] = useState(false);
   const [activeMonthTab, setActiveMonthTab] = useState(new Date().getMonth() + 1);
+  const [foldedSections, setFoldedSections] = useState<Record<string, boolean>>({
+    lunar: false,
+    festival: true,
+    weekly: false,
+    mood: true,
+  });
   const [moodEmoji, setMoodEmoji] = useState('');
   const [moodNote, setMoodNote] = useState('');
   const [moodSaved, setMoodSaved] = useState(false);
@@ -98,7 +104,15 @@ export default function DailyScreen() {
         {/* 今日農民曆 */}
         {lunarInfo && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>📅 今日農民曆</Text>
+            <TouchableOpacity
+              style={styles.sectionHeader}
+              onPress={() => setFoldedSections(s => ({ ...s, lunar: !s.lunar }))}
+              activeOpacity={0.6}
+            >
+              <Text style={styles.cardTitle}>📅 今日農民曆</Text>
+              <Text style={styles.foldIcon}>{foldedSections.lunar ? '▼' : '▲'}</Text>
+            </TouchableOpacity>
+            {!foldedSections.lunar && (<>
             <View style={styles.lunarRow}>
               <View style={styles.lunarItem}>
                 <Text style={styles.lunarLabel}>農曆</Text>
@@ -180,6 +194,8 @@ export default function DailyScreen() {
                 ))}
               </View>
             )}
+            </>
+          )}
           </View>
         )}
 
@@ -354,7 +370,15 @@ export default function DailyScreen() {
 
         {/* 本週籤詩節奏 */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>本週籤詩節奏</Text>
+          <TouchableOpacity
+            style={styles.sectionHeader}
+            onPress={() => setFoldedSections(s => ({ ...s, weekly: !s.weekly }))}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.cardTitle}>本週籤詩節奏</Text>
+            <Text style={styles.foldIcon}>{foldedSections.weekly ? '▼' : '▲'}</Text>
+          </TouchableOpacity>
+          {!foldedSections.weekly && (<>
           {weeklyPoems.map((item) => (
             <View key={item.date} style={styles.weekRow}>
               <View style={styles.weekMeta}>
@@ -369,11 +393,21 @@ export default function DailyScreen() {
               </View>
             </View>
           ))}
+          </>
+          )}
         </View>
 
         {/* 今日心情日記 */}
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>今日心情日記</Text>
+          <TouchableOpacity
+            style={styles.sectionHeader}
+            onPress={() => setFoldedSections(s => ({ ...s, mood: !s.mood }))}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.sectionTitle}>今日心情日記</Text>
+            <Text style={styles.foldIcon}>{foldedSections.mood ? '▼' : '▲'}</Text>
+          </TouchableOpacity>
+          {!foldedSections.mood && (<>
           <Text style={styles.sectionSubtitle}>記錄今天的感受，與天地神明共振。</Text>
           <View style={styles.moodRow}>
             {['😊', '😌', '😐', '😟', '😩'].map(emoji => (
@@ -406,6 +440,8 @@ export default function DailyScreen() {
               </TouchableOpacity>
             </>
           ) : null}
+          </>
+          )}
         </View>
 
         <View style={{ height: 60 }} />
@@ -427,7 +463,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: TempleTheme.bgCard,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: TempleTheme.goldDark + '24',
     padding: TempleSpacing.md,
@@ -440,7 +476,16 @@ const styles = StyleSheet.create({
     color: TempleTheme.goldLight,
     fontWeight: '800',
     fontSize: TempleFonts.body,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 10,
+  },
+  foldIcon: {
+    color: TempleTheme.textMuted,
+    fontSize: TempleFonts.small,
   },
   bigValue: {
     fontSize: 24,

@@ -5,6 +5,7 @@ import {
   TouchableOpacity, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { DecorativeBg } from '@/components/DecorativeBg';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 
 // ─── 紫微斗數命宮計算 ─────────────────────────────────────────
@@ -124,7 +125,7 @@ function PalaceCard({ title, star, summary, advice, color }: {
 }
 
 const pc = StyleSheet.create({
-  card: { backgroundColor: TempleTheme.bgCard, borderRadius: 14, borderWidth: 1.5, marginBottom: TempleSpacing.md, overflow: 'hidden' },
+  card: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, borderWidth: 1.5, marginBottom: TempleSpacing.md, overflow: 'hidden' },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: TempleSpacing.sm },
   title: { fontSize: TempleFonts.heading, fontWeight: 'bold' },
   star: { fontSize: TempleFonts.body, fontWeight: '600' },
@@ -137,19 +138,26 @@ const pc = StyleSheet.create({
 export default function ZiweiScreen() {
   const [birthYear, setBirthYear] = useState('');
   const [result, setResult] = useState<ZiweiResult | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleCalc = () => {
     const y = parseInt(birthYear);
     if (!y || y < 1900 || y > 2100) { setError('請輸入 1900～2100 之間的年份'); return; }
-    const r = calcZiwei(y);
-    if (!r) { setError('計算失敗，請重試'); return; }
+    setLoading(true);
     setError('');
-    setResult(r);
+    // Simulate brief calculation delay for UX
+    setTimeout(() => {
+      const r = calcZiwei(y);
+      if (!r) { setError('計算失敗，請重試'); setLoading(false); return; }
+      setResult(r);
+      setLoading(false);
+    }, 400);
   };
 
   return (
     <SafeAreaView style={s.safe}>
+      <DecorativeBg pattern="diamond" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={s.scroll}>
           <Text style={s.title}>紫微斗數</Text>
@@ -173,6 +181,13 @@ export default function ZiweiScreen() {
             </View>
             {error ? <Text style={s.error}>{error}</Text> : null}
           </View>
+
+          {loading ? (
+            <View style={s.loadingCard}>
+              <Text style={s.loadingIcon}>⭐</Text>
+              <Text style={s.loadingText}>命盤推算中…</Text>
+            </View>
+          ) : null}
 
           {result && (
             <>
@@ -225,14 +240,17 @@ const s = StyleSheet.create({
   scroll: { padding: TempleSpacing.md, paddingBottom: TempleSpacing.xxl },
   title: { fontSize: TempleFonts.subtitle, fontWeight: 'bold', color: TempleTheme.textGold, textAlign: 'center', marginBottom: 4 },
   subtitle: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, textAlign: 'center', marginBottom: TempleSpacing.lg, lineHeight: 18 },
-  inputCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 14, borderWidth: 1, borderColor: TempleTheme.gold + '40', padding: TempleSpacing.md, marginBottom: TempleSpacing.md },
+  inputCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, borderWidth: 1, borderColor: TempleTheme.gold + '40', padding: TempleSpacing.md, marginBottom: TempleSpacing.md },
   inputLabel: { color: TempleTheme.textGold, fontSize: TempleFonts.body, marginBottom: TempleSpacing.sm },
   inputRow: { flexDirection: 'row', gap: 10 },
   input: { flex: 1, backgroundColor: TempleTheme.bgMedium, borderRadius: 10, borderWidth: 1, borderColor: TempleTheme.gold, padding: 12, color: TempleTheme.textLight, fontSize: TempleFonts.heading, textAlign: 'center' } as any,
   calcBtn: { backgroundColor: TempleTheme.gold, borderRadius: 10, paddingHorizontal: TempleSpacing.lg, justifyContent: 'center', alignItems: 'center' },
   calcBtnText: { color: TempleTheme.bgDark, fontWeight: 'bold', fontSize: TempleFonts.body },
   error: { color: TempleTheme.danger, fontSize: TempleFonts.small, marginTop: 6 },
-  summaryCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 14, borderWidth: 1, borderColor: TempleTheme.goldDark + '60', padding: TempleSpacing.md, marginBottom: TempleSpacing.md, alignItems: 'center' },
+  loadingCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, borderWidth: 1, borderColor: TempleTheme.gold + '40', padding: TempleSpacing.xl, marginBottom: TempleSpacing.md, alignItems: 'center' },
+  loadingIcon: { fontSize: 32, marginBottom: 8 },
+  loadingText: { color: TempleTheme.textGold, fontSize: TempleFonts.body },
+  summaryCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, borderWidth: 1, borderColor: TempleTheme.goldDark + '60', padding: TempleSpacing.md, marginBottom: TempleSpacing.md, alignItems: 'center' },
   ganZhi: { fontSize: TempleFonts.title, fontWeight: 'bold', color: TempleTheme.goldLight, marginBottom: 6 },
   summaryText: { fontSize: TempleFonts.body, color: TempleTheme.textLight, marginBottom: 4 },
   highlight: { color: TempleTheme.goldLight, fontWeight: 'bold' },

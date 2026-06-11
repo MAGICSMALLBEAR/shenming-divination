@@ -53,3 +53,5 @@ backend/node_modules/
 docs/qa/
 qa-*.png
 dist-verify/
+
+.vercel

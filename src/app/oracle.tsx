@@ -7,8 +7,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
-import { HEXAGRAMS, drawHexagram, getLuckColor, getLuckLabel, type Hexagram } from '@/data/iching';
+import { drawHexagram, getLuckColor, getLuckLabel, type Hexagram } from '@/data/iching';
 import { TAROT_MAJOR, drawTarot, type TarotCard } from '@/data/tarot';
+import { DecorativeBg } from '@/components/DecorativeBg';
 
 type Tab = 'iching' | 'tarot' | 'pendulum';
 
@@ -256,6 +257,7 @@ export default function OracleScreen() {
 
   return (
     <SafeAreaView style={s.safe}>
+      <DecorativeBg pattern="diamond" />
       <View style={s.header}>
         <Text style={s.title}>多元占卜</Text>
         <View style={s.tabRow}>
