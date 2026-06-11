@@ -20,6 +20,8 @@ const tabs = [
   { name: 'map', href: '/map' as any, label: '廟宇' },
   { name: 'consult', href: '/consult' as any, label: '諮詢' },
   { name: 'community', href: '/community' as any, label: '交流' },
+  { name: 'fate', href: '/fate' as any, label: '合婚擇日' },
+  { name: 'bazi', href: '/bazi' as any, label: '八字' },
   { name: 'collection', href: '/collection' as const, labelKey: 'collection' },
   { name: 'wishes', href: '/wishes' as const, labelKey: 'wishes' },
   { name: 'chat', href: '/chat' as const, labelKey: 'chat' },

@@ -303,3 +303,256 @@ export function getMonthFortune(bazi: BaziInfo, month: number): MonthFortune {
 export function getFullYearMonthFortunes(bazi: BaziInfo): MonthFortune[] {
   return Array.from({ length: 12 }, (_, i) => getMonthFortune(bazi, i + 1));
 }
+
+// ═══════════════════════════════════════════════════
+// 2027 丁未年（陰火・土羊年）各生肖年運
+// 三合：亥卯未（木局）→ 豬兔羊大吉
+// 六合：午未合 → 馬吉
+// 沖：丑未相沖 → 牛最需注意
+// 刑：戌未相刑 → 狗注意
+// 害：子未相害 → 鼠注意
+// ═══════════════════════════════════════════════════
+const YEAR_FORTUNE_2027: Record<string, Omit<YearFortune, 'year' | 'yearGanZhi' | 'yearZodiac' | 'yearWuxing'>> = {
+  鼠: {
+    overallScore: 2,
+    overview: '丁未年子未相害，鼠年生人運勢偏弱，需謹慎行事，防小人暗算，凡事多思考。',
+    career:  { score: 2, summary: '工作上容易遭遇阻礙，小人較多，守成為主，不宜大動作。' },
+    wealth:  { score: 2, summary: '財務需保守，有破財機率，避免投資高風險項目。' },
+    love:    { score: 3, summary: '感情需多溝通，避免誤解，已婚者注意家庭關係維繫。' },
+    health:  { score: 3, summary: '腎臟泌尿系統需注意，多喝水，規律作息。' },
+    family:  { score: 3, summary: '家庭關係尚穩，多陪伴家人可化解小人之氣。' },
+    luckyMonths: [3, 7, 11],
+    cautiousMonths: [2, 8],
+    luckyColors: ['藍色', '黑色', '白色'],
+    luckyNumbers: [1, 6, 8],
+    advice: '今年宜低調行事，廣結善緣，避免衝突，靜待運勢回升。',
+    blessing: '鼠年生人在丁未年，守正避害，默默積蓄實力，靜待2028年大運轉好。',
+  },
+  牛: {
+    overallScore: 2,
+    overview: '丁未年丑未相沖，為沖太歲之年，牛年生人事業感情財運均受衝擊，需積極化解。',
+    career:  { score: 2, summary: '工作動盪，有換工作或職位調動風險，提前做好準備。' },
+    wealth:  { score: 2, summary: '財運不穩，支出增加，投資保守，存款為主。' },
+    love:    { score: 2, summary: '感情波折多，有分手或爭吵風險，需多包容溝通。' },
+    health:  { score: 2, summary: '腸胃消化系統需注意，手術、意外需格外小心。' },
+    family:  { score: 3, summary: '家庭需要多花時間維繫，長輩健康需關注。' },
+    luckyMonths: [4, 8, 12],
+    cautiousMonths: [3, 6, 9],
+    luckyColors: ['黃色', '棕色', '紅色'],
+    luckyNumbers: [2, 5, 9],
+    advice: '今年建議在農曆年初安太歲、拜太歲，做好防護，謹慎行事。',
+    blessing: '丑未相沖雖艱難，但逢化解貴人自來，沉著應對，終能轉危為安。',
+  },
+  虎: {
+    overallScore: 3,
+    overview: '丁未年對虎年生人運勢中平，寅亥相合有貴人助，但需注意健康與人際。',
+    career:  { score: 3, summary: '有貴人提攜，但需主動把握，按部就班推進工作。' },
+    wealth:  { score: 3, summary: '財運平穩，勤勞有收穫，投機類投資需謹慎。' },
+    love:    { score: 4, summary: '桃花有機會，積極主動可有收穫，情侶感情穩定。' },
+    health:  { score: 3, summary: '注意肝膽，春季多保養，避免過度疲勞。' },
+    family:  { score: 3, summary: '家庭和諧，親子關係良好。' },
+    luckyMonths: [2, 5, 11],
+    cautiousMonths: [4, 7],
+    luckyColors: ['綠色', '藍色', '金色'],
+    luckyNumbers: [3, 6, 9],
+    advice: '善用人際關係，貴人就在身旁，主動請教前輩，事半功倍。',
+    blessing: '虎年生人在丁未年，寅亥合貴，穩步向前，人際是最大助力。',
+  },
+  兔: {
+    overallScore: 5,
+    overview: '丁未年亥卯未三合木局，兔年生人大吉之年！事業財運感情全面旺盛，是近幾年最好的一年。',
+    career:  { score: 5, summary: '事業飛速，升遷機會大，有創業念頭可積極評估，貴人不斷。' },
+    wealth:  { score: 5, summary: '財運極旺，正財偏財均有進帳，是投資理財的好時機。' },
+    love:    { score: 5, summary: '感情甜蜜，單身者有極大機率遇到真命天子/天女，情侶可考慮婚事。' },
+    health:  { score: 4, summary: '身體狀況佳，但勿過度操勞，適度休息維持巔峰狀態。' },
+    family:  { score: 5, summary: '家庭喜事連連，有求子願望者今年機率大增。' },
+    luckyMonths: [3, 6, 10, 12],
+    cautiousMonths: [1],
+    luckyColors: ['綠色', '青色', '金色'],
+    luckyNumbers: [4, 8, 9],
+    advice: '今年是難得的大運之年，大膽行動，主動出擊，把握每一個機會！',
+    blessing: '兔年生人在丁未年，三合大吉，諸事皆宜，萬事如意，好運連連！',
+  },
+  龍: {
+    overallScore: 3,
+    overview: '丁未年辰未相破，龍年生人有小破損之象，凡事需謹慎收尾，避免功虧一簣。',
+    career:  { score: 3, summary: '工作中容易有疏失，需仔細確認細節，避免因小失大。' },
+    wealth:  { score: 3, summary: '財運普通，有小破財，避免衝動消費，穩健理財。' },
+    love:    { score: 3, summary: '感情需耐心經營，避免一時衝動造成誤解。' },
+    health:  { score: 3, summary: '注意腸胃與消化，飲食清淡，少吃刺激性食物。' },
+    family:  { score: 4, summary: '家庭關係是今年的精神依靠，多陪伴家人。' },
+    luckyMonths: [1, 5, 9],
+    cautiousMonths: [3, 7],
+    luckyColors: ['黃色', '金色', '橙色'],
+    luckyNumbers: [2, 5, 7],
+    advice: '今年凡事謹慎收尾，不要半途而廢，堅持到底必有成果。',
+    blessing: '龍年生人在丁未年，守正勿急，細心謹慎，終能化解小破而得完整。',
+  },
+  蛇: {
+    overallScore: 3,
+    overview: '丁未年蛇年生人屬平穩之年，巳丁同類火相助，事業有小幸運，整體運勢中規中矩。',
+    career:  { score: 3, summary: '工作平穩進行，有機會展現才能，但不會有劇烈變化。' },
+    wealth:  { score: 3, summary: '財運一般，正財穩定，偏財機會有限，守成為主。' },
+    love:    { score: 3, summary: '感情平穩，需要主動製造浪漫，避免平淡乏味。' },
+    health:  { score: 4, summary: '健康狀況不錯，但心臟血壓需留意，適度運動。' },
+    family:  { score: 3, summary: '家庭和睦，是穩定的一年。' },
+    luckyMonths: [2, 6, 10],
+    cautiousMonths: [5, 9],
+    luckyColors: ['紅色', '橙色', '金色'],
+    luckyNumbers: [1, 6, 9],
+    advice: '今年適合學習新技能、進修，為未來打基礎，穩健前行。',
+    blessing: '蛇年生人在丁未年，火旺輔助，穩中求進，積累實力，明年更旺。',
+  },
+  馬: {
+    overallScore: 4,
+    overview: '丁未年午未六合，馬年生人有貴人合作，事業感情均有進展，是中上之年。',
+    career:  { score: 4, summary: '有合作機會，善用人脈，合夥事業有好成績。' },
+    wealth:  { score: 4, summary: '財運佳，透過合作或人際關係帶來財富，偏財不錯。' },
+    love:    { score: 4, summary: '感情有進展，六合之年適合論及婚嫁，情侶關係升溫。' },
+    health:  { score: 3, summary: '心臟循環需注意，避免過度操勞，保持運動習慣。' },
+    family:  { score: 4, summary: '家庭喜氣洋洋，有喜事降臨的可能。' },
+    luckyMonths: [1, 5, 9, 11],
+    cautiousMonths: [2, 8],
+    luckyColors: ['紅色', '紫色', '金色'],
+    luckyNumbers: [3, 7, 9],
+    advice: '今年善用六合之力，主動合作，廣結善緣，好運隨之而來。',
+    blessing: '馬年生人在丁未年，午未相合，貴人在側，合作共贏，事業情感雙豐收。',
+  },
+  羊: {
+    overallScore: 3,
+    overview: '丁未年為羊年本命年，犯太歲之年。本命年運勢起伏較大，需戴紅、安太歲化解。',
+    career:  { score: 3, summary: '工作有變動，可能有轉換跑道機會，需謹慎評估。' },
+    wealth:  { score: 2, summary: '財運不穩，有意外支出，避免大額投資，量力而為。' },
+    love:    { score: 3, summary: '感情需要更多溝通，避免因本命年浮躁影響關係。' },
+    health:  { score: 3, summary: '本命年需注意意外傷害，出門多加小心，定期健檢。' },
+    family:  { score: 3, summary: '家人是本命年最大的支持，多依靠家庭力量。' },
+    luckyMonths: [4, 8, 12],
+    cautiousMonths: [1, 7, 10],
+    luckyColors: ['紅色', '粉色', '金色'],
+    luckyNumbers: [2, 4, 8],
+    advice: '本命年必須安太歲、戴紅、拜太歲，以神明庇護化解沖犯。',
+    blessing: '羊年生人本命年雖有波折，但神明眷顧，積善行德，終能平安度過。',
+  },
+  猴: {
+    overallScore: 3,
+    overview: '丁未年申未相鄰，猴年生人運勢中平，整體穩定但缺乏驚喜，按部就班有收穫。',
+    career:  { score: 3, summary: '工作按部就班，無大突破但也無大問題，積累經驗為主。' },
+    wealth:  { score: 3, summary: '財運一般，勤勞有所得，投機類不宜涉足。' },
+    love:    { score: 3, summary: '感情平穩，單身者可主動交際擴大圈子。' },
+    health:  { score: 4, summary: '健康狀況良好，是提升體能的好時機。' },
+    family:  { score: 3, summary: '家庭和諧，無大波折。' },
+    luckyMonths: [2, 6, 10],
+    cautiousMonths: [4, 8],
+    luckyColors: ['白色', '金色', '銀色'],
+    luckyNumbers: [4, 7, 8],
+    advice: '今年適合充實自己，學習投資、技能提升，為未來儲備能量。',
+    blessing: '猴年生人在丁未年，沉穩積累，待時機成熟，一飛沖天。',
+  },
+  雞: {
+    overallScore: 3,
+    overview: '丁未年酉未相合，有合作機會，雞年生人事業有貴人緣，整體運勢中上。',
+    career:  { score: 4, summary: '貴人緣佳，合作共事機會多，主動把握能有好成績。' },
+    wealth:  { score: 3, summary: '合作財運佳，獨自投資一般，適合找信任的夥伴共同理財。' },
+    love:    { score: 3, summary: '感情有機會，但需要主動付出，緣分需要努力維繫。' },
+    health:  { score: 3, summary: '注意呼吸道保養，避免過勞，作息規律。' },
+    family:  { score: 4, summary: '家庭關係融洽，兄弟姊妹關係好。' },
+    luckyMonths: [3, 6, 11],
+    cautiousMonths: [2, 9],
+    luckyColors: ['白色', '金色', '黃色'],
+    luckyNumbers: [5, 6, 8],
+    advice: '今年善用人脈，合作是財富和機遇的來源，獨行不如眾行。',
+    blessing: '雞年生人在丁未年，酉未相合，貴人助陣，事業財運均有良機。',
+  },
+  狗: {
+    overallScore: 2,
+    overview: '丁未年戌未相刑，狗年生人需特別小心，工作感情均有壓力，宜拜神化解。',
+    career:  { score: 2, summary: '工作壓力大，上下關係緊張，謹言慎行，避免衝突。' },
+    wealth:  { score: 2, summary: '財運受阻，有漏財之象，保守理財，避免借貸。' },
+    love:    { score: 2, summary: '感情易生口角，需大量溝通包容，避免小事變大事。' },
+    health:  { score: 3, summary: '脾胃需調養，情緒管理很重要，避免鬱悶。' },
+    family:  { score: 3, summary: '家人是支持力量，多花時間陪伴家人。' },
+    luckyMonths: [2, 5, 10],
+    cautiousMonths: [3, 6, 9],
+    luckyColors: ['黃色', '棕色', '橙色'],
+    luckyNumbers: [3, 5, 8],
+    advice: '今年宜多拜太歲，保持低調，謹言慎行，逢凶化吉。',
+    blessing: '狗年生人在丁未年，戌未相刑雖有壓力，但神明庇護，積善必能化解。',
+  },
+  豬: {
+    overallScore: 5,
+    overview: '丁未年亥卯未三合木局，豬年生人大旺之年！與兔年同為最吉，全面開花，諸事皆宜。',
+    career:  { score: 5, summary: '事業旺盛，貴人湧現，是創業或升遷的絕佳時機，勇敢出發！' },
+    wealth:  { score: 5, summary: '財運大旺，偏財正財齊至，投資理財均有豐厚回報。' },
+    love:    { score: 5, summary: '感情豐收，單身者桃花朵朵開，情侶戀情更進一步，已婚者感情甜蜜。' },
+    health:  { score: 4, summary: '身體狀況極佳，精力充沛，但注意別因忙碌忽視休息。' },
+    family:  { score: 5, summary: '家庭喜事連連，有求嗣、添丁之望者今年最佳。' },
+    luckyMonths: [2, 5, 8, 11],
+    cautiousMonths: [4],
+    luckyColors: ['綠色', '青色', '紫色'],
+    luckyNumbers: [4, 8, 12],
+    advice: '今年是人生難得的大吉之年，把握每一個機會，全速前進，好運連連！',
+    blessing: '豬年生人在丁未年，三合大局，好運滔滔，諸事皆宜，大展鴻圖！',
+  },
+};
+
+const MONTH_GANZHI_2027 = [
+  '丁丑', '戊寅', '己卯', '庚辰', '辛巳', '壬午',
+  '癸未', '甲申', '乙酉', '丙戌', '丁亥', '戊子',
+];
+
+function getMonthAdjustment2027(zodiac: string, monthIndex: number): number {
+  const clashMap: Record<string, number[]> = {
+    鼠: [1, 7],   牛: [0, 6],   虎: [3, 9],   兔: [2, 8],
+    龍: [5, 11],  蛇: [4, 10],  馬: [1, 7],   羊: [0, 6],
+    猴: [3, 9],   雞: [2, 8],   狗: [5, 11],  豬: [4, 10],
+  };
+  const clashes = clashMap[zodiac] ?? [];
+  if (clashes.includes(monthIndex)) return -1;
+  if (monthIndex === 6) return 1; // 癸未月，木旺助吉
+  return 0;
+}
+
+export function getYearFortune2027(bazi: BaziInfo): YearFortune {
+  const base = YEAR_FORTUNE_2027[bazi.zodiac] ?? YEAR_FORTUNE_2027['羊'];
+  return { year: 2027, yearGanZhi: '丁未', yearZodiac: '羊', yearWuxing: '土', ...base };
+}
+
+export function getMonthFortune2027(bazi: BaziInfo, month: number): MonthFortune {
+  const monthIndex = month - 1;
+  const adj = getMonthAdjustment2027(bazi.zodiac, monthIndex);
+  const yearData = YEAR_FORTUNE_2027[bazi.zodiac];
+  const base = Math.max(1, Math.min(5, (yearData?.overallScore ?? 3) + adj));
+  const isLucky = yearData?.luckyMonths.includes(month) ?? false;
+  const isCautious = yearData?.cautiousMonths.includes(month) ?? false;
+  const label = isLucky ? '吉' : isCautious ? '凶' : '平';
+  const overviews: Record<string, string> = {
+    吉: '本月是今年的吉月，運勢佳，可以積極推進重要事項，把握良機。',
+    凶: '本月需要謹慎行事，避免衝動決策，守成為主，靜待時機。',
+    平: '本月運勢平穩，按部就班做事，不宜冒進，也不必過於保守。',
+  };
+  const auspiciousDays = [2, 8, 14, 20, 26].map(d => d + (monthIndex % 4)).filter(d => d <= 28);
+  return {
+    year: 2027, month,
+    monthGanZhi: MONTH_GANZHI_2027[monthIndex] ?? '',
+    overallScore: base,
+    overview: overviews[label],
+    career:  { score: Math.max(1, base + (isLucky ? 1 : 0)), tip: isLucky ? '本月事業有貴人，適合主動出擊。' : '本月宜穩守，聚焦核心工作。' },
+    wealth:  { score: Math.max(1, base + (isLucky ? 1 : -1)), tip: isLucky ? '本月財運旺，可適度投資。' : '本月財務謹慎，保守理財。' },
+    love:    { score: Math.max(1, base), tip: isLucky ? '感情有進展，主動表達心意。' : '感情需要耐心，避免爭執。' },
+    health:  { score: Math.max(1, base + (isCautious ? -1 : 0)), tip: isCautious ? '本月身體較弱，注意休養。' : '保持規律作息，運動有益。' },
+    auspiciousDays,
+    advice: isLucky ? `${month}月是你的吉月，主動出擊，把握機會！`
+      : isCautious ? `${month}月需謹慎，凡事三思，多拜拜求平安。`
+      : `${month}月平穩運行，腳踏實地，穩健前進。`,
+  };
+}
+
+export function getFullYearMonthFortunes2027(bazi: BaziInfo): MonthFortune[] {
+  return Array.from({ length: 12 }, (_, i) => getMonthFortune2027(bazi, i + 1));
+}
+
+// 統一入口：依年份取得年運
+export function getYearFortuneByYear(bazi: BaziInfo, year: number): YearFortune {
+  if (year === 2027) return getYearFortune2027(bazi);
+  return getYearFortune(bazi); // 預設 2026
+}

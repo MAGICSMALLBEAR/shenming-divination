@@ -79,6 +79,22 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="fate">
+        <NativeTabs.Trigger.Label>合婚擇日</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="bazi">
+        <NativeTabs.Trigger.Label>八字</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="chat">
         <NativeTabs.Trigger.Label>{t('chat')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
