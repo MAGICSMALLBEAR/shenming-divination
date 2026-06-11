@@ -29,6 +29,10 @@ import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritua
 import { gods, type God } from '@/data/gods';
 import { getGodCardImage } from '@/data/godImages';
 import { recommendGods, type GodRecommendation } from '@/services/recommendation';
+import { useShakeDetector } from '@/hooks/useShakeDetector';
+import { CrossTempleComparison } from '@/components/CrossTempleComparison';
+import { getCurrentSolarTerm } from '@/services/solarTerms';
+import * as Haptics from 'expo-haptics';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -48,6 +52,20 @@ export default function HomeScreen() {
   const [showOnboarding, setShowOnboarding] = React.useState(false);
   const [dailyRecommendation, setDailyRecommendation] = React.useState<GodRecommendation | null>(null);
   const [pendingReview, setPendingReview] = React.useState<DivinationRecord | null>(null);
+  const [showCrossCompare, setShowCrossCompare] = React.useState(false);
+  const solarTerm = React.useMemo(() => getCurrentSolarTerm(), []);
+
+  // 搖手機求籤：在擲筊步驟偵測搖動
+  useShakeDetector(
+    React.useCallback(() => {
+      if (div.step === 'toss-jiaobei') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        div.performDraw();
+      }
+    }, [div]),
+    div.step === 'toss-jiaobei'
+  );
+
   const isCompact = layout.width < 420;
   const isTablet = layout.isTablet;
   const pageMaxWidth = layout.isWideDesktop ? 1180 : layout.isDesktop ? 1080 : layout.contentMaxWidth;
@@ -266,14 +284,19 @@ export default function HomeScreen() {
         );
       case 'toss-jiaobei':
         return (
-          <Jiaobei
-            onToss={div.performJiaobei}
-            onShengbei={div.performDraw}
-            results={div.jiaobeiResults}
-            strictMode={strictMode}
-            ritualStyleKey={ritualStyle}
-            onStyleChange={setRitualStyle}
-          />
+          <View>
+            <Jiaobei
+              onToss={div.performJiaobei}
+              onShengbei={div.performDraw}
+              results={div.jiaobeiResults}
+              strictMode={strictMode}
+              ritualStyleKey={ritualStyle}
+              onStyleChange={setRitualStyle}
+            />
+            <View style={styles.shakeHint}>
+              <Text style={styles.shakeHintText}>📳 或搖動手機直接求籤</Text>
+            </View>
+          </View>
         );
       case 'drawing':
         return (
@@ -288,15 +311,42 @@ export default function HomeScreen() {
       case 'ai-interpret':
       case 'result':
         return div.drawnPoem ? (
-          <PoemCard
-            poem={div.drawnPoem}
-            godName={div.selectedGod?.name || '神明'}
-            god={div.selectedGod}
-            aiInterpretation={div.aiInterpretation}
-            isLoading={div.step === 'ai-interpret' && !div.aiInterpretation}
-            questionCategory={div.questionCategory}
-            question={div.question}
-          />
+          <View>
+            {/* 節氣提示 */}
+            <View style={styles.solarTermBadge}>
+              <Text style={styles.solarTermText}>
+                {solarTerm.name}・{solarTerm.element}行 — {solarTerm.guidance}
+              </Text>
+            </View>
+            <PoemCard
+              poem={div.drawnPoem}
+              godName={div.selectedGod?.name || '神明'}
+              god={div.selectedGod}
+              aiInterpretation={div.aiInterpretation}
+              isLoading={div.step === 'ai-interpret' && !div.aiInterpretation}
+              questionCategory={div.questionCategory}
+              question={div.question}
+            />
+            {/* 跨神明比對 */}
+            {div.step === 'result' && div.selectedGodId != null && (
+              <View>
+                <TouchableOpacity
+                  style={styles.crossCompareToggle}
+                  onPress={() => setShowCrossCompare(v => !v)}
+                >
+                  <Text style={styles.crossCompareToggleText}>
+                    {showCrossCompare ? '▲ 收起其他神明' : '🏮 看看其他神明怎麼說'}
+                  </Text>
+                </TouchableOpacity>
+                {showCrossCompare && (
+                  <CrossTempleComparison
+                    currentGodId={div.selectedGodId}
+                    questionCategory={div.questionCategory}
+                  />
+                )}
+              </View>
+            )}
+          </View>
         ) : null;
       default:
         return null;
@@ -856,6 +906,29 @@ const fStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+  // 搖手機提示
+  shakeHint: {
+    alignItems: 'center', marginTop: 12, marginBottom: 4,
+  },
+  shakeHintText: {
+    color: TempleTheme.textMuted, fontSize: 13,
+    borderWidth: 1, borderColor: '#2A2020', borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 5,
+  },
+  // 節氣 badge
+  solarTermBadge: {
+    backgroundColor: '#1E1508', borderRadius: 8, borderWidth: 1,
+    borderColor: '#3A2A10', marginHorizontal: TempleSpacing.md,
+    marginBottom: 8, paddingHorizontal: 12, paddingVertical: 7,
+  },
+  solarTermText: { color: '#C9A96E', fontSize: 12, lineHeight: 18 },
+  // 跨神明比對
+  crossCompareToggle: {
+    marginHorizontal: TempleSpacing.md, marginTop: 16,
+    borderWidth: 1, borderColor: TempleTheme.goldDark, borderRadius: 10,
+    paddingVertical: 10, alignItems: 'center',
+  },
+  crossCompareToggleText: { color: TempleTheme.gold, fontSize: 14, fontWeight: '700' },
   container: { flex: 1 },
   pageShell: { flex: 1, width: '100%', alignSelf: 'center' },
   header: {
