@@ -200,8 +200,6 @@ export function getTodayFullLunarInfo(): LunarFullDayInfo | null {
   const base = new Date(2026, 0, 1); // 2026-01-01
   const dayOffset = Math.round((today.getTime() - base.getTime()) / (1000 * 60 * 60 * 24));
 
-  // 從 lunarCalendar 取得基礎資料
-  const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
   // 暫時先產生基本資料（實際應從 lunarCalendar 匯入）
   const solarDate = `${today.getMonth() + 1}/${today.getDate()}`;

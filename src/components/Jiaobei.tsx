@@ -14,6 +14,8 @@ interface JiaobeiProps {
   onShengbei: () => void;
   results: JiaobeiResult[];
   strictMode?: boolean;
+  tossSignal?: number;
+  lowMotion?: boolean;
   ritualStyleKey: RitualStyleKey;
   onStyleChange: (next: RitualStyleKey) => void;
 }
@@ -25,6 +27,8 @@ export function Jiaobei({
   onShengbei,
   results,
   strictMode,
+  tossSignal,
+  lowMotion = false,
   ritualStyleKey,
   onStyleChange,
 }: JiaobeiProps) {
@@ -37,11 +41,20 @@ export function Jiaobei({
   const settleProgress = useRef(new Animated.Value(0)).current;
   const resultFade = useRef(new Animated.Value(0)).current;
   const strictCount = results.filter((result) => result === 'shengbei').length;
+  const latestResult = results[results.length - 1] ?? null;
+  const visibleStrictCount = Math.min(
+    3,
+    strictCount + (currentResult === 'shengbei' && latestResult !== 'shengbei' ? 1 : 0)
+  );
+  const attemptLabel = currentResult && !isAnimating
+    ? '已完成 ' + results.length + ' 次擲筊'
+    : '第 ' + (results.length + 1) + ' 次擲筊';
+  const lastTossSignal = useRef(tossSignal);
 
   const landingFaces = useMemo(() => getLandingFaces(currentResult), [currentResult]);
   const landingPose = useMemo(() => getLandingPose(currentResult), [currentResult]);
 
-  const handleToss = () => {
+  const handleToss = React.useCallback(() => {
     if (isAnimating) {
       return;
     }
@@ -56,9 +69,9 @@ export function Jiaobei({
 
     Animated.timing(tossProgress, {
       toValue: 1,
-      duration: 980,
+      duration: lowMotion ? 420 : 980,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start(async () => {
       const result = onToss();
       setCurrentResult(result);
@@ -66,8 +79,10 @@ export function Jiaobei({
 
       if (result === 'shengbei') {
         await playShengbeiSound().catch(() => {});
-        setShowParticle(true);
-        setTimeout(() => setShowParticle(false), 1100);
+        if (!lowMotion) {
+          setShowParticle(true);
+          setTimeout(() => setShowParticle(false), 1100);
+        }
       } else {
         await playTossSound().catch(() => {});
       }
@@ -77,13 +92,13 @@ export function Jiaobei({
           toValue: 1,
           friction: 7,
           tension: 72,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
         Animated.spring(resultFade, {
           toValue: 1,
           friction: 7,
           tension: 62,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
       ]).start(() => {
         setIsAnimating(false);
@@ -92,7 +107,15 @@ export function Jiaobei({
         }
       });
     });
-  };
+  }, [isAnimating, lowMotion, onShengbei, onToss, resultFade, settleProgress, strictCount, strictMode, tossProgress]);
+
+  React.useEffect(() => {
+    if (tossSignal == null || lastTossSignal.current === tossSignal) {
+      return;
+    }
+    lastTossSignal.current = tossSignal;
+    handleToss();
+  }, [handleToss, tossSignal]);
 
   const pieceTransforms = [0, 1].map((index) => {
     const direction = index === 0 ? -1 : 1;
@@ -199,20 +222,23 @@ export function Jiaobei({
         };
   });
 
-  const strictComplete = strictMode && strictCount >= 2 && currentResult === 'shengbei';
+  const strictComplete = strictMode && visibleStrictCount >= 3 && currentResult === 'shengbei';
   const resultInfo = currentResult ? getResultInfo(currentResult) : null;
 
   return (
     <View style={styles.container}>
-      <ParticleEffect active={showParticle} type="gold" />
+      <ParticleEffect active={showParticle && !lowMotion} type="gold" />
 
       <Text style={styles.title}>{'\u64f2\u676f\u8acb\u793a'}</Text>
       <Text style={styles.attemptText}>
-        {`\u7b2c ${results.length + 1} \u6b21\u64f2\u676f`}
+        {attemptLabel}
         {strictMode ? (
-          <Text style={styles.strictHint}>{` | \u8056\u676f ${strictCount + (currentResult === 'shengbei' ? 1 : 0)}/3`}</Text>
+          <Text style={styles.strictHint}>{` | 聖筊 ${visibleStrictCount}/3`}</Text>
         ) : null}
       </Text>
+      {strictMode ? (
+        <Text style={styles.strictModeNote}>嚴謹模式：需累積三次聖筊才會進入抽籤。</Text>
+      ) : null}
       <RitualStylePicker value={ritualStyleKey} onChange={onStyleChange} />
 
       <View style={styles.stage}>
@@ -257,7 +283,7 @@ export function Jiaobei({
             <Text style={[styles.resultText, { color: resultInfo.color }]}>{resultInfo.text}</Text>
             <Text style={styles.resultDesc}>{resultInfo.desc}</Text>
             {strictMode && strictComplete ? (
-              <Text style={styles.strictCompleteText}>{'\u4e09\u6b21\u8056\u676f\u5df2\u6210\uff0c\u53ef\u4ee5\u8acb\u793a\u62bd\u7c64\u3002'}</Text>
+              <Text style={styles.strictCompleteText}>{'三次聖筊已成，可以請示抽籤。'}</Text>
             ) : null}
             {currentResult !== 'shengbei' && !isAnimating ? (
               <TouchableOpacity style={styles.retryBtn} onPress={handleToss}>
@@ -276,7 +302,7 @@ export function Jiaobei({
 
       {strictMode && currentResult === 'shengbei' && !isAnimating && !strictComplete ? (
         <TouchableOpacity style={styles.nextTossBtn} onPress={handleToss}>
-          <Text style={styles.nextTossBtnText}>{`\u7e7c\u7e8c\u64f2\u676f ${strictCount + 2}/3`}</Text>
+          <Text style={styles.nextTossBtnText}>{'繼續擲筊 ' + Math.min(3, visibleStrictCount + 1) + '/3'}</Text>
         </TouchableOpacity>
       ) : null}
 
@@ -447,6 +473,13 @@ const styles = StyleSheet.create({
   strictHint: {
     color: TempleTheme.gold,
     fontWeight: '700',
+  },
+  strictModeNote: {
+    fontSize: 11,
+    color: TempleTheme.textMuted,
+    marginTop: -6,
+    marginBottom: TempleSpacing.sm,
+    textAlign: 'center',
   },
   stage: {
     width: '100%',

@@ -3,11 +3,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
   TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform,
-  type ViewStyle, type TextStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleTheme, TempleSpacing } from '@/constants/temple-theme';
 import { isFirebaseConfigured } from '@/services/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -242,7 +241,7 @@ export default function CommunityScreen() {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const viewStyles = StyleSheet.create<Record<string, any>>({
   safe: { flex: 1, backgroundColor: TempleTheme.bgDark },
   header: {
@@ -287,7 +286,7 @@ const viewStyles = StyleSheet.create<Record<string, any>>({
   likeBtn: { paddingVertical: 4, paddingHorizontal: 8 },
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const textStyles = StyleSheet.create<Record<string, any>>({
   headerTitle: { color: TempleTheme.gold, fontSize: 20, fontWeight: '900' },
   headerSub: { color: TempleTheme.textMuted, fontSize: 13, marginTop: 2 },
@@ -311,5 +310,5 @@ const textStyles = StyleSheet.create<Record<string, any>>({
 });
 
 // Merge into a single namespace for ergonomics; callers use `styles.X`
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const styles: any = { ...viewStyles, ...textStyles };

@@ -16,13 +16,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { gods, questionCategories, type God } from '@/data/gods';
 import { getGodCardImage } from '@/data/godImages';
+import { getGodQuestionGuide } from '@/data/godQuestionGuides';
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { getGodProfile } from '@/data/godProfiles';
-import { reviewQuestion, suggestQuestionDrafts } from '@/services/questionAssistant';
+import { getQuestionQuality, suggestQuestionDrafts } from '@/services/questionAssistant';
 import { recommendGods } from '@/services/recommendation';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getHistory, getSettings } from '@/services/storage';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useI18n } from '@/hooks/useI18n';
 
 interface GodSelectorProps {
   onSelectGod: (godId: number) => void;
@@ -37,6 +39,7 @@ interface QuestionFormProps {
 
 export function GodSelector({ onSelectGod }: GodSelectorProps) {
   const layout = useResponsiveLayout();
+  const { t } = useI18n();
   const [patronGodId, setPatronGodId] = useState<number | null>(null);
   const [preferredGodId, setPreferredGodId] = useState<number | null>(null);
   const [detailGod, setDetailGod] = useState<God | null>(null);
@@ -61,11 +64,11 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>選擇要請示的神明</Text>
+      <Text style={styles.title}>{t('selectGodTitle')}</Text>
       <Text style={styles.subtitle}>
         {patronGodId
-          ? '已依你的設定標出守護神，若有常拜神明也可以直接選。'
-          : '先選一位你想請示的神明，再帶著問題進入求籤。'}
+          ? t('selectGodSubtitlePatron')
+          : t('selectGodSubtitleDefault')}
       </Text>
 
       <ScrollView
@@ -269,6 +272,7 @@ function GodDetailModal({ god, onClose, onSelect }: { god: God; onClose: () => v
 
 export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: QuestionFormProps) {
   const layout = useResponsiveLayout();
+  const { t } = useI18n();
   const [question, setQuestion] = useState('');
   const [category, setCategory] = useState('general');
   const [userName, setUserName] = useState('');
@@ -286,8 +290,15 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
     });
   }, []);
 
-  const reviews = useMemo(() => reviewQuestion(question), [question]);
+  const questionQuality = useMemo(() => getQuestionQuality(question), [question]);
+  const reviews = questionQuality.reviews;
+  const qualityColor = questionQuality.tone === 'good'
+    ? TempleTheme.success
+    : questionQuality.tone === 'ok'
+      ? TempleTheme.warning
+      : TempleTheme.danger;
   const drafts = useMemo(() => suggestQuestionDrafts(question, category), [question, category]);
+  const godQuestionGuide = useMemo(() => getGodQuestionGuide(selectedGod?.id), [selectedGod?.id]);
   const recommendations = useMemo(
     () =>
       recommendGods({
@@ -306,13 +317,13 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
   return (
     <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
       <View style={[styles.formContainer, { maxWidth: formMaxWidth }]}>
-        <Text style={styles.title}>整理你的問題</Text>
+        <Text style={styles.title}>{t('questionFormTitle')}</Text>
         {forWhom ? (
           <View style={styles.forWhomBanner}>
             <Text style={styles.forWhomText}>🙏 代替 <Text style={styles.forWhomName}>{forWhom}</Text> 求籤</Text>
           </View>
         ) : null}
-        <Text style={styles.subtitle}>題目越聚焦，籤意越容易讀得清楚。</Text>
+        <Text style={styles.subtitle}>{t('questionFormSubtitle')}</Text>
 
         {selectedGod ? (
           <View style={[styles.selectedCard, { borderColor: selectedGod.accentColor + '55' }]}>
@@ -333,6 +344,37 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
             </View>
           </View>
         ) : null}
+
+       
+        <View style={styles.guideCard}>
+          <View style={styles.guideHeader}>
+            <Text style={styles.guideTitle}>{godQuestionGuide.title}</Text>
+            <Text style={styles.guideBadge}>專屬問事</Text>
+          </View>
+          <Text style={styles.guideIntro}>{godQuestionGuide.intro}</Text>
+          <View style={styles.guideStepRow}>
+            {godQuestionGuide.steps.map((step, index) => (
+              <View key={step} style={styles.guideStep}>
+                <Text style={styles.guideStepIndex}>{index + 1}</Text>
+                <Text style={styles.guideStepText}>{step}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.guidePromptList}>
+            {godQuestionGuide.prompts.map((prompt) => (
+              <TouchableOpacity
+                key={prompt.text}
+                style={styles.guidePromptChip}
+                onPress={() => {
+                  setCategory(prompt.category);
+                  setQuestion(prompt.text);
+                }}
+              >
+                <Text style={styles.guidePromptText}>{prompt.text}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>稱呼</Text>
@@ -391,7 +433,20 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
             maxLength={80}
             textAlignVertical="top"
           />
-          <Text style={styles.questionCount}>{question.length} / 80</Text>
+          <View style={styles.questionMetaRow}>
+            <Text style={styles.questionCount}>{question.length} / 80</Text>
+            <Text style={[styles.qualityLabel, { color: qualityColor }]}>
+              清楚度 {questionQuality.score}% · {questionQuality.label}
+            </Text>
+          </View>
+          <View style={styles.qualityTrack}>
+            <View
+              style={[
+                styles.qualityFill,
+                { width: `${questionQuality.score}%`, backgroundColor: qualityColor },
+              ]}
+            />
+          </View>
         </View>
 
         {reviews.length > 0 ? (
@@ -399,9 +454,9 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
             <Text style={styles.assistTitle}>問題提醒</Text>
             {reviews.map((review) => (
               <View key={review.issue} style={styles.assistRow}>
-                <Text style={styles.assistBullet}>•</Text>
+                <Text style={[styles.assistBullet, review.severity === 'blocker' && styles.assistBulletStrong]}>•</Text>
                 <Text style={styles.assistText}>
-                  {review.issue}：{review.suggestion}
+                  {review.severity === 'blocker' ? '優先整理' : review.severity === 'warning' ? '建議調整' : '小提醒'}｜{review.issue}：{review.suggestion}
                 </Text>
               </View>
             ))}
@@ -449,7 +504,7 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
           onPress={() => question.trim() && onSubmit(question.trim(), category, userName.trim())}
           disabled={!question.trim()}
         >
-          <Text style={styles.submitBtnText}>開始求籤</Text>
+          <Text style={styles.submitBtnText}>{questionQuality.tone === 'needs-work' ? t('continueAnyway') : t('startDivination')}</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
@@ -597,6 +652,86 @@ const styles = StyleSheet.create({
     color: TempleTheme.textMuted,
     fontWeight: '600',
   },
+  guideCard: {
+    backgroundColor: TempleTheme.bgCard,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '30',
+    padding: TempleSpacing.md,
+    marginBottom: TempleSpacing.md,
+  },
+  guideHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: TempleSpacing.sm,
+    marginBottom: 6,
+  },
+  guideTitle: {
+    flex: 1,
+    fontSize: TempleFonts.body,
+    color: TempleTheme.goldLight,
+    fontWeight: '900',
+  },
+  guideBadge: {
+    fontSize: 11,
+    color: TempleTheme.gold,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '50',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    overflow: 'hidden',
+  },
+  guideIntro: {
+    color: TempleTheme.textMuted,
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
+    marginBottom: TempleSpacing.sm,
+  },
+  guideStepRow: {
+    gap: 8,
+    marginBottom: TempleSpacing.sm,
+  },
+  guideStep: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  guideStepIndex: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    lineHeight: 20,
+    textAlign: 'center',
+    overflow: 'hidden',
+    backgroundColor: TempleTheme.goldDark + '35',
+    color: TempleTheme.goldLight,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  guideStepText: {
+    flex: 1,
+    color: TempleTheme.textLight,
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
+  },
+  guidePromptList: {
+    gap: 8,
+  },
+  guidePromptChip: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '24',
+    backgroundColor: TempleTheme.bgDark + '44',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  guidePromptText: {
+    color: TempleTheme.goldLight,
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
+  },
   formGroup: { marginBottom: TempleSpacing.md },
   label: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginBottom: TempleSpacing.xs },
   nameTextInput: {
@@ -652,8 +787,30 @@ const styles = StyleSheet.create({
   questionCount: {
     fontSize: 11,
     color: TempleTheme.textMuted,
+  },
+  questionMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: TempleSpacing.sm,
+    marginTop: 6,
+  },
+  qualityLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    flexShrink: 1,
     textAlign: 'right',
-    marginTop: 4,
+  },
+  qualityTrack: {
+    height: 5,
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: TempleTheme.bgDark + '88',
+    marginTop: 6,
+  },
+  qualityFill: {
+    height: '100%',
+    borderRadius: 999,
   },
   assistCard: {
     backgroundColor: TempleTheme.bgCard,
@@ -679,6 +836,7 @@ const styles = StyleSheet.create({
     color: TempleTheme.gold,
     lineHeight: 20,
   },
+  assistBulletStrong: { color: TempleTheme.danger },
   assistText: {
     flex: 1,
     color: TempleTheme.textMuted,

@@ -4,7 +4,6 @@ import React, { useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
-  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,

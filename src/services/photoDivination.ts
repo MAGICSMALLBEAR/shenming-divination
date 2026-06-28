@@ -1,8 +1,7 @@
 // 拍照解籤服務 - 用 expo-image-picker 拍照，送 Vision AI 辨識籤號
 import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { getPoemsByGod } from '@/data/gods';
-import { gods } from '@/data/gods';
+import { getPoemsByGod , gods } from '@/data/gods';
 
 const getVisionApiUrl = () => {
   if (Platform.OS === 'android') return 'http://10.0.2.2:3001/api/vision';
@@ -58,8 +57,12 @@ function findMatchedPoem(visionResult: VisionResult): MatchedPoem | null {
   // 優先依籤系統比對
   const systemToGodIds: Record<string, number[]> = {
     '雷雨師百首': [1, 5, 8, 11, 14, 15],
+    '保生健康籤': [5],
+    '濟公活佛籤': [11],
     '觀音靈籤': [2],
     '六十甲子籤': [3, 4, 6, 7, 12, 13],
+    '三太子衝關籤': [12],
+    '月老姻緣籤': [13],
     '諸葛神數': [9],
     '二十八宿靈籤': [10],
   };
@@ -84,7 +87,7 @@ function findMatchedPoem(visionResult: VisionResult): MatchedPoem | null {
     const god = gods.find(g => g.id === godId);
     if (!god) continue;
     const poems = getPoemsByGod(godId);
-    const poem = (poems as Array<{ number: number; level: string; content: string; vernacular: string; story?: string }>)
+    const poem = (poems as { number: number; level: string; content: string; vernacular: string; story?: string }[])
       .find(p => p.number === targetNumber);
     if (poem) {
       return {

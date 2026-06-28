@@ -17,9 +17,9 @@ import { getDailyPoem, getWeeklyPoems } from '@/services/dailyPoem';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getSettings } from '@/services/storage';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
-import { getTodayFullLunarInfo, getCurrentShiChen, getAuspiciousHours } from '@/data/lunarFullCalendar';
+import { getTodayFullLunarInfo, getCurrentShiChen } from '@/data/lunarFullCalendar';
 import { getTodayFestival, getUpcomingFestivals } from '@/data/festivals';
-import { getYearFortune, getMonthFortune, type YearFortune, type MonthFortune } from '@/services/yearFortune';
+import { getYearFortune, getMonthFortune, type YearFortune } from '@/services/yearFortune';
 import type { BaziInfo } from '@/services/bazi';
 
 export default function DailyScreen() {
@@ -27,7 +27,6 @@ export default function DailyScreen() {
   const [fortune, setFortune] = useState<DailyFortune>(() => getDailyFortune());
   const [bazi, setBazi] = useState<BaziInfo | null>(null);
   const [yearFortune, setYearFortune] = useState<YearFortune | null>(null);
-  const [monthFortune, setMonthFortune] = useState<MonthFortune | null>(null);
   const [showShiChen, setShowShiChen] = useState(false);
   const [showYearDetail, setShowYearDetail] = useState(false);
   const [activeMonthTab, setActiveMonthTab] = useState(new Date().getMonth() + 1);
@@ -72,7 +71,6 @@ export default function DailyScreen() {
       setBazi(baziInfo);
       setFortune(getDailyFortune(baziInfo));
       setYearFortune(getYearFortune(baziInfo));
-      setMonthFortune(getMonthFortune(baziInfo, new Date().getMonth() + 1));
     });
   }, []);
 
@@ -80,7 +78,6 @@ export default function DailyScreen() {
   const weeklyPoems = useMemo(() => getWeeklyPoems(), []);
 
   const currentShiChen = lunarInfo ? getCurrentShiChen(lunarInfo.shiChen) : null;
-  const auspiciousHours = lunarInfo ? getAuspiciousHours(lunarInfo.shiChen) : [];
 
   const selectedMonthFortune = useMemo(() => {
     if (!bazi) return null;

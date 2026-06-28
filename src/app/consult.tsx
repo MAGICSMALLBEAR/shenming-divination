@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
-  Linking,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -10,7 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { PremiumPaywall } from '@/components/PremiumPaywall';

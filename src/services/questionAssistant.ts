@@ -1,6 +1,9 @@
+export type QuestionReviewSeverity = 'info' | 'warning' | 'blocker';
+
 export interface QuestionReview {
   issue: string;
   suggestion: string;
+  severity: QuestionReviewSeverity;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -18,6 +21,10 @@ function normalizeQuestion(question: string): string {
   return question.replace(/\s+/g, ' ').trim();
 }
 
+const VAGUE_TERMS = ['怎麼辦', '如何是好', '未來', '感情', '工作', '財運', '健康', '運勢', '好不好'];
+const TIME_HINTS = ['今天', '明天', '這週', '本週', '近期', '一個月', '三個月', '半年', '今年', '年底'];
+const MULTI_QUESTION_TERMS = ['還是', '或是', '以及', '並且', '同時', '另外', '還有'];
+
 function buildFocus(question: string, category: string): string {
   const clean = normalizeQuestion(question);
   if (!clean) return CATEGORY_LABELS[category] ?? CATEGORY_LABELS.general;
@@ -32,20 +39,39 @@ export function reviewQuestion(question: string): QuestionReview[] {
     reviews.push({
       issue: '題目有點太短',
       suggestion: '可以補上時間範圍、對象或你最在意的結果。',
+      severity: 'blocker',
     });
   }
 
-  if ((clean.match(/[？?]/g) ?? []).length > 1 || clean.includes('還是')) {
+  if ((clean.match(/[？?]/g) ?? []).length > 1 || MULTI_QUESTION_TERMS.some((term) => clean.includes(term))) {
     reviews.push({
       issue: '題目可能一次問了兩件事',
       suggestion: '先只保留一個最重要的判斷點，籤意會更集中。',
+      severity: 'warning',
     });
   }
 
+  if (clean.length >= 8 && !TIME_HINTS.some((term) => clean.includes(term))) {
+    reviews.push({
+      issue: '缺少時間範圍',
+      suggestion: '加上「近期、三個月內、今年」這類範圍，回訪時也比較好驗證。',
+      severity: 'info',
+    });
+  }
+
+  const compact = clean.replace(/[？?。!！,，、\s]/g, '');
+  if (compact.length <= 12 && VAGUE_TERMS.some((term) => compact.includes(term))) {
+    reviews.push({
+      issue: '問題可能太模糊',
+      suggestion: '把主詞、事件或選項說清楚，例如「我是否適合在三個月內換工作」。',
+      severity: 'warning',
+    });
+  }
   if (clean.length > 42) {
     reviews.push({
       issue: '題目偏長',
       suggestion: '濃縮成一句核心問題，保留真正想確認的那一件事。',
+      severity: 'info',
     });
   }
 
@@ -99,4 +125,28 @@ export function suggestQuestionDrafts(question: string, category: string): strin
   };
 
   return templates[category] ?? templates.general;
+}
+
+export function getQuestionQuality(question: string): {
+  score: number;
+  label: string;
+  tone: 'good' | 'ok' | 'needs-work';
+  reviews: QuestionReview[];
+} {
+  const clean = normalizeQuestion(question);
+  if (!clean) {
+    return { score: 0, label: '尚未輸入', tone: 'needs-work', reviews: [] };
+  }
+
+  const reviews = reviewQuestion(clean);
+  const penalty = reviews.reduce((sum, item) => {
+    if (item.severity === 'blocker') return sum + 34;
+    if (item.severity === 'warning') return sum + 22;
+    return sum + 10;
+  }, 0);
+  const score = Math.max(18, Math.min(100, 100 - penalty));
+
+  if (score >= 78) return { score, label: '問題清楚', tone: 'good', reviews };
+  if (score >= 55) return { score, label: '可求籤，建議再聚焦', tone: 'ok', reviews };
+  return { score, label: '建議先整理問題', tone: 'needs-work', reviews };
 }

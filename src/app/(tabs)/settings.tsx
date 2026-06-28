@@ -18,6 +18,7 @@ import {
   drawAnimationStyleOrder,
   drawAnimationStyles,
   getDrawAnimationRitualStyle,
+  normalizeDrawAnimationStyleKey,
 } from '@/constants/draw-animation-styles';
 import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
 import { getDailyPoem } from '@/services/dailyPoem';
@@ -44,6 +45,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { setLanguage, type Lang } from '@/services/i18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { PremiumPaywall } from '@/components/PremiumPaywall';
+import { DrawAnimation } from '@/components/DrawAnimation';
 import {
   isPremiumActive,
   getPremiumStatus,
@@ -60,7 +62,7 @@ const LANGUAGES: { key: Lang; label: string }[] = [
 ];
 
 export default function SettingsScreen() {
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const layout = useResponsiveLayout();
   const [settings, setSettings] = useState<AppSettings>({
     userName: '',
@@ -69,6 +71,7 @@ export default function SettingsScreen() {
     drawAnimationDurationMs: DRAW_ANIMATION_PRESETS[1].durationMs,
     drawAnimationMode: 'random',
     drawAnimationStyleKey: 'bronze',
+    lowMotionMode: false,
     language: lang,
   });
   const [saved, setSaved] = useState(false);
@@ -76,6 +79,7 @@ export default function SettingsScreen() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [premiumActive, setPremiumActive] = useState(false);
   const [premiumPlan, setPremiumPlan] = useState<PremiumPlan>('free');
+  const [showDrawPreview, setShowDrawPreview] = useState(false);
 
   useEffect(() => {
     getPremiumStatus().then(s => {
@@ -85,6 +89,10 @@ export default function SettingsScreen() {
   }, []);
 
   const dailyPoem = useMemo(() => getDailyPoem(), []);
+  const previewGod = useMemo(
+    () => gods.find((god) => god.id === settings.preferredGodId) ?? gods[0],
+    [settings.preferredGodId]
+  );
   const lunarInfo = useMemo(() => getTodayLunarInfo(), []);
 
   const bazi = useMemo(() => {
@@ -210,7 +218,7 @@ export default function SettingsScreen() {
           { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
         ]}
       >
-        <Text style={styles.pageTitle}>設定</Text>
+        <Text style={styles.pageTitle}>{t('settingsTitle')}</Text>
 
         <View style={styles.dailyCard}>
           <Text style={styles.dailyLabel}>
@@ -318,10 +326,19 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>求籤流程</Text>
           <ToggleRow
             label="嚴謹擲筊模式"
-            description="開啟後可以更重視擲筊結果與流程感。"
+            description="開啟後需累積三次聖筊，才會進入抽籤。"
             value={Boolean(settings.strictMode)}
             onToggle={() =>
               setSettings((prev) => ({ ...prev, strictMode: !prev.strictMode }))
+            }
+          />
+
+          <ToggleRow
+            label="低動畫 / 省電模式"
+            description="減少背景、煙霧、粒子與長動畫，低階手機會更穩。"
+            value={Boolean(settings.lowMotionMode)}
+            onToggle={() =>
+              setSettings((prev) => ({ ...prev, lowMotionMode: !prev.lowMotionMode }))
             }
           />
 
@@ -417,6 +434,27 @@ export default function SettingsScreen() {
               );
             })}
           </View>
+          <TouchableOpacity
+            style={styles.previewToggleBtn}
+            onPress={() => setShowDrawPreview((value) => !value)}
+          >
+            <Text style={styles.previewToggleText}>
+              {showDrawPreview ? '收起動畫預覽' : '預覽目前抽籤動畫'}
+            </Text>
+          </TouchableOpacity>
+
+          {showDrawPreview ? (
+            <View style={styles.drawPreviewPanel}>
+              <DrawAnimation
+                god={previewGod}
+                poemNumber={dailyPoem.poem.number}
+                durationMs={settings.lowMotionMode ? 3000 : normalizeDrawAnimationDuration(settings.drawAnimationDurationMs)}
+                styleKey={normalizeDrawAnimationStyleKey(settings.drawAnimationStyleKey)}
+                lowMotion={Boolean(settings.lowMotionMode)}
+                soundEnabled={false}
+              />
+            </View>
+          ) : null}
         </View>
 
         <View style={[styles.section, layout.isDesktop && styles.fullWidthSection]}>
@@ -852,7 +890,29 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 17,
   },
-  toggleRow: {
+  previewToggleBtn: {
+    marginTop: TempleSpacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: TempleTheme.gold,
+    backgroundColor: TempleTheme.goldDark + '22',
+    paddingVertical: TempleSpacing.sm,
+    alignItems: 'center',
+  },
+  previewToggleText: {
+    color: TempleTheme.goldLight,
+    fontSize: TempleFonts.body,
+    fontWeight: '800',
+  },
+  drawPreviewPanel: {
+    height: 640,
+    marginTop: TempleSpacing.md,
+    overflow: 'hidden',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '35',
+    backgroundColor: TempleTheme.bgDark,
+  },  toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

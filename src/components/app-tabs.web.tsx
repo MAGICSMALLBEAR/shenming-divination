@@ -18,7 +18,7 @@ const tabs = [
   { name: 'daily', href: '/daily' as any, labelKey: 'today', icon: '📅' },
   { name: 'temple', href: '/temple' as any, labelKey: 'temple', icon: '🪔' },
   { name: 'collection', href: '/collection' as const, labelKey: 'collection', icon: '💾' },
-  { name: 'more', href: '/more' as any, label: '更多', icon: '🔮' },
+  { name: 'more', href: '/more' as any, labelKey: 'more', icon: '🔮' },
   { name: 'settings', href: '/settings' as const, labelKey: 'settings', icon: '⚙️' },
 ];
 
@@ -32,7 +32,7 @@ export default function AppTabs() {
             {tabs.map((tab) => (
               <TabTrigger key={tab.name} name={tab.name} href={tab.href} asChild>
                 <TabButton>
-                  <ThemedText type="small">{'label' in tab ? tab.label : t(tab.labelKey!)}</ThemedText>
+                  <ThemedText type="small">{t(tab.labelKey!)}</ThemedText>
                 </TabButton>
               </TabTrigger>
             ))}

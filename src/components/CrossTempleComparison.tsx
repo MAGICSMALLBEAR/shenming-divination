@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleTheme, TempleSpacing } from '@/constants/temple-theme';
 import { gods } from '@/data/gods';
 import { getGodCardImage } from '@/data/godImages';
 import { drawPoem } from '@/services/divination';
@@ -97,7 +97,6 @@ export function CrossTempleComparison({ currentGodId, questionCategory }: Props)
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const styles: any = StyleSheet.create({
   container: { marginTop: 24, paddingHorizontal: TempleSpacing.md },
   header: { marginBottom: 12 },

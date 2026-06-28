@@ -43,7 +43,7 @@ export async function requestReview(): Promise<void> {
       try {
         // expo-store-review 需要安裝後才能使用
         // 安裝方式: npx expo install expo-store-review
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const StoreReview = await import('expo-store-review' as any);
         const isAvailable = await StoreReview.isAvailableAsync();
         if (isAvailable) {

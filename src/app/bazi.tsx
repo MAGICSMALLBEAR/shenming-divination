@@ -69,7 +69,7 @@ export default function BaziScreen() {
         gender,
       });
       setBazi(result);
-    } catch (e) {
+    } catch {
       setError('計算失敗，請確認輸入資料');
     }
   };

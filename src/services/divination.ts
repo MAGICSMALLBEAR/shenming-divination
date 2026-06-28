@@ -55,6 +55,8 @@ export async function saveDivinationRecord(params: {
     id: generateId(),
     ...params,
     timestamp: Date.now(),
+    verificationDueAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    verificationFinalDueAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
   };
   await addHistory(record);
   return record;

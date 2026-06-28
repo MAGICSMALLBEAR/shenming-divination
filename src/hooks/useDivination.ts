@@ -10,7 +10,7 @@ import {
 } from '@/constants/draw-animation-styles';
 import { gods } from '@/data/gods';
 import { tossJiaobei, drawPoem, drawZhugePoem, saveDivinationRecord } from '@/services/divination';
-import { addFavorite, getSettings, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
+import { addFavorite, getHistory, getSettings, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
 import { getAIInterpretation } from '@/services/ai';
 import { buildActionPlan } from '@/services/actionPlan';
 import type { JiaobeiResult } from '@/services/divination';
@@ -119,6 +119,11 @@ export function useDivination() {
     setStep('ai-interpret');
     let interpretation: string | null = null;
     try {
+    const recentHistory = (await getHistory())
+      .filter((record) => record.questionCategory === questionCategory)
+      .slice(0, 3)
+      .map((record) => `${record.godName}第${record.poem.number}籤/${record.poem.level}/${record.verificationStatus ?? '待驗證'}`)
+      .join('；');
       interpretation = await getAIInterpretation({
         godName: god?.name || '神明',
         userName: userName || '善信',
@@ -129,6 +134,7 @@ export function useDivination() {
         poemMeaning: poem.vernacular,
         poemStory: poem.story,
         poemLevel: poem.level,
+        recentHistorySummary: recentHistory || undefined,
       });
       setAIInterpretation(interpretation);
     } catch {

@@ -48,7 +48,7 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="more">
-        <NativeTabs.Trigger.Label>更多</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('more')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/explore.png')}
           renderingMode="template"

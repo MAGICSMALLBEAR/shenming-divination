@@ -36,6 +36,8 @@ interface DrawAnimationProps {
   poemNumber?: number | null;
   durationMs?: number;
   styleKey?: DrawAnimationStyleKey;
+  lowMotion?: boolean;
+  soundEnabled?: boolean;
 }
 
 export function DrawAnimation({
@@ -43,8 +45,11 @@ export function DrawAnimation({
   poemNumber,
   durationMs = DRAW_ANIMATION_DEFAULT_MS,
   styleKey = 'bronze',
+  lowMotion = false,
+  soundEnabled = true,
 }: DrawAnimationProps) {
-  const reducedMotion = useReducedMotion();
+  const systemReducedMotion = useReducedMotion();
+  const reducedMotion = systemReducedMotion || lowMotion;
   const auraAnim = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
@@ -84,7 +89,9 @@ export function DrawAnimation({
   ), [chosenDropAnim, chosenLiftAnim]);
 
   useEffect(() => {
-    playDrawSound();
+    if (soundEnabled) {
+      playDrawSound();
+    }
     if (reducedMotion) {
       setPhaseIndex(PHASES.length - 1);
       auraAnim.setValue(0.45);
@@ -105,16 +112,10 @@ export function DrawAnimation({
 
     const timers: ReturnType<typeof setTimeout>[] = [];
     const auraLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(auraAnim, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(auraAnim, { toValue: 0, duration: 1400, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      ])
+      Animated.timing(auraAnim, { toValue: 1, duration: 2800, easing: Easing.inOut(Easing.sin), useNativeDriver: true })
     );
     const floatLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, { toValue: 1, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(floatAnim, { toValue: 0, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ])
+      Animated.timing(floatAnim, { toValue: 1, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true })
     );
     const shakeLoop = Animated.loop(
       Animated.sequence([
@@ -130,7 +131,7 @@ export function DrawAnimation({
       toValue: 1,
       duration: ms,
       easing: Easing.linear,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
 
     numberOpacity.setValue(0);
@@ -190,72 +191,81 @@ export function DrawAnimation({
       floatLoop.stop();
       shakeLoop.stop();
     };
-  }, [auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flipAnim, floatAnim, motion.dropDistance, motion.liftDistance, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim]);
+  }, [auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flipAnim, floatAnim, motion.dropDistance, motion.liftDistance, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, soundEnabled]);
 
-  const translateX = shakeAnim.interpolate({
+  const translateX = useMemo(() => shakeAnim.interpolate({
     inputRange: [-1, 1],
     outputRange: [-motion.shakeAmplitude, motion.shakeAmplitude],
-  });
+  }), [shakeAnim, motion.shakeAmplitude]);
 
-  const rotate = shakeAnim.interpolate({
+  const rotate = useMemo(() => shakeAnim.interpolate({
     inputRange: [-1, 1],
     outputRange: ['-6deg', '6deg'],
-  });
+  }), [shakeAnim]);
 
-  const haloScale = auraAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.94, 1.1],
-  });
+  // auraAnim runs 0→1 in a single loop; bell-curve outputRange recreates the
+  // original 0.94→1.1→0.94 pulse without a back-and-forth Animated.sequence
+  // (sequences caused the native driver to build an inputRange of [0,0.5,1,0.5,0]).
+  const haloScale = useMemo(() => auraAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.94, 1.1, 0.94],
+  }), [auraAnim]);
 
-  const haloOpacity = auraAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.32, 0.72],
-  });
+  const haloOpacity = useMemo(() => auraAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.32, 0.72, 0.32],
+  }), [auraAnim]);
 
-  const altarFloat = floatAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -motion.floatDistance],
-  });
+  // floatAnim runs 0→1 in a single loop; bell-curve gives the same float effect.
+  const altarFloat = useMemo(() => floatAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, -motion.floatDistance, 0],
+  }), [floatAnim, motion.floatDistance]);
 
-  const chosenStickRotate = chosenDropAnim.interpolate({
+  const chosenStickRotate = useMemo(() => chosenDropAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '18deg'],
-  });
+  }), [chosenDropAnim]);
 
-  const progressWidth = progressAnim.interpolate({
+  const progressScaleX = useMemo(() => progressAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
+    outputRange: [0.001, 1],
+  }), [progressAnim]);
 
-  const flashScale = flashAnim.interpolate({
+  const progressTranslateX = useMemo(() => progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-110, 0],
+  }), [progressAnim]);
+
+  const flashScale = useMemo(() => flashAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0.35, motion.flashScale],
-  });
+  }), [flashAnim, motion.flashScale]);
 
-  const flashOpacity = flashAnim.interpolate({
+  const flashOpacity = useMemo(() => flashAnim.interpolate({
     inputRange: [0, 0.35, 1],
     outputRange: [0, 0.95, 0],
-  });
+  }), [flashAnim]);
 
-  const paperTranslateY = paperAnim.interpolate({
+  const paperTranslateY = useMemo(() => paperAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [44, 0],
-  });
+  }), [paperAnim]);
 
-  const paperScale = paperAnim.interpolate({
+  const paperScale = useMemo(() => paperAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0.82, 1],
-  });
+  }), [paperAnim]);
 
-  const paperOpacity = paperAnim.interpolate({
+  const paperOpacity = useMemo(() => paperAnim.interpolate({
     inputRange: [0, 0.25, 1],
     outputRange: [0, 1, 1],
-  });
+  }), [paperAnim]);
 
-  const paperRotateX = flipAnim.interpolate({
+  const paperRotateX = useMemo(() => flipAnim.interpolate({
     inputRange: [0, 0.52, 1],
     outputRange: [motion.paperRotateStart, '8deg', '0deg'],
-  });
+  }), [flipAnim, motion.paperRotateStart]);
 
   return (
     <View style={styles.container}>
@@ -396,7 +406,15 @@ export function DrawAnimation({
       </View>
 
       <View style={styles.progressTrack}>
-        <Animated.View style={[styles.progressFill, { width: progressWidth, backgroundColor: highlightColor }]} />
+        <Animated.View
+          style={[
+            styles.progressFill,
+            {
+              backgroundColor: highlightColor,
+              transform: [{ translateX: progressTranslateX }, { scaleX: progressScaleX }],
+            },
+          ]}
+        />
       </View>
 
       <Animated.View
@@ -636,6 +654,7 @@ const styles = StyleSheet.create({
     marginBottom: TempleSpacing.lg,
   },
   progressFill: {
+    width: 220,
     height: '100%',
     borderRadius: 999,
   },

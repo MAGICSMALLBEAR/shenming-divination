@@ -1,5 +1,5 @@
 export interface InterpretationSection {
-  key: 'summary' | 'insight' | 'actions' | 'cautions' | 'followUp';
+  key: 'summary' | 'state' | 'insight' | 'actions' | 'cautions' | 'avoid' | 'followUp';
   title: string;
   lines: string[];
 }
@@ -43,15 +43,21 @@ export function normalizeInterpretationText(raw: string, fallbackQuestion?: stri
 
   sections[0].lines.push(paragraphs[0] ?? '這支籤提醒你先定下心，再看清真正要處理的重點。');
   sections[1].lines.push(
-    paragraphs[1] ?? '目前不只是結果問題，更重要的是你的節奏、判斷與耐心。'
+    paragraphs[1] ?? '目前的狀態需要先穩住節奏，別急著把所有結果一次定案。'
   );
   sections[2].lines.push(
-    paragraphs[2] ?? '先做一個最小但明確的行動，讓籤意落到生活裡。'
+    paragraphs[2] ?? '目前不只是結果問題，更重要的是你的節奏、判斷與耐心。'
   );
   sections[3].lines.push(
-    paragraphs[3] ?? '避免同時處理太多方向，也不要因情緒急著做大決定。'
+    paragraphs[3] ?? '先做一個最小但明確的行動，讓籤意落到生活裡。'
   );
   sections[4].lines.push(
+    paragraphs[4] ?? '留意情緒、資訊不足與外界壓力，這些都可能讓判斷失準。'
+  );
+  sections[5].lines.push(
+    paragraphs[5] ?? '不宜在心急時做不可逆決定，也不宜同時處理太多方向。'
+  );
+  sections[6].lines.push(
     fallbackQuestion
       ? `可以追問：「關於${fallbackQuestion}，我下一步最該確認的是什麼？」`
       : '可以追問下一步、時間點，或該先避開什麼。'
@@ -76,13 +82,17 @@ export function extractInterpretationSections(text?: string | null): Interpretat
       const key =
         title.includes('結論')
           ? 'summary'
-          : title.includes('重點')
-            ? 'insight'
-            : title.includes('行動')
-              ? 'actions'
-              : title.includes('留意')
-                ? 'cautions'
-                : 'followUp';
+          : title.includes('狀態')
+            ? 'state'
+            : title.includes('重點')
+              ? 'insight'
+              : title.includes('行動')
+                ? 'actions'
+                : title.includes('留意')
+                  ? 'cautions'
+                  : title.includes('不宜') || title.includes('避免')
+                    ? 'avoid'
+                    : 'followUp';
 
       current = { key, title, lines: [] };
       sections.push(current);

@@ -28,10 +28,8 @@ import {
 import {
   getTodayRecommendedGod,
   getUpcomingGodBirthdays,
-  getGodWorshipInfo,
 } from '@/data/lunarCalendar';
-import { speakGodBlessing, stopSpeaking, isCurrentlySpeaking } from '@/services/speech';
-import { getBlessingText } from '@/services/speech';
+import { speakGodBlessing, stopSpeaking, getBlessingText } from '@/services/speech';
 import { PhotoDivination } from '@/components/PhotoDivination';
 import { PremiumPaywall } from '@/components/PremiumPaywall';
 import { canUseFeature, isPremiumActive } from '@/services/premiumService';

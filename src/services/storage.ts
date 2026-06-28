@@ -40,7 +40,12 @@ export interface DivinationRecord {
   verificationStatus?: VerificationStatus;
   verificationNotes?: string;
   verificationUpdatedAt?: number;
+  verificationDueAt?: number;
+  verificationFinalDueAt?: number;
   actionPlan?: string[];
+  actionProgress?: boolean[];
+  poemConfirmed?: boolean;
+  poemConfirmResult?: string;
 }
 
 export interface AppSettings {
@@ -54,6 +59,7 @@ export interface AppSettings {
   drawAnimationDurationMs?: number;
   drawAnimationMode?: DrawAnimationMode;
   drawAnimationStyleKey?: DrawAnimationStyleKey;
+  lowMotionMode?: boolean;
   theme?: 'dark' | 'light' | 'system';  // P4: 主題模式
   familyMembers?: FamilyMember[];
   ambientSound?: boolean;
@@ -74,10 +80,14 @@ export interface LastPoemContext {
 let memoryStore: Record<string, string> = {};
 
 function normalizeRecord(record: DivinationRecord): DivinationRecord {
+  const timestamp = record.timestamp ?? Date.now();
   return {
     ...record,
     verificationStatus: record.verificationStatus ?? 'pending',
+    verificationDueAt: record.verificationDueAt ?? timestamp + 7 * 24 * 60 * 60 * 1000,
+    verificationFinalDueAt: record.verificationFinalDueAt ?? timestamp + 30 * 24 * 60 * 60 * 1000,
     actionPlan: Array.isArray(record.actionPlan) ? record.actionPlan : undefined,
+    actionProgress: Array.isArray(record.actionProgress) ? record.actionProgress : [],
   };
 }
 
@@ -194,6 +204,30 @@ export async function updateVerification(
   });
 }
 
+
+export async function updateActionProgress(
+  id: string,
+  actionIndex: number,
+  done: boolean
+): Promise<void> {
+  const history = await getHistory();
+  const target = history.find((record) => record.id === id);
+  const current = target?.actionProgress ?? [];
+  const next = [...current];
+  next[actionIndex] = done;
+  await updateDivinationRecord(id, { actionProgress: next });
+}
+
+export async function updatePoemConfirmation(
+  id: string,
+  confirmed: boolean,
+  result: string
+): Promise<void> {
+  await updateDivinationRecord(id, {
+    poemConfirmed: confirmed,
+    poemConfirmResult: result,
+  });
+}
 export async function clearHistory(): Promise<void> {
   await removeItem(STORAGE_KEYS.HISTORY);
 }

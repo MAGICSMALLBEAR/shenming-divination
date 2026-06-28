@@ -6,8 +6,6 @@ import {
   signInAnonymously,
   signOut,
   onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithCredential,
   type User,
 } from 'firebase/auth';
 import { getFirebaseApp, isFirebaseConfigured } from './firebaseConfig';

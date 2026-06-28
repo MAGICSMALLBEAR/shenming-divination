@@ -7,10 +7,12 @@ interface ShareCardViewProps {
   godName: string;
   poem: Poem;
   aiInterpretation?: string | null;
+  question?: string;
+  actionPlan?: string[];
 }
 
 export const ShareCardView = forwardRef<View, ShareCardViewProps>(function ShareCardView(
-  { godName, poem, aiInterpretation },
+  { godName, poem, aiInterpretation, question, actionPlan = [] },
   ref
 ) {
   const aiSummary = aiInterpretation
@@ -36,6 +38,12 @@ export const ShareCardView = forwardRef<View, ShareCardViewProps>(function Share
         <Text style={styles.ganzhi}>{poem.ganzhi}</Text>
       </View>
 
+      {question ? (
+        <View style={styles.questionBox}>
+          <Text style={styles.questionLabel}>請示問題</Text>
+          <Text style={styles.questionText} numberOfLines={2}>{question}</Text>
+        </View>
+      ) : null}
       <View style={styles.poemBox}>
         {poem.content.split('\n').map((line) => (
           <Text key={line} style={styles.poemLine}>
@@ -55,6 +63,14 @@ export const ShareCardView = forwardRef<View, ShareCardViewProps>(function Share
         </View>
       ) : null}
 
+      {actionPlan.length ? (
+        <View style={styles.actionBox}>
+          <Text style={styles.aiLabel}>今日三步</Text>
+          {actionPlan.slice(0, 3).map((item, index) => (
+            <Text key={item} style={styles.actionText} numberOfLines={1}>{index + 1}. {item}</Text>
+          ))}
+        </View>
+      ) : null}
       <View style={styles.footer}>
         <Text style={styles.footerText}>神明占卜 App</Text>
         <Text style={styles.footerSub}>誠心請示 · 清明行動</Text>
@@ -111,7 +127,24 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: 12, color: '#FFF', fontWeight: '700' },
   ganzhi: { fontSize: 12, color: TempleTheme.textMuted },
-  poemBox: {
+  questionBox: {
+    width: '100%',
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: TempleTheme.goldDark + '18',
+    marginBottom: 10,
+  },
+  questionLabel: {
+    fontSize: 10,
+    color: TempleTheme.goldLight,
+    fontWeight: '800',
+    marginBottom: 3,
+  },
+  questionText: {
+    fontSize: 11,
+    color: TempleTheme.textLight,
+    lineHeight: 16,
+  },  poemBox: {
     backgroundColor: TempleTheme.bgLight,
     padding: 16,
     borderRadius: 12,
@@ -148,7 +181,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   aiText: { fontSize: 11, color: TempleTheme.textLight, lineHeight: 18 },
-  footer: {
+  actionBox: {
+    width: '100%',
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: TempleTheme.goldDark + '14',
+    marginBottom: 8,
+  },
+  actionText: {
+    fontSize: 10,
+    color: TempleTheme.textLight,
+    lineHeight: 15,
+  },  footer: {
     marginTop: 'auto',
     alignItems: 'center',
     paddingTop: 12,

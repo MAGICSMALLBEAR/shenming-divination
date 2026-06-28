@@ -22,6 +22,7 @@ import {
   getFavorites,
   getHistory,
   removeFavorite,
+  updateActionProgress,
   updateNote,
   updateVerification,
   type DivinationRecord,
@@ -30,6 +31,8 @@ import {
 
 type Tab = 'favorites' | 'history';
 type SortMode = 'newest' | 'oldest';
+type VerificationFilter = 'all' | VerificationStatus | 'due';
+type LevelFilter = 'all' | 'good' | 'neutral' | 'caution';
 
 const VERIFICATION_LABELS: Record<
   VerificationStatus,
@@ -52,6 +55,26 @@ function formatDate(timestamp: number): string {
 function normalizeText(value: string): string {
   return value.trim().toLowerCase();
 }
+function getLevelFilter(level: string): Exclude<LevelFilter, 'all'> {
+  if (level.includes('下') || level.includes('凶')) return 'caution';
+  if (level.includes('上') || level.includes('吉')) return 'good';
+  return 'neutral';
+}
+
+function isVerificationDue(record: DivinationRecord): boolean {
+  if ((record.verificationStatus ?? 'pending') !== 'pending') return false;
+  const now = Date.now();
+  return Boolean(
+    (record.verificationDueAt && record.verificationDueAt <= now) ||
+    (record.verificationFinalDueAt && record.verificationFinalDueAt <= now)
+  );
+}
+
+function formatShortDate(timestamp?: number): string {
+  if (!timestamp) return '未設定';
+  const date = new Date(timestamp);
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
 
 export default function CollectionScreen() {
   const params = useLocalSearchParams<{ tab?: string }>();
@@ -68,6 +91,8 @@ export default function CollectionScreen() {
   const [searchText, setSearchText] = useState('');
   const [selectedGod, setSelectedGod] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedVerification, setSelectedVerification] = useState<VerificationFilter>('all');
+  const [selectedLevel, setSelectedLevel] = useState<LevelFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [notesOnly, setNotesOnly] = useState(false);
 
@@ -99,6 +124,9 @@ export default function CollectionScreen() {
     const filtered = currentRecords.filter((record) => {
       if (selectedGod !== 'all' && record.godName !== selectedGod) return false;
       if (selectedCategory !== 'all' && record.questionCategory !== selectedCategory) return false;
+      if (selectedVerification === 'due' && !isVerificationDue(record)) return false;
+      if (selectedVerification !== 'all' && selectedVerification !== 'due' && (record.verificationStatus ?? 'pending') !== selectedVerification) return false;
+      if (selectedLevel !== 'all' && getLevelFilter(record.poem.level) !== selectedLevel) return false;
       if (notesOnly && !record.notes?.trim()) return false;
 
       if (!search) return true;
@@ -124,7 +152,7 @@ export default function CollectionScreen() {
     );
 
     return filtered;
-  }, [currentRecords, notesOnly, searchText, selectedCategory, selectedGod, sortMode]);
+  }, [currentRecords, notesOnly, searchText, selectedCategory, selectedGod, selectedLevel, selectedVerification, sortMode]);
 
   const filteredStats = useMemo(() => {
     const withNotes = filteredRecords.filter((record) => record.notes?.trim()).length;
@@ -132,12 +160,14 @@ export default function CollectionScreen() {
     const tracked = filteredRecords.filter(
       (record) => record.verificationStatus && record.verificationStatus !== 'pending'
     ).length;
+    const due = filteredRecords.filter(isVerificationDue).length;
 
     return {
       count: filteredRecords.length,
       withNotes,
       matched,
       tracked,
+      due,
     };
   }, [filteredRecords]);
 
@@ -145,6 +175,8 @@ export default function CollectionScreen() {
     searchText.trim().length > 0 ||
     selectedGod !== 'all' ||
     selectedCategory !== 'all' ||
+    selectedVerification !== 'all' ||
+    selectedLevel !== 'all' ||
     notesOnly ||
     sortMode !== 'newest';
 
@@ -152,6 +184,8 @@ export default function CollectionScreen() {
     setSearchText('');
     setSelectedGod('all');
     setSelectedCategory('all');
+    setSelectedVerification('all');
+    setSelectedLevel('all');
     setNotesOnly(false);
     setSortMode('newest');
   };
@@ -237,6 +271,12 @@ export default function CollectionScreen() {
     setVerificationNoteText(record.verificationNotes || '');
   };
 
+
+  const handleToggleAction = async (record: DivinationRecord, index: number) => {
+    const done = !record.actionProgress?.[index];
+    await updateActionProgress(record.id, index, done);
+    await loadData();
+  };
   const handleSaveVerification = async (id: string) => {
     await updateVerification(id, pendingVerificationStatus, verificationNoteText);
     setEditingVerificationId(null);
@@ -277,6 +317,10 @@ export default function CollectionScreen() {
           ))}
         </View>
 
+
+        <Text style={styles.verificationSchedule}>
+          回訪：7天 {formatShortDate(record.verificationDueAt)} ・ 30天 {formatShortDate(record.verificationFinalDueAt)}
+        </Text>
         {record.verificationNotes ? (
           <Text style={styles.verificationNote}>追蹤筆記：{record.verificationNotes}</Text>
         ) : null}
@@ -337,6 +381,11 @@ export default function CollectionScreen() {
         </Text>
       </View>
 
+      {record.poemConfirmResult ? (
+        <View style={[styles.confirmBadge, record.poemConfirmed && styles.confirmBadgeOk]}>
+          <Text style={styles.confirmBadgeText}>籤後確認：{record.poemConfirmResult}</Text>
+        </View>
+      ) : null}
       <View style={styles.recordPoem}>
         {record.poem.content.split('\n').map((line, index) => (
           <Text key={index} style={styles.poemLine}>
@@ -355,11 +404,21 @@ export default function CollectionScreen() {
         ) : null}
         {record.actionPlan?.length ? (
           <View style={styles.planBlock}>
-            {record.actionPlan.map((item) => (
-              <Text key={item} style={styles.planText}>
-                • {item}
-              </Text>
-            ))}
+            {record.actionPlan.map((item, index) => {
+              const done = Boolean(record.actionProgress?.[index]);
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.planCheckRow, done && styles.planCheckRowDone]}
+                  onPress={() => handleToggleAction(record, index)}
+                >
+                  <Text style={[styles.planCheckBox, done && styles.planCheckBoxDone]}>
+                    {done ? '✓' : ''}
+                  </Text>
+                  <Text style={[styles.planText, done && styles.planTextDone]}>{item}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         ) : null}
       </View>
@@ -450,11 +509,23 @@ export default function CollectionScreen() {
             <Text style={styles.summaryLabel}>已追蹤</Text>
           </View>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{filteredStats.matched}</Text>
-            <Text style={styles.summaryLabel}>已應驗</Text>
+            <Text style={styles.summaryValue}>{filteredStats.due}</Text>
+            <Text style={styles.summaryLabel}>待回訪</Text>
           </View>
         </View>
 
+        {filteredStats.due > 0 ? (
+          <TouchableOpacity
+            style={styles.reviewCenterBtn}
+            onPress={() => {
+              setActiveTab('history');
+              setSelectedVerification('due');
+              setSortMode('oldest');
+            }}
+          >
+            <Text style={styles.reviewCenterText}>查看 {filteredStats.due} 筆待回訪籤詩</Text>
+          </TouchableOpacity>
+        ) : null}
         <View style={styles.searchBar}>
           <Text style={styles.searchIcon}>🔎</Text>
           <TextInput
@@ -561,6 +632,62 @@ export default function CollectionScreen() {
           </View>
         </View>
 
+
+        <View style={styles.filterStrip}>
+          <View style={styles.filterContent}>
+            {[
+              { key: 'all', label: '全部應驗' },
+              { key: 'due', label: '待回訪' },
+              { key: 'pending', label: '待驗證' },
+              { key: 'matched', label: '已應驗' },
+              { key: 'unmatched', label: '不符合' },
+            ].map((item) => (
+              <TouchableOpacity
+                key={item.key}
+                style={[
+                  styles.filterChip,
+                  selectedVerification === item.key && styles.filterChipActive,
+                ]}
+                onPress={() => setSelectedVerification(item.key as VerificationFilter)}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    selectedVerification === item.key && styles.filterChipTextActive,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.filterStrip}>
+          <View style={styles.filterContent}>
+            {[
+              { key: 'all', label: '全部籤等' },
+              { key: 'good', label: '吉籤' },
+              { key: 'neutral', label: '平籤' },
+              { key: 'caution', label: '提醒籤' },
+            ].map((item) => (
+              <TouchableOpacity
+                key={item.key}
+                style={[styles.filterChip, selectedLevel === item.key && styles.filterChipActive]}
+                onPress={() => setSelectedLevel(item.key as LevelFilter)}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    selectedLevel === item.key && styles.filterChipTextActive,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
         <ScrollView
           style={styles.list}
           showsVerticalScrollIndicator={false}
@@ -671,7 +798,20 @@ const styles = StyleSheet.create({
     color: TempleTheme.textMuted,
     marginTop: 4,
   },
-  searchBar: {
+  reviewCenterBtn: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: TempleTheme.warning + '66',
+    backgroundColor: TempleTheme.warning + '14',
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginBottom: TempleSpacing.sm,
+  },
+  reviewCenterText: {
+    color: TempleTheme.goldLight,
+    fontSize: TempleFonts.small,
+    fontWeight: '900',
+  },  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: TempleTheme.bgCard,
@@ -802,7 +942,25 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
   },
-  recordPoem: {
+  confirmBadge: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: TempleTheme.warning + '70',
+    backgroundColor: TempleTheme.warning + '12',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  confirmBadgeOk: {
+    borderColor: TempleTheme.success + '70',
+    backgroundColor: TempleTheme.success + '12',
+  },
+  confirmBadgeText: {
+    color: TempleTheme.textLight,
+    fontSize: 11,
+    fontWeight: '700',
+  },  recordPoem: {
     backgroundColor: TempleTheme.bgLight,
     padding: TempleSpacing.md,
     borderRadius: 8,
@@ -835,10 +993,40 @@ const styles = StyleSheet.create({
     marginTop: TempleSpacing.sm,
     gap: 4,
   },
-  planText: {
+  planCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  planCheckRowDone: {
+    opacity: 0.72,
+  },
+  planCheckBox: {
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: TempleTheme.gold,
+    color: TempleTheme.bgDark,
+    textAlign: 'center',
+    lineHeight: 16,
+    fontSize: 12,
+    fontWeight: '900',
+    marginTop: 1,
+  },
+  planCheckBoxDone: {
+    backgroundColor: TempleTheme.success,
+    borderColor: TempleTheme.success,
+    color: TempleTheme.bgDark,
+  },  planText: {
     fontSize: 12,
     color: TempleTheme.goldLight,
     lineHeight: 18,
+  },
+  planTextDone: {
+    color: TempleTheme.textMuted,
+    textDecorationLine: 'line-through',
   },
   verificationCard: {
     marginTop: TempleSpacing.sm,
@@ -885,6 +1073,11 @@ const styles = StyleSheet.create({
   verificationBtnText: {
     fontSize: 12,
     color: TempleTheme.textLight,
+  },
+  verificationSchedule: {
+    color: TempleTheme.textMuted,
+    fontSize: 11,
+    marginTop: 8,
   },
   verificationNote: {
     marginTop: 8,

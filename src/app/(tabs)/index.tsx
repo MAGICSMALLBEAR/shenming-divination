@@ -20,13 +20,15 @@ import { FireworksEffect } from '@/components/FireworksEffect';
 import { ZhugeNumberInput } from '@/components/ZhugeNumberInput';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useI18n } from '@/hooks/useI18n';
 import { addWish } from '@/services/wishTracker';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
 import { playResultSound, startAmbientSound, stopAmbientSound } from '@/services/proceduralSound';
-import { getHistory, getLastPoemContext, getSettings, getFamilyMembers, addFamilyMember, removeFamilyMember, type DivinationRecord, type FamilyMember } from '@/services/storage';
+import { getHistory, getLastPoemContext, getSettings, getFamilyMembers, addFamilyMember, removeFamilyMember, updatePoemConfirmation, type DivinationRecord, type FamilyMember } from '@/services/storage';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritual-styles';
 import { gods, type God } from '@/data/gods';
+import { tossJiaobei, type JiaobeiResult } from '@/services/divination';
 import { getGodCardImage } from '@/data/godImages';
 import { recommendGods, type GodRecommendation } from '@/services/recommendation';
 import { useShakeDetector } from '@/hooks/useShakeDetector';
@@ -42,8 +44,11 @@ export default function HomeScreen() {
   const div = useDivination();
   const router = useRouter();
   const layout = useResponsiveLayout();
+  const { t } = useI18n();
   const reducedMotion = useReducedMotion();
   const [strictMode, setStrictMode] = React.useState(false);
+  const [lowMotionMode, setLowMotionMode] = React.useState(false);
+  const [shakeTossSignal, setShakeTossSignal] = React.useState(0);
   const [incenseDone, setIncenseDone] = React.useState(false);
   const [showFireworks, setShowFireworks] = React.useState(false);
   const [showWishBind, setShowWishBind] = React.useState(false);
@@ -55,6 +60,8 @@ export default function HomeScreen() {
   const [dailyRecommendation, setDailyRecommendation] = React.useState<GodRecommendation | null>(null);
   const [pendingReview, setPendingReview] = React.useState<DivinationRecord | null>(null);
   const [showCrossCompare, setShowCrossCompare] = React.useState(false);
+  const [poemConfirming, setPoemConfirming] = React.useState(false);
+  const [poemConfirmText, setPoemConfirmText] = React.useState<string | null>(null);
   const [familyMembers, setFamilyMembers] = React.useState<FamilyMember[]>([]);
   const [selectedPerson, setSelectedPerson] = React.useState<FamilyMember | null>(null);
   const [showAddFamily, setShowAddFamily] = React.useState(false);
@@ -67,9 +74,9 @@ export default function HomeScreen() {
     React.useCallback(() => {
       if (div.step === 'toss-jiaobei') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        div.performDraw();
+        setShakeTossSignal((value) => value + 1);
       }
-    }, [div]),
+    }, [div.step]),
     div.step === 'toss-jiaobei'
   );
 
@@ -117,7 +124,10 @@ export default function HomeScreen() {
   React.useEffect(() => {
     import('@/services/storage').then(({ getSettings }) => {
       getSettings().then(s => {
-        if (s) setStrictMode(s.strictMode || false);
+        if (s) {
+          setStrictMode(s.strictMode || false);
+          setLowMotionMode(Boolean(s.lowMotionMode));
+        }
       });
     });
   }, []);
@@ -195,6 +205,7 @@ export default function HomeScreen() {
       godName: div.selectedGod?.name || '神明',
       poemNumber: div.drawnPoem.number,
       poemSummary: div.drawnPoem.vernacular?.slice(0, 60) || div.drawnPoem.content.slice(0, 60),
+      dueDate: Date.now() + 30 * 24 * 60 * 60 * 1000,
     });
     setWishAdded(true);
     setShowWishBind(true);
@@ -211,7 +222,7 @@ export default function HomeScreen() {
       ) : (
         <View style={[styles.backBtnSmall, isCompact && styles.backBtnCompact]} />
       )}
-      <Text style={styles.appTitle}>🏛️ 神明占卜</Text>
+      <Text style={styles.appTitle}>🏛️ {t('homeTitle')}</Text>
       {div.step !== 'select-god' ? (
         <TouchableOpacity style={[styles.backBtn, isCompact && styles.backBtnCompact]} onPress={handleReset}>
           <Text style={styles.backBtnText}>✕ 重來</Text>
@@ -338,11 +349,13 @@ export default function HomeScreen() {
               onShengbei={div.performDraw}
               results={div.jiaobeiResults}
               strictMode={strictMode}
+              tossSignal={shakeTossSignal}
+              lowMotion={lowMotionMode}
               ritualStyleKey={ritualStyle}
               onStyleChange={setRitualStyle}
             />
             <View style={styles.shakeHint}>
-              <Text style={styles.shakeHintText}>📳 或搖動手機直接求籤</Text>
+              <Text style={styles.shakeHintText}>📳 或搖動手機擲筊</Text>
             </View>
           </View>
         );
@@ -353,6 +366,7 @@ export default function HomeScreen() {
             poemNumber={div.pendingPoem?.number}
             durationMs={div.drawAnimationDurationMs}
             styleKey={div.drawAnimationStyleKey}
+            lowMotion={lowMotionMode}
           />
         );
       case 'reveal-poem':
@@ -372,8 +386,10 @@ export default function HomeScreen() {
               god={div.selectedGod}
               aiInterpretation={div.aiInterpretation}
               isLoading={div.step === 'ai-interpret' && !div.aiInterpretation}
+              lowMotion={lowMotionMode}
               questionCategory={div.questionCategory}
               question={div.question}
+              record={div.currentRecord}
             />
             {/* 跨神明比對 */}
             {div.step === 'result' && div.selectedGodId != null && (
@@ -444,6 +460,19 @@ export default function HomeScreen() {
     await Share.share({ message: blessing });
   };
 
+  const handleConfirmPoem = async () => {
+    if (!div.currentRecord || poemConfirming) return;
+    setPoemConfirming(true);
+    const result: JiaobeiResult = tossJiaobei();
+    const confirmed = result === 'shengbei';
+    const label = result === 'shengbei' ? '聖筊，神明允此籤' : result === 'xiaobei' ? '笑筊，請再觀察籤意' : '陰筊，先保守解讀';
+    setPoemConfirmText(label);
+    await updatePoemConfirmation(div.currentRecord.id, confirmed, label);
+    Haptics.notificationAsync(
+      confirmed ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning
+    ).catch(() => {});
+    setPoemConfirming(false);
+  };
   const handleAskFollowUp = () => {
     router.push('/chat');
   };
@@ -482,7 +511,10 @@ export default function HomeScreen() {
             <Text style={styles.actionBtnIcon}>🧭</Text>
             <Text style={styles.actionBtnText}>回訪</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleAskFollowUp}>
+          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleConfirmPoem} disabled={poemConfirming}>
+            <Text style={styles.actionBtnIcon}>筊</Text>
+            <Text style={styles.actionBtnText}>{poemConfirmText ? '已確認' : poemConfirming ? '確認中' : '確認此籤'}</Text>
+          </TouchableOpacity>          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleAskFollowUp}>
             <Text style={styles.actionBtnIcon}>AI</Text>
             <Text style={styles.actionBtnText}>追問</Text>
           </TouchableOpacity>
@@ -504,10 +536,10 @@ export default function HomeScreen() {
           <Onboarding onComplete={() => setShowOnboarding(false)} />
         ) : (
           <>
-            <StarBackground />
-            {div.step === 'meditate' || div.step === 'toss-jiaobei' ? <IncenseSmoke /> : null}
-            <FireworksEffect active={showFireworks} />
-            <WishBindEffect active={showWishBind && !reducedMotion} />
+            {!lowMotionMode ? <StarBackground /> : null}
+            {!lowMotionMode && (div.step === 'meditate' || div.step === 'toss-jiaobei') ? <IncenseSmoke /> : null}
+            <FireworksEffect active={showFireworks && !lowMotionMode} />
+            <WishBindEffect active={showWishBind && !reducedMotion && !lowMotionMode} />
             <Modal visible={showAddFamily} transparent animationType="fade" onRequestClose={() => setShowAddFamily(false)}>
               <View style={styles.modalOverlay}>
                 <View style={styles.modalCard}>

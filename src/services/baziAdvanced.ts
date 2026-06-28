@@ -154,7 +154,6 @@ function getMonthPillar(year: number, month: number): Pillar {
   const monthGanIndex = (monthGanStart + (month - 1)) % 10;
   const monthZhiIndex = (month + 1) % 12; // 寅月=1月，卯月=2月...
   const gzIndex = (monthGanIndex * 6 + Math.floor(monthZhiIndex / 2)) % 60;
-  const gz = GAN_ZHI_60[gzIndex] ?? GAN_ZHI_60[0];
   return {
     gan: TIAN_GAN[monthGanIndex],
     zhi: DI_ZHI[monthZhiIndex],

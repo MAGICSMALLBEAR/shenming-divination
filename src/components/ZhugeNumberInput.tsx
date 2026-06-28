@@ -2,6 +2,7 @@
 import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView } from 'react-native';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { getZhugeNumberContext } from '@/data/poems/zhugeShenShu';
 
 interface ZhugeNumberInputProps {
   onSubmit: (number: number) => void;
@@ -48,6 +49,11 @@ export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
     outputRange: [TempleTheme.goldDark + '30', TempleTheme.gold + '80'],
   });
 
+  const numberContext = React.useMemo(() => {
+    const n = parseInt(digits, 10);
+    return digits && !isNaN(n) && n > 0 ? getZhugeNumberContext(n) : null;
+  }, [digits]);
+
   const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
 
   return (
@@ -80,6 +86,13 @@ export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
           )}
         </Animated.View>
       </Animated.View>
+
+      {numberContext ? (
+        <View style={styles.contextBox}>
+          <Text style={styles.contextTitle}>對應第 {numberContext.normalizedNumber} 數 · {numberContext.poem.title}</Text>
+          <Text style={styles.contextMeta}>{numberContext.poem.ganzhi} · {numberContext.poem.level}</Text>
+        </View>
+      ) : null}
 
       {/* 數字鍵盤 */}
       <View style={styles.keypad}>
@@ -159,6 +172,29 @@ const styles = StyleSheet.create({
   displayPlaceholder: {
     fontSize: TempleFonts.body, color: TempleTheme.textMuted + '60',
     letterSpacing: 3,
+  },
+  contextBox: {
+    width: '100%',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '30',
+    backgroundColor: TempleTheme.bgCard + 'AA',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: TempleSpacing.md,
+    alignItems: 'center',
+  },
+  contextTitle: {
+    fontSize: TempleFonts.small,
+    color: TempleTheme.goldLight,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 3,
+  },
+  contextMeta: {
+    fontSize: 11,
+    color: TempleTheme.textMuted,
+    textAlign: 'center',
   },
   keypad: {
     flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',

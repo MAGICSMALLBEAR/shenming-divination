@@ -53,7 +53,7 @@ function ParticleItem({ particle, onDone }: { particle: Particle; onDone?: () =>
       Animated.timing(progress, {
         toValue: 1,
         duration: 700,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
     ]).start(() => onDone?.());
   }, []);

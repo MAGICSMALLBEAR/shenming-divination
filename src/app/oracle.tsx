@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { drawHexagram, getLuckColor, getLuckLabel, type Hexagram } from '@/data/iching';
-import { TAROT_MAJOR, drawTarot, type TarotCard } from '@/data/tarot';
+import { drawTarot, type TarotCard } from '@/data/tarot';
 import { DecorativeBg } from '@/components/DecorativeBg';
 
 type Tab = 'iching' | 'tarot' | 'pendulum';

@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, ScrollView, TouchableOpacity, Alert, Platform, useWindowDimensions, type DimensionValue } from 'react-native';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import type { Poem } from '@/data/poems/leiyushi';
 import type { God } from '@/data/gods';
@@ -17,6 +18,7 @@ import { captureAndShare } from '@/services/shareCard';
 import { extractInterpretationSections } from '@/services/interpretation';
 import { buildActionPlan } from '@/services/actionPlan';
 import { addWish } from '@/services/wishTracker';
+import { updateVerification, type DivinationRecord, type VerificationStatus } from '@/services/storage';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 interface PoemCardProps {
@@ -24,10 +26,12 @@ interface PoemCardProps {
   godName: string;
   aiInterpretation?: string | null;
   isLoading?: boolean;
+  lowMotion?: boolean;
   questionCategory?: string;
   userName?: string;
   god?: God | null;
   question?: string;
+  record?: DivinationRecord | null;
 }
 
 const REVEAL_DUST = [
@@ -40,9 +44,11 @@ const REVEAL_DUST = [
   { left: '74%', top: '44%', delay: 0.48, size: 5 },
 ] as const;
 
-export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionCategory, userName, god, question }: PoemCardProps) {
+export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion = false, questionCategory, userName, god, question, record }: PoemCardProps) {
   const { width } = useWindowDimensions();
-  const reducedMotion = useReducedMotion();
+  const router = useRouter();
+  const systemReducedMotion = useReducedMotion();
+  const reducedMotion = systemReducedMotion || lowMotion;
   const poemTheme = getPoemTheme(poem.number, poem.level);
   const isCompact = width < 480;
   const isTablet = width >= 768;
@@ -88,17 +94,17 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
     dustLoop.start();
 
     // 1. 卡片淡入
-    Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: false }).start();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
 
     // 2. 捲軸展開
     Animated.timing(scrollAnim, {
       toValue: 1, duration: 900,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start(() => {
       // 3. 文字逐行浮現
       Animated.stagger(120,
         lineAnims.map(a =>
-          Animated.spring(a, { toValue: 1, friction: 8, tension: 60, useNativeDriver: false })
+          Animated.spring(a, { toValue: 1, friction: 8, tension: 60, useNativeDriver: true })
         )
       ).start();
     });
@@ -113,7 +119,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
         aiFadeAnim.setValue(1);
         return;
       }
-      Animated.timing(aiFadeAnim, { toValue: 1, duration: 800, useNativeDriver: false }).start();
+      Animated.timing(aiFadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
     }
   }, [aiFadeAnim, aiInterpretation, reducedMotion]);
 
@@ -152,6 +158,35 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
   );
   const closeupImage = getGodCloseupImage(god?.id);
   const [savedActionIndex, setSavedActionIndex] = useState<number | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(
+    record?.verificationStatus ?? 'pending'
+  );
+
+  useEffect(() => {
+    setVerificationStatus(record?.verificationStatus ?? 'pending');
+  }, [record?.id, record?.verificationStatus]);
+
+  const formatReviewDate = (timestamp?: number) => {
+    if (!timestamp) return '未設定';
+    const date = new Date(timestamp);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  };
+
+  const verificationMeta: Record<VerificationStatus, { label: string; color: string }> = {
+    pending: { label: '待驗證', color: TempleTheme.warning },
+    matched: { label: '已應驗', color: TempleTheme.success },
+    unmatched: { label: '不太符合', color: TempleTheme.danger },
+  };
+
+  const handleQuickVerification = async (status: VerificationStatus) => {
+    if (!record?.id) return;
+    try {
+      await updateVerification(record.id, status, record.verificationNotes ?? '');
+      setVerificationStatus(status);
+    } catch {
+      Alert.alert('追蹤失敗', '請稍後再試一次。');
+    }
+  };
 
   const handleShareCard = async () => {
     if (sharing || Platform.OS === 'web') {
@@ -192,6 +227,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
         godName,
         poemNumber: poem.number,
         poemSummary: poem.vernacular.slice(0, 60),
+        dueDate: Date.now() + 7 * 24 * 60 * 60 * 1000,
       });
       setSavedActionIndex(index);
       setTimeout(() => setSavedActionIndex(null), 2000);
@@ -283,6 +319,12 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
           <Text style={styles.metadataLabel}>{oracleCatalog.label}</Text>
           <Text style={styles.metadataText}>{oracleCatalog.sourceNote}</Text>
           <Text style={styles.metadataHint}>{oracleCatalog.completenessNote}</Text>
+          <Text style={styles.metadataSubTitle}>來源與版本</Text>
+          <Text style={styles.metadataBullet}>• {oracleCatalog.sourceType}</Text>
+          <Text style={styles.metadataBullet}>• {oracleCatalog.editionNote}</Text>
+          <Text style={styles.metadataBullet}>• 版本：{oracleCatalog.versionTag}</Text>
+          <Text style={styles.metadataSubTitle}>適用題型</Text>
+          <Text style={styles.metadataText}>{oracleCatalog.suitabilityNote}</Text>
           <View style={styles.metadataChipRow}>
             {oracleCatalog.strengths.map((item) => (
               <View key={item} style={[styles.metadataChip, { borderColor: godAccent + '50' }]}>
@@ -401,16 +443,53 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
                 onPress={() => handleSaveActionWish(step, index)}
               >
                 <Text style={styles.actionWishBtnText}>
-                  {savedActionIndex === index ? '已加入' : '設為願望'}
+                  {savedActionIndex === index ? '已加入' : '7天追蹤'}
                 </Text>
               </TouchableOpacity>
             </View>
           ))}
         </View>
 
+       
+        {record ? (
+          <View style={styles.verificationMiniCard}>
+            <View style={styles.verificationMiniHeader}>
+              <Text style={styles.verificationMiniTitle}>應驗追蹤</Text>
+              <Text style={[styles.verificationMiniBadge, { color: verificationMeta[verificationStatus].color, borderColor: verificationMeta[verificationStatus].color + '66' }]}>
+                {verificationMeta[verificationStatus].label}
+              </Text>
+            </View>
+            <Text style={styles.verificationMiniText}>
+              系統已排定 7 天 {formatReviewDate(record.verificationDueAt)} 與 30 天 {formatReviewDate(record.verificationFinalDueAt)} 回訪。回來標記準不準，之後 AI 解籤會更懂你的脈絡。
+            </Text>
+            <View style={styles.verificationMiniActions}>
+              {(['pending', 'matched', 'unmatched'] as VerificationStatus[]).map((status) => (
+                <TouchableOpacity
+                  key={status}
+                  style={[
+                    styles.verificationMiniBtn,
+                    verificationStatus === status && { borderColor: verificationMeta[status].color, backgroundColor: verificationMeta[status].color + '14' },
+                  ]}
+                  onPress={() => handleQuickVerification(status)}
+                >
+                  <Text style={styles.verificationMiniBtnText}>{verificationMeta[status].label}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity style={styles.verificationMiniLink} onPress={() => router.push('/collection?tab=history' as never)}>
+                <Text style={styles.verificationMiniLinkText}>打開回顧</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
         <View style={[styles.actionRow, isCompact && styles.actionRowCompact]}>
           <TouchableOpacity style={[styles.copyBtn, styles.actionBtnHalf]} onPress={handleCopy}>
             <Text style={styles.copyBtnText}>{copied ? '✓ 已複製' : '📋 複製'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.communityBtn, styles.actionBtnHalf]} onPress={() => router.push('/community' as never)}>
+            <Text style={styles.communityBtnText}>💬 社群交流</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.communityBtn, styles.actionBtnHalf]} onPress={() => router.push('/community' as never)}>
+            <Text style={styles.communityBtnText}>💬 社群交流</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.shareCardBtn, styles.actionBtnHalf]} onPress={handleShareCard} disabled={sharing}>
             <Text style={styles.shareCardBtnText}>{sharing ? '產生中…' : '🖼️ 圖卡分享'}</Text>
@@ -418,14 +497,14 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, questionC
         </View>
         {/* 隱藏的圖卡模板，供截圖 */}
         <View style={styles.hiddenCard}>
-          <ShareCardView ref={shareCardRef} godName={godName} poem={poem} aiInterpretation={aiInterpretation} />
+          <ShareCardView ref={shareCardRef} godName={godName} poem={poem} aiInterpretation={aiInterpretation} question={question} actionPlan={actionPlan} />
         </View>
       </Animated.View>
 
       {/* AI 解籤 */}
       {isLoading && (
         <View style={styles.aiLoading}>
-          <Text style={styles.aiLoadingText}>{godName}正在為您解籤...</Text>
+          <Text style={styles.aiLoadingText}>籤詩已先顯示，{godName}正在補上開示...</Text>
           <View style={styles.loadingDots}>
             {[0, 1, 2].map(i => <View key={i} style={[styles.dot, { opacity: 0.3 + i * 0.3 }]} />)}
           </View>
@@ -778,12 +857,89 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  verificationMiniCard: {
+    marginHorizontal: TempleSpacing.md,
+    marginBottom: TempleSpacing.md,
+    padding: TempleSpacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: TempleTheme.warning + '35',
+    backgroundColor: TempleTheme.bgDark + '50',
+  },
+  verificationMiniHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: TempleSpacing.sm,
+    marginBottom: 8,
+  },
+  verificationMiniTitle: {
+    color: TempleTheme.goldLight,
+    fontSize: TempleFonts.body,
+    fontWeight: '900',
+  },
+  verificationMiniBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    fontSize: 11,
+    fontWeight: '800',
+    overflow: 'hidden',
+  },
+  verificationMiniText: {
+    color: TempleTheme.textMuted,
+    fontSize: TempleFonts.small,
+    lineHeight: 20,
+    marginBottom: TempleSpacing.sm,
+  },
+  verificationMiniActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  verificationMiniBtn: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '28',
+    backgroundColor: TempleTheme.bgCard,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  verificationMiniBtnText: {
+    color: TempleTheme.textLight,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  verificationMiniLink: {
+    borderRadius: 999,
+    backgroundColor: TempleTheme.goldDark + '30',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  verificationMiniLinkText: {
+    color: TempleTheme.goldLight,
+    fontSize: 12,
+    fontWeight: '800',
+  },
   actionRow: { flexDirection: 'row', gap: TempleSpacing.sm, marginHorizontal: TempleSpacing.md, marginTop: TempleSpacing.sm, marginBottom: TempleSpacing.xs },
   actionRowCompact: { flexDirection: 'column', marginHorizontal: 12 },
   actionBtnHalf: { flex: 1 },
   copyBtn: { paddingVertical: 10, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '50' },
   copyBtnText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
-  shareCardBtn: { paddingVertical: 10, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '50', backgroundColor: TempleTheme.bgCard },
+  communityBtn: {
+    backgroundColor: TempleTheme.bgDark + '88',
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: TempleTheme.goldDark + '35',
+  },
+  communityBtnText: {
+    color: TempleTheme.textLight,
+    fontSize: TempleFonts.small,
+    fontWeight: '800',
+  },  shareCardBtn: { paddingVertical: 10, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '50', backgroundColor: TempleTheme.bgCard },
   shareCardBtnText: { fontSize: TempleFonts.small, color: TempleTheme.gold },
   hiddenCard: { position: 'absolute', top: -9999, left: -9999, opacity: 0 },
   aiLoading: { alignItems: 'center', padding: TempleSpacing.lg },

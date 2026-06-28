@@ -14,12 +14,6 @@ import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-them
 const HEAVENLY_STEMS = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
 const EARTHLY_BRANCHES = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
 
-// 12 宮名
-const PALACE_NAMES = [
-  '命宮','兄弟宮','夫妻宮','子女宮','財帛宮','疾厄宮',
-  '遷移宮','交友宮','官祿宮','田宅宮','福德宮','父母宮',
-];
-
 // 主星 — 依生年地支（農曆）分配紫微至何宮
 const ZIWEI_STAR_BY_BRANCH: Record<string, string> = {
   子: '命宮', 丑: '父母宮', 寅: '福德宮', 卯: '田宅宮',

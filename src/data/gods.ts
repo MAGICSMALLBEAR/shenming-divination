@@ -5,6 +5,12 @@ import { jiazi60Poems } from './poems/jiazi60';
 import { zhugeShenShuPoems } from './poems/zhugeShenShu';
 import { guanyinLingQianPoems } from './poems/guanyinLingQian';
 import { ershibaxiuPoems } from './poems/ershibaxiu';
+import {
+  baoshengHealthPoems,
+  jigongLingQianPoems,
+  santaiziBreakthroughPoems,
+  yuelaoMarriagePoems,
+} from './poems/godSpecific';
 
 export interface God {
   id: number;
@@ -88,7 +94,7 @@ export const gods: God[] = [
     name: '保生大帝',
     title: '保生大帝',
     description: '醫藥之神，精通醫術。信眾祈求身體健康、疾病痊癒、藥方有效。',
-    poemSystem: '雷雨師百首',
+    poemSystem: '保生健康籤（雷雨師）',
     totalPoems: 100,
     image: require('@/assets/images/gods/baoshengdadi.png'),
     blessing: '願大帝慈悲醫治，藥到病除，身心安康，福壽綿長。',
@@ -178,7 +184,7 @@ export const gods: God[] = [
     name: '濟公活佛',
     title: '濟公活佛',
     description: '南宋高僧道濟禪師，形象破帽破扇破鞋，不受戒律拘束。以顛狂不羈之姿行走人間，專解疑難雜症，以幽默智慧化解煩憂。信眾求突破困境、化險為夷、心開意解。',
-    poemSystem: '雷雨師百首',
+    poemSystem: '濟公活佛籤（雷雨師）',
     totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/jigonghuofo-card.png'),
     blessing: '願濟公師父慈悲點化，嬉笑怒罵皆智慧，煩惱執著都放下，一切隨緣自在。',
@@ -193,7 +199,7 @@ export const gods: God[] = [
     name: '三太子',
     title: '中壇元帥',
     description: '托塔天王李靖第三子哪吒三太子，手持乾坤圈、火尖槍，腳踏風火輪。少年英雄，剛猛直率，活潑熱情。信眾祈求事業衝刺、創意靈感、突破難關、身體健康。',
-    poemSystem: '六十甲子籤',
+    poemSystem: '三太子衝關籤（六十甲子）',
     totalPoems: 60,
     image: require('@/assets/images/gods/generated/cards/santaizi-card.png'),
     blessing: '願三太子風火神威加持，勇猛精進不退縮，突破眼前的關卡，看見新的風景。',
@@ -208,7 +214,7 @@ export const gods: God[] = [
     name: '月下老人',
     title: '月下老人',
     description: '手持天下姻緣簿與紅絲線，專司人間男女婚姻。傳說月下老人以紅線繫住有緣男女的腳，千里姻緣一線牽。信眾祈求良緣、感情和合、婚姻美滿。',
-    poemSystem: '六十甲子籤',
+    poemSystem: '月老姻緣籤（六十甲子）',
     totalPoems: 60,
     image: require('@/assets/images/gods/generated/cards/yuexialaoren-card.png'),
     blessing: '願月老慈悲牽紅線，良緣早成，心意相通，有情人終成眷屬。',
@@ -268,6 +274,10 @@ export function getPoemsByGod(godId: number) {
   if (!god) return leiyushiPoems;
 
   if (god.poemSystem === '六十甲子籤') return jiazi60Poems;
+  if (god.poemSystem === '保生健康籤（雷雨師）') return baoshengHealthPoems;
+  if (god.poemSystem === '濟公活佛籤（雷雨師）') return jigongLingQianPoems;
+  if (god.poemSystem === '三太子衝關籤（六十甲子）') return santaiziBreakthroughPoems;
+  if (god.poemSystem === '月老姻緣籤（六十甲子）') return yuelaoMarriagePoems;
   if (god.poemSystem === '諸葛神數') return zhugeShenShuPoems;
   if (god.poemSystem === '觀音靈籤') return guanyinLingQianPoems;
   if (god.poemSystem === '二十八宿靈籤') return ershibaxiuPoems;

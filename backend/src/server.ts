@@ -132,9 +132,22 @@ function buildStructuredFallback(params: {
       ? `${params.godName}這次更像是在提醒你先穩住，再決定要不要往前。`
       : `${params.godName}給的是觀察型提醒，現在最重要的是看清局勢。`;
 
+  const state = isPositive
+    ? '目前有可用助力，但還需要你把機會落到具體行動。'
+    : isCautious
+      ? '目前阻力較明顯，先降風險、慢半拍確認，會比硬推更穩。'
+      : '目前局勢還在整理中，適合多觀察訊號與人事變化。';
+
+  const avoid = isCautious
+    ? '不宜賭氣、衝動承諾、立刻投入大量資源。'
+    : '不宜把順勢當成保證，也不宜忽略細節與後續收尾。';
+
   return [
     '【一句結論】',
     summary,
+    '',
+    '【目前狀態】',
+    state,
     '',
     '【籤意重點】',
     `你問的是${categoryLabel}。目前這題的關鍵，不只在結果，也在你怎麼拿捏節奏與判斷。`,
@@ -147,6 +160,9 @@ function buildStructuredFallback(params: {
     '',
     '【需要留意】',
     '不要一次想解決所有問題，也不要在情緒最重的時候做大決定。',
+    '',
+    '【不宜做什麼】',
+    avoid,
     '',
     '【適合追問】',
     params.question
@@ -209,11 +225,13 @@ app.post('/api/interpret', async (req, res) => {
     const systemPrompt = [
       personality,
       `使用者稱呼：${userName || '信眾'}`,
-      '請直接輸出以下五段，標題必須完全一致：',
+      '請直接輸出以下七段，標題必須完全一致：',
       '【一句結論】',
+      '【目前狀態】',
       '【籤意重點】',
       '【建議行動】',
       '【需要留意】',
+      '【不宜做什麼】',
       '【適合追問】',
       '不要輸出 JSON，也不要寫前言。',
       '每段 1 到 3 句即可，重點放在可理解與可執行，同時維持該神明的語氣特色。',

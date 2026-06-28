@@ -326,8 +326,52 @@ export const zhugeShenShuPoems: Poem[] = [
     jieYue: { marriage: '尚待最後磨合', wealth: '尚未完全落袋', career: '收尾最重要', health: '康復未竟', travel: '行程尚未完結', study: '臨門仍須用功', general: '中平，慎終則吉' } },
 ];
 
+export interface ZhugeHexagramReference {
+  number: number;
+  name: string;
+  ganzhi: string;
+  level: string;
+  theme: string;
+}
+
+export interface ZhugeNumberContext {
+  inputNumber: number;
+  normalizedNumber: number;
+  poem: Poem;
+  methodNote: string;
+}
+
+export const zhugeShenShuMethod = {
+  label: '報數問卦',
+  rule: '輸入任一正整數後，以 64 為循環取得對應卦數；0 與負數會先取絕對值並回到 1 到 64。',
+  editionNote: '此版本以六十四卦象義轉為現代白話籤解，偏向策略、風險與下一步提醒。',
+};
+
+export const zhugeHexagramIndex: ZhugeHexagramReference[] = zhugeShenShuPoems.map((poem) => ({
+  number: poem.number,
+  name: poem.title,
+  ganzhi: poem.ganzhi,
+  level: poem.level,
+  theme: poem.story,
+}));
+
+export function normalizeZhugeNumber(inputNumber: number): number {
+  const wholeNumber = Math.trunc(Math.abs(inputNumber));
+  if (!wholeNumber) return 1;
+  return ((wholeNumber - 1) % zhugeShenShuPoems.length) + 1;
+}
+
+export function getZhugeNumberContext(inputNumber: number): ZhugeNumberContext {
+  const normalizedNumber = normalizeZhugeNumber(inputNumber);
+  return {
+    inputNumber,
+    normalizedNumber,
+    poem: zhugeShenShuPoems[normalizedNumber - 1],
+    methodNote: zhugeShenShuMethod.rule,
+  };
+}
+
 // 根據報的數字取對應籤
 export function drawZhugePoem(inputNumber: number): typeof zhugeShenShuPoems[0] {
-  const idx = Math.abs(inputNumber - 1) % zhugeShenShuPoems.length;
-  return zhugeShenShuPoems[idx];
+  return getZhugeNumberContext(inputNumber).poem;
 }

@@ -33,6 +33,7 @@ interface AIInterpretRequest {
   poemMeaning: string;
   poemStory: string;
   poemLevel: string;
+  recentHistorySummary?: string;
 }
 
 const categoryContext: Record<string, string> = {
@@ -57,6 +58,12 @@ function buildFallbackInterpretation(params: AIInterpretRequest): string {
       ? `${params.godName}這次更像是在提醒你放慢腳步，先穩住再決定。`
       : `${params.godName}給的是觀察型提示，現在最重要的是看清局勢再動。`;
 
+  const state = isPositive
+    ? '目前局勢已有可用的助力，但仍需要你把方向收斂成具體行動。'
+    : isCautious
+      ? '目前局勢仍有阻力，先保留彈性、降低風險，會比硬推更好。'
+      : '目前局勢還在醞釀，適合觀察訊號、整理條件，再決定下一步。';
+
   const insight = `這次你問的是${categoryLabel}。籤詩白話提到「${params.poemMeaning.slice(0, 28)}」，表示事情的關鍵不只在結果，也在你的節奏與判斷。`;
 
   const action = isPositive
@@ -69,6 +76,14 @@ function buildFallbackInterpretation(params: AIInterpretRequest): string {
     ? '不要因一時心急或外界壓力做出太快的承諾。'
     : '避免同時分心處理太多方向，否則會把原本可解的事做亂。';
 
+  const avoid = isCautious
+    ? '不宜賭氣、衝動表態、立刻投入大量金錢或承諾。'
+    : '不宜把好兆頭當成保證，也不宜忽略細節與人的感受。';
+
+  const historyHint = params.recentHistorySummary
+    ? `過去同類問題中，你曾有這些紀錄：${params.recentHistorySummary}。這次可把它視為延續觀察，而不是孤立事件。`
+    : '目前沒有足夠的同類回訪紀錄，建議把這次結果保存，之後再驗證。';
+
   const followUp = params.question
     ? `可以追問：「關於${params.question}，我下一步最該確認的是什麼？」`
     : '可以追問時間點、阻礙來源，或最適合先處理的那一步。';
@@ -78,14 +93,23 @@ function buildFallbackInterpretation(params: AIInterpretRequest): string {
       '【一句結論】',
       summary,
       '',
+      '【目前狀態】',
+      state,
+      '',
       '【籤意重點】',
       insight,
       '',
       '【建議行動】',
       action,
       '',
+      '【過去脈絡】',
+      historyHint,
+      '',
       '【需要留意】',
       caution,
+      '',
+      '【不宜做什麼】',
+      avoid,
       '',
       '【適合追問】',
       followUp,

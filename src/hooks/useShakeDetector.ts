@@ -18,7 +18,7 @@ export function useShakeDetector(onShake: () => void, enabled = true) {
 
     let Accelerometer: any;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+
       Accelerometer = require('expo-sensors').Accelerometer;
     } catch {
       return;

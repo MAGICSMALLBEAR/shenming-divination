@@ -401,10 +401,6 @@ export const GOD_BIRTHDAYS_LUNAR: GodBirthdayEntry[] = [
   },
 ];
 
-// 農曆日→公曆日期的粗略換算（用固定偏移，精確版需天文計算）
-// 這裡用今年農曆月比對，回傳近似公曆月份（每年差約21~51天不等）
-const LUNAR_TO_SOLAR_APPROX_OFFSET_DAYS = 29; // 農曆比公曆早約29天（平均值）
-
 // 推算「近似公曆日期」：農曆 M 月 D 日 ≈ 公曆 (M+1) 月 D 日（粗略）
 function approxSolarFromLunar(year: number, lunarMonth: number, lunarDay: number): Date {
   // 農曆通常比公曆晚 1-2 個月，這裡用 +1 個月粗略換算

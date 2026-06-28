@@ -8,7 +8,7 @@ export interface SolarTerm {
 }
 
 // 2026 年二十四節氣（月/日）
-const SOLAR_TERMS_2026: Array<{ month: number; day: number; term: SolarTerm }> = [
+const SOLAR_TERMS_2026: { month: number; day: number; term: SolarTerm }[] = [
   { month: 1,  day: 5,  term: { name: '小寒', element: '水', guidance: '寒氣凝聚，心誠則靈，宜靜心默禱', auspicious: '祈福、謀事', avoid: '輕率決策' } },
   { month: 1,  day: 20, term: { name: '大寒', element: '水', guidance: '嚴冬末節，蓄勢待發，籤意主謹慎', auspicious: '儲蓄、靜守', avoid: '冒進、爭競' } },
   { month: 2,  day: 4,  term: { name: '立春', element: '木', guidance: '萬象更新，求籤問事生機蓬勃', auspicious: '開業、求財、感情', avoid: '怠惰拖延' } },
