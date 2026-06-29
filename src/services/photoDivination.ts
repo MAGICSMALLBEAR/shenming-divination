@@ -83,6 +83,18 @@ function findMatchedPoem(visionResult: VisionResult): MatchedPoem | null {
     candidateGodIds = gods.map(g => g.id);
   }
 
+  // 優先檢查有專屬籤詩系統的神明（避免同名詩號被基底系統先匹配）
+  const baseSystems = new Set(['雷雨師百首', '六十甲子籤']);
+  candidateGodIds.sort((a, b) => {
+    const godA = gods.find(g => g.id === a);
+    const godB = gods.find(g => g.id === b);
+    const aIsBase = godA ? baseSystems.has(godA.poemSystem) : true;
+    const bIsBase = godB ? baseSystems.has(godB.poemSystem) : true;
+    if (aIsBase && !bIsBase) return 1;
+    if (!aIsBase && bIsBase) return -1;
+    return 0;
+  });
+
   for (const godId of candidateGodIds) {
     const god = gods.find(g => g.id === godId);
     if (!god) continue;

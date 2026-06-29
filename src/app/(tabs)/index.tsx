@@ -189,7 +189,7 @@ export default function HomeScreen() {
       default: handleReset();
     }
   };
-  const handleReset = () => { setIncenseDone(false); setWishAdded(false); div.reset(); };
+  const handleReset = () => { setIncenseDone(false); setWishAdded(false); setPoemConfirmText(null); setPoemConfirming(false); div.reset(); };
   const handleSelectGod = (godId: number) => {
     const god = gods.find((item) => item.id === godId);
     if (god) {
@@ -289,11 +289,11 @@ export default function HomeScreen() {
               <DailyGodRecommendationCard
                 recommendation={dailyRecommendation}
                 onSelect={() => handleSelectGod(dailyRecommendation.god.id)}
-                reducedMotion={reducedMotion}
+                reducedMotion={reducedMotion || lowMotionMode}
               />
             ) : null}
             {pendingReview ? (
-              <PendingReviewCard record={pendingReview} onPress={handleReviewRecord} reducedMotion={reducedMotion} />
+              <PendingReviewCard record={pendingReview} onPress={handleReviewRecord} reducedMotion={reducedMotion || lowMotionMode} />
             ) : null}
             {hasLastPoemContext ? (
               <TouchableOpacity style={styles.followUpShortcut} onPress={handleAskFollowUp}>
@@ -312,7 +312,7 @@ export default function HomeScreen() {
                 god={div.selectedGod}
                 image={selectedGodCardImage}
                 isCompact={isCompact}
-                reducedMotion={reducedMotion}
+                reducedMotion={reducedMotion || lowMotionMode}
               />
             )}
             <QuestionForm

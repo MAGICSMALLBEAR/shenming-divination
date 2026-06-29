@@ -153,9 +153,12 @@ export async function removeFavorite(id: string): Promise<void> {
   await setFavorites(favorites.filter((record) => record.id !== id));
 }
 
-export async function isFavorite(poemNumber: number): Promise<boolean> {
+export async function isFavorite(poemNumber: number, godName?: string): Promise<boolean> {
   const favorites = await getFavorites();
-  return favorites.some((record) => record.poem.number === poemNumber);
+  return favorites.some((record) =>
+    record.poem.number === poemNumber &&
+    (!godName || record.godName === godName)
+  );
 }
 
 export async function getHistory(): Promise<DivinationRecord[]> {

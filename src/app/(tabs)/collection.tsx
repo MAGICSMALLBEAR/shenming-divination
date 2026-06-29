@@ -274,8 +274,17 @@ export default function CollectionScreen() {
 
   const handleToggleAction = async (record: DivinationRecord, index: number) => {
     const done = !record.actionProgress?.[index];
+    setFavorites(prev => prev.map(r =>
+      r.id === record.id
+        ? { ...r, actionProgress: r.actionProgress ? r.actionProgress.map((p, i) => i === index ? done : p) : [] }
+        : r
+    ));
+    setHistory(prev => prev.map(r =>
+      r.id === record.id
+        ? { ...r, actionProgress: r.actionProgress ? r.actionProgress.map((p, i) => i === index ? done : p) : [] }
+        : r
+    ));
     await updateActionProgress(record.id, index, done);
-    await loadData();
   };
   const handleSaveVerification = async (id: string) => {
     await updateVerification(id, pendingVerificationStatus, verificationNoteText);

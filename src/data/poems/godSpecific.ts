@@ -37,7 +37,9 @@ function buildFocusedJieYue(poem: Poem, config: GodSpecificConfig): JieYue {
   return {
     ...poem.jieYue,
     [config.focusKey]: `${config.focusLabel}專解：${originalFocus}。${advice}`,
-    general: `${config.generalPrefix}：${poem.jieYue.general}。${advice}`,
+    ...(config.focusKey !== 'general' && {
+      general: `${config.generalPrefix}：${poem.jieYue.general}。${advice}`,
+    }),
   };
 }
 

@@ -41,10 +41,10 @@ export function Jiaobei({
   const settleProgress = useRef(new Animated.Value(0)).current;
   const resultFade = useRef(new Animated.Value(0)).current;
   const strictCount = results.filter((result) => result === 'shengbei').length;
-  const latestResult = results[results.length - 1] ?? null;
+  const preTossResultLength = useRef(results.length);
   const visibleStrictCount = Math.min(
     3,
-    strictCount + (currentResult === 'shengbei' && latestResult !== 'shengbei' ? 1 : 0)
+    strictCount + (currentResult === 'shengbei' && preTossResultLength.current === results.length ? 1 : 0)
   );
   const attemptLabel = currentResult && !isAnimating
     ? '已完成 ' + results.length + ' 次擲筊'
@@ -58,6 +58,7 @@ export function Jiaobei({
     if (isAnimating) {
       return;
     }
+    preTossResultLength.current = results.length;
 
     setIsAnimating(true);
     setCurrentResult(null);
@@ -107,7 +108,7 @@ export function Jiaobei({
         }
       });
     });
-  }, [isAnimating, lowMotion, onShengbei, onToss, resultFade, settleProgress, strictCount, strictMode, tossProgress]);
+  }, [isAnimating, lowMotion, onShengbei, onToss, resultFade, results, settleProgress, strictCount, strictMode, tossProgress]);
 
   React.useEffect(() => {
     if (tossSignal == null || lastTossSignal.current === tossSignal) {

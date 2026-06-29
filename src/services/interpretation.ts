@@ -6,9 +6,11 @@ export interface InterpretationSection {
 
 const SECTION_TITLES: InterpretationSection[] = [
   { key: 'summary', title: '一句結論', lines: [] },
+  { key: 'state', title: '目前狀態', lines: [] },
   { key: 'insight', title: '籤意重點', lines: [] },
   { key: 'actions', title: '建議行動', lines: [] },
   { key: 'cautions', title: '需要留意', lines: [] },
+  { key: 'avoid', title: '不宜做什麼', lines: [] },
   { key: 'followUp', title: '適合追問', lines: [] },
 ];
 

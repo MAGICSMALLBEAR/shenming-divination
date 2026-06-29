@@ -488,9 +488,6 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
           <TouchableOpacity style={[styles.communityBtn, styles.actionBtnHalf]} onPress={() => router.push('/community' as never)}>
             <Text style={styles.communityBtnText}>💬 社群交流</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.communityBtn, styles.actionBtnHalf]} onPress={() => router.push('/community' as never)}>
-            <Text style={styles.communityBtnText}>💬 社群交流</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={[styles.shareCardBtn, styles.actionBtnHalf]} onPress={handleShareCard} disabled={sharing}>
             <Text style={styles.shareCardBtnText}>{sharing ? '產生中…' : '🖼️ 圖卡分享'}</Text>
           </TouchableOpacity>

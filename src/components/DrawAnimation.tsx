@@ -64,6 +64,7 @@ export function DrawAnimation({
   const flipAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [phaseIndex, setPhaseIndex] = useState(0);
+  const [trackWidth, setTrackWidth] = useState(220);
 
   const highlightColor = god?.accentColor || TempleTheme.goldLight;
   const primaryColor = god?.primaryColor || TempleTheme.redLight;
@@ -234,8 +235,8 @@ export function DrawAnimation({
 
   const progressTranslateX = useMemo(() => progressAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-110, 0],
-  }), [progressAnim]);
+    outputRange: [-trackWidth / 2, 0],
+  }), [progressAnim, trackWidth]);
 
   const flashScale = useMemo(() => flashAnim.interpolate({
     inputRange: [0, 1],
@@ -405,12 +406,13 @@ export function DrawAnimation({
         ))}
       </View>
 
-      <View style={styles.progressTrack}>
+      <View style={styles.progressTrack} onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}>
         <Animated.View
           style={[
             styles.progressFill,
             {
               backgroundColor: highlightColor,
+              width: trackWidth,
               transform: [{ translateX: progressTranslateX }, { scaleX: progressScaleX }],
             },
           ]}

@@ -170,7 +170,7 @@ export function useDivination() {
     setCurrentRecord(record);
 
     // 檢查是否已收藏
-    const fav = await isFavorite(poem.number);
+    const fav = await isFavorite(poem.number, god?.name);
     setIsFavorited(fav);
 
     setIsLoading(false);
