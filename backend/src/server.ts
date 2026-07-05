@@ -543,16 +543,16 @@ app.get('/api/health', (_req, res) => {
 
 app.listen(PORT, () => {
   const config = getAIConfig();
-  console.log(`神明占卜 API 已啟動：http://localhost:${PORT}`);
+  console.log(`Shenming Divination API ready: http://localhost:${PORT}`);
   console.log(`Interpret: POST http://localhost:${PORT}/api/interpret`);
   console.log(`Chat:      POST http://localhost:${PORT}/api/chat`);
   console.log(`Vision:    POST http://localhost:${PORT}/api/vision`);
-  console.log(`合婚:      POST http://localhost:${PORT}/api/bazi/match`);
-  console.log(`擇日:      POST http://localhost:${PORT}/api/择日`);
+  console.log(`BaziMatch: POST http://localhost:${PORT}/api/bazi/match`);
+  console.log('DatePick:  endpoint enabled');
   console.log(`Health:    GET  http://localhost:${PORT}/api/health`);
   console.log(
     hasUsableApiKey(config)
       ? `AI provider: ${config.provider} (${config.model})`
-      : 'AI provider: fallback only（尚未設定有效 API Key）'
+      : 'AI provider: fallback only (no valid API key configured)'
   );
 });
