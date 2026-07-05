@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { TempleTheme, TempleSpacing } from '@/constants/temple-theme';
+import { TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import type { FamilyMember } from '@/services/storage';
 
 interface Props {
@@ -18,6 +20,8 @@ export function ForWhomSelector({
   onAddPress,
   onRemove,
 }: Props) {
+  const { theme } = useAppTheme();
+  const famStyle = useMemo(() => createFamStyle(theme), [theme]);
   const isSelf = selectedPerson === null;
   return (
     <View style={famStyle.row}>
@@ -49,14 +53,16 @@ export function ForWhomSelector({
   );
 }
 
-const famStyle = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: TempleSpacing.md, paddingVertical: 6, backgroundColor: TempleTheme.bgMedium },
-  label: { color: TempleTheme.textMuted, fontSize: 13, marginRight: 6, flexShrink: 0 },
-  chips: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-  chip: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: TempleTheme.gold },
-  chipActive: { backgroundColor: TempleTheme.gold },
-  chipText: { color: TempleTheme.gold, fontSize: 13 },
-  chipTextActive: { color: TempleTheme.bgDark, fontWeight: 'bold' },
-  addBtn: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: TempleTheme.goldDark },
-  addBtnText: { color: TempleTheme.goldDark, fontSize: 16, lineHeight: 20 },
-});
+function createFamStyle(theme: ThemeColors) {
+  return StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: TempleSpacing.md, paddingVertical: 6, backgroundColor: theme.bgMedium },
+    label: { color: theme.textMuted, fontSize: 13, marginRight: 6, flexShrink: 0 },
+    chips: { flexDirection: 'row', gap: 6, alignItems: 'center' },
+    chip: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: theme.gold },
+    chipActive: { backgroundColor: theme.gold },
+    chipText: { color: theme.gold, fontSize: 13 },
+    chipTextActive: { color: theme.bgDark, fontWeight: 'bold' },
+    addBtn: { paddingVertical: 4, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: theme.goldDark },
+    addBtnText: { color: theme.goldDark, fontSize: 16, lineHeight: 20 },
+  });
+}

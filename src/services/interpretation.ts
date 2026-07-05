@@ -1,5 +1,5 @@
 export interface InterpretationSection {
-  key: 'summary' | 'state' | 'insight' | 'actions' | 'cautions' | 'avoid' | 'followUp';
+  key: 'summary' | 'state' | 'insight' | 'actions' | 'cautions' | 'avoid' | 'history' | 'followUp';
   title: string;
   lines: string[];
 }
@@ -94,7 +94,9 @@ export function extractInterpretationSections(text?: string | null): Interpretat
                   ? 'cautions'
                   : title.includes('不宜') || title.includes('避免')
                     ? 'avoid'
-                    : 'followUp';
+                    : title.includes('脈絡') || title.includes('過去')
+                      ? 'history'
+                      : 'followUp';
 
       current = { key, title, lines: [] };
       sections.push(current);

@@ -13,6 +13,7 @@ import { tossJiaobei, drawPoem, drawZhugePoem, saveDivinationRecord } from '@/se
 import { addFavorite, getHistory, getSettings, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
 import { getAIInterpretation } from '@/services/ai';
 import { buildActionPlan } from '@/services/actionPlan';
+import { requestReview, shouldRequestReview } from '@/services/reviewService';
 import type { JiaobeiResult } from '@/services/divination';
 import type { DivinationRecord } from '@/services/storage';
 
@@ -175,6 +176,10 @@ export function useDivination() {
 
     setIsLoading(false);
     setStep('result');
+
+    if (await shouldRequestReview(poem.level)) {
+      requestReview();
+    }
   }, [selectedGodId, question, questionCategory, userName, zhugeNumber]);
 
   // 收藏/取消收藏

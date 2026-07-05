@@ -11,7 +11,9 @@ import { DrawAnimation } from '@/components/DrawAnimation';
 import { PoemCard } from '@/components/PoemCard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Onboarding, hasOnboarded } from '@/components/Onboarding';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { speakText, stopSpeaking } from '@/services/speech';
 import { IncenseSmoke } from '@/components/IncenseSmoke';
 import { IncenseRitual } from '@/components/IncenseRitual';
@@ -45,6 +47,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const layout = useResponsiveLayout();
   const { t } = useI18n();
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   const reducedMotion = useReducedMotion();
   const [strictMode, setStrictMode] = React.useState(false);
   const [lowMotionMode, setLowMotionMode] = React.useState(false);
@@ -514,7 +518,8 @@ export default function HomeScreen() {
           <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleConfirmPoem} disabled={poemConfirming}>
             <Text style={styles.actionBtnIcon}>筊</Text>
             <Text style={styles.actionBtnText}>{poemConfirmText ? '已確認' : poemConfirming ? '確認中' : '確認此籤'}</Text>
-          </TouchableOpacity>          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleAskFollowUp}>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleAskFollowUp}>
             <Text style={styles.actionBtnIcon}>AI</Text>
             <Text style={styles.actionBtnText}>追問</Text>
           </TouchableOpacity>
@@ -531,7 +536,7 @@ export default function HomeScreen() {
   return (
     <ErrorBoundary onReset={handleReset}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
+        <StatusBar barStyle="light-content" backgroundColor={theme.bgDark} />
         {showOnboarding ? (
           <Onboarding onComplete={() => setShowOnboarding(false)} />
         ) : (
@@ -544,8 +549,8 @@ export default function HomeScreen() {
               <View style={styles.modalOverlay}>
                 <View style={styles.modalCard}>
                   <Text style={styles.modalTitle}>新增家人成員</Text>
-                  <TextInput style={styles.modalInput} value={newFamName} onChangeText={setNewFamName} placeholder="姓名" placeholderTextColor={TempleTheme.textMuted} />
-                  <TextInput style={styles.modalInput} value={newFamRelation} onChangeText={setNewFamRelation} placeholder="關係（媽媽、爸爸…）" placeholderTextColor={TempleTheme.textMuted} />
+                  <TextInput style={styles.modalInput} value={newFamName} onChangeText={setNewFamName} placeholder="姓名" placeholderTextColor={theme.textMuted} />
+                  <TextInput style={styles.modalInput} value={newFamRelation} onChangeText={setNewFamRelation} placeholder="關係（媽媽、爸爸…）" placeholderTextColor={theme.textMuted} />
                   <View style={styles.modalBtnRow}>
                     <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowAddFamily(false)}>
                       <Text style={styles.modalCancelText}>取消</Text>
@@ -591,6 +596,8 @@ function SelectedGodEntranceBanner({
   isCompact: boolean;
   reducedMotion: boolean;
 }) {
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   const reveal = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -678,6 +685,8 @@ function DailyGodRecommendationCard({
   onSelect: () => void;
   reducedMotion: boolean;
 }) {
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   const cardImage = getGodCardImage(recommendation.god.id);
   const glowAnim = React.useRef(new Animated.Value(0)).current;
   const pressAnim = React.useRef(new Animated.Value(1)).current;
@@ -760,6 +769,8 @@ function PendingReviewCard({
   onPress: () => void;
   reducedMotion: boolean;
 }) {
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   const pulseAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -789,11 +800,11 @@ function PendingReviewCard({
 
   const borderColor = pulseAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [TempleTheme.warning + '55', TempleTheme.goldLight + 'DD'],
+    outputRange: [theme.warning + '55', theme.goldLight + 'DD'],
   });
   const backgroundColor = pulseAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [TempleTheme.warning + '12', TempleTheme.goldDark + '1F'],
+    outputRange: [theme.warning + '12', theme.goldDark + '1F'],
   });
 
   return (
@@ -814,6 +825,8 @@ function PendingReviewCard({
 }
 
 function WishBindEffect({ active }: { active: boolean }) {
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   const bindAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -873,14 +886,15 @@ function WishBindEffect({ active }: { active: boolean }) {
 
 // ─────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.bgDark },
   // 搖手機提示
   shakeHint: {
     alignItems: 'center', marginTop: 12, marginBottom: 4,
   },
   shakeHintText: {
-    color: TempleTheme.textMuted, fontSize: 13,
+    color: theme.textMuted, fontSize: 13,
     borderWidth: 1, borderColor: '#2A2020', borderRadius: 20,
     paddingHorizontal: 14, paddingVertical: 5,
   },
@@ -894,10 +908,10 @@ const styles = StyleSheet.create({
   // 跨神明比對
   crossCompareToggle: {
     marginHorizontal: TempleSpacing.md, marginTop: 16,
-    borderWidth: 1, borderColor: TempleTheme.goldDark, borderRadius: 10,
+    borderWidth: 1, borderColor: theme.goldDark, borderRadius: 10,
     paddingVertical: 10, alignItems: 'center',
   },
-  crossCompareToggleText: { color: TempleTheme.gold, fontSize: 14, fontWeight: '700' },
+  crossCompareToggleText: { color: theme.gold, fontSize: 14, fontWeight: '700' },
   container: { flex: 1 },
   pageShell: { flex: 1, width: '100%', alignSelf: 'center' },
   header: {
@@ -907,15 +921,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: TempleSpacing.md,
     paddingVertical: TempleSpacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '20',
+    borderBottomColor: theme.goldDark + '20',
   },
   headerCompact: { paddingHorizontal: 12 },
-  appTitle: { fontSize: TempleFonts.heading, fontWeight: '700', color: TempleTheme.goldLight },
+  appTitle: { fontSize: TempleFonts.heading, fontWeight: '700', color: theme.goldLight },
   appTitleCompact: { fontSize: 17, flex: 1, marginHorizontal: 8, textAlign: 'center' },
-  backBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: TempleTheme.bgCard, borderWidth: 1, borderColor: TempleTheme.goldDark + '30', minWidth: 60, alignItems: 'center' },
-  backBtnText: { fontSize: 12, color: TempleTheme.textMuted },
+  backBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: theme.bgCard, borderWidth: 1, borderColor: theme.goldDark + '30', minWidth: 60, alignItems: 'center' },
+  backBtnText: { fontSize: 12, color: theme.textMuted },
   backBtnSmall: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, minWidth: 60, alignItems: 'center' },
-  backBtnTextSmall: { fontSize: 12, color: TempleTheme.goldLight },
+  backBtnTextSmall: { fontSize: 12, color: theme.goldLight },
   backBtnCompact: { minWidth: 52, paddingHorizontal: 8 },
   backBtnTextCompact: { fontSize: 11 },
   stepIndicator: {
@@ -925,18 +939,18 @@ const styles = StyleSheet.create({
   stepIndicatorCompact: { paddingHorizontal: 12 },
   stepItem: { flexDirection: 'row', alignItems: 'center' },
   stepDot: {
-    width: 26, height: 26, borderRadius: 13, backgroundColor: TempleTheme.bgCard,
-    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: TempleTheme.goldDark + '30',
+    width: 26, height: 26, borderRadius: 13, backgroundColor: theme.bgCard,
+    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: theme.goldDark + '30',
   },
   stepDotCompact: { width: 24, height: 24, borderRadius: 12 },
-  stepDotActive: { backgroundColor: TempleTheme.goldDark + '30', borderColor: TempleTheme.goldDark },
-  stepDotCurrent: { backgroundColor: TempleTheme.red, borderColor: TempleTheme.gold, width: 30, height: 30, borderRadius: 15 },
+  stepDotActive: { backgroundColor: theme.goldDark + '30', borderColor: theme.goldDark },
+  stepDotCurrent: { backgroundColor: theme.red, borderColor: theme.gold, width: 30, height: 30, borderRadius: 15 },
   stepDotCurrentCompact: { width: 28, height: 28, borderRadius: 14 },
   stepIcon: { fontSize: 11 },
   stepIconCompact: { fontSize: 10 },
-  stepLine: { width: 12, height: 1, backgroundColor: TempleTheme.goldDark + '30', marginHorizontal: 2 },
+  stepLine: { width: 12, height: 1, backgroundColor: theme.goldDark + '30', marginHorizontal: 2 },
   stepLineCompact: { width: 8 },
-  stepLineActive: { backgroundColor: TempleTheme.goldDark },
+  stepLineActive: { backgroundColor: theme.goldDark },
   content: { flex: 1 },
   fullScreen: { flex: 1 },
   recommendCard: {
@@ -945,7 +959,7 @@ const styles = StyleSheet.create({
     padding: TempleSpacing.md,
     borderRadius: 16,
     borderWidth: 1,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     flexDirection: 'row',
     alignItems: 'center',
     gap: TempleSpacing.md,
@@ -968,13 +982,13 @@ const styles = StyleSheet.create({
   },
   recommendName: {
     fontSize: TempleFonts.heading,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '900',
     marginBottom: 4,
   },
   recommendReason: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     lineHeight: 20,
   },
   recommendImageWrap: {
@@ -983,7 +997,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     overflow: 'hidden',
-    backgroundColor: TempleTheme.bgDark,
+    backgroundColor: theme.bgDark,
   },
   recommendImage: { width: '100%', height: '100%' },
   pendingReviewCard: {
@@ -992,26 +1006,26 @@ const styles = StyleSheet.create({
     padding: TempleSpacing.md,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: TempleTheme.warning + '55',
-    backgroundColor: TempleTheme.warning + '12',
+    borderColor: theme.warning + '55',
+    backgroundColor: theme.warning + '12',
     flexDirection: 'row',
     alignItems: 'center',
     gap: TempleSpacing.sm,
   },
   pendingReviewMeta: { flex: 1 },
   pendingReviewTitle: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: TempleFonts.small,
     fontWeight: '800',
     marginBottom: 4,
   },
   pendingReviewText: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 12,
     lineHeight: 18,
   },
   pendingReviewCta: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -1021,24 +1035,24 @@ const styles = StyleSheet.create({
     padding: TempleSpacing.md,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '35',
-    backgroundColor: TempleTheme.bgCard,
+    borderColor: theme.goldDark + '35',
+    backgroundColor: theme.bgCard,
   },
   followUpShortcutTitle: {
     fontSize: TempleFonts.body,
     fontWeight: '800',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginBottom: 4,
   },
   followUpShortcutText: {
     fontSize: TempleFonts.small,
     lineHeight: 20,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   selectedGodBanner: {
-    backgroundColor: TempleTheme.bgCard, marginHorizontal: TempleSpacing.md,
+    backgroundColor: theme.bgCard, marginHorizontal: TempleSpacing.md,
     marginBottom: TempleSpacing.md, padding: TempleSpacing.md, borderRadius: 12,
-    borderWidth: 1, borderColor: TempleTheme.goldDark + '40', flexDirection: 'row', alignItems: 'center', gap: TempleSpacing.md,
+    borderWidth: 1, borderColor: theme.goldDark + '40', flexDirection: 'row', alignItems: 'center', gap: TempleSpacing.md,
     overflow: 'visible',
   },
   selectedGodBannerCompact: { flexDirection: 'column', alignItems: 'center' },
@@ -1076,32 +1090,32 @@ const styles = StyleSheet.create({
   selectedGodMeta: { flex: 1 },
   selectedGodMetaCompact: { alignSelf: 'stretch' },
   selectedGodTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 },
-  selectedGodName: { fontSize: TempleFonts.heading, fontWeight: '700', color: TempleTheme.goldLight },
+  selectedGodName: { fontSize: TempleFonts.heading, fontWeight: '700', color: theme.goldLight },
   selectedGodNameCompact: { textAlign: 'center' },
   selectedGodTagline: { fontSize: 12, fontWeight: '600', marginTop: 2, marginBottom: 4 },
-  selectedGodDesc: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginTop: 2 },
+  selectedGodDesc: { fontSize: TempleFonts.small, color: theme.textMuted, marginTop: 2 },
   selectedGodTextCompact: { textAlign: 'center' },
   actionBar: {
     flexDirection: 'row', justifyContent: 'center', gap: TempleSpacing.sm, flexWrap: 'wrap',
     paddingHorizontal: TempleSpacing.md, paddingVertical: TempleSpacing.sm,
-    borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '20', backgroundColor: TempleTheme.bgDark,
+    borderTopWidth: 1, borderTopColor: theme.goldDark + '20', backgroundColor: theme.bgDark,
   },
   actionBarCompact: { paddingHorizontal: 12 },
   actionBtn: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: TempleSpacing.md,
-    paddingVertical: TempleSpacing.sm, borderRadius: 10, backgroundColor: TempleTheme.bgCard,
-    borderWidth: 1, borderColor: TempleTheme.goldDark + '30', gap: 6,
+    paddingVertical: TempleSpacing.sm, borderRadius: 10, backgroundColor: theme.bgCard,
+    borderWidth: 1, borderColor: theme.goldDark + '30', gap: 6,
   },
   actionBtnCompact: { width: '100%', justifyContent: 'center' },
   actionBtnTablet: { minWidth: 180 },
-  actionBtnPrimary: { backgroundColor: TempleTheme.red, borderColor: TempleTheme.goldDark },
-  actionBtnDone: { opacity: 0.6, borderColor: TempleTheme.success + '60' },
+  actionBtnPrimary: { backgroundColor: theme.red, borderColor: theme.goldDark },
+  actionBtnDone: { opacity: 0.6, borderColor: theme.success + '60' },
   actionBtnIcon: { fontSize: 16 },
-  actionBtnText: { fontSize: TempleFonts.small, color: TempleTheme.textLight, fontWeight: '600' },
-  actionBtnTextPrimary: { color: TempleTheme.goldLight },
+  actionBtnText: { fontSize: TempleFonts.small, color: theme.textLight, fontWeight: '600' },
+  actionBtnTextPrimary: { color: theme.goldLight },
   toast: {
     position: 'absolute', bottom: 100, alignSelf: 'center',
-    backgroundColor: TempleTheme.goldDark, paddingHorizontal: 24, paddingVertical: 10,
+    backgroundColor: theme.goldDark, paddingHorizontal: 24, paddingVertical: 10,
     borderRadius: 20, elevation: 4,
   },
   toastCompact: { left: 16, right: 16, bottom: 88 },
@@ -1133,19 +1147,19 @@ const styles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     borderWidth: 2,
-    borderColor: TempleTheme.goldLight,
+    borderColor: theme.goldLight,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: TempleTheme.goldLight,
+    shadowColor: theme.goldLight,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 18,
     elevation: 6,
   },
   wishBindSealText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: 28,
     fontWeight: '900',
   },
@@ -1155,17 +1169,18 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: TempleTheme.goldLight,
+    backgroundColor: theme.goldLight,
   },
   // 新增家人 Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, padding: 24, width: '100%', maxWidth: 360, borderWidth: 1, borderColor: TempleTheme.gold },
-  modalTitle: { fontSize: TempleFonts.heading, color: TempleTheme.textGold, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
-  modalInput: { backgroundColor: TempleTheme.bgMedium, borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold, padding: 10, color: TempleTheme.textLight, fontSize: TempleFonts.body, marginBottom: 10 } as any,
+  modalCard: { backgroundColor: theme.bgCard, borderRadius: 16, padding: 24, width: '100%', maxWidth: 360, borderWidth: 1, borderColor: theme.gold },
+  modalTitle: { fontSize: TempleFonts.heading, color: theme.textGold, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
+  modalInput: { backgroundColor: theme.bgMedium, borderRadius: 8, borderWidth: 1, borderColor: theme.gold, padding: 10, color: theme.textLight, fontSize: TempleFonts.body, marginBottom: 10 } as any,
   modalBtnRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
-  modalCancelBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.textMuted, alignItems: 'center' },
-  modalCancelText: { color: TempleTheme.textMuted, fontSize: TempleFonts.body },
-  modalConfirmBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: TempleTheme.gold, alignItems: 'center' },
-  modalConfirmText: { color: TempleTheme.bgDark, fontSize: TempleFonts.body, fontWeight: 'bold' },
+  modalCancelBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: theme.textMuted, alignItems: 'center' },
+  modalCancelText: { color: theme.textMuted, fontSize: TempleFonts.body },
+  modalConfirmBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: theme.gold, alignItems: 'center' },
+  modalConfirmText: { color: theme.bgDark, fontSize: TempleFonts.body, fontWeight: 'bold' },
   actionBtnBlessing: { borderColor: '#E879A0', backgroundColor: '#E879A033' },
-});
+  });
+}

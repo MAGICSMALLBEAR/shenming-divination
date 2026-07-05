@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { TempleTheme, TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import type { DailyFortune } from '@/services/dailyFortune';
 
 // ─── 五行關係標籤 ───────────────────────────────────────────
-const RELATION_LABEL: Record<string, { text: string; color: string }> = {
-  '今日生我': { text: '今日生我 ✦', color: TempleTheme.success },
-  '我生今日': { text: '我生今日 ◦', color: TempleTheme.warning },
-  '今日克我': { text: '今日克我 ✕', color: TempleTheme.danger },
-  '我克今日': { text: '我克今日 ◇', color: '#E67E22' },
-  '同行':     { text: '同行平穩 ＝', color: TempleTheme.textMuted },
-};
+function getRelationLabel(theme: ThemeColors): Record<string, { text: string; color: string }> {
+  return {
+    '今日生我': { text: '今日生我 ✦', color: theme.success },
+    '我生今日': { text: '我生今日 ◦', color: theme.warning },
+    '今日克我': { text: '今日克我 ✕', color: theme.danger },
+    '我克今日': { text: '我克今日 ◇', color: '#E67E22' },
+    '同行':     { text: '同行平穩 ＝', color: theme.textMuted },
+  };
+}
 
 // ─── 每日修行建議 ───────────────────────────────────────────
 function getDailyPractice(fortune: DailyFortune): string {
@@ -39,6 +43,9 @@ interface Props {
 }
 
 export function DailyFortuneCard({ fortune, expanded, onToggle }: Props) {
+  const { theme } = useAppTheme();
+  const fStyles = useMemo(() => createFStyles(theme), [theme]);
+  const RELATION_LABEL = useMemo(() => getRelationLabel(theme), [theme]);
   const SCORE_LABELS = [
     { key: 'wealth' as const, label: '財', icon: '💰' },
     { key: 'career' as const, label: '事', icon: '💼' },
@@ -46,7 +53,7 @@ export function DailyFortuneCard({ fortune, expanded, onToggle }: Props) {
     { key: 'health' as const, label: '康', icon: '🏥' },
   ];
   const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
-  const overallColor = fortune.overall >= 4 ? TempleTheme.success : fortune.overall >= 3 ? TempleTheme.warning : TempleTheme.danger;
+  const overallColor = fortune.overall >= 4 ? theme.success : fortune.overall >= 3 ? theme.warning : theme.danger;
   const relation = fortune.wuxingRelation ? RELATION_LABEL[fortune.wuxingRelation] : null;
 
   return (
@@ -72,7 +79,7 @@ export function DailyFortuneCard({ fortune, expanded, onToggle }: Props) {
           {SCORE_LABELS.map(({ key, icon }) => (
             <View key={key} style={fStyles.miniItem}>
               <Text style={fStyles.miniIcon}>{icon}</Text>
-              <Text style={[fStyles.miniStar, { color: fortune.scores[key] >= 4 ? TempleTheme.success : fortune.scores[key] >= 3 ? TempleTheme.warning : TempleTheme.danger }]}>
+              <Text style={[fStyles.miniStar, { color: fortune.scores[key] >= 4 ? theme.success : fortune.scores[key] >= 3 ? theme.warning : theme.danger }]}>
                 {'★'.repeat(fortune.scores[key])}
               </Text>
             </View>
@@ -95,7 +102,7 @@ export function DailyFortuneCard({ fortune, expanded, onToggle }: Props) {
             <View key={key} style={fStyles.scoreRow}>
               <Text style={fStyles.scoreIcon}>{icon}</Text>
               <Text style={fStyles.scoreLabel}>{label}運</Text>
-              <Text style={[fStyles.scoreStar, { color: fortune.scores[key] >= 4 ? TempleTheme.success : fortune.scores[key] >= 3 ? TempleTheme.warning : TempleTheme.danger }]}>
+              <Text style={[fStyles.scoreStar, { color: fortune.scores[key] >= 4 ? theme.success : fortune.scores[key] >= 3 ? theme.warning : theme.danger }]}>
                 {stars(fortune.scores[key])}
               </Text>
             </View>
@@ -117,39 +124,40 @@ export function DailyFortuneCard({ fortune, expanded, onToggle }: Props) {
   );
 }
 
-const fStyles = StyleSheet.create({
+function createFStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   card: {
     marginHorizontal: TempleSpacing.md, marginBottom: TempleSpacing.sm,
-    backgroundColor: TempleTheme.bgCard, borderRadius: 14,
-    borderWidth: 1, borderColor: TempleTheme.goldDark + '30', overflow: 'hidden',
+    backgroundColor: theme.bgCard, borderRadius: 14,
+    borderWidth: 1, borderColor: theme.goldDark + '30', overflow: 'hidden',
   },
   header: { flexDirection: 'row', alignItems: 'center', padding: TempleSpacing.sm, gap: TempleSpacing.sm },
   headerLeft: { flex: 1 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
-  title: { fontSize: 12, fontWeight: '700', color: TempleTheme.goldLight },
-  zodiacTag: { fontSize: 10, color: TempleTheme.gold, fontWeight: '600' },
+  title: { fontSize: 12, fontWeight: '700', color: theme.goldLight },
+  zodiacTag: { fontSize: 10, color: theme.gold, fontWeight: '600' },
   overallRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
   stars: { fontSize: 11, letterSpacing: 1 },
   colorDot: { width: 10, height: 10, borderRadius: 5 },
-  colorName: { fontSize: 10, color: TempleTheme.textMuted },
+  colorName: { fontSize: 10, color: theme.textMuted },
   relationBadge: { fontSize: 9, fontWeight: '700' },
   miniScores: { flexDirection: 'row', gap: 4 },
   miniItem: { alignItems: 'center' },
   miniIcon: { fontSize: 12 },
   miniStar: { fontSize: 7 },
-  chevron: { fontSize: 12, color: TempleTheme.textMuted, paddingHorizontal: 4 },
-  body: { paddingHorizontal: TempleSpacing.md, paddingBottom: TempleSpacing.md, borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '20' },
+  chevron: { fontSize: 12, color: theme.textMuted, paddingHorizontal: 4 },
+  body: { paddingHorizontal: TempleSpacing.md, paddingBottom: TempleSpacing.md, borderTopWidth: 1, borderTopColor: theme.goldDark + '20' },
   scoreRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, gap: 6 },
   scoreIcon: { fontSize: 14, width: 20 },
-  scoreLabel: { fontSize: 12, color: TempleTheme.textMuted, width: 28 },
+  scoreLabel: { fontSize: 12, color: theme.textMuted, width: 28 },
   scoreStar: { fontSize: 12, letterSpacing: 1 },
-  divider: { height: 1, backgroundColor: TempleTheme.goldDark + '20', marginVertical: 8 },
+  divider: { height: 1, backgroundColor: theme.goldDark + '20', marginVertical: 8 },
   infoRow: { flexDirection: 'row', gap: TempleSpacing.md, marginBottom: 4 },
-  infoItem: { fontSize: 11, color: TempleTheme.textLight, flex: 1 },
-  advice: { fontSize: TempleFonts.small, color: TempleTheme.gold, marginTop: 6, fontStyle: 'italic', lineHeight: 18 },
+  infoItem: { fontSize: 11, color: theme.textLight, flex: 1 },
+  advice: { fontSize: TempleFonts.small, color: theme.gold, marginTop: 6, fontStyle: 'italic', lineHeight: 18 },
   practice: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     marginTop: 8,
     lineHeight: 20,
     fontWeight: '700',
@@ -159,4 +167,5 @@ const fStyles = StyleSheet.create({
     marginTop: TempleSpacing.sm, marginBottom: 6, alignItems: 'center',
   },
   wuxingBannerText: { fontSize: 11, fontWeight: '700', letterSpacing: 1 },
-});
+  });
+}

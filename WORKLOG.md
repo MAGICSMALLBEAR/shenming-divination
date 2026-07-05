@@ -1,4 +1,101 @@
-﻿## 2026-06-10 P1 ~ P4 市場差距全面補足
+﻿## 2026-07-05 淺色主題重建 + App Store 評分上線 + 功能缺口盤點
+
+### 本輪主題
+先做一次全 App 功能盤點，找出「架子搭好但沒接上線」的缺口；再依優先度動手修復其中兩項可以獨立完成、不需外部帳號的高優先項目。
+
+### 功能盤點重點發現
+| 類別 | 發現 |
+|------|------|
+| 🔴 架好但沒接線 | Firebase 仍是 `YOUR_API_KEY` 佔位符、`premiumService.ts` 用 AsyncStorage 模擬訂閱（未接 IAP）、`expo-store-review` 套件未安裝、淺色主題全站未套用、後端未正式部署到 Fly.io |
+| 🟡 產品面缺口 | 沒有測試/CI、沒有隱私權政策頁面（有用 Firebase Auth／金流，上架必須）、沒有 Crash reporting/Analytics、沒有籤詩全庫瀏覽/查詢功能、沒有 Apple 登入 |
+| 🟢 長期 | npm 11 個中度漏洞（卡在 Expo 內部套件鏈，等 SDK 57）、Firestore 離線持久化未設定、籤詩文本本身無多語言版本 |
+
+詳細分類已整理進本檔案下方「未來代辦清單」。
+
+### 完成項目 1：App Store 評分機制真正上線
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 安裝套件 | `package.json` | `npx expo install expo-store-review`（依 Expo v56 官方文件確認不需 config plugin） |
+| 移除臨時動態 import | `src/services/reviewService.ts` | 改回正常 `import * as StoreReview from 'expo-store-review'` |
+| **補上遺漏的呼叫點** | `src/hooks/useDivination.ts` | 發現 `shouldRequestReview()`/`requestReview()` 兩個函式雖然寫好，但整個專案沒有任何地方呼叫，裝了套件也不會生效；已在 `performDraw()` 抽籤完成、`step` 設為 `'result'` 之後接上呼叫 |
+
+### 完成項目 2：淺色/深色主題改成真正可即時切換
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 新增主題狀態管理 | `src/services/themeStore.ts`（新檔） | 仿照既有 `i18n.ts` 的 singleton + listener 模式，管理目前主題模式與系統色彩模式 |
+| 新增 reactive hook | `src/hooks/useAppTheme.ts`（新檔） | 提供 `{ theme, mode, setMode }` |
+| App 啟動載入設定 | `src/app/_layout.tsx` | 掛載時讀取使用者先前存的主題設定 |
+| 首頁全面轉換 | `src/app/(tabs)/index.tsx` | 含 `HomeScreen` 及其 4 個子元件，`StyleSheet.create` 改成 `createStyles(theme)` 函式 |
+| 設定頁全面轉換 | `src/app/(tabs)/settings.tsx` | 主題選擇改成即時套用（比照現有「環境音」開關的體驗），不用再按「儲存設定」 |
+| 首頁子元件轉換 | `src/components/home/ForWhomSelector.tsx`、`DailyFortuneCard.tsx` | 含把模組層級寫死顏色的 `RELATION_LABEL` 物件改成依 theme 動態產生 |
+
+#### 疑難排解記錄（有參考價值，先記下來）
+主題切換一開始「狀態有更新但畫面不變色」：`setThemeMode()` 確認有觸發、監聽器也有被呼叫，但畫面重新渲染後讀到的還是舊值。排除模組重複載入、dev server 快取舊 bundle 後，找到真正原因：
+
+**`app.json` 開了 `experiments.reactCompiler: true`**。React Compiler 會自動幫函式加記憶化，但它看不出 `getCurrentThemeMode()` 這種讀取「模組層級外部可變狀態」的函式每次呼叫結果可能不同，於是把第一次的值快取住，之後永遠不會重新計算。
+
+**修法**：改用 React 內建的 `useSyncExternalStore`（就是為了訂閱這種外部可變狀態設計的 hook），React Compiler 認得這個 hook 的語意、不會把它記憶化掉。
+
+### 驗證
+- `npx tsc --noEmit` 全部通過
+- 用 Playwright 啟動本機 Web 版實際點擊「深色/淺色」切換，截圖確認首頁與設定頁即時換色，主控台無錯誤
+
+### 尚未完成（範圍內刻意保留）
+- 其餘約 35 個檔案仍用固定死的 `TempleTheme`，設定頁「* 淺色主題仍在優化中」提示保留為真實狀態
+- 尚未 commit（詳見下方「未來代辦清單」與目前 git 狀態）
+
+---
+
+## 2026-06-30 Code Review 十大 Bug 修復
+
+### 本輪主題
+對前一輪抽籤動畫修復的 diff 跑 `/code-review --effort high`，找出 10 個 bug 並全部修復。
+
+### 修復清單
+| # | 檔案 | Bug | 修法 |
+|---|------|-----|------|
+| 1 | `src/services/interpretation.ts` | `SECTION_TITLES` 只有 5 個項目，但程式寫入索引 0~6，`sections[5]`/`[6]` undefined 導致每次 fallback 都會 crash | 補上 `state`、`avoid` 兩個 section，擴充成 7 個對齊 |
+| 2 | `src/components/PoemCard.tsx` | 「💬 社群交流」按鈕複製貼上重複渲染兩次 | 移除多餘的一個 |
+| 3 | `src/app/(tabs)/index.tsx` | `handleReset` 沒有重置 `poemConfirmText`/`poemConfirming` | 補上重置 |
+| 4 | `src/components/Jiaobei.tsx` | `visibleStrictCount` 連續兩次聖筊時因 `latestResult` 判斷錯誤少算一次 | 改用 `preTossResultLength` ref 判斷 |
+| 5 | `src/data/poems/godSpecific.ts` | 濟公籤 `focusKey: 'general'` 時，`general:` 覆寫掉本該寫入的內容 | `focusKey === 'general'` 時不再額外寫 `general` |
+| 6 | `src/app/(tabs)/index.tsx` | 3 個子元件只收到 `reducedMotion`，沒收到 `lowMotionMode` | 傳入 `reducedMotion \|\| lowMotionMode` |
+| 7 | `src/services/storage.ts` | `isFavorite` 只比對 `poem.number`，不同神明共用籤號會誤判已收藏 | 加上 `godName` 一併比對 |
+| 8 | `src/app/(tabs)/collection.tsx` | `handleToggleAction` 每次都 `await loadData()` 全量重讀 | 改成樂觀更新本地 state，背景寫入 |
+| 9 | `src/components/DrawAnimation.tsx` | 進度條寬度/位移用寫死的數字 | 改用 `onLayout` 動態量測 |
+| 10 | `src/services/photoDivination.ts` | 拍照辨識比對籤號時沒有依籤系統排序，會被基底系統（雷雨師/六十甲子）搶先誤配對 | 排序時讓有專屬籤詩系統的神明優先比對 |
+
+### Git
+- `fix: 修復 code review 發現的 10 個 bug`（commit `610420c`）
+
+---
+
+## 2026-06-29 抽籤動畫 crash 修復 + Vercel 部署
+
+### 本輪主題
+修復抽籤時的執行期錯誤：`inputRange must be monotonically non-decreasing 0,0.5,1,0.5,0`。
+
+### 根因
+`Animated.sequence([0→1 的 timing, 1→0 的 timing])` 在 RN Web 的 native driver 上會被取樣成 5 個關鍵幀 `[0, 0.5, 1, 0.5, 0]`，這串數字被誤判成 `inputRange` 使用，因為不是遞增數列而丟出例外。
+
+### 修法
+| 項目 | 檔案 | 說明 |
+|------|------|------|
+| 動畫改為單程 | `src/components/DrawAnimation.tsx` | `auraLoop`、`floatLoop` 從來回 `sequence` 改成單一 `0→1` timing，搭配鐘形 `outputRange`（如 `[0.94, 1.1, 0.94]`）維持視覺效果 |
+| interpolation 穩定化 | 同上 | 所有 interpolation 包進 `useMemo`，避免重渲染時重建節點 |
+| 進度條改用原生驅動 | 同上 | `progressAnim` 從 `useNativeDriver: false` 改為 `true`，寬度改用 `transform` |
+
+### 部署
+- 修復後 push 到 GitHub（`https://github.com/MAGICSMALLBEAR/shenming-divination.git`），由既有的 GitHub–Vercel 整合自動部署到 `shenming-divination.vercel.app`
+- 同時修正 `vercel.json` 加入 `cleanUrls` 支援靜態路由正確對應
+
+### Git
+- `fix: 修復抽籤動畫 inputRange 非遞增錯誤並新增功能優化`（commit `82c18d9`）
+- `fix: vercel.json 加入 cleanUrls 支援靜態路由正確對應`（commit `a29a3ec`）
+
+---
+
+## 2026-06-10 P1 ~ P4 市場差距全面補足
 
 ### 本輪主題
 根據競品分析識別四類市場缺口，逐一實作：P1 基礎缺口 → P2 留存缺口 → P3 商業化缺口 → P4 質感缺口
@@ -100,14 +197,17 @@
 
 ## 未來代辦清單
 
+> 2026-07-05 更新：#2 已完成；#4 已完成首頁＋設定頁，其餘頁面待續；新增 #10~#14（來自功能缺口盤點）。
+
 ### 🔴 高優先（上架前必須）
 
 | # | 項目 | 說明 | 指令/備注 |
 |---|------|------|-----------|
 | 1 | **Firebase 接入** | 到 console.firebase.google.com 建立專案，填入 `src/services/firebaseConfig.ts` | 填完後雲端同步自動生效 |
-| 2 | **expo-store-review 安裝** | reviewService.ts 架構已完備，缺 package | `npx expo install expo-store-review` |
+| 2 | ~~**expo-store-review 安裝**~~ ✅ 2026-07-05 完成 | 已安裝套件，並補上 `useDivination.ts` 裡遺漏的呼叫點（原本裝了也不會生效） | — |
 | 3 | **IAP 真實付款** | premiumService.ts 架構已建好，接入 RevenueCat 或 Expo IAP | 目前 AsyncStorage 模擬，不能收費 |
-| 4 | **淺色主題全頁面套用** | themes.ts 已建，AppSettings.theme 已存，但各頁面仍用 TempleTheme | 逐頁把 `getThemeColors()` 替換 `TempleTheme` |
+| 4 | **淺色主題全頁面套用**（進行中） | 已完成首頁 `index.tsx`（含子元件）與設定頁 `settings.tsx`；已建好共用機制 `src/services/themeStore.ts` + `src/hooks/useAppTheme.ts`，其餘約 35 個檔案照同一套 `createStyles(theme)` 模式逐檔轉換即可 | 注意：`app.json` 開了 `reactCompiler`，讀外部可變狀態一律要用 `useSyncExternalStore`，不要用手動 `setTick` 強制重render，否則會被編譯器記憶化卡住 |
+| 10 | **隱私權政策 / 服務條款頁面** | 已用 Firebase Auth 與規劃中的金流，App Store / Google Play 上架強制要求，目前完全沒有 | 新建靜態頁面 + app.json 或官網連結 |
 
 ### 🟡 中優先（品質提升）
 
@@ -115,6 +215,9 @@
 |---|------|------|
 | 5 | **後端正式部署** | `backend/Dockerfile` + `fly.toml` 已建好，執行 `fly launch` 部署到 Fly.io；更新前端 `EXPO_PUBLIC_AI_API_URL` |
 | 6 | **Firebase Community** | community.tsx 已實作 Firestore 路徑，填入真實 API key 後自動生效 |
+| 11 | **測試 / CI** | 目前完全沒有單元測試或 E2E 測試，也沒有 CI pipeline，上架前屬於風險項目 |
+| 12 | **Crash reporting / Analytics** | 尚未接 Sentry 或 Firebase Analytics 之類工具，上線後出問題會完全不知道 |
+| 13 | **Apple 登入** | `authService.ts` 目前只有 Google／匿名登入；若上 iOS 且提供其他第三方登入，Apple 規定必須同時提供 Sign in with Apple |
 
 ### 🟢 低優先（長期優化）
 
@@ -123,6 +226,7 @@
 | 7 | **npm 漏洞** | 等 Expo SDK 57 升級時一併解決，詳見上方說明 |
 | 8 | **原生 Widget** | Expo SDK 57+ expo-widgets 套件，屆時將現有 `scheduleFortuneWidgetNotification()` 資料層升接原生 Widget UI |
 | 9 | **Firebase 資料離線快取** | AI 解籤已有 offlineCache.ts，Firebase 讀寫另需 Firestore offline persistence 設定 |
+| 14 | **籤詩查詢圖書館** | 目前只能透過「抽籤」看到籤詩，沒有「瀏覽/查詢全部籤詩」的檢索功能 |
 
 ---
 

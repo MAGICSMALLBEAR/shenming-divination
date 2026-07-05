@@ -511,11 +511,11 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
       {aiInterpretation ? (
         <Animated.View style={[styles.aiCard, { opacity: aiFadeAnim }]}>
           <Text style={styles.aiLabel}>{godName}慈悲開示</Text>
-          {aiSections.map((section) => (
-            <View key={section.key} style={styles.aiSection}>
+          {aiSections.map((section, index) => (
+            <View key={`${section.key}-${index}`} style={styles.aiSection}>
               <Text style={styles.aiSectionTitle}>{section.title}</Text>
-              {section.lines.map((line) => (
-                <Text key={line} style={styles.aiText}>
+              {section.lines.map((line, lineIndex) => (
+                <Text key={lineIndex} style={styles.aiText}>
                   {line}
                 </Text>
               ))}

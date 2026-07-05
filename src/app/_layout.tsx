@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
+import { initThemeFromSettings } from '@/services/themeStore';
 
 export default function RootLayout() {
+  useEffect(() => {
+    initThemeFromSettings();
+  }, []);
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />

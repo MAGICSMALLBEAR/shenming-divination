@@ -20,7 +20,8 @@ import {
   getDrawAnimationRitualStyle,
   normalizeDrawAnimationStyleKey,
 } from '@/constants/draw-animation-styles';
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { getDailyPoem } from '@/services/dailyPoem';
 import {
   getSettings,
@@ -53,7 +54,7 @@ import {
   SUBSCRIPTION_PLANS,
   type PremiumPlan,
 } from '@/services/premiumService';
-import { THEME_LABELS, type ThemeMode } from '@/constants/themes';
+import { THEME_LABELS, type ThemeMode, type ThemeColors } from '@/constants/themes';
 
 const LANGUAGES: { key: Lang; label: string }[] = [
   { key: 'zh-TW', label: '繁體中文' },
@@ -64,6 +65,8 @@ const LANGUAGES: { key: Lang; label: string }[] = [
 export default function SettingsScreen() {
   const { lang, t } = useI18n();
   const layout = useResponsiveLayout();
+  const { theme, mode: activeThemeMode, setMode } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [settings, setSettings] = useState<AppSettings>({
     userName: '',
     birthDate: '',
@@ -210,7 +213,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
+      <StatusBar barStyle="light-content" backgroundColor={theme.bgDark} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={[
@@ -265,7 +268,7 @@ export default function SettingsScreen() {
               value={settings.userName}
               onChangeText={(value) => setSettings((prev) => ({ ...prev, userName: value }))}
               placeholder="輸入名字或暱稱"
-              placeholderTextColor={TempleTheme.textMuted}
+              placeholderTextColor={theme.textMuted}
             />
 
             <FieldLabel text="出生年份" />
@@ -274,7 +277,7 @@ export default function SettingsScreen() {
               value={settings.birthDate}
               onChangeText={(value) => setSettings((prev) => ({ ...prev, birthDate: value }))}
               placeholder="例如：1996 或 民國 85"
-              placeholderTextColor={TempleTheme.textMuted}
+              placeholderTextColor={theme.textMuted}
             />
 
           {bazi ? (
@@ -410,7 +413,7 @@ export default function SettingsScreen() {
                   key={key}
                   style={[
                     styles.drawStyleCard,
-                    { borderColor: active ? ritualStyle.chipColor : TempleTheme.goldDark + '25' },
+                    { borderColor: active ? ritualStyle.chipColor : theme.goldDark + '25' },
                     active && styles.drawStyleCardActive,
                   ]}
                   onPress={() =>
@@ -520,7 +523,7 @@ export default function SettingsScreen() {
             value={(settings as any).aiServerUrl || ''}
             onChangeText={v => setSettings(prev => ({ ...prev, aiServerUrl: v || undefined }) as any)}
             placeholder="AI 伺服器網址（選填）"
-            placeholderTextColor={TempleTheme.textMuted}
+            placeholderTextColor={theme.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
           />
@@ -529,7 +532,7 @@ export default function SettingsScreen() {
             value={(settings as any).aiApiKey || ''}
             onChangeText={v => setSettings(prev => ({ ...prev, aiApiKey: v || undefined }) as any)}
             placeholder="API Key（選填，例如 sk-ant-...）"
-            placeholderTextColor={TempleTheme.textMuted}
+            placeholderTextColor={theme.textMuted}
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
@@ -554,7 +557,7 @@ export default function SettingsScreen() {
             value={backupText}
             onChangeText={setBackupText}
             placeholder="備份 JSON 會顯示在這裡，也可以手動貼上舊備份。"
-            placeholderTextColor={TempleTheme.textMuted}
+            placeholderTextColor={theme.textMuted}
             multiline
           />
         </View>
@@ -599,13 +602,16 @@ export default function SettingsScreen() {
                 key={mode}
                 style={[
                   styles.godChip,
-                  (settings.theme ?? 'dark') === mode && styles.godChipActive,
+                  activeThemeMode === mode && styles.godChipActive,
                 ]}
-                onPress={() => setSettings(prev => ({ ...prev, theme: mode }))}
+                onPress={() => {
+                  setSettings(prev => ({ ...prev, theme: mode }));
+                  setMode(mode);
+                }}
               >
                 <Text style={[
                   styles.godChipText,
-                  (settings.theme ?? 'dark') === mode && styles.godChipTextActive,
+                  activeThemeMode === mode && styles.godChipTextActive,
                 ]}>
                   {label}
                 </Text>
@@ -643,6 +649,8 @@ export default function SettingsScreen() {
 }
 
 function FieldLabel({ text }: { text: string }) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return <Text style={styles.fieldLabel}>{text}</Text>;
 }
 
@@ -657,6 +665,8 @@ function ToggleRow({
   value: boolean;
   onToggle: () => void | Promise<void>;
 }) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <TouchableOpacity
       style={[styles.toggleRow, value && styles.toggleRowActive]}
@@ -673,40 +683,41 @@ function ToggleRow({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.bgDark },
   container: { flex: 1 },
   content: { width: '100%', alignSelf: 'center', paddingVertical: TempleSpacing.md },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
     marginBottom: TempleSpacing.md,
   },
   dailyCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
+    borderColor: theme.goldDark + '40',
   },
   dailyLabel: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '600',
     marginBottom: 6,
   },
   dailyContent: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   dailyHint: {
     marginTop: 6,
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     lineHeight: 20,
   },
   section: {
@@ -721,57 +732,57 @@ const styles = StyleSheet.create({
   sectionGridItem: {
     flex: 1,
     minWidth: 320,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '22',
+    borderColor: theme.goldDark + '22',
     padding: TempleSpacing.md,
   },
   fullWidthSection: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '22',
+    borderColor: theme.goldDark + '22',
     padding: TempleSpacing.md,
   },
   sectionTitle: {
     fontSize: TempleFonts.body,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginBottom: TempleSpacing.sm,
   },
   fieldLabel: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginBottom: 6,
     marginTop: 2,
   },
   input: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
     borderRadius: 8,
     padding: TempleSpacing.sm,
     fontSize: TempleFonts.body,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     marginBottom: TempleSpacing.sm,
   },
   baziCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
+    borderColor: theme.goldDark + '40',
   },
   baziTitle: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '800',
     marginBottom: 4,
   },
   baziText: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
     lineHeight: 20,
   },
@@ -784,14 +795,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 16,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
   },
-  godChipActive: { backgroundColor: TempleTheme.goldDark + '30', borderColor: TempleTheme.gold },
-  godChipPatron: { borderColor: TempleTheme.gold + '80', borderWidth: 1.5 },
-  godChipText: { fontSize: 12, color: TempleTheme.textMuted },
-  godChipTextActive: { color: TempleTheme.goldLight, fontWeight: '600' },
+  godChipActive: { backgroundColor: theme.goldDark + '30', borderColor: theme.gold },
+  godChipPatron: { borderColor: theme.gold + '80', borderWidth: 1.5 },
+  godChipText: { fontSize: 12, color: theme.textMuted },
+  godChipTextActive: { color: theme.goldLight, fontWeight: '600' },
   durationGrid: {
     gap: TempleSpacing.xs,
     flexDirection: 'row',
@@ -800,31 +811,31 @@ const styles = StyleSheet.create({
   durationCard: {
     flex: 1,
     minWidth: 190,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '25',
+    borderColor: theme.goldDark + '25',
     borderRadius: 12,
     padding: TempleSpacing.sm,
   },
   durationCardActive: {
-    borderColor: TempleTheme.gold,
-    backgroundColor: TempleTheme.goldDark + '25',
+    borderColor: theme.gold,
+    backgroundColor: theme.goldDark + '25',
   },
   durationTitle: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontWeight: '700',
     marginBottom: 4,
   },
   durationTitleActive: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   durationDesc: {
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   durationDescActive: {
-    color: TempleTheme.textGold,
+    color: theme.textGold,
   },
   animationModeRow: {
     flexDirection: 'row',
@@ -835,27 +846,27 @@ const styles = StyleSheet.create({
   animationModeCard: {
     flex: 1,
     minWidth: 180,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '24',
+    borderColor: theme.goldDark + '24',
     borderRadius: 12,
     padding: TempleSpacing.sm,
   },
   animationModeCardActive: {
-    borderColor: TempleTheme.gold,
-    backgroundColor: TempleTheme.goldDark + '22',
+    borderColor: theme.gold,
+    backgroundColor: theme.goldDark + '22',
   },
   animationModeTitle: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.small,
     fontWeight: '800',
     marginBottom: 4,
   },
   animationModeTitleActive: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   animationModeDesc: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     lineHeight: 17,
   },
@@ -867,13 +878,13 @@ const styles = StyleSheet.create({
   drawStyleCard: {
     flex: 1,
     minWidth: 190,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
     borderRadius: 14,
     padding: TempleSpacing.sm,
   },
   drawStyleCardActive: {
-    backgroundColor: TempleTheme.goldDark + '18',
+    backgroundColor: theme.goldDark + '18',
   },
   drawStyleImage: {
     width: '100%',
@@ -886,7 +897,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   drawStyleText: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     lineHeight: 17,
   },
@@ -894,13 +905,13 @@ const styles = StyleSheet.create({
     marginTop: TempleSpacing.md,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.gold,
-    backgroundColor: TempleTheme.goldDark + '22',
+    borderColor: theme.gold,
+    backgroundColor: theme.goldDark + '22',
     paddingVertical: TempleSpacing.sm,
     alignItems: 'center',
   },
   previewToggleText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: TempleFonts.body,
     fontWeight: '800',
   },
@@ -910,60 +921,60 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '35',
-    backgroundColor: TempleTheme.bgDark,
+    borderColor: theme.goldDark + '35',
+    backgroundColor: theme.bgDark,
   },  toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 10,
     padding: TempleSpacing.sm,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
     marginBottom: TempleSpacing.xs,
   },
-  toggleRowActive: { borderColor: TempleTheme.goldDark },
+  toggleRowActive: { borderColor: theme.goldDark },
   toggleInfo: { flex: 1, marginRight: TempleSpacing.sm },
-  toggleLabel: { fontSize: TempleFonts.small, color: TempleTheme.textLight, fontWeight: '600' },
-  toggleDesc: { fontSize: 11, color: TempleTheme.textMuted, marginTop: 2 },
+  toggleLabel: { fontSize: TempleFonts.small, color: theme.textLight, fontWeight: '600' },
+  toggleDesc: { fontSize: 11, color: theme.textMuted, marginTop: 2 },
   toggleSwitch: {
     width: 48,
     height: 28,
     borderRadius: 14,
-    backgroundColor: TempleTheme.bgDark + '80',
+    backgroundColor: theme.bgDark + '80',
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
-  toggleSwitchOn: { backgroundColor: TempleTheme.goldDark },
+  toggleSwitchOn: { backgroundColor: theme.goldDark },
   toggleKnob: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: TempleTheme.textMuted,
+    backgroundColor: theme.textMuted,
   },
-  toggleKnobOn: { backgroundColor: TempleTheme.goldLight, alignSelf: 'flex-end' },
+  toggleKnobOn: { backgroundColor: theme.goldLight, alignSelf: 'flex-end' },
   lunarCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
   },
   lunarDate: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontWeight: '600',
     marginBottom: 8,
   },
   lunarText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginBottom: 4,
   },
   backupHint: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
     lineHeight: 20,
     marginBottom: 8,
@@ -977,37 +988,37 @@ const styles = StyleSheet.create({
   },
   backupBtn: {
     flex: 1,
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
   },
   backupBtnSecondary: {
     flex: 1,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '25',
+    borderColor: theme.goldDark + '25',
   },
   backupBtnText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   aiInput: {
-    backgroundColor: TempleTheme.bgCard, borderWidth: 1, borderColor: TempleTheme.goldDark + '40',
-    borderRadius: 10, padding: TempleSpacing.sm, color: TempleTheme.textLight,
+    backgroundColor: theme.bgCard, borderWidth: 1, borderColor: theme.goldDark + '40',
+    borderRadius: 10, padding: TempleSpacing.sm, color: theme.textLight,
     fontSize: TempleFonts.small, marginBottom: TempleSpacing.sm,
   } as any,
   backupInput: {
     minHeight: 160,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '25',
+    borderColor: theme.goldDark + '25',
     borderRadius: 10,
     padding: TempleSpacing.sm,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     textAlignVertical: 'top',
   },
   // Premium styles
@@ -1027,54 +1038,55 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '44',
+    borderColor: theme.goldDark + '44',
   },
-  premiumCancelBtnText: { color: TempleTheme.textMuted, fontSize: 13 },
+  premiumCancelBtnText: { color: theme.textMuted, fontSize: 13 },
   premiumFreeCard: {
-    backgroundColor: TempleTheme.bgMedium,
+    backgroundColor: theme.bgMedium,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '33',
+    borderColor: theme.goldDark + '33',
     padding: TempleSpacing.md,
     gap: 6,
   },
-  premiumFreeTitle: { color: TempleTheme.textLight, fontWeight: '700', fontSize: TempleFonts.body },
-  premiumFreeDesc: { color: TempleTheme.textMuted, fontSize: TempleFonts.small },
+  premiumFreeTitle: { color: theme.textLight, fontWeight: '700', fontSize: TempleFonts.body },
+  premiumFreeDesc: { color: theme.textMuted, fontSize: TempleFonts.small },
   premiumUpgradeBtn: {
     marginTop: 8,
-    backgroundColor: TempleTheme.gold,
+    backgroundColor: theme.gold,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
   },
-  premiumUpgradeBtnText: { color: TempleTheme.bgDark, fontWeight: '900', fontSize: TempleFonts.body },
-  themeNote: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 6 },
+  premiumUpgradeBtnText: { color: theme.bgDark, fontWeight: '900', fontSize: TempleFonts.body },
+  themeNote: { color: theme.textMuted, fontSize: 11, marginTop: 6 },
 
   saveBtn: {
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: TempleSpacing.lg,
   },
   saveBtnText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: TempleFonts.body,
     fontWeight: '700',
   },
   aboutSection: {
     marginTop: 'auto',
     padding: TempleSpacing.md,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
   },
   aboutTitle: {
     fontSize: TempleFonts.small,
     fontWeight: '600',
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginBottom: 6,
   },
-  aboutText: { fontSize: 11, color: TempleTheme.textMuted, lineHeight: 18 },
-});
+  aboutText: { fontSize: 11, color: theme.textMuted, lineHeight: 18 },
+  });
+}
