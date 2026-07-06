@@ -1,12 +1,15 @@
 // Error Boundary - 捕獲渲染錯誤，避免白畫面
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 interface Props {
   children: React.ReactNode;
   fallbackMessage?: string;
   onReset?: () => void;
+  theme: ThemeColors;
 }
 
 interface State {
@@ -14,7 +17,12 @@ interface State {
   errorMessage: string;
 }
 
-export class ErrorBoundary extends React.Component<Props, State> {
+export function ErrorBoundary(props: Omit<Props, 'theme'>) {
+  const { theme } = useAppTheme();
+  return <ErrorBoundaryClass {...props} theme={theme} />;
+}
+
+class ErrorBoundaryClass extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, errorMessage: '' };
@@ -35,6 +43,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const styles = createStyles(this.props.theme);
       return (
         <View style={styles.container}>
           <Text style={styles.icon}>🏛️</Text>
@@ -51,39 +60,41 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: TempleTheme.bgDark,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: TempleSpacing.lg,
-  },
-  icon: {
-    fontSize: 64,
-    marginBottom: TempleSpacing.md,
-  },
-  title: {
-    fontSize: TempleFonts.heading,
-    fontWeight: '700',
-    color: TempleTheme.goldLight,
-    marginBottom: TempleSpacing.sm,
-  },
-  message: {
-    fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
-    textAlign: 'center',
-    marginBottom: TempleSpacing.lg,
-  },
-  button: {
-    backgroundColor: TempleTheme.red,
-    paddingHorizontal: TempleSpacing.lg,
-    paddingVertical: TempleSpacing.sm,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: TempleTheme.goldLight,
-    fontSize: TempleFonts.body,
-    fontWeight: '700',
-  },
-});
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.bgDark,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: TempleSpacing.lg,
+    },
+    icon: {
+      fontSize: 64,
+      marginBottom: TempleSpacing.md,
+    },
+    title: {
+      fontSize: TempleFonts.heading,
+      fontWeight: '700',
+      color: theme.goldLight,
+      marginBottom: TempleSpacing.sm,
+    },
+    message: {
+      fontSize: TempleFonts.small,
+      color: theme.textMuted,
+      textAlign: 'center',
+      marginBottom: TempleSpacing.lg,
+    },
+    button: {
+      backgroundColor: theme.red,
+      paddingHorizontal: TempleSpacing.lg,
+      paddingVertical: TempleSpacing.sm,
+      borderRadius: 10,
+    },
+    buttonText: {
+      color: theme.goldLight,
+      fontSize: TempleFonts.body,
+      fontWeight: '700',
+    },
+  });
+}

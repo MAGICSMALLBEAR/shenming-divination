@@ -1,12 +1,14 @@
 // 紫微斗數基礎 — 依生年推算命宮、財帛宮、夫妻宮
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
   TouchableOpacity, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DecorativeBg } from '@/components/DecorativeBg';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 // ─── 紫微斗數命宮計算 ─────────────────────────────────────────
 // 簡化版：依生年天干地支定命宮，提供三宮基礎解析
@@ -94,15 +96,19 @@ function calcZiwei(year: number): ZiweiResult | null {
   };
 }
 
-const PALACE_COLORS: Record<string, string> = {
-  '命宮': TempleTheme.goldLight,
-  '夫妻宮': '#E879A0',
-  '財帛宮': TempleTheme.success,
-};
+function getPalaceColors(theme: ThemeColors): Record<string, string> {
+  return {
+    '命宮': theme.goldLight,
+    '夫妻宮': '#E879A0',
+    '財帛宮': theme.success,
+  };
+}
 
 function PalaceCard({ title, star, summary, advice, color }: {
   title: string; star?: string; summary: string; advice: string; color: string;
 }) {
+  const { theme } = useAppTheme();
+  const pc = useMemo(() => createPcStyles(theme), [theme]);
   return (
     <View style={[pc.card, { borderColor: color + '80' }]}>
       <View style={[pc.titleRow, { backgroundColor: color + '20' }]}>
@@ -118,18 +124,23 @@ function PalaceCard({ title, star, summary, advice, color }: {
   );
 }
 
-const pc = StyleSheet.create({
-  card: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, borderWidth: 1.5, marginBottom: TempleSpacing.md, overflow: 'hidden' },
-  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: TempleSpacing.sm },
-  title: { fontSize: TempleFonts.heading, fontWeight: 'bold' },
-  star: { fontSize: TempleFonts.body, fontWeight: '600' },
-  summary: { color: TempleTheme.textLight, fontSize: TempleFonts.body, lineHeight: 22, padding: TempleSpacing.sm, paddingTop: 4 },
-  adviceRow: { flexDirection: 'row', gap: 6, padding: TempleSpacing.sm, paddingTop: 0 },
-  adviceIcon: { fontSize: 14, marginTop: 2 },
-  advice: { color: TempleTheme.textMuted, fontSize: TempleFonts.small, lineHeight: 18, flex: 1 },
-});
+function createPcStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    card: { backgroundColor: theme.bgCard, borderRadius: 16, borderWidth: 1.5, marginBottom: TempleSpacing.md, overflow: 'hidden' },
+    titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: TempleSpacing.sm },
+    title: { fontSize: TempleFonts.heading, fontWeight: 'bold' },
+    star: { fontSize: TempleFonts.body, fontWeight: '600' },
+    summary: { color: theme.textLight, fontSize: TempleFonts.body, lineHeight: 22, padding: TempleSpacing.sm, paddingTop: 4 },
+    adviceRow: { flexDirection: 'row', gap: 6, padding: TempleSpacing.sm, paddingTop: 0 },
+    adviceIcon: { fontSize: 14, marginTop: 2 },
+    advice: { color: theme.textMuted, fontSize: TempleFonts.small, lineHeight: 18, flex: 1 },
+  });
+}
 
 export default function ZiweiScreen() {
+  const { theme } = useAppTheme();
+  const s = useMemo(() => createStyles(theme), [theme]);
+  const PALACE_COLORS = useMemo(() => getPalaceColors(theme), [theme]);
   const [birthYear, setBirthYear] = useState('');
   const [result, setResult] = useState<ZiweiResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -165,7 +176,7 @@ export default function ZiweiScreen() {
                 value={birthYear}
                 onChangeText={v => { setBirthYear(v); setError(''); }}
                 placeholder="例：1990"
-                placeholderTextColor={TempleTheme.textMuted}
+                placeholderTextColor={theme.textMuted}
                 keyboardType="number-pad"
                 maxLength={4}
               />
@@ -229,25 +240,27 @@ export default function ZiweiScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: theme.bgDark },
   scroll: { padding: TempleSpacing.md, paddingBottom: TempleSpacing.xxl },
-  title: { fontSize: TempleFonts.subtitle, fontWeight: 'bold', color: TempleTheme.textGold, textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, textAlign: 'center', marginBottom: TempleSpacing.lg, lineHeight: 18 },
-  inputCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, borderWidth: 1, borderColor: TempleTheme.gold + '40', padding: TempleSpacing.md, marginBottom: TempleSpacing.md },
-  inputLabel: { color: TempleTheme.textGold, fontSize: TempleFonts.body, marginBottom: TempleSpacing.sm },
+  title: { fontSize: TempleFonts.subtitle, fontWeight: 'bold', color: theme.textGold, textAlign: 'center', marginBottom: 4 },
+  subtitle: { fontSize: TempleFonts.small, color: theme.textMuted, textAlign: 'center', marginBottom: TempleSpacing.lg, lineHeight: 18 },
+  inputCard: { backgroundColor: theme.bgCard, borderRadius: 16, borderWidth: 1, borderColor: theme.gold + '40', padding: TempleSpacing.md, marginBottom: TempleSpacing.md },
+  inputLabel: { color: theme.textGold, fontSize: TempleFonts.body, marginBottom: TempleSpacing.sm },
   inputRow: { flexDirection: 'row', gap: 10 },
-  input: { flex: 1, backgroundColor: TempleTheme.bgMedium, borderRadius: 10, borderWidth: 1, borderColor: TempleTheme.gold, padding: 12, color: TempleTheme.textLight, fontSize: TempleFonts.heading, textAlign: 'center' } as any,
-  calcBtn: { backgroundColor: TempleTheme.gold, borderRadius: 10, paddingHorizontal: TempleSpacing.lg, justifyContent: 'center', alignItems: 'center' },
-  calcBtnText: { color: TempleTheme.bgDark, fontWeight: 'bold', fontSize: TempleFonts.body },
-  error: { color: TempleTheme.danger, fontSize: TempleFonts.small, marginTop: 6 },
-  loadingCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, borderWidth: 1, borderColor: TempleTheme.gold + '40', padding: TempleSpacing.xl, marginBottom: TempleSpacing.md, alignItems: 'center' },
+  input: { flex: 1, backgroundColor: theme.bgMedium, borderRadius: 10, borderWidth: 1, borderColor: theme.gold, padding: 12, color: theme.textLight, fontSize: TempleFonts.heading, textAlign: 'center' } as any,
+  calcBtn: { backgroundColor: theme.gold, borderRadius: 10, paddingHorizontal: TempleSpacing.lg, justifyContent: 'center', alignItems: 'center' },
+  calcBtnText: { color: theme.bgDark, fontWeight: 'bold', fontSize: TempleFonts.body },
+  error: { color: theme.danger, fontSize: TempleFonts.small, marginTop: 6 },
+  loadingCard: { backgroundColor: theme.bgCard, borderRadius: 16, borderWidth: 1, borderColor: theme.gold + '40', padding: TempleSpacing.xl, marginBottom: TempleSpacing.md, alignItems: 'center' },
   loadingIcon: { fontSize: 32, marginBottom: 8 },
-  loadingText: { color: TempleTheme.textGold, fontSize: TempleFonts.body },
-  summaryCard: { backgroundColor: TempleTheme.bgCard, borderRadius: 16, borderWidth: 1, borderColor: TempleTheme.goldDark + '60', padding: TempleSpacing.md, marginBottom: TempleSpacing.md, alignItems: 'center' },
-  ganZhi: { fontSize: TempleFonts.title, fontWeight: 'bold', color: TempleTheme.goldLight, marginBottom: 6 },
-  summaryText: { fontSize: TempleFonts.body, color: TempleTheme.textLight, marginBottom: 4 },
-  highlight: { color: TempleTheme.goldLight, fontWeight: 'bold' },
-  disclaimer: { backgroundColor: TempleTheme.bgMedium, borderRadius: 10, padding: TempleSpacing.sm, marginTop: 4 },
-  disclaimerText: { color: TempleTheme.textMuted, fontSize: 11, lineHeight: 16, textAlign: 'center' },
-});
+  loadingText: { color: theme.textGold, fontSize: TempleFonts.body },
+  summaryCard: { backgroundColor: theme.bgCard, borderRadius: 16, borderWidth: 1, borderColor: theme.goldDark + '60', padding: TempleSpacing.md, marginBottom: TempleSpacing.md, alignItems: 'center' },
+  ganZhi: { fontSize: TempleFonts.title, fontWeight: 'bold', color: theme.goldLight, marginBottom: 6 },
+  summaryText: { fontSize: TempleFonts.body, color: theme.textLight, marginBottom: 4 },
+  highlight: { color: theme.goldLight, fontWeight: 'bold' },
+  disclaimer: { backgroundColor: theme.bgMedium, borderRadius: 10, padding: TempleSpacing.sm, marginTop: 4 },
+  disclaimerText: { color: theme.textMuted, fontSize: 11, lineHeight: 16, textAlign: 'center' },
+  });
+}

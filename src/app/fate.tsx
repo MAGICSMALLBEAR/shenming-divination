@@ -1,12 +1,14 @@
 // 合婚 / 擇日 頁面 — AI 命理分析
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
   TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { TempleTheme, TempleSpacing } from '@/constants/temple-theme';
+import { TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 const API_BASE = 'http://localhost:3001';
 
@@ -17,6 +19,8 @@ const ZODIAC_LIST = ['鼠', '牛', '虎', '兔', '龍', '蛇', '馬', '羊', '�
 const WUXING_LIST = ['木', '火', '土', '金', '水'];
 
 export default function FateScreen() {
+  const { theme } = useAppTheme();
+  const s = useMemo(() => createStyles(theme), [theme]);
   const [tab, setTab] = useState<Tab>('match');
 
   // 合婚
@@ -121,7 +125,7 @@ export default function FateScreen() {
                 <View style={s.row}>
                   <View style={s.field}>
                     <Text style={s.label}>出生年</Text>
-                    <TextInput style={s.input} placeholder="1990" placeholderTextColor={TempleTheme.textMuted}
+                    <TextInput style={s.input} placeholder="1990" placeholderTextColor={theme.textMuted}
                       value={p1Year} onChangeText={v => { setP1Year(v); setP1Zodiac(zodiacFromYear(v)); }}
                       keyboardType="number-pad" maxLength={4} />
                   </View>
@@ -146,7 +150,7 @@ export default function FateScreen() {
                 <View style={s.row}>
                   <View style={s.field}>
                     <Text style={s.label}>出生年</Text>
-                    <TextInput style={s.input} placeholder="1992" placeholderTextColor={TempleTheme.textMuted}
+                    <TextInput style={s.input} placeholder="1992" placeholderTextColor={theme.textMuted}
                       value={p2Year} onChangeText={v => { setP2Year(v); setP2Zodiac(zodiacFromYear(v)); }}
                       keyboardType="number-pad" maxLength={4} />
                   </View>
@@ -171,7 +175,7 @@ export default function FateScreen() {
                 disabled={matchLoading || !p1Year || !p2Year}
               >
                 {matchLoading
-                  ? <ActivityIndicator color={TempleTheme.bgDark} />
+                  ? <ActivityIndicator color={theme.bgDark} />
                   : <Text style={s.btnText}>🔮 開始合婚分析</Text>}
               </TouchableOpacity>
 
@@ -200,7 +204,7 @@ export default function FateScreen() {
                 <View style={s.row}>
                   <View style={s.field}>
                     <Text style={s.label}>偏好月份（可留空）</Text>
-                    <TextInput style={s.input} placeholder="如：3（三月）" placeholderTextColor={TempleTheme.textMuted}
+                    <TextInput style={s.input} placeholder="如：3（三月）" placeholderTextColor={theme.textMuted}
                       value={preferMonth} onChangeText={setPreferMonth} keyboardType="number-pad" maxLength={2} />
                   </View>
                 </View>
@@ -225,13 +229,13 @@ export default function FateScreen() {
 
                 <Text style={s.label}>備注（選填）</Text>
                 <TextInput style={[s.input, { height: 64, textAlignVertical: 'top' }]}
-                  placeholder="如：需避開本命年犯太歲…" placeholderTextColor={TempleTheme.textMuted}
+                  placeholder="如：需避開本命年犯太歲…" placeholderTextColor={theme.textMuted}
                   value={notes} onChangeText={setNotes} multiline maxLength={100} />
               </View>
 
               <TouchableOpacity style={s.btn} onPress={handleDateSelect} disabled={dateLoading}>
                 {dateLoading
-                  ? <ActivityIndicator color={TempleTheme.bgDark} />
+                  ? <ActivityIndicator color={theme.bgDark} />
                   : <Text style={s.btnText}>📅 AI 推薦吉日</Text>}
               </TouchableOpacity>
 
@@ -254,39 +258,41 @@ export default function FateScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: theme.bgDark },
   header: { paddingHorizontal: TempleSpacing.lg, paddingTop: TempleSpacing.md, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#2A2020' },
-  title: { color: TempleTheme.gold, fontSize: 20, fontWeight: '900' },
-  sub: { color: TempleTheme.textMuted, fontSize: 13, marginTop: 2 },
+  title: { color: theme.gold, fontSize: 20, fontWeight: '900' },
+  sub: { color: theme.textMuted, fontSize: 13, marginTop: 2 },
   tabs: { flexDirection: 'row', paddingHorizontal: TempleSpacing.md, paddingTop: 12, gap: 8 },
-  tab: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#2A2020', alignItems: 'center', backgroundColor: TempleTheme.bgCard },
-  tabActive: { backgroundColor: TempleTheme.gold, borderColor: TempleTheme.gold },
-  tabText: { color: TempleTheme.textMuted, fontSize: 14, fontWeight: '700' },
-  tabTextActive: { color: TempleTheme.bgDark },
+  tab: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#2A2020', alignItems: 'center', backgroundColor: theme.bgCard },
+  tabActive: { backgroundColor: theme.gold, borderColor: theme.gold },
+  tabText: { color: theme.textMuted, fontSize: 14, fontWeight: '700' },
+  tabTextActive: { color: theme.bgDark },
   scroll: { flex: 1 },
   scrollContent: { padding: TempleSpacing.md },
-  sectionTitle: { color: TempleTheme.gold, fontSize: 16, fontWeight: '900', marginBottom: 4 },
-  desc: { color: TempleTheme.textMuted, fontSize: 12, marginBottom: 14 },
-  card: { backgroundColor: TempleTheme.bgCard, borderRadius: 12, borderWidth: 1, borderColor: '#2A2020', padding: TempleSpacing.md, marginBottom: 12 },
-  cardTitle: { color: TempleTheme.goldLight, fontSize: 14, fontWeight: '700', marginBottom: 10 },
+  sectionTitle: { color: theme.gold, fontSize: 16, fontWeight: '900', marginBottom: 4 },
+  desc: { color: theme.textMuted, fontSize: 12, marginBottom: 14 },
+  card: { backgroundColor: theme.bgCard, borderRadius: 12, borderWidth: 1, borderColor: '#2A2020', padding: TempleSpacing.md, marginBottom: 12 },
+  cardTitle: { color: theme.goldLight, fontSize: 14, fontWeight: '700', marginBottom: 10 },
   row: { flexDirection: 'row', gap: 10, marginBottom: 10 },
   field: { flex: 1 },
-  label: { color: TempleTheme.textMuted, fontSize: 12, marginBottom: 4, marginTop: 8 },
-  input: { backgroundColor: TempleTheme.bgDark, borderWidth: 1, borderColor: '#3A2A20', borderRadius: 8, color: TempleTheme.textLight, fontSize: 14, paddingHorizontal: 10, paddingVertical: 8 },
+  label: { color: theme.textMuted, fontSize: 12, marginBottom: 4, marginTop: 8 },
+  input: { backgroundColor: theme.bgDark, borderWidth: 1, borderColor: '#3A2A20', borderRadius: 8, color: theme.textLight, fontSize: 14, paddingHorizontal: 10, paddingVertical: 8 },
   readOnly: { backgroundColor: '#1E1408', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, borderWidth: 1, borderColor: '#2A2010' },
-  readOnlyText: { color: TempleTheme.gold, fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  readOnlyText: { color: theme.gold, fontSize: 16, fontWeight: '700', textAlign: 'center' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4, marginBottom: 4 },
-  chip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, borderColor: '#3A2A20', backgroundColor: TempleTheme.bgDark },
-  chipActive: { backgroundColor: TempleTheme.gold, borderColor: TempleTheme.gold },
-  chipText: { color: TempleTheme.textMuted, fontSize: 13 },
-  chipTextActive: { color: TempleTheme.bgDark, fontWeight: '700' },
-  btn: { backgroundColor: TempleTheme.gold, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
+  chip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, borderColor: '#3A2A20', backgroundColor: theme.bgDark },
+  chipActive: { backgroundColor: theme.gold, borderColor: theme.gold },
+  chipText: { color: theme.textMuted, fontSize: 13 },
+  chipTextActive: { color: theme.bgDark, fontWeight: '700' },
+  btn: { backgroundColor: theme.gold, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
   btnDisabled: { opacity: 0.4 },
-  btnText: { color: TempleTheme.bgDark, fontSize: 16, fontWeight: '900' },
+  btnText: { color: theme.bgDark, fontSize: 16, fontWeight: '900' },
   result: { backgroundColor: '#1E1A08', borderRadius: 12, borderWidth: 1, borderColor: '#3A2A10', padding: TempleSpacing.md, marginTop: 14 },
-  resultTitle: { color: TempleTheme.gold, fontSize: 14, fontWeight: '700', marginBottom: 8 },
-  resultText: { color: TempleTheme.textLight, fontSize: 14, lineHeight: 24 },
+  resultTitle: { color: theme.gold, fontSize: 14, fontWeight: '700', marginBottom: 8 },
+  resultText: { color: theme.textLight, fontSize: 14, lineHeight: 24 },
   disclaimer: { marginTop: 20, alignItems: 'center' },
-  disclaimerText: { color: TempleTheme.textMuted, fontSize: 11 },
-});
+  disclaimerText: { color: theme.textMuted, fontSize: 11 },
+  });
+}

@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
 import { getDailyPoem, getWeeklyPoems } from '@/services/dailyPoem';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
@@ -24,6 +26,8 @@ import type { BaziInfo } from '@/services/bazi';
 
 export default function DailyScreen() {
   const layout = useResponsiveLayout();
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [fortune, setFortune] = useState<DailyFortune>(() => getDailyFortune());
   const [bazi, setBazi] = useState<BaziInfo | null>(null);
   const [yearFortune, setYearFortune] = useState<YearFortune | null>(null);
@@ -88,7 +92,7 @@ export default function DailyScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
+      <StatusBar barStyle="light-content" backgroundColor={theme.bgDark} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={[
@@ -184,7 +188,7 @@ export default function DailyScreen() {
                     <Text style={styles.shiChenName}>{sc.name}時</Text>
                     <Text style={styles.shiChenTime}>{sc.timeRange}</Text>
                     <Text style={styles.shiChenWx}>{sc.wuxing}</Text>
-                    <Text style={[styles.shiChenStatus, sc.auspicious && { color: TempleTheme.gold }]}>
+                    <Text style={[styles.shiChenStatus, sc.auspicious && { color: theme.gold }]}>
                       {sc.auspicious ? '吉' : '平'}
                     </Text>
                   </View>
@@ -424,7 +428,7 @@ export default function DailyScreen() {
                 value={moodNote}
                 onChangeText={t => { setMoodNote(t); setMoodSaved(false); }}
                 placeholder="今天有什麼想說的…（可選）"
-                placeholderTextColor={TempleTheme.textMuted}
+                placeholderTextColor={theme.textMuted}
                 multiline
                 maxLength={120}
               />
@@ -447,22 +451,23 @@ export default function DailyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.bgDark },
   container: { flex: 1 },
   content: { width: '100%', alignSelf: 'center', paddingVertical: TempleSpacing.md },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
     marginBottom: TempleSpacing.lg,
   },
   card: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '24',
+    borderColor: theme.goldDark + '24',
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
   },
@@ -470,7 +475,7 @@ const styles = StyleSheet.create({
   heroGridDesktop: { flexDirection: 'row', gap: TempleSpacing.md },
   heroCard: { flex: 1 },
   cardTitle: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '800',
     fontSize: TempleFonts.body,
   },
@@ -481,29 +486,29 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   foldIcon: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
   },
   bigValue: {
     fontSize: 24,
     fontWeight: '900',
-    color: TempleTheme.gold,
+    color: theme.gold,
     marginBottom: 8,
   },
   subtitle: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
     marginBottom: 4,
   },
   advice: {
     marginTop: 10,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     lineHeight: 22,
   },
-  poemMeta: { color: TempleTheme.textMuted, fontSize: TempleFonts.small, marginBottom: 6 },
-  poemTitle: { color: TempleTheme.goldLight, fontWeight: '700', marginBottom: 10 },
-  poemLine: { color: TempleTheme.textLight, lineHeight: 24, fontSize: TempleFonts.body },
-  poemMeaning: { marginTop: 12, color: TempleTheme.textMuted, lineHeight: 22, fontSize: TempleFonts.small },
+  poemMeta: { color: theme.textMuted, fontSize: TempleFonts.small, marginBottom: 6 },
+  poemTitle: { color: theme.goldLight, fontWeight: '700', marginBottom: 10 },
+  poemLine: { color: theme.textLight, lineHeight: 24, fontSize: TempleFonts.body },
+  poemMeaning: { marginTop: 12, color: theme.textMuted, lineHeight: 22, fontSize: TempleFonts.small },
 
   // 農民曆
   lunarRow: {
@@ -514,14 +519,14 @@ const styles = StyleSheet.create({
   },
   lunarItem: {
     minWidth: 80,
-    backgroundColor: TempleTheme.goldDark + '18',
+    backgroundColor: theme.goldDark + '18',
     borderRadius: 8,
     padding: 8,
     alignItems: 'center',
     flex: 1,
   },
-  lunarLabel: { color: TempleTheme.textMuted, fontSize: 11, marginBottom: 4 },
-  lunarValue: { color: TempleTheme.goldLight, fontWeight: '700', fontSize: 13 },
+  lunarLabel: { color: theme.textMuted, fontSize: 11, marginBottom: 4 },
+  lunarValue: { color: theme.goldLight, fontWeight: '700', fontSize: 13 },
   yiJiRow: { flexDirection: 'row', gap: 12, marginBottom: 10 },
   yiBlock: {
     flex: 1,
@@ -544,21 +549,21 @@ const styles = StyleSheet.create({
   yiText: { color: '#a5d6a7', fontSize: 12, lineHeight: 18 },
   jiText: { color: '#ef9a9a', fontSize: 12, lineHeight: 18 },
   godsRow: { flexDirection: 'row', marginBottom: 4 },
-  godsLabel: { color: TempleTheme.gold, fontSize: 12, fontWeight: '700', width: 44 },
-  godsText: { color: TempleTheme.textMuted, fontSize: 12, flex: 1 },
+  godsLabel: { color: theme.gold, fontSize: 12, fontWeight: '700', width: 44 },
+  godsText: { color: theme.textMuted, fontSize: 12, flex: 1 },
   shiChenCurrent: {
-    backgroundColor: TempleTheme.goldDark + '22',
+    backgroundColor: theme.goldDark + '22',
     borderRadius: 8,
     padding: 8,
     marginTop: 10,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '44',
+    borderColor: theme.goldDark + '44',
   },
-  shiChenCurrentLabel: { color: TempleTheme.gold, fontWeight: '700', fontSize: 13 },
-  shiChenCurrentSub: { color: TempleTheme.textMuted, fontSize: 12, marginTop: 2 },
+  shiChenCurrentLabel: { color: theme.gold, fontWeight: '700', fontSize: 13 },
+  shiChenCurrentSub: { color: theme.textMuted, fontSize: 12, marginTop: 2 },
   toggleBtn: { marginTop: 8 },
-  toggleBtnText: { color: TempleTheme.gold, fontSize: 13, fontWeight: '600' },
+  toggleBtnText: { color: theme.gold, fontSize: 13, fontWeight: '600' },
   shiChenGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -567,73 +572,73 @@ const styles = StyleSheet.create({
   },
   shiChenCell: {
     width: '23%',
-    backgroundColor: TempleTheme.bgDark + 'aa',
+    backgroundColor: theme.bgDark + 'aa',
     borderRadius: 8,
     padding: 6,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '22',
+    borderColor: theme.goldDark + '22',
   },
   shiChenCellAuspicious: {
-    borderColor: TempleTheme.gold + '60',
-    backgroundColor: TempleTheme.goldDark + '18',
+    borderColor: theme.gold + '60',
+    backgroundColor: theme.goldDark + '18',
   },
-  shiChenName: { color: TempleTheme.textLight, fontWeight: '700', fontSize: 12 },
-  shiChenTime: { color: TempleTheme.textMuted, fontSize: 10, marginTop: 2 },
-  shiChenWx: { color: TempleTheme.textMuted, fontSize: 10 },
-  shiChenStatus: { fontSize: 11, fontWeight: '700', marginTop: 2, color: TempleTheme.textMuted },
+  shiChenName: { color: theme.textLight, fontWeight: '700', fontSize: 12 },
+  shiChenTime: { color: theme.textMuted, fontSize: 10, marginTop: 2 },
+  shiChenWx: { color: theme.textMuted, fontSize: 10 },
+  shiChenStatus: { fontSize: 11, fontWeight: '700', marginTop: 2, color: theme.textMuted },
 
   // 節慶
-  festivalDesc: { color: TempleTheme.textLight, fontSize: TempleFonts.small, lineHeight: 20, marginBottom: 8 },
-  festivalGuide: { color: TempleTheme.gold, fontSize: TempleFonts.small, marginBottom: 8, fontWeight: '600' },
+  festivalDesc: { color: theme.textLight, fontSize: TempleFonts.small, lineHeight: 20, marginBottom: 8 },
+  festivalGuide: { color: theme.gold, fontSize: TempleFonts.small, marginBottom: 8, fontWeight: '600' },
   offeringsRow: { flexDirection: 'row', marginBottom: 4 },
-  offeringsLabel: { color: TempleTheme.textMuted, fontSize: 12, width: 40 },
-  offeringsText: { color: TempleTheme.textLight, fontSize: 12, flex: 1 },
+  offeringsLabel: { color: theme.textMuted, fontSize: 12, width: 40 },
+  offeringsText: { color: theme.textLight, fontSize: 12, flex: 1 },
   upcomingFestRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '14',
+    borderBottomColor: theme.goldDark + '14',
     gap: 10,
   },
   festDot: { width: 10, height: 10, borderRadius: 5 },
-  upcomingFestName: { color: TempleTheme.goldLight, fontWeight: '700', fontSize: 13 },
-  upcomingFestDate: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 2 },
-  upcomingFestDays: { color: TempleTheme.gold, fontWeight: '700', fontSize: 12 },
+  upcomingFestName: { color: theme.goldLight, fontWeight: '700', fontSize: 13 },
+  upcomingFestDate: { color: theme.textMuted, fontSize: 11, marginTop: 2 },
+  upcomingFestDays: { color: theme.gold, fontWeight: '700', fontSize: 12 },
 
   // 流年
   yearScoreRow: { marginBottom: 10 },
-  yearScore: { color: TempleTheme.gold, fontSize: 20, fontWeight: '900', marginBottom: 6 },
-  yearOverview: { color: TempleTheme.textLight, fontSize: TempleFonts.small, lineHeight: 20 },
+  yearScore: { color: theme.gold, fontSize: 20, fontWeight: '900', marginBottom: 6 },
+  yearOverview: { color: theme.textLight, fontSize: TempleFonts.small, lineHeight: 20 },
   dimensionGrid: { gap: 10, marginTop: 12 },
   dimensionCell: {
-    backgroundColor: TempleTheme.bgDark + 'aa',
+    backgroundColor: theme.bgDark + 'aa',
     borderRadius: 8,
     padding: 10,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '22',
+    borderColor: theme.goldDark + '22',
   },
-  dimLabel: { color: TempleTheme.gold, fontWeight: '800', fontSize: 13, marginBottom: 4 },
-  dimScore: { color: TempleTheme.goldLight, fontSize: 16, marginBottom: 6 },
-  dimSummary: { color: TempleTheme.textMuted, fontSize: 12, lineHeight: 18 },
+  dimLabel: { color: theme.gold, fontWeight: '800', fontSize: 13, marginBottom: 4 },
+  dimScore: { color: theme.goldLight, fontSize: 16, marginBottom: 6 },
+  dimSummary: { color: theme.textMuted, fontSize: 12, lineHeight: 18 },
   luckyRow: { flexDirection: 'row', marginTop: 10 },
-  luckyLabel: { color: TempleTheme.textMuted, fontSize: 12, width: 56 },
-  luckyValue: { color: TempleTheme.goldLight, fontSize: 12, flex: 1 },
+  luckyLabel: { color: theme.textMuted, fontSize: 12, width: 56 },
+  luckyValue: { color: theme.goldLight, fontSize: 12, flex: 1 },
   yearAdvice: {
     marginTop: 12,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.small,
     lineHeight: 20,
     padding: 10,
-    backgroundColor: TempleTheme.goldDark + '18',
+    backgroundColor: theme.goldDark + '18',
     borderRadius: 8,
     borderLeftWidth: 3,
-    borderLeftColor: TempleTheme.gold,
+    borderLeftColor: theme.gold,
   },
   yearBlessing: {
     marginTop: 8,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 12,
     fontStyle: 'italic',
     textAlign: 'center',
@@ -646,48 +651,48 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
+    borderColor: theme.goldDark + '40',
   },
   monthTabActive: {
-    backgroundColor: TempleTheme.goldDark + '55',
-    borderColor: TempleTheme.gold,
+    backgroundColor: theme.goldDark + '55',
+    borderColor: theme.gold,
   },
-  monthTabText: { color: TempleTheme.textMuted, fontSize: 13 },
-  monthTabTextActive: { color: TempleTheme.gold, fontWeight: '700' },
+  monthTabText: { color: theme.textMuted, fontSize: 13 },
+  monthTabTextActive: { color: theme.gold, fontWeight: '700' },
   monthDetail: {
     marginTop: 12,
-    backgroundColor: TempleTheme.bgDark + 'aa',
+    backgroundColor: theme.bgDark + 'aa',
     borderRadius: 10,
     padding: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '22',
+    borderColor: theme.goldDark + '22',
   },
   monthScoreRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  monthGanZhi: { color: TempleTheme.gold, fontWeight: '800', fontSize: 14 },
-  monthScore: { color: TempleTheme.goldLight, fontSize: 14 },
-  monthOverview: { color: TempleTheme.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 10 },
+  monthGanZhi: { color: theme.gold, fontWeight: '800', fontSize: 14 },
+  monthScore: { color: theme.goldLight, fontSize: 14 },
+  monthOverview: { color: theme.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 10 },
   monthDimRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
   monthDimCell: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: TempleTheme.goldDark + '18',
+    backgroundColor: theme.goldDark + '18',
     borderRadius: 6,
     padding: 6,
   },
-  monthDimLabel: { color: TempleTheme.gold, fontWeight: '700', fontSize: 11, marginBottom: 2 },
-  monthDimStars: { color: TempleTheme.goldLight, fontSize: 12, marginBottom: 2 },
-  monthDimTip: { color: TempleTheme.textMuted, fontSize: 10, lineHeight: 14 },
+  monthDimLabel: { color: theme.gold, fontWeight: '700', fontSize: 11, marginBottom: 2 },
+  monthDimStars: { color: theme.goldLight, fontSize: 12, marginBottom: 2 },
+  monthDimTip: { color: theme.textMuted, fontSize: 10, lineHeight: 14 },
   monthAdvice: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: 12,
     lineHeight: 18,
     padding: 8,
-    backgroundColor: TempleTheme.goldDark + '14',
+    backgroundColor: theme.goldDark + '14',
     borderRadius: 6,
   },
 
   noBaziCard: { alignItems: 'center' },
-  noBaziText: { color: TempleTheme.textMuted, fontSize: TempleFonts.small, lineHeight: 22, textAlign: 'center' },
+  noBaziText: { color: theme.textMuted, fontSize: TempleFonts.small, lineHeight: 22, textAlign: 'center' },
 
   // 週詩
   weekRow: {
@@ -695,27 +700,28 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '14',
+    borderBottomColor: theme.goldDark + '14',
   },
   weekMeta: { width: 72 },
-  weekDate: { color: TempleTheme.goldLight, fontWeight: '700', fontSize: 12 },
-  weekDay: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 2 },
+  weekDate: { color: theme.goldLight, fontWeight: '700', fontSize: 12 },
+  weekDay: { color: theme.textMuted, fontSize: 11, marginTop: 2 },
   weekContent: { flex: 1 },
-  weekPoemTitle: { color: TempleTheme.textLight, fontSize: 12, fontWeight: '700', marginBottom: 4 },
-  weekPoemText: { color: TempleTheme.textMuted, fontSize: 12 },
+  weekPoemTitle: { color: theme.textLight, fontSize: 12, fontWeight: '700', marginBottom: 4 },
+  weekPoemText: { color: theme.textMuted, fontSize: 12 },
   // 心情日記
-  sectionTitle: { color: TempleTheme.textGold, fontWeight: 'bold', fontSize: TempleFonts.body, marginBottom: 4 },
-  sectionSubtitle: { color: TempleTheme.textMuted, fontSize: TempleFonts.small, marginBottom: 10 },
+  sectionTitle: { color: theme.textGold, fontWeight: 'bold', fontSize: TempleFonts.body, marginBottom: 4 },
+  sectionSubtitle: { color: theme.textMuted, fontSize: TempleFonts.small, marginBottom: 10 },
   moodRow: { flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 12 },
-  moodBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent', backgroundColor: TempleTheme.bgMedium },
-  moodBtnActive: { borderColor: TempleTheme.goldLight, backgroundColor: TempleTheme.bgCard },
+  moodBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent', backgroundColor: theme.bgMedium },
+  moodBtnActive: { borderColor: theme.goldLight, backgroundColor: theme.bgCard },
   moodEmoji: { fontSize: 26 },
   moodInput: {
-    backgroundColor: TempleTheme.bgMedium, borderRadius: 10, borderWidth: 1,
-    borderColor: TempleTheme.gold + '50', padding: 10, color: TempleTheme.textLight,
+    backgroundColor: theme.bgMedium, borderRadius: 10, borderWidth: 1,
+    borderColor: theme.gold + '50', padding: 10, color: theme.textLight,
     fontSize: TempleFonts.small, minHeight: 48, marginBottom: 10,
   } as any,
-  moodSaveBtn: { backgroundColor: TempleTheme.bgMedium, borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold, paddingVertical: 8, alignItems: 'center' },
-  moodSaveBtnDone: { borderColor: TempleTheme.success, backgroundColor: TempleTheme.success + '22' },
-  moodSaveBtnText: { color: TempleTheme.textGold, fontSize: TempleFonts.small, fontWeight: 'bold' },
-});
+  moodSaveBtn: { backgroundColor: theme.bgMedium, borderRadius: 8, borderWidth: 1, borderColor: theme.gold, paddingVertical: 8, alignItems: 'center' },
+  moodSaveBtnDone: { borderColor: theme.success, backgroundColor: theme.success + '22' },
+  moodSaveBtnText: { color: theme.textGold, fontSize: TempleFonts.small, fontWeight: 'bold' },
+  });
+}

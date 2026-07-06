@@ -1,5 +1,5 @@
 // 拍照解籤元件
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -10,7 +10,9 @@ import {
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { pickAndIdentifyPoem, type MatchedPoem, type VisionResult } from '@/services/photoDivination';
 
 interface Props {
@@ -22,6 +24,8 @@ interface Props {
 type Status = 'idle' | 'loading' | 'done' | 'error';
 
 export function PhotoDivination({ visible, onClose, onUsePoem }: Props) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [status, setStatus] = useState<Status>('idle');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [visionResult, setVisionResult] = useState<VisionResult | null>(null);
@@ -79,7 +83,7 @@ export function PhotoDivination({ visible, onClose, onUsePoem }: Props) {
 
           {status === 'loading' && (
             <View style={styles.loadingGroup}>
-              <ActivityIndicator size="large" color={TempleTheme.gold} />
+              <ActivityIndicator size="large" color={theme.gold} />
               <Text style={styles.loadingText}>AI 正在辨識籤詩中...</Text>
               <Text style={styles.loadingHint}>約需 5~15 秒</Text>
             </View>
@@ -181,26 +185,27 @@ export function PhotoDivination({ visible, onClose, onUsePoem }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: TempleTheme.bgDark,
+    backgroundColor: theme.bgDark,
   },
   header: {
     padding: TempleSpacing.lg,
     paddingTop: TempleSpacing.xl ?? 32,
     borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '28',
+    borderBottomColor: theme.goldDark + '28',
     position: 'relative',
   },
   title: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: 24,
     fontWeight: '900',
     marginBottom: 6,
   },
   subtitle: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
     lineHeight: 20,
   },
@@ -212,10 +217,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '50',
+    borderColor: theme.goldDark + '50',
   },
   closeBtnText: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -225,7 +230,7 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   hint: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.body,
     textAlign: 'center',
     marginBottom: TempleSpacing.md,
@@ -237,13 +242,13 @@ const styles = StyleSheet.create({
     paddingTop: TempleSpacing.xl ?? 32,
   },
   primaryBtn: {
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: TempleFonts.body,
     fontWeight: '900',
     letterSpacing: 2,
@@ -253,10 +258,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '50',
+    borderColor: theme.goldDark + '50',
   },
   secondaryBtnText: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.body,
     fontWeight: '700',
   },
@@ -266,12 +271,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   loadingText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: TempleFonts.body,
     fontWeight: '700',
   },
   loadingHint: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 13,
   },
   previewImage: {
@@ -279,7 +284,7 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: 16,
     marginBottom: TempleSpacing.md,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
   },
   errorCard: {
     backgroundColor: '#3B1212',
@@ -296,26 +301,26 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   errorText: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.small,
     lineHeight: 22,
   },
   notesText: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 12,
     marginTop: 8,
     fontStyle: 'italic',
   },
   resultCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
+    borderColor: theme.goldDark + '40',
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
   },
   resultTitle: {
-    color: TempleTheme.gold,
+    color: theme.gold,
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 2,
@@ -326,89 +331,89 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '18',
+    borderBottomColor: theme.goldDark + '18',
   },
   resultLabel: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
   },
   resultValue: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: TempleFonts.small,
     fontWeight: '700',
     maxWidth: '60%',
     textAlign: 'right',
   },
   levelText: {
-    color: TempleTheme.gold,
+    color: theme.gold,
   },
   confidence: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 12,
     marginTop: TempleSpacing.sm,
     fontStyle: 'italic',
   },
   matchCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: TempleTheme.gold + '55',
+    borderColor: theme.gold + '55',
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
   },
   matchTitle: {
-    color: TempleTheme.gold,
+    color: theme.gold,
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 2,
     marginBottom: 8,
   },
   matchGod: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: TempleFonts.small,
     fontWeight: '800',
     marginBottom: 4,
   },
   matchNumber: {
-    color: TempleTheme.gold,
+    color: theme.gold,
     fontSize: TempleFonts.heading,
     fontWeight: '900',
     marginBottom: TempleSpacing.sm,
   },
   matchContent: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.small,
     lineHeight: 22,
     marginBottom: 8,
   },
   matchMeaning: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 13,
     lineHeight: 20,
     marginBottom: TempleSpacing.md,
   },
   usePoemBtn: {
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
   },
   usePoemBtnText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: TempleFonts.body,
     fontWeight: '900',
     letterSpacing: 1,
   },
   noMatchCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
   },
   noMatchText: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
     lineHeight: 22,
   },
@@ -417,12 +422,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '50',
+    borderColor: theme.goldDark + '50',
     marginTop: 8,
   },
   retryBtnText: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.body,
     fontWeight: '700',
   },
-});
+  });
+}

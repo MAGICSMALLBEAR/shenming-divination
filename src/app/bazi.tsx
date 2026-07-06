@@ -6,7 +6,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { TempleTheme, TempleSpacing } from '@/constants/temple-theme';
+import { TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import {
   calculateFullBazi, getCurrentDaYun, getMissingWuxing,
   type FullBaziInfo,
@@ -17,8 +19,10 @@ const WUXING_COLORS: Record<string, string> = { 木: '#4CAF50', 火: '#F44336', 
 const WUXING_EMOJI: Record<string, string> = { 木: '🌿', 火: '🔥', 土: '🏔️', 金: '⚜️', 水: '💧' };
 
 function WuxingBar({ element, count, total }: { element: string; count: number; total: number }) {
+  const { theme } = useAppTheme();
+  const bar = useMemo(() => createBarStyles(theme), [theme]);
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-  const color = WUXING_COLORS[element] ?? TempleTheme.gold;
+  const color = WUXING_COLORS[element] ?? theme.gold;
   return (
     <View style={bar.row}>
       <Text style={bar.label}>{WUXING_EMOJI[element]} {element}</Text>
@@ -31,6 +35,8 @@ function WuxingBar({ element, count, total }: { element: string; count: number; 
 }
 
 export default function BaziScreen() {
+  const { theme } = useAppTheme();
+  const s = useMemo(() => createStyles(theme), [theme]);
   const [birthYear, setBirthYear] = useState('');
   const [birthMonth, setBirthMonth] = useState('');
   const [birthDay, setBirthDay] = useState('');
@@ -91,22 +97,22 @@ export default function BaziScreen() {
             <View style={s.inputRow}>
               <View style={s.inputGroup}>
                 <Text style={s.inputLabel}>出生年</Text>
-                <TextInput style={s.input} placeholder="1990" placeholderTextColor={TempleTheme.textMuted}
+                <TextInput style={s.input} placeholder="1990" placeholderTextColor={theme.textMuted}
                   value={birthYear} onChangeText={setBirthYear} keyboardType="number-pad" maxLength={4} />
               </View>
               <View style={s.inputGroup}>
                 <Text style={s.inputLabel}>月</Text>
-                <TextInput style={s.input} placeholder="8" placeholderTextColor={TempleTheme.textMuted}
+                <TextInput style={s.input} placeholder="8" placeholderTextColor={theme.textMuted}
                   value={birthMonth} onChangeText={setBirthMonth} keyboardType="number-pad" maxLength={2} />
               </View>
               <View style={s.inputGroup}>
                 <Text style={s.inputLabel}>日</Text>
-                <TextInput style={s.input} placeholder="15" placeholderTextColor={TempleTheme.textMuted}
+                <TextInput style={s.input} placeholder="15" placeholderTextColor={theme.textMuted}
                   value={birthDay} onChangeText={setBirthDay} keyboardType="number-pad" maxLength={2} />
               </View>
               <View style={s.inputGroup}>
                 <Text style={s.inputLabel}>時（可選）</Text>
-                <TextInput style={s.input} placeholder="14" placeholderTextColor={TempleTheme.textMuted}
+                <TextInput style={s.input} placeholder="14" placeholderTextColor={theme.textMuted}
                   value={birthHour} onChangeText={setBirthHour} keyboardType="number-pad" maxLength={2} />
               </View>
             </View>
@@ -144,7 +150,7 @@ export default function BaziScreen() {
                           <Text style={s.zhiText}>{p?.zhi ?? '—'}</Text>
                         </View>
                         <Text style={s.naYin} numberOfLines={2}>{p?.naYin ?? ''}</Text>
-                        <Text style={[s.wuxingDot, { color: WUXING_COLORS[p?.wuxing ?? ''] ?? TempleTheme.textMuted }]}>
+                        <Text style={[s.wuxingDot, { color: WUXING_COLORS[p?.wuxing ?? ''] ?? theme.textMuted }]}>
                           {p?.wuxing ?? ''}
                         </Text>
                       </View>
@@ -178,7 +184,7 @@ export default function BaziScreen() {
               <View style={s.card}>
                 <Text style={s.cardTitle}>生命主題</Text>
                 <Text style={s.lifeTheme}>{bazi.lifeTheme}</Text>
-                <Text style={[s.cardTitle, { marginTop: 12, color: TempleTheme.goldLight }]}>2026丙午年運勢</Text>
+                <Text style={[s.cardTitle, { marginTop: 12, color: theme.goldLight }]}>2026丙午年運勢</Text>
                 <Text style={s.lifeTheme}>{bazi.yearFortune2026}</Text>
               </View>
 
@@ -221,69 +227,73 @@ export default function BaziScreen() {
   );
 }
 
-const bar = StyleSheet.create({
+function createBarStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 8 },
-  label: { color: TempleTheme.textMuted, fontSize: 13, width: 40 },
+  label: { color: theme.textMuted, fontSize: 13, width: 40 },
   track: { flex: 1, height: 12, backgroundColor: '#2A2020', borderRadius: 6, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 6 },
-  count: { color: TempleTheme.gold, fontSize: 13, width: 20, textAlign: 'right' },
-});
+  count: { color: theme.gold, fontSize: 13, width: 20, textAlign: 'right' },
+  });
+}
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: theme.bgDark },
   header: { paddingHorizontal: TempleSpacing.lg, paddingTop: TempleSpacing.md, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#2A2020' },
-  title: { color: TempleTheme.gold, fontSize: 20, fontWeight: '900' },
-  sub: { color: TempleTheme.textMuted, fontSize: 13, marginTop: 2 },
+  title: { color: theme.gold, fontSize: 20, fontWeight: '900' },
+  sub: { color: theme.textMuted, fontSize: 13, marginTop: 2 },
   scroll: { flex: 1 },
   content: { padding: TempleSpacing.md },
-  card: { backgroundColor: TempleTheme.bgCard, borderRadius: 12, borderWidth: 1, borderColor: '#2A2020', padding: TempleSpacing.md, marginBottom: 14 },
-  cardTitle: { color: TempleTheme.gold, fontSize: 14, fontWeight: '700', marginBottom: 12 },
+  card: { backgroundColor: theme.bgCard, borderRadius: 12, borderWidth: 1, borderColor: '#2A2020', padding: TempleSpacing.md, marginBottom: 14 },
+  cardTitle: { color: theme.gold, fontSize: 14, fontWeight: '700', marginBottom: 12 },
   inputRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   inputGroup: { flex: 1 },
-  inputLabel: { color: TempleTheme.textMuted, fontSize: 11, marginBottom: 3 },
-  input: { backgroundColor: TempleTheme.bgDark, borderWidth: 1, borderColor: '#3A2A20', borderRadius: 8, color: TempleTheme.textLight, fontSize: 14, paddingHorizontal: 8, paddingVertical: 8, textAlign: 'center' },
+  inputLabel: { color: theme.textMuted, fontSize: 11, marginBottom: 3 },
+  input: { backgroundColor: theme.bgDark, borderWidth: 1, borderColor: '#3A2A20', borderRadius: 8, color: theme.textLight, fontSize: 14, paddingHorizontal: 8, paddingVertical: 8, textAlign: 'center' },
   genderRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  genderBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#3A2A20', alignItems: 'center', backgroundColor: TempleTheme.bgDark },
-  genderActive: { backgroundColor: TempleTheme.gold, borderColor: TempleTheme.gold },
-  genderText: { color: TempleTheme.textMuted, fontWeight: '700' },
-  genderTextActive: { color: TempleTheme.bgDark },
-  error: { color: TempleTheme.danger, fontSize: 12, marginBottom: 8 },
-  calcBtn: { backgroundColor: TempleTheme.gold, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
-  calcBtnText: { color: TempleTheme.bgDark, fontSize: 16, fontWeight: '900' },
+  genderBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#3A2A20', alignItems: 'center', backgroundColor: theme.bgDark },
+  genderActive: { backgroundColor: theme.gold, borderColor: theme.gold },
+  genderText: { color: theme.textMuted, fontWeight: '700' },
+  genderTextActive: { color: theme.bgDark },
+  error: { color: theme.danger, fontSize: 12, marginBottom: 8 },
+  calcBtn: { backgroundColor: theme.gold, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+  calcBtnText: { color: theme.bgDark, fontSize: 16, fontWeight: '900' },
   pillarsTable: { flexDirection: 'row', gap: 6, marginBottom: 10 },
   pillarCol: { flex: 1, alignItems: 'center', gap: 4 },
   pillarColDay: { backgroundColor: '#1E1408', borderRadius: 10, padding: 4 },
-  pillarName: { color: TempleTheme.textMuted, fontSize: 11 },
+  pillarName: { color: theme.textMuted, fontSize: 11 },
   ganBox: { width: 44, height: 44, borderRadius: 8, backgroundColor: '#2A2020', justifyContent: 'center', alignItems: 'center' },
-  ganBoxDay: { backgroundColor: TempleTheme.gold + '33', borderWidth: 1, borderColor: TempleTheme.gold },
-  ganText: { color: TempleTheme.textLight, fontSize: 20, fontWeight: '700' },
-  ganTextDay: { color: TempleTheme.gold, fontSize: 22, fontWeight: '900' },
-  shiShenBadge: { color: TempleTheme.textMuted, fontSize: 9, marginTop: 1 },
+  ganBoxDay: { backgroundColor: theme.gold + '33', borderWidth: 1, borderColor: theme.gold },
+  ganText: { color: theme.textLight, fontSize: 20, fontWeight: '700' },
+  ganTextDay: { color: theme.gold, fontSize: 22, fontWeight: '900' },
+  shiShenBadge: { color: theme.textMuted, fontSize: 9, marginTop: 1 },
   zhiBox: { width: 44, height: 44, borderRadius: 8, backgroundColor: '#1A1810', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#2A2020' },
-  zhiText: { color: TempleTheme.textLight, fontSize: 20, fontWeight: '600' },
-  naYin: { color: TempleTheme.textMuted, fontSize: 9, textAlign: 'center' },
+  zhiText: { color: theme.textLight, fontSize: 20, fontWeight: '600' },
+  naYin: { color: theme.textMuted, fontSize: 9, textAlign: 'center' },
   wuxingDot: { fontSize: 11, fontWeight: '700' },
   dayMasterRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, marginBottom: 4 },
-  dayMasterLabel: { color: TempleTheme.textMuted, fontSize: 13 },
-  dayMasterValue: { color: TempleTheme.goldLight, fontSize: 15, fontWeight: '700' },
-  personalityText: { color: TempleTheme.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  dayMasterLabel: { color: theme.textMuted, fontSize: 13 },
+  dayMasterValue: { color: theme.goldLight, fontSize: 15, fontWeight: '700' },
+  personalityText: { color: theme.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 },
   missingBox: { marginTop: 10, backgroundColor: '#1A0E08', borderRadius: 8, padding: 10, borderWidth: 1, borderColor: '#3A1A08' },
   missingTitle: { color: '#FF9800', fontSize: 13, fontWeight: '700', marginBottom: 4 },
-  missingDesc: { color: TempleTheme.textMuted, fontSize: 12, lineHeight: 18 },
-  lifeTheme: { color: TempleTheme.textLight, fontSize: 13, lineHeight: 22 },
+  missingDesc: { color: theme.textMuted, fontSize: 12, lineHeight: 18 },
+  lifeTheme: { color: theme.textLight, fontSize: 13, lineHeight: 22 },
   daYunRow: { flexDirection: 'row', gap: 8, paddingBottom: 4 },
   daYunItem: { alignItems: 'center', paddingHorizontal: 8, paddingVertical: 8, borderRadius: 10, backgroundColor: '#2A2020', borderWidth: 1, borderColor: '#3A2A20', minWidth: 64 },
-  daYunItemActive: { backgroundColor: '#2A1A08', borderColor: TempleTheme.gold },
-  daYunAge: { color: TempleTheme.textMuted, fontSize: 10, marginBottom: 4 },
-  daYunAgeActive: { color: TempleTheme.gold },
-  daYunGan: { color: TempleTheme.textLight, fontSize: 18, fontWeight: '700' },
-  daYunGanActive: { color: TempleTheme.goldLight },
-  daYunZhi: { color: TempleTheme.textMuted, fontSize: 16 },
-  daYunZhiActive: { color: TempleTheme.gold },
-  currentBadge: { color: TempleTheme.gold, fontSize: 9, marginTop: 2, fontWeight: '700' },
+  daYunItemActive: { backgroundColor: '#2A1A08', borderColor: theme.gold },
+  daYunAge: { color: theme.textMuted, fontSize: 10, marginBottom: 4 },
+  daYunAgeActive: { color: theme.gold },
+  daYunGan: { color: theme.textLight, fontSize: 18, fontWeight: '700' },
+  daYunGanActive: { color: theme.goldLight },
+  daYunZhi: { color: theme.textMuted, fontSize: 16 },
+  daYunZhiActive: { color: theme.gold },
+  currentBadge: { color: theme.gold, fontSize: 9, marginTop: 2, fontWeight: '700' },
   currentDaYunDetail: { marginTop: 12, backgroundColor: '#1E1408', borderRadius: 8, padding: 10, borderWidth: 1, borderColor: '#3A2A10' },
-  currentDaYunTitle: { color: TempleTheme.gold, fontSize: 13, fontWeight: '700', marginBottom: 6 },
-  currentDaYunText: { color: TempleTheme.textLight, fontSize: 13, lineHeight: 22 },
+  currentDaYunTitle: { color: theme.gold, fontSize: 13, fontWeight: '700', marginBottom: 6 },
+  currentDaYunText: { color: theme.textLight, fontSize: 13, lineHeight: 22 },
   disclaimer: { alignItems: 'center', marginTop: 10 },
-  disclaimerText: { color: TempleTheme.textMuted, fontSize: 11 },
-});
+  disclaimerText: { color: theme.textMuted, fontSize: 11 },
+  });
+}

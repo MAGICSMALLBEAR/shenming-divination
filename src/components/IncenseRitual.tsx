@@ -12,7 +12,9 @@ import { Image } from 'expo-image';
 
 import { RitualStylePicker } from '@/components/RitualStylePicker';
 import { ritualStyles, type RitualStyleKey } from '@/constants/ritual-styles';
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { playIncenseSound } from '@/services/proceduralSound';
 
 interface IncenseRitualProps {
@@ -39,6 +41,8 @@ export function IncenseRitual({
   ritualStyleKey,
   onStyleChange,
 }: IncenseRitualProps) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [step, setStep] = useState<RitualStep>('idle');
   const [dropZoneRect, setDropZoneRect] = useState<Rect | null>(null);
   const [sceneLayout, setSceneLayout] = useState<{ width: number; height: number } | null>(null);
@@ -517,7 +521,8 @@ export function IncenseRitual({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
@@ -526,12 +531,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginBottom: TempleSpacing.xs,
   },
   godName: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginBottom: TempleSpacing.md,
   },
   scene: {
@@ -603,7 +608,7 @@ const styles = StyleSheet.create({
     width: 126,
     height: 50,
     borderRadius: 22,
-    backgroundColor: TempleTheme.bgDark,
+    backgroundColor: theme.bgDark,
     zIndex: 2,
   },
   censerTopLip: {
@@ -649,9 +654,9 @@ const styles = StyleSheet.create({
     right: 8,
     borderRadius: 16,
     padding: TempleSpacing.md,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '28',
+    borderColor: theme.goldDark + '28',
   },
   offerPanelTitleRow: {
     flexDirection: 'row',
@@ -662,7 +667,7 @@ const styles = StyleSheet.create({
   offerPanelTitle: {
     fontSize: TempleFonts.body,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   offerPanelTag: {
     fontSize: 11,
@@ -671,7 +676,7 @@ const styles = StyleSheet.create({
   offerPanelText: {
     fontSize: TempleFonts.small,
     lineHeight: 18,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   handIncense: {
     position: 'absolute',
@@ -717,7 +722,7 @@ const styles = StyleSheet.create({
   instruction: {
     fontSize: TempleFonts.body,
     lineHeight: 22,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     textAlign: 'center',
     marginBottom: TempleSpacing.md,
   },
@@ -725,13 +730,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: TempleSpacing.xl,
     paddingVertical: TempleSpacing.sm,
     borderRadius: 12,
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     borderWidth: 1,
-    borderColor: TempleTheme.gold,
+    borderColor: theme.gold,
   },
   lightBtnText: {
     fontSize: TempleFonts.body,
     fontWeight: '800',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
-});
+  });
+}

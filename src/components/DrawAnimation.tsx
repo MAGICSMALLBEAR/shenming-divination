@@ -10,7 +10,9 @@ import {
   getDrawAnimationRitualStyle,
   type DrawAnimationStyleKey,
 } from '@/constants/draw-animation-styles';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { playDrawSound } from '@/services/proceduralSound';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
@@ -65,9 +67,11 @@ export function DrawAnimation({
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [trackWidth, setTrackWidth] = useState(220);
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const highlightColor = god?.accentColor || TempleTheme.goldLight;
-  const primaryColor = god?.primaryColor || TempleTheme.redLight;
+  const highlightColor = god?.accentColor || theme.goldLight;
+  const primaryColor = god?.primaryColor || theme.redLight;
   const auraColor = god?.auraColor || '#F4D39B';
   const drawStyle = drawAnimationStyles[styleKey];
   const ritualStyle = getDrawAnimationRitualStyle(styleKey);
@@ -470,7 +474,8 @@ export function DrawAnimation({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
@@ -480,12 +485,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginBottom: TempleSpacing.xs,
   },
   subtitle: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginBottom: TempleSpacing.sm,
   },
   styleBadge: {
@@ -493,7 +498,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 5,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     marginBottom: TempleSpacing.lg,
   },
   styleBadgeText: {
@@ -513,7 +518,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1.5,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
   },
   godChipImage: { width: '100%', height: '100%' },
   godChipOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
@@ -521,7 +526,7 @@ const styles = StyleSheet.create({
   godLabel: {
     fontSize: TempleFonts.body,
     fontWeight: '700',
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     marginBottom: 4,
   },
   godBlessing: {
@@ -529,7 +534,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   styleSummary: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     lineHeight: 17,
     marginTop: 4,
@@ -618,7 +623,7 @@ const styles = StyleSheet.create({
   qiantongText: {
     fontSize: 40,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     letterSpacing: 4,
   },
   stick: {
@@ -645,14 +650,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '55',
+    borderColor: theme.goldDark + '55',
   },
   progressTrack: {
     width: 220,
     height: 6,
     borderRadius: 999,
     overflow: 'hidden',
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     marginBottom: TempleSpacing.lg,
   },
   progressFill: {
@@ -663,7 +668,7 @@ const styles = StyleSheet.create({
   fortunePaper: {
     width: 190,
     minHeight: 112,
-    backgroundColor: TempleTheme.bgLight,
+    backgroundColor: theme.bgLight,
     borderRadius: 10,
     borderWidth: 1.5,
     paddingHorizontal: TempleSpacing.lg,
@@ -688,7 +693,7 @@ const styles = StyleSheet.create({
     borderColor: '#F4D7A1',
   },
   paperSealText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: 18,
     fontWeight: '900',
   },
@@ -713,7 +718,7 @@ const styles = StyleSheet.create({
   },
   revealCard: {
     width: 260,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 18,
     borderWidth: 1.5,
     paddingHorizontal: TempleSpacing.lg,
@@ -729,7 +734,8 @@ const styles = StyleSheet.create({
   revealCardText: {
     fontSize: TempleFonts.small,
     lineHeight: 22,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     textAlign: 'center',
   },
-});
+  });
+}

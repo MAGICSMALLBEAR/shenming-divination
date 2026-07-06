@@ -1,5 +1,5 @@
 // 真人解籤師諮詢頁（P3）
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   SafeAreaView,
@@ -9,8 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { PremiumPaywall } from '@/components/PremiumPaywall';
 import { canUseFeature, isPremiumActive } from '@/services/premiumService';
 
@@ -88,6 +90,8 @@ const CONSULTANTS: Consultant[] = [
 
 export default function ConsultScreen() {
   const layout = useResponsiveLayout();
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [showPaywall, setShowPaywall] = useState(false);
   const [premiumActive, setPremiumActive] = useState(false);
   const [selectedConsultant, setSelectedConsultant] = useState<Consultant | null>(null);
@@ -172,7 +176,7 @@ export default function ConsultScreen() {
           >
             <View style={styles.cardHeader}>
               {/* 頭像 */}
-              <View style={[styles.avatar, { backgroundColor: TempleTheme.goldDark + '33' }]}>
+              <View style={[styles.avatar, { backgroundColor: theme.goldDark + '33' }]}>
                 <Text style={styles.avatarText}>{c.name[0]}</Text>
               </View>
 
@@ -186,7 +190,7 @@ export default function ConsultScreen() {
                   )}
                   {!c.available && (
                     <View style={[styles.badge, styles.badgeUnavail]}>
-                      <Text style={[styles.badgeText, { color: TempleTheme.textMuted }]}>休假中</Text>
+                      <Text style={[styles.badgeText, { color: theme.textMuted }]}>休假中</Text>
                     </View>
                   )}
                 </View>
@@ -259,33 +263,34 @@ export default function ConsultScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.bgDark },
   container: { flex: 1 },
   content: { width: '100%', alignSelf: 'center', paddingVertical: TempleSpacing.md },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
     marginBottom: 4,
   },
   pageSubtitle: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     textAlign: 'center',
     fontSize: TempleFonts.small,
     marginBottom: TempleSpacing.md,
   },
   infoCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '24',
+    borderColor: theme.goldDark + '24',
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
   },
   infoTitle: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '800',
     fontSize: TempleFonts.body,
     marginBottom: 12,
@@ -296,44 +301,44 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '14',
+    borderBottomColor: theme.goldDark + '14',
   },
   stepDot: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: TempleTheme.goldDark + '44',
+    backgroundColor: theme.goldDark + '44',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepNum: { color: TempleTheme.gold, fontWeight: '900', fontSize: 12 },
-  stepText: { color: TempleTheme.textLight, fontSize: TempleFonts.small, flex: 1 },
+  stepNum: { color: theme.gold, fontWeight: '900', fontSize: 12 },
+  stepText: { color: theme.textLight, fontSize: TempleFonts.small, flex: 1 },
   upgradeBtn: {
     marginTop: 12,
-    backgroundColor: TempleTheme.goldDark + '44',
+    backgroundColor: theme.goldDark + '44',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: TempleTheme.gold + '55',
+    borderColor: theme.gold + '55',
   },
-  upgradeBtnText: { color: TempleTheme.gold, fontWeight: '700', fontSize: 13 },
+  upgradeBtnText: { color: theme.gold, fontWeight: '700', fontSize: 13 },
   sectionTitle: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '800',
     fontSize: TempleFonts.body,
     marginBottom: TempleSpacing.sm,
   },
   consultCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '24',
+    borderColor: theme.goldDark + '24',
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,
   },
   consultCardSelected: {
-    borderColor: TempleTheme.gold + '80',
+    borderColor: theme.gold + '80',
   },
   consultCardUnavail: { opacity: 0.65 },
   cardHeader: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', marginBottom: 10 },
@@ -342,73 +347,73 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     borderWidth: 2,
-    borderColor: TempleTheme.goldDark + '60',
+    borderColor: theme.goldDark + '60',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: TempleTheme.gold, fontWeight: '900', fontSize: 20 },
+  avatarText: { color: theme.gold, fontWeight: '900', fontSize: 20 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-  consultName: { color: TempleTheme.goldLight, fontWeight: '800', fontSize: TempleFonts.body },
-  consultTitle: { color: TempleTheme.textMuted, fontSize: 12, marginBottom: 4 },
+  consultName: { color: theme.goldLight, fontWeight: '800', fontSize: TempleFonts.body },
+  consultTitle: { color: theme.textMuted, fontSize: 12, marginBottom: 4 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  stars: { color: TempleTheme.gold, fontSize: 12 },
-  rating: { color: TempleTheme.goldLight, fontWeight: '700', fontSize: 12 },
-  reviewCount: { color: TempleTheme.textMuted, fontSize: 11 },
+  stars: { color: theme.gold, fontSize: 12 },
+  rating: { color: theme.goldLight, fontWeight: '700', fontSize: 12 },
+  reviewCount: { color: theme.textMuted, fontSize: 11 },
   badge: {
-    backgroundColor: TempleTheme.gold + '22',
+    backgroundColor: theme.gold + '22',
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderWidth: 1,
-    borderColor: TempleTheme.gold + '55',
+    borderColor: theme.gold + '55',
   },
-  badgeUnavail: { backgroundColor: 'transparent', borderColor: TempleTheme.goldDark + '40' },
-  badgeText: { color: TempleTheme.gold, fontSize: 10, fontWeight: '700' },
+  badgeUnavail: { backgroundColor: 'transparent', borderColor: theme.goldDark + '40' },
+  badgeText: { color: theme.gold, fontSize: 10, fontWeight: '700' },
   priceBlock: { alignItems: 'flex-end' },
-  price: { color: TempleTheme.gold, fontWeight: '900', fontSize: 16 },
-  duration: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 2 },
+  price: { color: theme.gold, fontWeight: '900', fontSize: 16 },
+  duration: { color: theme.textMuted, fontSize: 11, marginTop: 2 },
   specialtyRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
   specialtyChip: {
-    backgroundColor: TempleTheme.goldDark + '22',
+    backgroundColor: theme.goldDark + '22',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '44',
+    borderColor: theme.goldDark + '44',
   },
-  specialtyText: { color: TempleTheme.textMuted, fontSize: 11 },
-  experienceText: { color: TempleTheme.textMuted, fontSize: 11, marginLeft: 'auto' },
+  specialtyText: { color: theme.textMuted, fontSize: 11 },
+  experienceText: { color: theme.textMuted, fontSize: 11, marginLeft: 'auto' },
   expandPanel: { marginTop: 10 },
   divider: {
     height: 1,
-    backgroundColor: TempleTheme.goldDark + '30',
+    backgroundColor: theme.goldDark + '30',
     marginBottom: 10,
   },
   consultDesc: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.small,
     lineHeight: 20,
     marginBottom: 12,
   },
   bookBtn: {
-    backgroundColor: TempleTheme.gold,
+    backgroundColor: theme.gold,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
   },
-  bookBtnDisabled: { backgroundColor: TempleTheme.goldDark + '44' },
-  bookBtnText: { color: TempleTheme.bgDark, fontWeight: '900', fontSize: TempleFonts.body },
+  bookBtnDisabled: { backgroundColor: theme.goldDark + '44' },
+  bookBtnText: { color: theme.bgDark, fontWeight: '900', fontSize: TempleFonts.body },
   faqCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '24',
+    borderColor: theme.goldDark + '24',
     padding: TempleSpacing.md,
     marginTop: TempleSpacing.sm,
     marginBottom: TempleSpacing.md,
   },
   faqTitle: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '800',
     fontSize: TempleFonts.body,
     marginBottom: 12,
@@ -416,8 +421,9 @@ const styles = StyleSheet.create({
   faqItem: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '14',
+    borderBottomColor: theme.goldDark + '14',
   },
-  faqQ: { color: TempleTheme.textLight, fontWeight: '700', fontSize: 13, marginBottom: 4 },
-  faqA: { color: TempleTheme.textMuted, fontSize: 12, lineHeight: 18 },
-});
+  faqQ: { color: theme.textLight, fontWeight: '700', fontSize: 13, marginBottom: 4 },
+  faqA: { color: theme.textMuted, fontSize: 12, lineHeight: 18 },
+  });
+}

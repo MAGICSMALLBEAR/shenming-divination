@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 
@@ -10,7 +10,9 @@ import {
   type AtlasCrop,
   type RitualStyleKey,
 } from '@/constants/ritual-styles';
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 interface RitualStylePickerProps {
   value: RitualStyleKey;
@@ -18,6 +20,8 @@ interface RitualStylePickerProps {
 }
 
 export function RitualStylePicker({ value, onChange }: RitualStylePickerProps) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.container}>
       <Text style={styles.label}>AI 風格</Text>
@@ -66,6 +70,8 @@ function AtlasThumb({
   width: number;
   height: number;
 }) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const scale = Math.max(width / crop.width, height / crop.height);
 
   return (
@@ -87,7 +93,8 @@ function AtlasThumb({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 420,
@@ -95,7 +102,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginBottom: TempleSpacing.xs,
   },
   row: {
@@ -109,8 +116,8 @@ const styles = StyleSheet.create({
     minWidth: 108,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '28',
-    backgroundColor: TempleTheme.bgCard,
+    borderColor: theme.goldDark + '28',
+    backgroundColor: theme.bgCard,
     padding: TempleSpacing.sm,
   },
   thumbRow: {
@@ -132,12 +139,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 12,
     fontWeight: '800',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginBottom: 4,
   },
   summary: {
     fontSize: 10,
     lineHeight: 14,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
-});
+  });
+}

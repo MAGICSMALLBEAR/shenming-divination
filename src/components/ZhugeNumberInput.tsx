@@ -1,7 +1,9 @@
 // 孔明神數 - 報數輸入介面
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView } from 'react-native';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { getZhugeNumberContext } from '@/data/poems/zhugeShenShu';
 
 interface ZhugeNumberInputProps {
@@ -9,6 +11,8 @@ interface ZhugeNumberInputProps {
 }
 
 export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [digits, setDigits] = React.useState<string>('');
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
@@ -46,7 +50,7 @@ export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
 
   const glowColor = glowAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [TempleTheme.goldDark + '30', TempleTheme.gold + '80'],
+    outputRange: [theme.goldDark + '30', theme.gold + '80'],
   });
 
   const numberContext = React.useMemo(() => {
@@ -133,52 +137,53 @@ export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   scroll: {
     flexGrow: 1, alignItems: 'center',
     paddingHorizontal: TempleSpacing.lg, paddingVertical: TempleSpacing.md,
   },
   header: { alignItems: 'center', marginBottom: TempleSpacing.md },
   title: {
-    fontSize: 28, fontWeight: '900', color: TempleTheme.goldLight,
+    fontSize: 28, fontWeight: '900', color: theme.goldLight,
     letterSpacing: 6, marginBottom: 4,
   },
   subtitle: {
-    fontSize: TempleFonts.body, color: TempleTheme.gold,
+    fontSize: TempleFonts.body, color: theme.gold,
     fontWeight: '600', letterSpacing: 3, marginBottom: TempleSpacing.sm,
   },
   desc: {
-    fontSize: TempleFonts.small, color: TempleTheme.textMuted,
+    fontSize: TempleFonts.small, color: theme.textMuted,
     textAlign: 'center', lineHeight: 22,
   },
   hexagramHint: {
     alignItems: 'center', marginBottom: TempleSpacing.md,
-    backgroundColor: TempleTheme.bgCard, borderRadius: 12,
+    backgroundColor: theme.bgCard, borderRadius: 12,
     paddingVertical: TempleSpacing.sm, paddingHorizontal: TempleSpacing.lg,
-    borderWidth: 1, borderColor: TempleTheme.goldDark + '30',
+    borderWidth: 1, borderColor: theme.goldDark + '30',
   },
-  hexagramText: { fontSize: 22, color: TempleTheme.goldLight, letterSpacing: 8, marginBottom: 4 },
-  hexagramLabel: { fontSize: 11, color: TempleTheme.textMuted },
+  hexagramText: { fontSize: 22, color: theme.goldLight, letterSpacing: 8, marginBottom: 4 },
+  hexagramLabel: { fontSize: 11, color: theme.textMuted },
   displayBox: {
     width: '100%', height: 72, borderRadius: 16,
-    backgroundColor: TempleTheme.bgCard, borderWidth: 2,
+    backgroundColor: theme.bgCard, borderWidth: 2,
     justifyContent: 'center', alignItems: 'center',
     marginBottom: TempleSpacing.md,
   },
   displayNumber: {
-    fontSize: 40, fontWeight: '700', color: TempleTheme.goldLight,
+    fontSize: 40, fontWeight: '700', color: theme.goldLight,
     letterSpacing: 6,
   },
   displayPlaceholder: {
-    fontSize: TempleFonts.body, color: TempleTheme.textMuted + '60',
+    fontSize: TempleFonts.body, color: theme.textMuted + '60',
     letterSpacing: 3,
   },
   contextBox: {
     width: '100%',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
-    backgroundColor: TempleTheme.bgCard + 'AA',
+    borderColor: theme.goldDark + '30',
+    backgroundColor: theme.bgCard + 'AA',
     paddingVertical: 10,
     paddingHorizontal: 12,
     marginBottom: TempleSpacing.md,
@@ -186,14 +191,14 @@ const styles = StyleSheet.create({
   },
   contextTitle: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '800',
     textAlign: 'center',
     marginBottom: 3,
   },
   contextMeta: {
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     textAlign: 'center',
   },
   keypad: {
@@ -202,29 +207,30 @@ const styles = StyleSheet.create({
   },
   key: {
     width: '28%', aspectRatio: 1.8,
-    backgroundColor: TempleTheme.bgCard, borderRadius: 12,
-    borderWidth: 1, borderColor: TempleTheme.goldDark + '30',
+    backgroundColor: theme.bgCard, borderRadius: 12,
+    borderWidth: 1, borderColor: theme.goldDark + '30',
     justifyContent: 'center', alignItems: 'center',
   },
-  keyDelete: { backgroundColor: TempleTheme.bgDark },
+  keyDelete: { backgroundColor: theme.bgDark },
   keyEmpty: { width: '28%' },
-  keyText: { fontSize: 22, color: TempleTheme.textLight, fontWeight: '600' },
-  keyDeleteText: { fontSize: 20, color: TempleTheme.textMuted },
+  keyText: { fontSize: 22, color: theme.textLight, fontWeight: '600' },
+  keyDeleteText: { fontSize: 20, color: theme.textMuted },
   actions: {
     flexDirection: 'row', gap: TempleSpacing.md,
     width: '100%', marginBottom: TempleSpacing.sm,
   },
   clearBtn: {
     flex: 1, paddingVertical: 14, borderRadius: 12,
-    borderWidth: 1, borderColor: TempleTheme.goldDark + '40',
+    borderWidth: 1, borderColor: theme.goldDark + '40',
     alignItems: 'center',
   },
-  clearBtnText: { fontSize: TempleFonts.body, color: TempleTheme.textMuted },
+  clearBtnText: { fontSize: TempleFonts.body, color: theme.textMuted },
   confirmBtn: {
     flex: 2, paddingVertical: 14, borderRadius: 12,
-    backgroundColor: TempleTheme.red, alignItems: 'center',
+    backgroundColor: theme.red, alignItems: 'center',
   },
   confirmBtnDisabled: { opacity: 0.4 },
-  confirmBtnText: { fontSize: TempleFonts.body, fontWeight: '700', color: TempleTheme.goldLight, letterSpacing: 2 },
-  tip: { fontSize: 11, color: TempleTheme.textMuted + '80', marginTop: 4 },
-});
+  confirmBtnText: { fontSize: TempleFonts.body, fontWeight: '700', color: theme.goldLight, letterSpacing: 2 },
+  tip: { fontSize: 11, color: theme.textMuted + '80', marginTop: 4 },
+  });
+}

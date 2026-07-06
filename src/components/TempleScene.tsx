@@ -1,11 +1,14 @@
 // 廟宇場景背景 - Jiaobei / 冥想時顯示
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
-import { TempleTheme } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 const { width } = Dimensions.get('window');
 
 export function TempleScene() {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const lanternSwing = useRef(new Animated.Value(0)).current;
   const candleFlicker1 = useRef(new Animated.Value(1)).current;
   const candleFlicker2 = useRef(new Animated.Value(0.8)).current;
@@ -90,7 +93,8 @@ export function TempleScene() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   scene: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     zIndex: 0,
@@ -101,35 +105,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end',
   },
   roofLeft: {
-    width: '50%', height: 36, backgroundColor: TempleTheme.red + '40',
+    width: '50%', height: 36, backgroundColor: theme.red + '40',
     borderTopLeftRadius: 8, transform: [{ skewX: '20deg' }],
   },
   roofRight: {
-    width: '50%', height: 36, backgroundColor: TempleTheme.red + '40',
+    width: '50%', height: 36, backgroundColor: theme.red + '40',
     borderTopRightRadius: 8, transform: [{ skewX: '-20deg' }],
   },
   roofRidge: {
     position: 'absolute', bottom: 0, width: '60%', height: 6,
-    backgroundColor: TempleTheme.goldDark + '60', borderRadius: 3,
+    backgroundColor: theme.goldDark + '60', borderRadius: 3,
   },
   pillar: {
     position: 'absolute', top: 40, bottom: 80,
-    width: 14, backgroundColor: TempleTheme.red + '35', borderRadius: 7,
+    width: 14, backgroundColor: theme.red + '35', borderRadius: 7,
   },
   lanternWire: {
     position: 'absolute', top: 30, width: 1,
-    backgroundColor: TempleTheme.goldDark + '50', height: 50,
+    backgroundColor: theme.goldDark + '50', height: 50,
     alignItems: 'center',
   },
   lantern: { position: 'absolute', top: 20, alignItems: 'center' },
   lanternLeft: {},
   lanternRight: {},
   lanternBody: {
-    width: 22, height: 32, backgroundColor: TempleTheme.red + '70',
-    borderRadius: 11, borderWidth: 1, borderColor: TempleTheme.goldDark + '60',
+    width: 22, height: 32, backgroundColor: theme.red + '70',
+    borderRadius: 11, borderWidth: 1, borderColor: theme.goldDark + '60',
   },
   lanternTassel: {
-    width: 2, height: 12, backgroundColor: TempleTheme.goldDark + '60',
+    width: 2, height: 12, backgroundColor: theme.goldDark + '60',
     borderRadius: 1, marginTop: 2,
   },
   candleHolder: {
@@ -146,7 +150,8 @@ const styles = StyleSheet.create({
   },
   floor: {
     position: 'absolute', bottom: 0, left: 0, right: 0, height: 80,
-    backgroundColor: TempleTheme.bgCard + '40',
-    borderTopWidth: 2, borderTopColor: TempleTheme.goldDark + '20',
+    backgroundColor: theme.bgCard + '40',
+    borderTopWidth: 2, borderTopColor: theme.goldDark + '20',
   },
-});
+  });
+}

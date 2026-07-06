@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { setItem } from '@/services/storage';
 
 const ONBOARDING_KEY = '@divination_onboarded';
@@ -58,6 +60,8 @@ const STEPS = [
 ];
 
 export function Onboarding({ onComplete }: OnboardingProps) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { width } = useWindowDimensions();
   const [step, setStep] = useState(0);
   const isCompact = width < 420;
@@ -121,7 +125,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
@@ -138,16 +143,16 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: TempleTheme.goldDark + '40',
+    backgroundColor: theme.goldDark + '40',
   },
   dotDone: {
-    backgroundColor: TempleTheme.goldDark,
+    backgroundColor: theme.goldDark,
   },
   dotActive: {
     width: 24,
     height: 8,
     borderRadius: 4,
-    backgroundColor: TempleTheme.gold,
+    backgroundColor: theme.gold,
   },
   dotActiveCompact: {
     width: 20,
@@ -156,9 +161,9 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: TempleTheme.goldDark + '18',
+    backgroundColor: theme.goldDark + '18',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: TempleSpacing.lg,
@@ -169,13 +174,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: TempleFonts.title,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
     marginBottom: TempleSpacing.md,
   },
   body: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     textAlign: 'center',
     lineHeight: 26,
     maxWidth: 420,
@@ -194,18 +199,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
-    backgroundColor: TempleTheme.bgCard,
+    borderColor: theme.goldDark + '30',
+    backgroundColor: theme.bgCard,
   },
   prevBtnText: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   nextBtn: {
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     minWidth: 160,
     alignItems: 'center',
   },
@@ -224,6 +229,7 @@ const styles = StyleSheet.create({
   },
   skipBtnText: {
     fontSize: 13,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
-});
+  });
+}

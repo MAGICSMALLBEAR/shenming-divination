@@ -1,7 +1,8 @@
 // 香煙裊裊背景動畫
 import React, { useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
-import { TempleTheme } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 const { width } = Dimensions.get('window');
 const PARTICLE_COUNT = 12;
@@ -14,6 +15,8 @@ interface Particle {
 }
 
 export function IncenseSmoke() {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   // 產生穩定不變的粒子配置
   const particles = useMemo<Particle[]>(() => {
     return Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
@@ -34,6 +37,8 @@ export function IncenseSmoke() {
 }
 
 function SmokeParticle({ x, delay, duration, size }: Particle) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.3)).current;
@@ -94,14 +99,16 @@ function SmokeParticle({ x, delay, duration, size }: Particle) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    zIndex: 0,
-  },
-  particle: {
-    position: 'absolute',
-    bottom: 0,
-    backgroundColor: TempleTheme.goldDark + '40',
-  },
-});
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+      zIndex: 0,
+    },
+    particle: {
+      position: 'absolute',
+      bottom: 0,
+      backgroundColor: theme.goldDark + '40',
+    },
+  });
+}

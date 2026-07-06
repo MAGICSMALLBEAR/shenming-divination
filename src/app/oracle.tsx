@@ -1,20 +1,24 @@
 // 多元占卜 — 易卦 64 卦 + 塔羅 22 張 + 靈擺是非
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Animated, TextInput, Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { drawHexagram, getLuckColor, getLuckLabel, type Hexagram } from '@/data/iching';
 import { drawTarot, type TarotCard } from '@/data/tarot';
 import { DecorativeBg } from '@/components/DecorativeBg';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 type Tab = 'iching' | 'tarot' | 'pendulum';
 
 // ── 易卦 ──────────────────────────────────────────────────────────────────
 function IChingSection() {
+  const { theme } = useAppTheme();
+  const s = useMemo(() => createStyles(theme), [theme]);
   const [result, setResult] = useState<Hexagram | null>(null);
   const [question, setQuestion] = useState('');
   const [shaking, setShaking] = useState(false);
@@ -49,7 +53,7 @@ function IChingSection() {
         value={question}
         onChangeText={setQuestion}
         placeholder="在心中默唸問題…（可選）"
-        placeholderTextColor={TempleTheme.textMuted}
+        placeholderTextColor={theme.textMuted}
         multiline
         maxLength={80}
       />
@@ -90,6 +94,8 @@ function IChingSection() {
 
 // ── 塔羅 ──────────────────────────────────────────────────────────────────
 function TarotSection() {
+  const { theme } = useAppTheme();
+  const s = useMemo(() => createStyles(theme), [theme]);
   const [result, setResult] = useState<TarotCard | null>(null);
   const [question, setQuestion] = useState('');
   const [flipped, setFlipped] = useState(false);
@@ -124,7 +130,7 @@ function TarotSection() {
         value={question}
         onChangeText={setQuestion}
         placeholder="在心中默唸問題…（可選）"
-        placeholderTextColor={TempleTheme.textMuted}
+        placeholderTextColor={theme.textMuted}
         multiline
         maxLength={80}
       />
@@ -167,6 +173,8 @@ function TarotSection() {
 
 // ── 靈擺 ──────────────────────────────────────────────────────────────────
 function PendulumSection() {
+  const { theme } = useAppTheme();
+  const s = useMemo(() => createStyles(theme), [theme]);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<'yes' | 'no' | null>(null);
   const [swinging, setSwinging] = useState(false);
@@ -196,8 +204,8 @@ function PendulumSection() {
     outputRange: ['0deg', '25deg', '-25deg', '18deg', '-18deg', '0deg'],
   });
 
-  const YES_COLOR = TempleTheme.success;
-  const NO_COLOR = TempleTheme.danger;
+  const YES_COLOR = theme.success;
+  const NO_COLOR = theme.danger;
 
   return (
     <ScrollView contentContainerStyle={s.section}>
@@ -209,7 +217,7 @@ function PendulumSection() {
         value={question}
         onChangeText={setQuestion}
         placeholder="請輸入是非題，例如：我應該…嗎？"
-        placeholderTextColor={TempleTheme.textMuted}
+        placeholderTextColor={theme.textMuted}
         multiline
         maxLength={60}
       />
@@ -253,6 +261,8 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 export default function OracleScreen() {
+  const { theme } = useAppTheme();
+  const s = useMemo(() => createStyles(theme), [theme]);
   const [tab, setTab] = useState<Tab>('iching');
 
   return (
@@ -281,56 +291,57 @@ export default function OracleScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: TempleTheme.bgDark },
-  header: { paddingHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.md, paddingBottom: TempleSpacing.sm, backgroundColor: TempleTheme.bgDark },
-  title: { fontSize: TempleFonts.subtitle, fontWeight: 'bold', color: TempleTheme.textGold, textAlign: 'center', marginBottom: TempleSpacing.sm },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: theme.bgDark },
+  header: { paddingHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.md, paddingBottom: TempleSpacing.sm, backgroundColor: theme.bgDark },
+  title: { fontSize: TempleFonts.subtitle, fontWeight: 'bold', color: theme.textGold, textAlign: 'center', marginBottom: TempleSpacing.sm },
   tabRow: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
-  tabBtn: { paddingVertical: 6, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1, borderColor: TempleTheme.gold },
-  tabBtnActive: { backgroundColor: TempleTheme.gold },
-  tabLabel: { color: TempleTheme.gold, fontSize: TempleFonts.body, fontWeight: '500' },
-  tabLabelActive: { color: TempleTheme.bgDark, fontWeight: 'bold' },
+  tabBtn: { paddingVertical: 6, paddingHorizontal: 20, borderRadius: 20, borderWidth: 1, borderColor: theme.gold },
+  tabBtnActive: { backgroundColor: theme.gold },
+  tabLabel: { color: theme.gold, fontSize: TempleFonts.body, fontWeight: '500' },
+  tabLabelActive: { color: theme.bgDark, fontWeight: 'bold' },
 
   section: { padding: TempleSpacing.md, paddingBottom: TempleSpacing.xxl },
-  sectionTitle: { fontSize: TempleFonts.heading, fontWeight: 'bold', color: TempleTheme.textGold, textAlign: 'center', marginBottom: 4 },
-  hint: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, textAlign: 'center', marginBottom: TempleSpacing.md },
+  sectionTitle: { fontSize: TempleFonts.heading, fontWeight: 'bold', color: theme.textGold, textAlign: 'center', marginBottom: 4 },
+  hint: { fontSize: TempleFonts.small, color: theme.textMuted, textAlign: 'center', marginBottom: TempleSpacing.md },
   input: {
-    backgroundColor: TempleTheme.bgCard,
-    borderRadius: 12, borderWidth: 1, borderColor: TempleTheme.gold,
-    padding: TempleSpacing.sm, color: TempleTheme.textLight,
+    backgroundColor: theme.bgCard,
+    borderRadius: 12, borderWidth: 1, borderColor: theme.gold,
+    padding: TempleSpacing.sm, color: theme.textLight,
     fontSize: TempleFonts.body, marginBottom: TempleSpacing.md,
     minHeight: 52,
   } as any,
 
   drawBtn: {
-    backgroundColor: TempleTheme.bgCard,
-    borderRadius: 16, borderWidth: 1.5, borderColor: TempleTheme.gold,
+    backgroundColor: theme.bgCard,
+    borderRadius: 16, borderWidth: 1.5, borderColor: theme.gold,
     paddingVertical: TempleSpacing.md, paddingHorizontal: TempleSpacing.xl,
     alignItems: 'center', alignSelf: 'center', marginBottom: TempleSpacing.lg,
     minWidth: 180,
   },
   coinIcon: { fontSize: 48, marginBottom: 6 },
-  drawBtnText: { color: TempleTheme.textGold, fontSize: TempleFonts.body, fontWeight: 'bold' },
+  drawBtnText: { color: theme.textGold, fontSize: TempleFonts.body, fontWeight: 'bold' },
 
   resultCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 16, borderWidth: 1.5,
     padding: TempleSpacing.md, marginTop: 4,
   },
   hexRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: TempleSpacing.sm },
-  hexSymbol: { fontSize: 52, color: TempleTheme.textGold },
+  hexSymbol: { fontSize: 52, color: theme.textGold },
   hexNameCol: {},
-  hexNum: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
-  hexName: { fontSize: TempleFonts.heading, fontWeight: 'bold', color: TempleTheme.textLight },
-  hexImage: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginBottom: TempleSpacing.sm },
+  hexNum: { fontSize: TempleFonts.small, color: theme.textMuted },
+  hexName: { fontSize: TempleFonts.heading, fontWeight: 'bold', color: theme.textLight },
+  hexImage: { fontSize: TempleFonts.small, color: theme.textMuted, marginBottom: TempleSpacing.sm },
   luckBadge: { fontSize: TempleFonts.small, fontWeight: 'bold', marginTop: 2 },
-  guidance: { fontSize: TempleFonts.body, color: TempleTheme.textLight, lineHeight: 24, marginBottom: TempleSpacing.sm },
-  divider: { height: 1, backgroundColor: TempleTheme.bgMedium, marginVertical: TempleSpacing.sm },
+  guidance: { fontSize: TempleFonts.body, color: theme.textLight, lineHeight: 24, marginBottom: TempleSpacing.sm },
+  divider: { height: 1, backgroundColor: theme.bgMedium, marginVertical: TempleSpacing.sm },
   actionRow: { flexDirection: 'row', gap: TempleSpacing.sm },
   actionCol: { flex: 1 },
-  actionLabel: { fontSize: TempleFonts.small, fontWeight: 'bold', color: TempleTheme.success, marginBottom: 2 },
-  cautionLabel: { fontSize: TempleFonts.small, fontWeight: 'bold', color: TempleTheme.warning, marginBottom: 2 },
-  actionText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, lineHeight: 18 },
+  actionLabel: { fontSize: TempleFonts.small, fontWeight: 'bold', color: theme.success, marginBottom: 2 },
+  cautionLabel: { fontSize: TempleFonts.small, fontWeight: 'bold', color: theme.warning, marginBottom: 2 },
+  actionText: { fontSize: TempleFonts.small, color: theme.textMuted, lineHeight: 18 },
 
   // tarot
   cardFace: { width: 64, height: 90, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
@@ -338,13 +349,14 @@ const s = StyleSheet.create({
   tarotHeader: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: TempleSpacing.sm },
   tarotSymbol: { fontSize: 52 },
   tarotNameCol: {},
-  tarotSubName: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
+  tarotSubName: { fontSize: TempleFonts.small, color: theme.textMuted },
 
   // pendulum
   pendulumContainer: { alignItems: 'center', height: 160, marginBottom: TempleSpacing.md },
-  pendulumPivot: { width: 12, height: 12, borderRadius: 6, backgroundColor: TempleTheme.gold },
+  pendulumPivot: { width: 12, height: 12, borderRadius: 6, backgroundColor: theme.gold },
   pendulumArm: { alignItems: 'center', position: 'absolute', top: 0 },
-  pendulumLine: { width: 2, height: 100, backgroundColor: TempleTheme.gold, marginTop: 6 },
-  pendulumBob: { width: 28, height: 28, borderRadius: 14, backgroundColor: TempleTheme.gold, marginTop: 2 },
+  pendulumLine: { width: 2, height: 100, backgroundColor: theme.gold, marginTop: 6 },
+  pendulumBob: { width: 28, height: 28, borderRadius: 14, backgroundColor: theme.gold, marginTop: 2 },
   pendulumAnswer: { fontSize: TempleFonts.title, fontWeight: 'bold', marginBottom: TempleSpacing.sm },
-} as const);
+  } as const);
+}

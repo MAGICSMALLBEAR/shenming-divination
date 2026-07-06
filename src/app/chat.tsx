@@ -12,9 +12,11 @@ import {
   View,
 } from 'react-native';
 
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { getLastPoemContext, type LastPoemContext } from '@/services/storage';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -43,6 +45,8 @@ function buildInitialAssistantMessage(lastPoem: LastPoemContext | null): string 
 
 export default function ChatScreen() {
   const layout = useResponsiveLayout();
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [lastPoem, setLastPoem] = useState<LastPoemContext | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -162,7 +166,7 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
+      <StatusBar barStyle="light-content" backgroundColor={theme.bgDark} />
       <View
         style={[
           styles.container,
@@ -219,7 +223,7 @@ export default function ChatScreen() {
 
           {isLoading ? (
             <View style={styles.loading}>
-              <ActivityIndicator color={TempleTheme.goldLight} size="small" />
+              <ActivityIndicator color={theme.goldLight} size="small" />
               <Text style={styles.loadingText}>正在整理回應...</Text>
             </View>
           ) : null}
@@ -246,7 +250,7 @@ export default function ChatScreen() {
             value={input}
             onChangeText={setInput}
             placeholder="直接輸入你想追問的內容..."
-            placeholderTextColor={TempleTheme.textMuted}
+            placeholderTextColor={theme.textMuted}
             multiline
             maxLength={500}
           />
@@ -263,42 +267,43 @@ export default function ChatScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.bgDark },
   container: { flex: 1, width: '100%', alignSelf: 'center', paddingVertical: TempleSpacing.md },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
     marginBottom: TempleSpacing.md,
   },
   contextCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.md,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '35',
+    borderColor: theme.goldDark + '35',
     marginBottom: TempleSpacing.sm,
   },
   contextTitle: {
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginBottom: 6,
   },
   contextMain: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   contextSub: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.gold,
+    color: theme.gold,
     marginTop: 2,
   },
   contextQuestion: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginTop: TempleSpacing.xs,
     lineHeight: 20,
   },
@@ -315,26 +320,26 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: TempleTheme.goldDark + '25',
+    backgroundColor: theme.goldDark + '25',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
+    borderColor: theme.goldDark + '40',
   },
   assistantBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.gold + '30',
+    borderColor: theme.gold + '30',
   },
   msgRole: {
     fontSize: 11,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginBottom: 6,
   },
   msgText: {
     fontSize: TempleFonts.body,
     lineHeight: 24,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
   },
   msgBlankLine: { height: 6 },
   loading: {
@@ -345,7 +350,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   quickPromptSection: {
     marginTop: TempleSpacing.xs,
@@ -356,13 +361,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '25',
+    borderColor: theme.goldDark + '25',
   },
   quickPromptText: {
     fontSize: 12,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
   },
   inputBar: {
     flexDirection: 'row',
@@ -370,25 +375,25 @@ const styles = StyleSheet.create({
     gap: TempleSpacing.sm,
     paddingTop: TempleSpacing.sm,
     borderTopWidth: 1,
-    borderTopColor: TempleTheme.goldDark + '20',
+    borderTopColor: theme.goldDark + '20',
   },
   chatInput: {
     flex: 1,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.sm,
     fontSize: TempleFonts.body,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     maxHeight: 96,
     minHeight: 48,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
   },
   sendBtn: {
     minWidth: 64,
     height: 44,
     borderRadius: 22,
-    backgroundColor: TempleTheme.goldDark,
+    backgroundColor: theme.goldDark,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 14,
@@ -399,4 +404,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-});
+  });
+}

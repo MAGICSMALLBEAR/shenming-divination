@@ -1,7 +1,8 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Poem } from '@/data/poems/leiyushi';
-import { TempleTheme } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 interface ShareCardViewProps {
   godName: string;
@@ -15,6 +16,8 @@ export const ShareCardView = forwardRef<View, ShareCardViewProps>(function Share
   { godName, poem, aiInterpretation, question, actionPlan = [] },
   ref
 ) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const aiSummary = aiInterpretation
     ?.split('\n')
     .filter((line) => line.trim())
@@ -82,31 +85,32 @@ export const ShareCardView = forwardRef<View, ShareCardViewProps>(function Share
 const CARD_W = 320;
 const CARD_H = 520;
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   card: {
     width: CARD_W,
     height: CARD_H,
-    backgroundColor: TempleTheme.bgDark,
+    backgroundColor: theme.bgDark,
     borderRadius: 20,
     padding: 24,
     borderWidth: 2,
-    borderColor: TempleTheme.goldDark,
+    borderColor: theme.goldDark,
     alignItems: 'center',
   },
   topOrnament: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: TempleTheme.goldDark + '30',
+    backgroundColor: theme.goldDark + '30',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
   },
-  ornamentText: { fontSize: 22, color: TempleTheme.goldLight, fontWeight: '900' },
+  ornamentText: { fontSize: 22, color: theme.goldLight, fontWeight: '900' },
   title: {
     fontSize: 24,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     letterSpacing: 4,
     marginBottom: 12,
   },
@@ -117,35 +121,35 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   badge: {
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 10,
   },
   levelBadge: {
-    backgroundColor: TempleTheme.goldDark + '40',
+    backgroundColor: theme.goldDark + '40',
   },
   badgeText: { fontSize: 12, color: '#FFF', fontWeight: '700' },
-  ganzhi: { fontSize: 12, color: TempleTheme.textMuted },
+  ganzhi: { fontSize: 12, color: theme.textMuted },
   questionBox: {
     width: '100%',
     borderRadius: 10,
     padding: 10,
-    backgroundColor: TempleTheme.goldDark + '18',
+    backgroundColor: theme.goldDark + '18',
     marginBottom: 10,
   },
   questionLabel: {
     fontSize: 10,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '800',
     marginBottom: 3,
   },
   questionText: {
     fontSize: 11,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     lineHeight: 16,
   },  poemBox: {
-    backgroundColor: TempleTheme.bgLight,
+    backgroundColor: theme.bgLight,
     padding: 16,
     borderRadius: 12,
     width: '100%',
@@ -163,12 +167,12 @@ const styles = StyleSheet.create({
   },
   story: {
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     textAlign: 'center',
     marginBottom: 10,
   },
   aiBox: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 10,
     padding: 10,
     width: '100%',
@@ -176,30 +180,31 @@ const styles = StyleSheet.create({
   },
   aiLabel: {
     fontSize: 11,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '800',
     marginBottom: 4,
   },
-  aiText: { fontSize: 11, color: TempleTheme.textLight, lineHeight: 18 },
+  aiText: { fontSize: 11, color: theme.textLight, lineHeight: 18 },
   actionBox: {
     width: '100%',
     borderRadius: 10,
     padding: 10,
-    backgroundColor: TempleTheme.goldDark + '14',
+    backgroundColor: theme.goldDark + '14',
     marginBottom: 8,
   },
   actionText: {
     fontSize: 10,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     lineHeight: 15,
   },  footer: {
     marginTop: 'auto',
     alignItems: 'center',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: TempleTheme.goldDark + '30',
+    borderTopColor: theme.goldDark + '30',
     width: '100%',
   },
-  footerText: { fontSize: 12, color: TempleTheme.goldLight, fontWeight: '600' },
-  footerSub: { fontSize: 10, color: TempleTheme.textMuted, marginTop: 2 },
-});
+  footerText: { fontSize: 12, color: theme.goldLight, fontWeight: '600' },
+  footerSub: { fontSize: 10, color: theme.textMuted, marginTop: 2 },
+  });
+}

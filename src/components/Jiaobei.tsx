@@ -5,7 +5,9 @@ import { Image } from 'expo-image';
 import { ParticleEffect } from '@/components/ParticleEffect';
 import { RitualStylePicker } from '@/components/RitualStylePicker';
 import { ritualStyles, type RitualStyleKey } from '@/constants/ritual-styles';
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import type { JiaobeiResult } from '@/services/divination';
 import { playShengbeiSound, playTossSound, vibrateLight } from '@/services/proceduralSound';
 
@@ -32,6 +34,8 @@ export function Jiaobei({
   ritualStyleKey,
   onStyleChange,
 }: JiaobeiProps) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [isAnimating, setIsAnimating] = React.useState(false);
   const [currentResult, setCurrentResult] = React.useState<JiaobeiResult | null>(null);
   const [showParticle, setShowParticle] = React.useState(false);
@@ -224,7 +228,7 @@ export function Jiaobei({
   });
 
   const strictComplete = strictMode && visibleStrictCount >= 3 && currentResult === 'shengbei';
-  const resultInfo = currentResult ? getResultInfo(currentResult) : null;
+  const resultInfo = currentResult ? getResultInfo(currentResult, theme) : null;
 
   return (
     <View style={styles.container}>
@@ -316,7 +320,7 @@ export function Jiaobei({
       {results.length > 0 ? (
         <View style={styles.historyStrip}>
           {results.map((result, index) => {
-            const info = getResultInfo(result);
+            const info = getResultInfo(result, theme);
             return (
               <View key={`${result}-${index}`} style={styles.historyItem}>
                 <Text style={styles.historyIndex}>{index + 1}</Text>
@@ -341,6 +345,8 @@ function JiaobeiPiece({
   flying?: boolean;
   ritualStyleKey: RitualStyleKey;
 }) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const palette = ritualStyles[ritualStyleKey].jiaobei;
   const source = face === 'flat' ? palette.flatSprite : palette.roundSprite;
 
@@ -428,33 +434,34 @@ function getShadowOpacity(result: JiaobeiResult | null, index: number) {
   return 0.18;
 }
 
-function getResultInfo(result: JiaobeiResult) {
+function getResultInfo(result: JiaobeiResult, theme: ThemeColors) {
   switch (result) {
     case 'shengbei':
       return {
         text: '\u8056\u676f',
         emoji: '◎',
         desc: '\u795e\u610f\u5141\u53ef\uff0c\u773c\u524d\u65b9\u5411\u53ef\u4ee5\u7e7c\u7e8c\u5f80\u4e0b\u8d70\u3002',
-        color: TempleTheme.success,
+        color: theme.success,
       };
     case 'xiaobei':
       return {
         text: '\u7b11\u676f',
         emoji: '○',
         desc: '\u554f\u984c\u9084\u4e0d\u5920\u660e\u78ba\uff0c\u6216\u795e\u660e\u63d0\u9192\u4f60\u5148\u518d\u60f3\u4e00\u5c64\u3002',
-        color: TempleTheme.warning,
+        color: theme.warning,
       };
     case 'yinbei':
       return {
         text: '\u9670\u676f',
         emoji: '△',
         desc: '\u76ee\u524d\u4e0d\u5b9c\u7167\u539f\u8def\u5f91\u524d\u9032\uff0c\u5efa\u8b70\u5148\u505c\u4e00\u4e0b\u518d\u8acb\u793a\u3002',
-        color: TempleTheme.danger,
+        color: theme.danger,
       };
   }
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
@@ -463,21 +470,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginBottom: TempleSpacing.xs,
   },
   attemptText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginBottom: TempleSpacing.md,
   },
   strictHint: {
-    color: TempleTheme.gold,
+    color: theme.gold,
     fontWeight: '700',
   },
   strictModeNote: {
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginTop: -6,
     marginBottom: TempleSpacing.sm,
     textAlign: 'center',
@@ -540,17 +547,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     alignItems: 'center',
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     paddingHorizontal: TempleSpacing.xl,
     paddingVertical: TempleSpacing.md,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
+    borderColor: theme.goldDark + '40',
   },
   resultEmoji: {
     fontSize: 36,
     marginBottom: TempleSpacing.xs,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   resultText: {
     fontSize: TempleFonts.subtitle,
@@ -559,7 +566,7 @@ const styles = StyleSheet.create({
   },
   resultDesc: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     textAlign: 'center',
     marginBottom: TempleSpacing.sm,
     lineHeight: 20,
@@ -568,32 +575,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: TempleSpacing.lg,
     paddingVertical: TempleSpacing.sm,
     borderRadius: 8,
-    backgroundColor: TempleTheme.warning + '20',
+    backgroundColor: theme.warning + '20',
     borderWidth: 1,
-    borderColor: TempleTheme.warning,
+    borderColor: theme.warning,
   },
   retryBtnText: {
-    color: TempleTheme.warning,
+    color: theme.warning,
     fontWeight: '600',
   },
   tossBtn: {
     width: 92,
     height: 92,
     borderRadius: 46,
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: TempleTheme.goldDark,
+    borderColor: theme.goldDark,
   },
   tossBtnText: {
     fontSize: TempleFonts.heading,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   strictCompleteText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.gold,
+    color: theme.gold,
     fontWeight: '700',
     marginTop: TempleSpacing.xs,
   },
@@ -601,27 +608,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: TempleSpacing.xl,
     paddingVertical: TempleSpacing.sm,
     borderRadius: 10,
-    backgroundColor: TempleTheme.goldDark + '30',
+    backgroundColor: theme.goldDark + '30',
     borderWidth: 1,
-    borderColor: TempleTheme.gold,
+    borderColor: theme.gold,
   },
   nextTossBtnText: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   drawBtn: {
     paddingHorizontal: TempleSpacing.xxl,
     paddingVertical: TempleSpacing.md,
     borderRadius: 16,
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     borderWidth: 2,
-    borderColor: TempleTheme.gold,
+    borderColor: theme.gold,
   },
   drawBtnText: {
     fontSize: TempleFonts.heading,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   historyStrip: {
     flexDirection: 'row',
@@ -632,21 +639,22 @@ const styles = StyleSheet.create({
   },
   historyItem: {
     alignItems: 'center',
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     paddingHorizontal: TempleSpacing.sm,
     paddingVertical: TempleSpacing.xs,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
     minWidth: 64,
   },
   historyIndex: {
     fontSize: 12,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   historyText: {
     fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
   },
-});
+  });
+}

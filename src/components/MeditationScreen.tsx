@@ -1,7 +1,9 @@
 // 冥想引導元件
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, useWindowDimensions } from 'react-native';
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 interface MeditationProps {
   godName: string;
@@ -9,6 +11,8 @@ interface MeditationProps {
 }
 
 export function MeditationScreen({ godName, onComplete }: MeditationProps) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { width } = useWindowDimensions();
   const [seconds, setSeconds] = useState(0);
   const [isReady, setIsReady] = useState(false);
@@ -89,7 +93,8 @@ export function MeditationScreen({ godName, onComplete }: MeditationProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
@@ -104,43 +109,43 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: TempleTheme.goldDark + '15',
+    backgroundColor: theme.goldDark + '15',
     top: '30%',
   },
   godName: {
     fontSize: TempleFonts.title,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginBottom: TempleSpacing.xl,
     letterSpacing: 6,
   },
   godNameCompact: { fontSize: 28, letterSpacing: 4, textAlign: 'center' },
   instructionBox: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 16,
     padding: TempleSpacing.lg,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
+    borderColor: theme.goldDark + '40',
     width: '100%',
     marginBottom: TempleSpacing.xl,
   },
   instructionTitle: {
     fontSize: TempleFonts.heading,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
     marginBottom: TempleSpacing.md,
   },
   instructionText: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     textAlign: 'center',
     marginBottom: TempleSpacing.md,
     lineHeight: 24,
   },
   instructionDetail: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -157,38 +162,39 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
   },
   progressDotActive: {
-    backgroundColor: TempleTheme.gold,
-    borderColor: TempleTheme.goldLight,
+    backgroundColor: theme.gold,
+    borderColor: theme.goldLight,
   },
   progressText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   continueBtn: {
     paddingHorizontal: TempleSpacing.xxl,
     paddingVertical: TempleSpacing.md,
     borderRadius: 12,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
   },
   continueBtnCompact: { width: '100%', maxWidth: 320, alignItems: 'center' },
   continueBtnActive: {
-    backgroundColor: TempleTheme.red,
-    borderColor: TempleTheme.gold,
+    backgroundColor: theme.red,
+    borderColor: theme.gold,
   },
   continueBtnText: {
     fontSize: TempleFonts.heading,
     fontWeight: '700',
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     letterSpacing: 4,
   },
   continueBtnTextActive: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
-});
+  });
+}

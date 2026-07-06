@@ -15,8 +15,10 @@ import {
 import { useLocalSearchParams } from 'expo-router';
 
 import { gods, questionCategories } from '@/data/gods';
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import {
   clearHistory,
   getFavorites,
@@ -34,14 +36,16 @@ type SortMode = 'newest' | 'oldest';
 type VerificationFilter = 'all' | VerificationStatus | 'due';
 type LevelFilter = 'all' | 'good' | 'neutral' | 'caution';
 
-const VERIFICATION_LABELS: Record<
+function getVerificationLabels(theme: ThemeColors): Record<
   VerificationStatus,
   { text: string; color: string }
-> = {
-  pending: { text: '待驗證', color: TempleTheme.warning },
-  matched: { text: '已應驗', color: TempleTheme.success },
-  unmatched: { text: '不太符合', color: TempleTheme.danger },
-};
+> {
+  return {
+    pending: { text: '待驗證', color: theme.warning },
+    matched: { text: '已應驗', color: theme.success },
+    unmatched: { text: '不太符合', color: theme.danger },
+  };
+}
 
 function formatDate(timestamp: number): string {
   const date = new Date(timestamp);
@@ -79,6 +83,9 @@ function formatShortDate(timestamp?: number): string {
 export default function CollectionScreen() {
   const params = useLocalSearchParams<{ tab?: string }>();
   const layout = useResponsiveLayout();
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const VERIFICATION_LABELS = useMemo(() => getVerificationLabels(theme), [theme]);
   const [activeTab, setActiveTab] = useState<Tab>('favorites');
   const [favorites, setFavorites] = useState<DivinationRecord[]>([]);
   const [history, setHistory] = useState<DivinationRecord[]>([]);
@@ -341,7 +348,7 @@ export default function CollectionScreen() {
               value={verificationNoteText}
               onChangeText={setVerificationNoteText}
               placeholder="記一下後來發生了什麼，之後回看會很有價值。"
-              placeholderTextColor={TempleTheme.textMuted}
+              placeholderTextColor={theme.textMuted}
               multiline
             />
             <View style={styles.noteEditActions}>
@@ -441,7 +448,7 @@ export default function CollectionScreen() {
             value={noteText}
             onChangeText={setNoteText}
             placeholder="寫下你當時的心情、後續觀察，或這支籤對你的提醒。"
-            placeholderTextColor={TempleTheme.textMuted}
+            placeholderTextColor={theme.textMuted}
             multiline
           />
           <View style={styles.noteEditActions}>
@@ -480,7 +487,7 @@ export default function CollectionScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
+      <StatusBar barStyle="light-content" backgroundColor={theme.bgDark} />
       <View
         style={[
           styles.container,
@@ -542,7 +549,7 @@ export default function CollectionScreen() {
             value={searchText}
             onChangeText={setSearchText}
             placeholder="搜尋籤詩、問題、筆記或 AI 解讀"
-            placeholderTextColor={TempleTheme.textMuted}
+            placeholderTextColor={theme.textMuted}
           />
           {searchText ? (
             <TouchableOpacity onPress={() => setSearchText('')}>
@@ -747,13 +754,14 @@ export default function CollectionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.bgDark },
   container: { flex: 1, paddingTop: TempleSpacing.sm, width: '100%', alignSelf: 'center' },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
     marginBottom: TempleSpacing.sm,
   },
@@ -767,20 +775,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: TempleSpacing.lg,
     paddingVertical: TempleSpacing.sm,
     borderRadius: 20,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
   },
   tabActive: {
-    backgroundColor: TempleTheme.goldDark + '30',
-    borderColor: TempleTheme.gold,
+    backgroundColor: theme.goldDark + '30',
+    borderColor: theme.gold,
   },
   tabText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   tabTextActive: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   summaryRow: {
@@ -790,60 +798,60 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.sm,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
     alignItems: 'center',
   },
   summaryValue: {
     fontSize: 22,
     fontWeight: '800',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   summaryLabel: {
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginTop: 4,
   },
   reviewCenterBtn: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.warning + '66',
-    backgroundColor: TempleTheme.warning + '14',
+    borderColor: theme.warning + '66',
+    backgroundColor: theme.warning + '14',
     paddingVertical: 10,
     alignItems: 'center',
     marginBottom: TempleSpacing.sm,
   },
   reviewCenterText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: TempleFonts.small,
     fontWeight: '900',
   },  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
     paddingHorizontal: TempleSpacing.sm,
     marginBottom: TempleSpacing.sm,
   },
   searchIcon: {
     fontSize: 12,
     marginRight: 6,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 8,
     fontSize: TempleFonts.small,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
   },
   searchClear: {
     fontSize: 12,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     padding: 4,
   },
   filterStrip: {
@@ -858,20 +866,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 16,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
   },
   filterChipActive: {
-    backgroundColor: TempleTheme.goldDark + '24',
-    borderColor: TempleTheme.gold,
+    backgroundColor: theme.goldDark + '24',
+    borderColor: theme.gold,
   },
   filterChipText: {
     fontSize: 12,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   filterChipTextActive: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   list: { flex: 1 },
@@ -883,12 +891,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   recordCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
   },
   recordCardDesktop: {
     width: '48.8%',
@@ -907,24 +915,24 @@ const styles = StyleSheet.create({
   recordGod: {
     fontSize: TempleFonts.body,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   recordDate: {
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginTop: 2,
   },
   recordNumberBadge: {
-    backgroundColor: TempleTheme.red + '28',
+    backgroundColor: theme.red + '28',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.red + '60',
+    borderColor: theme.red + '60',
   },
   recordNumber: {
     fontSize: 12,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '600',
   },
   recordMetaRow: {
@@ -935,8 +943,8 @@ const styles = StyleSheet.create({
   },
   recordLevel: {
     fontSize: 11,
-    color: TempleTheme.goldLight,
-    backgroundColor: TempleTheme.goldDark + '26',
+    color: theme.goldLight,
+    backgroundColor: theme.goldDark + '26',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
@@ -944,8 +952,8 @@ const styles = StyleSheet.create({
   },
   recordCategory: {
     fontSize: 11,
-    color: TempleTheme.textLight,
-    backgroundColor: TempleTheme.bgDark + '40',
+    color: theme.textLight,
+    backgroundColor: theme.bgDark + '40',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
@@ -956,21 +964,21 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: TempleTheme.warning + '70',
-    backgroundColor: TempleTheme.warning + '12',
+    borderColor: theme.warning + '70',
+    backgroundColor: theme.warning + '12',
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   confirmBadgeOk: {
-    borderColor: TempleTheme.success + '70',
-    backgroundColor: TempleTheme.success + '12',
+    borderColor: theme.success + '70',
+    backgroundColor: theme.success + '12',
   },
   confirmBadgeText: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: 11,
     fontWeight: '700',
   },  recordPoem: {
-    backgroundColor: TempleTheme.bgLight,
+    backgroundColor: theme.bgLight,
     padding: TempleSpacing.md,
     borderRadius: 8,
     marginBottom: TempleSpacing.sm,
@@ -984,17 +992,17 @@ const styles = StyleSheet.create({
   },
   recordFooter: {
     borderTopWidth: 1,
-    borderTopColor: TempleTheme.goldDark + '20',
+    borderTopColor: theme.goldDark + '20',
     paddingTop: TempleSpacing.sm,
   },
   recordQuestion: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     lineHeight: 20,
   },
   recordAi: {
     fontSize: 12,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     marginTop: 8,
     lineHeight: 20,
   },
@@ -1016,8 +1024,8 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: TempleTheme.gold,
-    color: TempleTheme.bgDark,
+    borderColor: theme.gold,
+    color: theme.bgDark,
     textAlign: 'center',
     lineHeight: 16,
     fontSize: 12,
@@ -1025,25 +1033,25 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   planCheckBoxDone: {
-    backgroundColor: TempleTheme.success,
-    borderColor: TempleTheme.success,
-    color: TempleTheme.bgDark,
+    backgroundColor: theme.success,
+    borderColor: theme.success,
+    color: theme.bgDark,
   },  planText: {
     fontSize: 12,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     lineHeight: 18,
   },
   planTextDone: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     textDecorationLine: 'line-through',
   },
   verificationCard: {
     marginTop: TempleSpacing.sm,
     padding: TempleSpacing.sm,
     borderRadius: 10,
-    backgroundColor: TempleTheme.bgDark + '38',
+    backgroundColor: theme.bgDark + '38',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '18',
+    borderColor: theme.goldDark + '18',
   },
   verificationHeader: {
     flexDirection: 'row',
@@ -1053,7 +1061,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 12,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   statusBadge: {
@@ -1074,37 +1082,37 @@ const styles = StyleSheet.create({
   verificationBtn: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '24',
+    borderColor: theme.goldDark + '24',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
   },
   verificationBtnText: {
     fontSize: 12,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
   },
   verificationSchedule: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     marginTop: 8,
   },
   verificationNote: {
     marginTop: 8,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 12,
     lineHeight: 18,
   },
   noteEditArea: { marginTop: TempleSpacing.sm },
   noteInput: {
-    backgroundColor: TempleTheme.bgDark + '40',
+    backgroundColor: theme.bgDark + '40',
     borderRadius: 8,
     padding: TempleSpacing.sm,
     fontSize: TempleFonts.small,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     minHeight: 72,
     textAlignVertical: 'top',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
   },
   noteEditActions: {
     flexDirection: 'row',
@@ -1116,40 +1124,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: TempleTheme.goldDark + '40',
+    backgroundColor: theme.goldDark + '40',
   },
   noteSaveText: {
     fontSize: 12,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '600',
   },
   noteCancelBtn: {
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: TempleTheme.bgDark + '40',
+    backgroundColor: theme.bgDark + '40',
   },
   noteCancelText: {
     fontSize: 12,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   noteView: {
     marginTop: TempleSpacing.sm,
     padding: TempleSpacing.sm,
-    backgroundColor: TempleTheme.bgDark + '30',
+    backgroundColor: theme.bgDark + '30',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '15',
+    borderColor: theme.goldDark + '15',
   },
   noteViewLabel: {
     fontSize: 11,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '600',
     marginBottom: 4,
   },
   noteViewText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     lineHeight: 20,
   },
   addNoteBtn: {
@@ -1158,12 +1166,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
     borderStyle: 'dashed',
   },
   addNoteText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   removeBtn: {
     marginTop: TempleSpacing.sm,
@@ -1171,11 +1179,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: TempleTheme.danger + '30',
+    borderColor: theme.danger + '30',
   },
   removeBtnText: {
     fontSize: 12,
-    color: TempleTheme.danger,
+    color: theme.danger,
   },
   emptyState: {
     width: '100%',
@@ -1190,17 +1198,17 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     lineHeight: 52,
     fontSize: 22,
-    color: TempleTheme.goldLight,
-    backgroundColor: TempleTheme.bgCard,
+    color: theme.goldLight,
+    backgroundColor: theme.bgCard,
     marginBottom: TempleSpacing.md,
   },
   emptyText: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   emptyHint: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginTop: TempleSpacing.xs,
     opacity: 0.7,
     textAlign: 'center',
@@ -1210,13 +1218,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 999,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '35',
+    borderColor: theme.goldDark + '35',
   },
   emptyActionText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   exportBtn: {
@@ -1226,12 +1234,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
-    backgroundColor: TempleTheme.bgCard,
+    borderColor: theme.goldDark + '40',
+    backgroundColor: theme.bgCard,
   },
   exportBtnText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   clearBtn: {
     width: '100%',
@@ -1240,10 +1248,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: TempleTheme.danger + '20',
+    borderColor: theme.danger + '20',
   },
   clearBtnText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.danger,
+    color: theme.danger,
   },
-});
+  });
+}

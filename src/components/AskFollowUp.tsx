@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -8,7 +8,9 @@ import {
   View,
 } from 'react-native';
 
-import { TempleTheme, TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 interface AskFollowUpProps {
   godName: string;
@@ -22,6 +24,8 @@ interface Message {
 }
 
 export function AskFollowUp({ godName, poemContent, aiInterpretation }: AskFollowUpProps) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [expanded, setExpanded] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -129,7 +133,7 @@ export function AskFollowUp({ godName, poemContent, aiInterpretation }: AskFollo
 
           {isLoading ? (
             <View style={styles.loading}>
-              <ActivityIndicator size="small" color={TempleTheme.goldLight} />
+              <ActivityIndicator size="small" color={theme.goldLight} />
               <Text style={styles.loadingText}>{godName}正在整理回應...</Text>
             </View>
           ) : null}
@@ -140,7 +144,7 @@ export function AskFollowUp({ godName, poemContent, aiInterpretation }: AskFollo
               value={input}
               onChangeText={setInput}
               placeholder={`想再問 ${godName} 什麼？`}
-              placeholderTextColor={TempleTheme.textMuted}
+              placeholderTextColor={theme.textMuted}
             />
             <TouchableOpacity
               style={[styles.askBtn, (!input.trim() || isLoading) && styles.askBtnDisabled]}
@@ -156,7 +160,8 @@ export function AskFollowUp({ godName, poemContent, aiInterpretation }: AskFollo
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   container: { marginTop: TempleSpacing.sm },
   toggleBtn: {
     flexDirection: 'row',
@@ -164,64 +169,64 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: TempleSpacing.sm,
     paddingHorizontal: TempleSpacing.md,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: TempleTheme.gold + '30',
+    borderColor: theme.gold + '30',
   },
   toggleText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '600',
   },
-  toggleArrow: { fontSize: 10, color: TempleTheme.textMuted },
+  toggleArrow: { fontSize: 10, color: theme.textMuted },
   panel: {
     marginTop: TempleSpacing.xs,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: TempleTheme.gold + '20',
+    borderColor: theme.gold + '20',
     overflow: 'hidden',
   },
   quickPromptList: {
     padding: TempleSpacing.sm,
     gap: TempleSpacing.xs,
     borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '15',
+    borderBottomColor: theme.goldDark + '15',
   },
   quickPromptChip: {
     borderRadius: 10,
-    backgroundColor: TempleTheme.bgDark + '50',
+    backgroundColor: theme.bgDark + '50',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
   },
   quickPromptText: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: 12,
     lineHeight: 18,
   },
   bubble: { padding: TempleSpacing.sm, margin: TempleSpacing.xs, borderRadius: 10 },
   userBubble: {
-    backgroundColor: TempleTheme.goldDark + '20',
+    backgroundColor: theme.goldDark + '20',
     alignSelf: 'flex-end',
     maxWidth: '80%',
   },
   aiBubble: {
-    backgroundColor: TempleTheme.bgDark + '50',
+    backgroundColor: theme.bgDark + '50',
     alignSelf: 'flex-start',
     maxWidth: '90%',
   },
   bubbleRole: {
     fontSize: 11,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
     marginBottom: 4,
   },
   bubbleText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     lineHeight: 20,
   },
   loading: {
@@ -230,31 +235,32 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: TempleSpacing.sm,
   },
-  loadingText: { fontSize: TempleFonts.small, color: TempleTheme.textMuted },
+  loadingText: { fontSize: TempleFonts.small, color: theme.textMuted },
   inputRow: {
     flexDirection: 'row',
     padding: TempleSpacing.sm,
     gap: TempleSpacing.xs,
     borderTopWidth: 1,
-    borderTopColor: TempleTheme.goldDark + '20',
+    borderTopColor: theme.goldDark + '20',
   },
   input: {
     flex: 1,
-    backgroundColor: TempleTheme.bgDark + '40',
+    backgroundColor: theme.bgDark + '40',
     borderRadius: 8,
     padding: 8,
     fontSize: TempleFonts.small,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
   },
   askBtn: {
     minWidth: 54,
     height: 36,
     borderRadius: 8,
-    backgroundColor: TempleTheme.goldDark,
+    backgroundColor: theme.goldDark,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 10,
   },
   askBtnDisabled: { opacity: 0.4 },
   askBtnText: { color: '#FFF', fontWeight: '700', fontSize: 12 },
-});
+  });
+}

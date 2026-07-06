@@ -12,7 +12,9 @@ import {
   View,
 } from 'react-native';
 
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import {
   addWish,
   fulfillWish,
@@ -44,6 +46,8 @@ function formatReminder(timestamp?: number): string | null {
 
 export default function WishesScreen() {
   const layout = useResponsiveLayout();
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
@@ -171,7 +175,7 @@ export default function WishesScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
+      <StatusBar barStyle="light-content" backgroundColor={theme.bgDark} />
       <View
         style={[
           styles.container,
@@ -206,7 +210,7 @@ export default function WishesScreen() {
               value={newContent}
               onChangeText={setNewContent}
               placeholder="寫下你想持續實踐、等待實現或提醒自己的事情。"
-              placeholderTextColor={TempleTheme.textMuted}
+              placeholderTextColor={theme.textMuted}
               multiline
             />
 
@@ -249,7 +253,7 @@ export default function WishesScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={TempleTheme.gold}
+              tintColor={theme.gold}
             />
           }
         >
@@ -289,7 +293,7 @@ export default function WishesScreen() {
                     value={gratitudeText}
                     onChangeText={setGratitudeText}
                     placeholder="完成後想感謝什麼？這次學到了什麼？"
-                    placeholderTextColor={TempleTheme.textMuted}
+                    placeholderTextColor={theme.textMuted}
                     multiline
                   />
                   <TextInput
@@ -297,7 +301,7 @@ export default function WishesScreen() {
                     value={fulfillmentMethod}
                     onChangeText={setFulfillmentMethod}
                     placeholder="你是怎麼還願或實際落地的？例如：去拜拜、回饋家人、完成計畫。"
-                    placeholderTextColor={TempleTheme.textMuted}
+                    placeholderTextColor={theme.textMuted}
                     multiline
                   />
                   <TextInput
@@ -305,7 +309,7 @@ export default function WishesScreen() {
                     value={reflectionText}
                     onChangeText={setReflectionText}
                     placeholder="補一段回顧，之後回來看會很有力量。"
-                    placeholderTextColor={TempleTheme.textMuted}
+                    placeholderTextColor={theme.textMuted}
                     multiline
                   />
                   <View style={styles.gratitudeActions}>
@@ -376,13 +380,14 @@ export default function WishesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.bgDark },
   container: { flex: 1, paddingVertical: TempleSpacing.md, width: '100%', alignSelf: 'center' },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
     marginBottom: TempleSpacing.md,
   },
@@ -393,60 +398,60 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.sm,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '25',
+    borderColor: theme.goldDark + '25',
     alignItems: 'center',
   },
   summaryValue: {
     fontSize: 22,
     fontWeight: '800',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   summaryLabel: {
     marginTop: 4,
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   addBtn: {
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
     alignItems: 'center',
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     marginBottom: TempleSpacing.sm,
   },
   addBtnText: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   addForm: {
     marginBottom: TempleSpacing.md,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.md,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '25',
+    borderColor: theme.goldDark + '25',
   },
   addInput: {
-    backgroundColor: TempleTheme.bgDark + '35',
+    backgroundColor: theme.bgDark + '35',
     borderRadius: 8,
     padding: TempleSpacing.sm,
     fontSize: TempleFonts.body,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '25',
+    borderColor: theme.goldDark + '25',
     minHeight: 76,
     textAlignVertical: 'top',
   },
   sectionHint: {
     marginTop: TempleSpacing.sm,
     marginBottom: TempleSpacing.xs,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
   },
   optionRow: {
@@ -459,30 +464,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 16,
-    backgroundColor: TempleTheme.bgDark + '40',
+    backgroundColor: theme.bgDark + '40',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
   },
   optionChipActive: {
-    backgroundColor: TempleTheme.goldDark + '25',
-    borderColor: TempleTheme.gold,
+    backgroundColor: theme.goldDark + '25',
+    borderColor: theme.gold,
   },
   optionChipText: {
     fontSize: 12,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   optionChipTextActive: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   submitBtn: {
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
   },
   submitBtnText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontSize: TempleFonts.body,
     fontWeight: '700',
   },
@@ -506,17 +511,17 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     lineHeight: 52,
     fontSize: 22,
-    color: TempleTheme.goldLight,
-    backgroundColor: TempleTheme.bgCard,
+    color: theme.goldLight,
+    backgroundColor: theme.bgCard,
     marginBottom: TempleSpacing.md,
   },
   emptyText: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   emptyHint: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginTop: TempleSpacing.xs,
     opacity: 0.75,
     textAlign: 'center',
@@ -526,17 +531,17 @@ const styles = StyleSheet.create({
     width: '100%',
     fontSize: TempleFonts.body,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginBottom: TempleSpacing.sm,
     marginTop: TempleSpacing.md,
   },
   wishCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
   },
   wishCardDesktop: {
     width: '48.8%',
@@ -554,28 +559,28 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: TempleTheme.warning,
+    backgroundColor: theme.warning,
     marginRight: 8,
   },
   wishStatusFulfilled: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: TempleTheme.success,
+    backgroundColor: theme.success,
     marginRight: 8,
   },
   wishDate: {
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   wishContent: {
     fontSize: TempleFonts.body,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     lineHeight: 24,
   },
   wishPoem: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginTop: TempleSpacing.xs,
   },
   reminderRow: {
@@ -586,8 +591,8 @@ const styles = StyleSheet.create({
   },
   reminderBadge: {
     fontSize: 11,
-    color: TempleTheme.bgDark,
-    backgroundColor: TempleTheme.gold,
+    color: theme.bgDark,
+    backgroundColor: theme.gold,
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -595,7 +600,7 @@ const styles = StyleSheet.create({
   },
   reminderText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
   },
   wishActions: {
     flexDirection: 'row',
@@ -607,16 +612,16 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 8,
-    backgroundColor: TempleTheme.success + '20',
+    backgroundColor: theme.success + '20',
   },
   fulfillBtnText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.success,
+    color: theme.success,
     fontWeight: '600',
   },
   deleteBtnText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.danger,
+    color: theme.danger,
     paddingVertical: 6,
   },
   gratitudeForm: {
@@ -624,14 +629,14 @@ const styles = StyleSheet.create({
     gap: TempleSpacing.xs,
   },
   gratitudeInput: {
-    backgroundColor: TempleTheme.bgDark + '40',
+    backgroundColor: theme.bgDark + '40',
     borderRadius: 8,
     padding: TempleSpacing.sm,
     fontSize: TempleFonts.small,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     minHeight: 64,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
     textAlignVertical: 'top',
   },
   gratitudeActions: {
@@ -645,32 +650,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: TempleTheme.goldDark + '40',
+    backgroundColor: theme.goldDark + '40',
   },
   gratitudeSaveText: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '600',
   },
   gratitudeCancelText: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   fulfillmentMeta: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginTop: TempleSpacing.sm,
     lineHeight: 20,
   },
   gratitudeText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginTop: TempleSpacing.sm,
     fontStyle: 'italic',
     lineHeight: 20,
   },
   reflectionText: {
     fontSize: TempleFonts.small,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     marginTop: TempleSpacing.xs,
     lineHeight: 20,
   },
-});
+  });
+}

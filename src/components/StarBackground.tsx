@@ -1,7 +1,7 @@
 // 星空金箔飄落背景
 import React, { useMemo, useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions, Easing } from 'react-native';
-import { TempleTheme } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 const { width, height } = Dimensions.get('window');
 const STAR_COUNT = 30;
@@ -77,6 +77,7 @@ function TwinkleStar({ star }: { star: Star }) {
 }
 
 function GoldFlake({ flake }: { flake: Flake }) {
+  const { theme } = useAppTheme();
   const translateY = useRef(new Animated.Value(-20)).current;
   const translateX = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -121,7 +122,7 @@ function GoldFlake({ flake }: { flake: Flake }) {
         top: 0,
         width: flake.size,
         height: flake.size,
-        backgroundColor: TempleTheme.goldLight,
+        backgroundColor: theme.goldLight,
         opacity,
         transform: [{ translateY }, { translateX }, { rotate: rotateStr as any }],
         borderRadius: 1,

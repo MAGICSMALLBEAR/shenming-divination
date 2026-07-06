@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,7 +15,9 @@ import {
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import {
   TEMPLES,
   calcDistanceKm,
@@ -77,6 +79,8 @@ async function saveCheckIn(record: CheckInRecord): Promise<CheckInRecord[]> {
 
 export default function MapScreen() {
   const layout = useResponsiveLayout();
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [search, setSearch] = useState('');
   const [selectedCity, setSelectedCity] = useState('全部');
   const [userLat, setUserLat] = useState<number | null>(null);
@@ -219,13 +223,13 @@ export default function MapScreen() {
           <TextInput
             style={styles.searchInput}
             placeholder="搜尋廟名、神明、祈求..."
-            placeholderTextColor={TempleTheme.textMuted}
+            placeholderTextColor={theme.textMuted}
             value={search}
             onChangeText={setSearch}
           />
           <TouchableOpacity style={styles.locateBtn} onPress={handleLocate} disabled={locating}>
             {locating
-              ? <ActivityIndicator color={TempleTheme.gold} size="small" />
+              ? <ActivityIndicator color={theme.gold} size="small" />
               : <Text style={styles.locateBtnText}>📍 定位</Text>
             }
           </TouchableOpacity>
@@ -349,8 +353,8 @@ export default function MapScreen() {
                       </TouchableOpacity>
                     ))}
                   </View>
-                  <TextInput style={styles.reviewInput} value={reviewAuthor} onChangeText={setReviewAuthor} placeholder="您的名字" placeholderTextColor={TempleTheme.textMuted} />
-                  <TextInput style={[styles.reviewInput, { minHeight: 56 }] as any} value={reviewText} onChangeText={setReviewText} placeholder="留下您對這座廟宇的感想…" placeholderTextColor={TempleTheme.textMuted} multiline maxLength={200} />
+                  <TextInput style={styles.reviewInput} value={reviewAuthor} onChangeText={setReviewAuthor} placeholder="您的名字" placeholderTextColor={theme.textMuted} />
+                  <TextInput style={[styles.reviewInput, { minHeight: 56 }] as any} value={reviewText} onChangeText={setReviewText} placeholder="留下您對這座廟宇的感想…" placeholderTextColor={theme.textMuted} multiline maxLength={200} />
                   <TouchableOpacity style={styles.reviewSubmitBtn} onPress={handleAddReview} disabled={!reviewText.trim()}>
                     <Text style={styles.reviewSubmitText}>發佈評論</Text>
                   </TouchableOpacity>
@@ -378,19 +382,20 @@ export default function MapScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.bgDark },
   container: { flex: 1 },
   content: { width: '100%', alignSelf: 'center', paddingVertical: TempleSpacing.md },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
     marginBottom: 4,
   },
   subtitle: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     textAlign: 'center',
     fontSize: TempleFonts.small,
     marginBottom: TempleSpacing.md,
@@ -402,20 +407,20 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
+    borderColor: theme.goldDark + '40',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.body,
   },
   locateBtn: {
-    backgroundColor: TempleTheme.goldDark + '33',
+    backgroundColor: theme.goldDark + '33',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '60',
+    borderColor: theme.goldDark + '60',
     paddingHorizontal: 14,
     paddingVertical: 10,
     justifyContent: 'center',
@@ -423,7 +428,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   locateBtnText: {
-    color: TempleTheme.gold,
+    color: theme.gold,
     fontWeight: '700',
     fontSize: 13,
   },
@@ -440,37 +445,37 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '40',
+    borderColor: theme.goldDark + '40',
     backgroundColor: 'transparent',
   },
   cityChipActive: {
-    backgroundColor: TempleTheme.goldDark + '55',
-    borderColor: TempleTheme.gold,
+    backgroundColor: theme.goldDark + '55',
+    borderColor: theme.gold,
   },
   cityChipText: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 13,
   },
   cityChipTextActive: {
-    color: TempleTheme.gold,
+    color: theme.gold,
     fontWeight: '700',
   },
   resultCount: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
     marginBottom: 10,
   },
   card: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '24',
+    borderColor: theme.goldDark + '24',
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,
   },
   cardSelected: {
-    borderColor: TempleTheme.gold + '80',
-    backgroundColor: TempleTheme.bgCard,
+    borderColor: theme.gold + '80',
+    backgroundColor: theme.bgCard,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -480,67 +485,67 @@ const styles = StyleSheet.create({
   },
   cardTitleRow: { flex: 1 },
   templeName: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '800',
     fontSize: TempleFonts.body,
   },
   templeCity: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 12,
     marginTop: 2,
   },
   distanceText: {
-    color: TempleTheme.gold,
+    color: theme.gold,
     fontWeight: '700',
     fontSize: 13,
   },
   mainGod: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.small,
     marginBottom: 4,
   },
   specialty: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
     marginBottom: 8,
   },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
-    backgroundColor: TempleTheme.goldDark + '22',
+    backgroundColor: theme.goldDark + '22',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '44',
+    borderColor: theme.goldDark + '44',
   },
   tagText: {
-    color: TempleTheme.gold,
+    color: theme.gold,
     fontSize: 11,
     fontWeight: '600',
   },
   detailPanel: { marginTop: 12 },
   divider: {
     height: 1,
-    backgroundColor: TempleTheme.goldDark + '30',
+    backgroundColor: theme.goldDark + '30',
     marginBottom: 12,
   },
   detailAddress: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.small,
     marginBottom: 6,
   },
   detailTime: {
-    color: TempleTheme.textLight,
+    color: theme.textLight,
     fontSize: TempleFonts.small,
     marginBottom: 6,
   },
   detailFounded: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
     marginBottom: 6,
   },
   detailDesc: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
     lineHeight: 20,
     marginBottom: 12,
@@ -548,70 +553,71 @@ const styles = StyleSheet.create({
   detailBtnRow: { flexDirection: 'row', gap: 8, marginTop: TempleSpacing.sm },
   mapBtn: {
     flex: 1,
-    backgroundColor: TempleTheme.goldDark + '44',
+    backgroundColor: theme.goldDark + '44',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: TempleTheme.gold + '60',
+    borderColor: theme.gold + '60',
   },
   mapBtnText: {
-    color: TempleTheme.gold,
+    color: theme.gold,
     fontWeight: '700',
     fontSize: TempleFonts.body,
   },
   checkInBtn: {
     flex: 1,
-    backgroundColor: TempleTheme.red + '33',
+    backgroundColor: theme.red + '33',
     borderRadius: 10,
     paddingVertical: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: TempleTheme.redLight + '80',
+    borderColor: theme.redLight + '80',
   },
-  checkInBtnText: { color: TempleTheme.redLight, fontWeight: '700', fontSize: TempleFonts.body },
-  checkInLastDate: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 2 },
+  checkInBtnText: { color: theme.redLight, fontWeight: '700', fontSize: TempleFonts.body },
+  checkInLastDate: { color: theme.textMuted, fontSize: 11, marginTop: 2 },
   checkInBadge: {
-    backgroundColor: TempleTheme.red,
+    backgroundColor: theme.red,
     borderRadius: 8,
     paddingVertical: 2,
     paddingHorizontal: 7,
     marginLeft: 6,
   },
   checkInBadgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
-  distanceNear: { color: TempleTheme.success },
+  distanceNear: { color: theme.success },
   // 評論
-  reviewSection: { marginTop: TempleSpacing.md, borderTopWidth: 1, borderTopColor: TempleTheme.goldDark + '30', paddingTop: TempleSpacing.sm },
-  reviewTitle: { color: TempleTheme.textGold, fontWeight: 'bold', fontSize: TempleFonts.small, marginBottom: TempleSpacing.sm },
-  reviewItem: { marginBottom: TempleSpacing.sm, padding: TempleSpacing.sm, backgroundColor: TempleTheme.bgMedium, borderRadius: 8 },
+  reviewSection: { marginTop: TempleSpacing.md, borderTopWidth: 1, borderTopColor: theme.goldDark + '30', paddingTop: TempleSpacing.sm },
+  reviewTitle: { color: theme.textGold, fontWeight: 'bold', fontSize: TempleFonts.small, marginBottom: TempleSpacing.sm },
+  reviewItem: { marginBottom: TempleSpacing.sm, padding: TempleSpacing.sm, backgroundColor: theme.bgMedium, borderRadius: 8 },
   reviewHeader: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 4 },
-  reviewAuthor: { color: TempleTheme.textLight, fontWeight: 'bold', fontSize: 12, flex: 1 },
-  reviewStars: { color: TempleTheme.goldLight, fontSize: 12 },
-  reviewDate: { color: TempleTheme.textMuted, fontSize: 11 },
-  reviewText: { color: TempleTheme.textMuted, fontSize: 12, lineHeight: 16 },
-  noReviews: { color: TempleTheme.textMuted, fontSize: 12, fontStyle: 'italic', marginBottom: TempleSpacing.sm },
+  reviewAuthor: { color: theme.textLight, fontWeight: 'bold', fontSize: 12, flex: 1 },
+  reviewStars: { color: theme.goldLight, fontSize: 12 },
+  reviewDate: { color: theme.textMuted, fontSize: 11 },
+  reviewText: { color: theme.textMuted, fontSize: 12, lineHeight: 16 },
+  noReviews: { color: theme.textMuted, fontSize: 12, fontStyle: 'italic', marginBottom: TempleSpacing.sm },
   reviewForm: { gap: 8 },
   reviewRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  reviewLabel: { color: TempleTheme.textMuted, fontSize: 12 },
-  reviewStar: { fontSize: 22, color: TempleTheme.bgMedium },
-  reviewStarActive: { color: TempleTheme.goldLight },
-  reviewInput: { backgroundColor: TempleTheme.bgDark, borderRadius: 8, borderWidth: 1, borderColor: TempleTheme.gold + '40', padding: 8, color: TempleTheme.textLight, fontSize: 12 },
-  reviewSubmitBtn: { backgroundColor: TempleTheme.gold + '33', borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: TempleTheme.gold + '60' },
-  reviewSubmitText: { color: TempleTheme.gold, fontWeight: 'bold', fontSize: 12 },
+  reviewLabel: { color: theme.textMuted, fontSize: 12 },
+  reviewStar: { fontSize: 22, color: theme.bgMedium },
+  reviewStarActive: { color: theme.goldLight },
+  reviewInput: { backgroundColor: theme.bgDark, borderRadius: 8, borderWidth: 1, borderColor: theme.gold + '40', padding: 8, color: theme.textLight, fontSize: 12 },
+  reviewSubmitBtn: { backgroundColor: theme.gold + '33', borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: theme.gold + '60' },
+  reviewSubmitText: { color: theme.gold, fontWeight: 'bold', fontSize: 12 },
   emptyCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 14,
     padding: TempleSpacing.lg,
     alignItems: 'center',
   },
   emptyText: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.body,
   },
   toast: {
     position: 'absolute', bottom: 100, alignSelf: 'center',
-    backgroundColor: TempleTheme.goldDark, paddingHorizontal: 20, paddingVertical: 8,
+    backgroundColor: theme.goldDark, paddingHorizontal: 20, paddingVertical: 8,
     borderRadius: 20, elevation: 6,
   },
   toastText: { color: '#FFF', fontSize: TempleFonts.small, fontWeight: '600' },
-});
+  });
+}

@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { getStats, getYearlySummary, type Stats, type YearlySummary } from '@/services/statsService';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 export default function StatsScreen() {
   const layout = useResponsiveLayout();
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [yearly, setYearly] = useState<YearlySummary | null>(null);
 
@@ -18,7 +22,7 @@ export default function StatsScreen() {
   if (!stats) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
+        <StatusBar barStyle="light-content" backgroundColor={theme.bgDark} />
         <View style={styles.loading}>
           <Text style={styles.loadingText}>整理統計中...</Text>
         </View>
@@ -28,7 +32,7 @@ export default function StatsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={TempleTheme.bgDark} />
+      <StatusBar barStyle="light-content" backgroundColor={theme.bgDark} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={[
@@ -53,9 +57,9 @@ export default function StatsScreen() {
           <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
             <Text style={styles.sectionTitle}>應驗追蹤</Text>
             <View style={styles.verificationRow}>
-              <StatPill label="待驗證" value={stats.verification.pending} color={TempleTheme.warning} />
-              <StatPill label="已應驗" value={stats.verification.matched} color={TempleTheme.success} />
-              <StatPill label="不太符合" value={stats.verification.unmatched} color={TempleTheme.danger} />
+              <StatPill label="待驗證" value={stats.verification.pending} color={theme.warning} />
+              <StatPill label="已應驗" value={stats.verification.matched} color={theme.success} />
+              <StatPill label="不太符合" value={stats.verification.unmatched} color={theme.danger} />
             </View>
           </View>
 
@@ -130,6 +134,8 @@ export default function StatsScreen() {
 }
 
 function StatPill({ label, value, color }: { label: string; value: number; color: string }) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={[styles.pill, { borderColor: color + '55' }]}>
       <Text style={[styles.pillValue, { color }]}>{value}</Text>
@@ -139,6 +145,8 @@ function StatPill({ label, value, color }: { label: string; value: number; color
 }
 
 function WeeklyChart({ data }: { data: Stats['weeklyDraws'] }) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const max = Math.max(...data.map((item) => item.count), 1);
 
   return (
@@ -162,12 +170,14 @@ function WeeklyChart({ data }: { data: Stats['weeklyDraws'] }) {
 }
 
 function YearlySummaryCard({ summary }: { summary: YearlySummary }) {
+  const { theme } = useAppTheme();
+  const yearlyStyles = useMemo(() => createYearlyStyles(theme), [theme]);
   const luckyColor =
     summary.luckyRate >= 50
-      ? TempleTheme.success
+      ? theme.success
       : summary.luckyRate >= 30
-        ? TempleTheme.warning
-        : TempleTheme.danger;
+        ? theme.warning
+        : theme.danger;
 
   const statItems = [
     {
@@ -246,12 +256,13 @@ function YearlySummaryCard({ summary }: { summary: YearlySummary }) {
   );
 }
 
-const yearlyStyles = StyleSheet.create({
+function createYearlyStyles(theme: ThemeColors) {
+  return StyleSheet.create({
   card: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: TempleTheme.goldDark + '50',
+    borderColor: theme.goldDark + '50',
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
     overflow: 'hidden',
@@ -265,25 +276,25 @@ const yearlyStyles = StyleSheet.create({
   title: {
     fontSize: TempleFonts.body,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     letterSpacing: 1,
   },
   totalBadge: {
     fontSize: 11,
     fontWeight: '700',
-    color: TempleTheme.bgDark,
-    backgroundColor: TempleTheme.gold,
+    color: theme.bgDark,
+    backgroundColor: theme.gold,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 10,
   },
   luckySection: { alignItems: 'center', marginBottom: TempleSpacing.md },
-  luckySub: { fontSize: 11, color: TempleTheme.textMuted, marginBottom: 4 },
+  luckySub: { fontSize: 11, color: theme.textMuted, marginBottom: 4 },
   luckyRate: { fontSize: 52, fontWeight: '900', lineHeight: 58 },
   luckyBarTrack: {
     width: '100%',
     height: 8,
-    backgroundColor: TempleTheme.bgDark + '60',
+    backgroundColor: theme.bgDark + '60',
     borderRadius: 4,
     overflow: 'hidden',
     marginTop: 6,
@@ -292,38 +303,40 @@ const yearlyStyles = StyleSheet.create({
   luckyBarFill: { height: '100%', borderRadius: 4, minWidth: 4 },
   divider: {
     height: 1,
-    backgroundColor: TempleTheme.goldDark + '20',
+    backgroundColor: theme.goldDark + '20',
     marginBottom: TempleSpacing.md,
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: TempleSpacing.sm },
   gridItem: {
     width: '30%',
     flex: 1,
-    backgroundColor: TempleTheme.bgDark + '40',
+    backgroundColor: theme.bgDark + '40',
     borderRadius: 10,
     padding: TempleSpacing.sm,
     alignItems: 'center',
     minWidth: 90,
   },
   gridIcon: { fontSize: 20, marginBottom: 2 },
-  gridLabel: { fontSize: 10, color: TempleTheme.textMuted, marginBottom: 2 },
+  gridLabel: { fontSize: 10, color: theme.textMuted, marginBottom: 2 },
   gridValue: {
     fontSize: 13,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
   },
-  gridSub: { fontSize: 10, color: TempleTheme.gold, marginTop: 1 },
-});
+  gridSub: { fontSize: 10, color: theme.gold, marginTop: 1 },
+  });
+}
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.bgDark },
   container: { flex: 1 },
   content: { paddingVertical: TempleSpacing.md, width: '100%', alignSelf: 'center' },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     textAlign: 'center',
     marginBottom: TempleSpacing.lg,
   },
@@ -331,28 +344,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: TempleTheme.bgDark,
+    backgroundColor: theme.bgDark,
   },
-  loadingText: { color: TempleTheme.textMuted },
+  loadingText: { color: theme.textMuted },
   kpiRow: { flexDirection: 'row', gap: TempleSpacing.sm, marginBottom: TempleSpacing.lg },
   kpiCard: {
     flex: 1,
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 16,
     padding: TempleSpacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
   },
-  kpiNumber: { fontSize: 36, fontWeight: '900', color: TempleTheme.goldLight },
-  kpiLabel: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, marginTop: 4 },
+  kpiNumber: { fontSize: 36, fontWeight: '900', color: theme.goldLight },
+  kpiLabel: { fontSize: TempleFonts.small, color: theme.textMuted, marginTop: 4 },
   section: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12,
     padding: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '20',
+    borderColor: theme.goldDark + '20',
   },
   sectionGrid: {},
   sectionGridDesktop: {
@@ -369,7 +382,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: TempleFonts.body,
     fontWeight: '700',
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     marginBottom: TempleSpacing.sm,
   },
   verificationRow: {
@@ -383,7 +396,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     padding: TempleSpacing.sm,
-    backgroundColor: TempleTheme.bgDark + '45',
+    backgroundColor: theme.bgDark + '45',
     alignItems: 'center',
   },
   pillValue: {
@@ -393,51 +406,51 @@ const styles = StyleSheet.create({
   pillLabel: {
     marginTop: 4,
     fontSize: 11,
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
   },
   highlightRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: TempleTheme.bgDark + '40',
+    backgroundColor: theme.bgDark + '40',
     padding: TempleSpacing.sm,
     borderRadius: 8,
   },
-  highlightName: { fontSize: TempleFonts.body, color: TempleTheme.textLight, fontWeight: '600' },
-  highlightCount: { fontSize: TempleFonts.body, color: TempleTheme.gold, fontWeight: '700' },
+  highlightName: { fontSize: TempleFonts.body, color: theme.textLight, fontWeight: '600' },
+  highlightCount: { fontSize: TempleFonts.body, color: theme.gold, fontWeight: '700' },
   rankRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '10',
+    borderBottomColor: theme.goldDark + '10',
   },
-  rankNum: { width: 30, fontSize: TempleFonts.small, color: TempleTheme.textMuted },
-  rankName: { flex: 1, fontSize: TempleFonts.small, color: TempleTheme.textLight },
-  rankCount: { fontSize: TempleFonts.small, color: TempleTheme.gold, fontWeight: '600' },
+  rankNum: { width: 30, fontSize: TempleFonts.small, color: theme.textMuted },
+  rankName: { flex: 1, fontSize: TempleFonts.small, color: theme.textLight },
+  rankCount: { fontSize: TempleFonts.small, color: theme.gold, fontWeight: '600' },
   levelBar: { gap: 6 },
   levelRow: { flexDirection: 'row', alignItems: 'center', gap: TempleSpacing.sm },
-  levelName: { width: 70, fontSize: 12, color: TempleTheme.textLight, fontWeight: '600' },
+  levelName: { width: 70, fontSize: 12, color: theme.textLight, fontWeight: '600' },
   levelBarTrack: {
     flex: 1,
     height: 16,
-    backgroundColor: TempleTheme.bgDark + '60',
+    backgroundColor: theme.bgDark + '60',
     borderRadius: 8,
     overflow: 'hidden',
   },
   levelBarFill: {
     height: '100%',
-    backgroundColor: TempleTheme.goldDark,
+    backgroundColor: theme.goldDark,
     borderRadius: 8,
     minWidth: 4,
   },
-  levelCount: { width: 30, fontSize: 12, color: TempleTheme.textMuted, textAlign: 'right' },
+  levelCount: { width: 30, fontSize: 12, color: theme.textMuted, textAlign: 'right' },
   weekChart: { flexDirection: 'row', alignItems: 'flex-end', gap: TempleSpacing.xs, height: 100 },
   weekCol: { flex: 1, alignItems: 'center', height: '100%', justifyContent: 'flex-end' },
-  weekCount: { fontSize: 10, color: TempleTheme.textMuted, marginBottom: 2 },
+  weekCount: { fontSize: 10, color: theme.textMuted, marginBottom: 2 },
   weekBarTrack: {
     width: '70%',
-    backgroundColor: TempleTheme.bgDark + '60',
+    backgroundColor: theme.bgDark + '60',
     borderRadius: 4,
     overflow: 'hidden',
     minHeight: 4,
@@ -445,9 +458,10 @@ const styles = StyleSheet.create({
   },
   weekBarFill: {
     width: '100%',
-    backgroundColor: TempleTheme.goldDark,
+    backgroundColor: theme.goldDark,
     borderRadius: 4,
     minHeight: 4,
   },
-  weekDay: { fontSize: 10, color: TempleTheme.textMuted, marginTop: 4 },
-});
+  weekDay: { fontSize: 10, color: theme.textMuted, marginTop: 4 },
+  });
+}

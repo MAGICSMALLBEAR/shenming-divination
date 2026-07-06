@@ -1,5 +1,5 @@
 // 更多工具 — 次要功能入口網格
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { DecorativeBg } from '@/components/DecorativeBg';
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 
 interface ToolEntry {
   route: string;
@@ -21,6 +23,7 @@ interface ToolEntry {
 }
 
 const TOOLS: ToolEntry[] = [
+  { route: '/library', label: '籤詩圖書館', icon: '📖', desc: '瀏覽・搜尋全部籤詩' },
   { route: '/oracle', label: '多元占卜', icon: '☯', desc: '易卦・塔羅・靈擺' },
   { route: '/bazi', label: '八字命盤', icon: '📜', desc: '四柱・五行・大運' },
   { route: '/ziwei', label: '紫微斗數', icon: '⭐', desc: '命宮・財帛・夫妻' },
@@ -35,6 +38,8 @@ const TOOLS: ToolEntry[] = [
 export default function MoreScreen() {
   const router = useRouter();
   const layout = useResponsiveLayout();
+  const { theme } = useAppTheme();
+  const s = useMemo(() => createStyles(theme), [theme]);
   const columns = layout.isDesktop ? 3 : 2;
 
   return (
@@ -62,23 +67,25 @@ export default function MoreScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safe: { flex: 1, backgroundColor: theme.bgDark },
   scroll: { padding: TempleSpacing.md, paddingBottom: TempleSpacing.xxl, alignItems: 'center' },
-  title: { fontSize: TempleFonts.subtitle, fontWeight: 'bold', color: TempleTheme.textGold, textAlign: 'center', marginBottom: 4 },
-  subtitle: { fontSize: TempleFonts.small, color: TempleTheme.textMuted, textAlign: 'center', marginBottom: TempleSpacing.lg },
+  title: { fontSize: TempleFonts.subtitle, fontWeight: 'bold', color: theme.textGold, textAlign: 'center', marginBottom: 4 },
+  subtitle: { fontSize: TempleFonts.small, color: theme.textMuted, textAlign: 'center', marginBottom: TempleSpacing.lg },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', width: '100%' },
   card: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: TempleTheme.gold + '30',
+    borderColor: theme.gold + '30',
     padding: TempleSpacing.md,
     alignItems: 'center',
     minHeight: 120,
     justifyContent: 'center',
   },
   cardIcon: { fontSize: 36, marginBottom: 8 },
-  cardLabel: { color: TempleTheme.textLight, fontWeight: 'bold', fontSize: TempleFonts.body, marginBottom: 4 },
-  cardDesc: { color: TempleTheme.textMuted, fontSize: TempleFonts.small, textAlign: 'center' },
-});
+  cardLabel: { color: theme.textLight, fontWeight: 'bold', fontSize: TempleFonts.body, marginBottom: 4 },
+  cardDesc: { color: theme.textMuted, fontSize: TempleFonts.small, textAlign: 'center' },
+  });
+}

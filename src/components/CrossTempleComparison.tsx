@@ -2,7 +2,9 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
-import { TempleTheme, TempleSpacing } from '@/constants/temple-theme';
+import { TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { gods } from '@/data/gods';
 import { getGodCardImage } from '@/data/godImages';
 import { drawPoem } from '@/services/divination';
@@ -28,6 +30,8 @@ function seededRandom(seed: number) {
 }
 
 export function CrossTempleComparison({ currentGodId, questionCategory }: Props) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const comparisons = useMemo((): CompareItem[] => {
@@ -97,27 +101,29 @@ export function CrossTempleComparison({ currentGodId, questionCategory }: Props)
   );
 }
 
-const styles: any = StyleSheet.create({
+function createStyles(theme: ThemeColors): any {
+  return StyleSheet.create({
   container: { marginTop: 24, paddingHorizontal: TempleSpacing.md },
   header: { marginBottom: 12 },
-  title: { color: TempleTheme.gold, fontSize: 16, fontWeight: '700' as const },
-  subtitle: { color: TempleTheme.textMuted, fontSize: 12, marginTop: 2 },
+  title: { color: theme.gold, fontSize: 16, fontWeight: '700' as const },
+  subtitle: { color: theme.textMuted, fontSize: 12, marginTop: 2 },
   card: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 12, borderWidth: 1, borderColor: '#2A2020', marginBottom: 10, padding: 12,
   },
   cardHeader: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 10 },
   godImg: { width: 44, height: 56, borderRadius: 6, borderWidth: 1, borderColor: '#B8860B33' },
   cardMeta: { width: 72 },
-  godName: { color: TempleTheme.goldLight, fontSize: 13, fontWeight: '700' as const },
-  poemNum: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 2 },
+  godName: { color: theme.goldLight, fontSize: 13, fontWeight: '700' as const },
+  poemNum: { color: theme.textMuted, fontSize: 11, marginTop: 2 },
   level: { fontSize: 11, fontWeight: '700' as const, marginTop: 2 },
   cardRight: { flex: 1, alignItems: 'flex-end' as const },
-  previewLine: { color: TempleTheme.textMuted, fontSize: 12, textAlign: 'right' as const },
-  expandHint: { color: TempleTheme.textMuted, fontSize: 11, marginTop: 4 },
+  previewLine: { color: theme.textMuted, fontSize: 12, textAlign: 'right' as const },
+  expandHint: { color: theme.textMuted, fontSize: 11, marginTop: 4 },
   divider: { height: 1, backgroundColor: '#2A2020', marginVertical: 10 },
   detail: { marginTop: 4 },
-  poemLine: { color: TempleTheme.textLight, fontSize: 14, lineHeight: 24, fontWeight: '600' as const },
-  vernacular: { color: TempleTheme.textMuted, fontSize: 12, lineHeight: 18, marginTop: 8 },
-  note: { color: TempleTheme.textMuted, fontSize: 10, textAlign: 'center' as const, marginTop: 4 },
-}) as any;
+  poemLine: { color: theme.textLight, fontSize: 14, lineHeight: 24, fontWeight: '600' as const },
+  vernacular: { color: theme.textMuted, fontSize: 12, lineHeight: 18, marginTop: 8 },
+  note: { color: theme.textMuted, fontSize: 10, textAlign: 'center' as const, marginTop: 4 },
+  }) as any;
+}

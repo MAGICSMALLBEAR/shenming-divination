@@ -350,7 +350,7 @@ export const TEMPLES: Temple[] = [
 
   // --- 台北市補充 ---
   {
-    id: 'longshan_taipei',
+    id: 'longshan_taipei_2',
     name: '台北龍山寺', mainGod: '觀世音菩薩', godIds: [3],
     address: '台北市萬華區廣州街211號', city: '台北市', district: '萬華區',
     lat: 25.0373, lng: 121.4997, openHours: '06:00–22:00',
@@ -385,7 +385,7 @@ export const TEMPLES: Temple[] = [
 
   // --- 新北市補充 ---
   {
-    id: 'bitan_xindian',
+    id: 'bitan_xindian_2',
     name: '新店碧潭福德宮', mainGod: '福德正神', godIds: [5],
     address: '新北市新店區碧潭路22號', city: '新北市', district: '新店區',
     lat: 24.9717, lng: 121.5400, openHours: '06:00–21:00',
@@ -524,7 +524,7 @@ export const TEMPLES: Temple[] = [
 
   // --- 雲林縣補充 ---
   {
-    id: 'beigang_chaotian',
+    id: 'beigang_chaotian_2',
     name: '北港朝天宮', mainGod: '媽祖', godIds: [1],
     address: '雲林縣北港鎮中山路178號', city: '雲林縣', district: '北港鎮',
     lat: 23.5707, lng: 120.3020, openHours: '04:30–23:00',

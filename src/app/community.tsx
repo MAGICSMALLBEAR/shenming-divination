@@ -1,12 +1,14 @@
 // 社群討論版 — 用戶分享籤詩心得，Firebase 支援（降級為本機 mock）
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
   TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { TempleTheme, TempleSpacing } from '@/constants/temple-theme';
+import { TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import { isFirebaseConfigured } from '@/services/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -47,6 +49,8 @@ function levelColor(level: string) {
 }
 
 export default function CommunityScreen() {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => ({ ...createViewStyles(theme), ...createTextStyles(theme) }), [theme]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
@@ -165,14 +169,14 @@ export default function CommunityScreen() {
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
                   placeholder="神明名稱（如：媽祖）"
-                  placeholderTextColor={TempleTheme.textMuted}
+                  placeholderTextColor={theme.textMuted}
                   value={godName}
                   onChangeText={setGodName}
                 />
                 <TextInput
                   style={[styles.input, { width: 80 }]}
                   placeholder="籤號"
-                  placeholderTextColor={TempleTheme.textMuted}
+                  placeholderTextColor={theme.textMuted}
                   value={poemNum}
                   onChangeText={setPoemNum}
                   keyboardType="number-pad"
@@ -182,7 +186,7 @@ export default function CommunityScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="分享你的心得、靈驗故事或請示結果…（最少5字）"
-                placeholderTextColor={TempleTheme.textMuted}
+                placeholderTextColor={theme.textMuted}
                 value={comment}
                 onChangeText={setComment}
                 multiline
@@ -196,7 +200,7 @@ export default function CommunityScreen() {
                   disabled={submitting || !comment.trim() || comment.length < 5}
                 >
                   {submitting
-                    ? <ActivityIndicator size="small" color={TempleTheme.bgDark} />
+                    ? <ActivityIndicator size="small" color={theme.bgDark} />
                     : <Text style={styles.submitBtnText}>發布</Text>}
                 </TouchableOpacity>
               </View>
@@ -205,7 +209,7 @@ export default function CommunityScreen() {
 
           {/* 貼文列表 */}
           {loading ? (
-            <ActivityIndicator color={TempleTheme.gold} style={{ marginTop: 40 }} />
+            <ActivityIndicator color={theme.gold} style={{ marginTop: 40 }} />
           ) : (
             posts.map(post => (
               <View key={post.id} style={styles.post}>
@@ -242,8 +246,9 @@ export default function CommunityScreen() {
 }
 
 
-const viewStyles = StyleSheet.create<Record<string, any>>({
-  safe: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createViewStyles(theme: ThemeColors) {
+  return StyleSheet.create<Record<string, any>>({
+  safe: { flex: 1, backgroundColor: theme.bgDark },
   header: {
     paddingHorizontal: TempleSpacing.lg,
     paddingTop: TempleSpacing.md,
@@ -258,25 +263,25 @@ const viewStyles = StyleSheet.create<Record<string, any>>({
   scroll: { flex: 1 },
   scrollContent: { padding: TempleSpacing.md },
   addBtn: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 10, borderWidth: 1,
-    borderColor: TempleTheme.goldDark,
+    borderColor: theme.goldDark,
     paddingVertical: 12, alignItems: 'center', marginBottom: 12,
   },
   form: {
-    backgroundColor: TempleTheme.bgCard, borderRadius: 12,
+    backgroundColor: theme.bgCard, borderRadius: 12,
     borderWidth: 1, borderColor: '#2A2020',
     padding: TempleSpacing.md, marginBottom: 16,
   },
   formRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   formFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
   submitBtn: {
-    backgroundColor: TempleTheme.gold, borderRadius: 8,
+    backgroundColor: theme.gold, borderRadius: 8,
     paddingHorizontal: 20, paddingVertical: 8,
   },
   submitBtnDisabled: { opacity: 0.4 },
   post: {
-    backgroundColor: TempleTheme.bgCard, borderRadius: 12,
+    backgroundColor: theme.bgCard, borderRadius: 12,
     borderWidth: 1, borderColor: '#2A2020',
     padding: TempleSpacing.md, marginBottom: 10,
   },
@@ -284,31 +289,30 @@ const viewStyles = StyleSheet.create<Record<string, any>>({
   postGodBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   postFooter: { flexDirection: 'row', marginTop: 10 },
   likeBtn: { paddingVertical: 4, paddingHorizontal: 8 },
-});
+  });
+}
 
 
-const textStyles = StyleSheet.create<Record<string, any>>({
-  headerTitle: { color: TempleTheme.gold, fontSize: 20, fontWeight: '900' },
-  headerSub: { color: TempleTheme.textMuted, fontSize: 13, marginTop: 2 },
+function createTextStyles(theme: ThemeColors) {
+  return StyleSheet.create<Record<string, any>>({
+  headerTitle: { color: theme.gold, fontSize: 20, fontWeight: '900' },
+  headerSub: { color: theme.textMuted, fontSize: 13, marginTop: 2 },
   localBadgeText: { color: '#C9A96E', fontSize: 11 },
-  addBtnText: { color: TempleTheme.gold, fontSize: 14, fontWeight: '700' },
+  addBtnText: { color: theme.gold, fontSize: 14, fontWeight: '700' },
   input: {
-    backgroundColor: TempleTheme.bgDark,
+    backgroundColor: theme.bgDark,
     borderWidth: 1, borderColor: '#3A2A20', borderRadius: 8,
-    color: TempleTheme.textLight, fontSize: 14,
+    color: theme.textLight, fontSize: 14,
     paddingHorizontal: 10, paddingVertical: 8,
   },
   textArea: { height: 80, textAlignVertical: 'top' },
-  charCount: { color: TempleTheme.textMuted, fontSize: 12 },
-  submitBtnText: { color: TempleTheme.bgDark, fontWeight: '900', fontSize: 14 },
-  postGodName: { color: TempleTheme.goldLight, fontSize: 13, fontWeight: '700' },
-  postPoemNum: { color: TempleTheme.textMuted, fontSize: 11 },
+  charCount: { color: theme.textMuted, fontSize: 12 },
+  submitBtnText: { color: theme.bgDark, fontWeight: '900', fontSize: 14 },
+  postGodName: { color: theme.goldLight, fontSize: 13, fontWeight: '700' },
+  postPoemNum: { color: theme.textMuted, fontSize: 11 },
   postLevel: { fontSize: 11, fontWeight: '700' },
-  postTime: { color: TempleTheme.textMuted, fontSize: 11 },
-  postComment: { color: TempleTheme.textLight, fontSize: 14, lineHeight: 22 },
-  likeBtnText: { color: TempleTheme.textMuted, fontSize: 13 },
-});
-
-// Merge into a single namespace for ergonomics; callers use `styles.X`
-
-const styles: any = { ...viewStyles, ...textStyles };
+  postTime: { color: theme.textMuted, fontSize: 11 },
+  postComment: { color: theme.textLight, fontSize: 14, lineHeight: 22 },
+  likeBtnText: { color: theme.textMuted, fontSize: 13 },
+  });
+}

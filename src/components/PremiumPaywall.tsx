@@ -1,5 +1,5 @@
 // 付費牆元件：功能受限時顯示升級提示
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   SafeAreaView,
@@ -9,7 +9,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { TempleFonts, TempleSpacing, TempleTheme } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { ThemeColors } from '@/constants/themes';
 import {
   SUBSCRIPTION_PLANS,
   activatePlan,
@@ -25,6 +27,8 @@ interface Props {
 }
 
 export function PremiumPaywall({ visible, onClose, featureName, onActivated }: Props) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [selectedPlan, setSelectedPlan] = useState<PremiumPlan>('yearly');
   const [activating, setActivating] = useState(false);
   const [alreadyPremium, setAlreadyPremium] = useState(false);
@@ -164,25 +168,26 @@ export function PremiumPaywall({ visible, onClose, featureName, onActivated }: P
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: TempleTheme.bgDark },
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: theme.bgDark },
   content: { padding: TempleSpacing.md, paddingBottom: 100 },
   header: { alignItems: 'center', marginBottom: TempleSpacing.lg },
   crown: { fontSize: 48, marginBottom: 8 },
   title: {
     fontSize: TempleFonts.heading,
     fontWeight: '900',
-    color: TempleTheme.gold,
+    color: theme.gold,
     marginBottom: 6,
   },
   featureHint: {
-    color: TempleTheme.vermilion,
+    color: theme.vermilion,
     fontWeight: '700',
     fontSize: TempleFonts.small,
     marginBottom: 6,
   },
   subtitle: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: TempleFonts.small,
     textAlign: 'center',
     lineHeight: 20,
@@ -198,19 +203,19 @@ const styles = StyleSheet.create({
   },
   alreadyPremiumText: { color: '#81c784', fontWeight: '700' },
   planCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: TempleTheme.goldDark + '30',
+    borderColor: theme.goldDark + '30',
     padding: TempleSpacing.md,
     marginBottom: 12,
   },
   planCardSelected: {
-    borderColor: TempleTheme.gold,
-    backgroundColor: TempleTheme.goldDark + '18',
+    borderColor: theme.gold,
+    backgroundColor: theme.goldDark + '18',
   },
   planCardHighlight: {
-    borderColor: TempleTheme.gold + '88',
+    borderColor: theme.gold + '88',
   },
   planHeader: {
     flexDirection: 'row',
@@ -218,43 +223,43 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 10,
   },
-  planName: { color: TempleTheme.textLight, fontWeight: '700', fontSize: 15, marginBottom: 4 },
-  planNameHighlight: { color: TempleTheme.gold },
+  planName: { color: theme.textLight, fontWeight: '700', fontSize: 15, marginBottom: 4 },
+  planNameHighlight: { color: theme.gold },
   priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
-  planPrice: { color: TempleTheme.goldLight, fontWeight: '900', fontSize: 22 },
-  planPriceHighlight: { color: TempleTheme.gold },
-  planPeriod: { color: TempleTheme.textMuted, fontSize: 12 },
+  planPrice: { color: theme.goldLight, fontWeight: '900', fontSize: 22 },
+  planPriceHighlight: { color: theme.gold },
+  planPeriod: { color: theme.textMuted, fontSize: 12 },
   badge: {
-    backgroundColor: TempleTheme.goldDark + '44',
+    backgroundColor: theme.goldDark + '44',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '88',
+    borderColor: theme.goldDark + '88',
   },
-  badgeHighlight: { backgroundColor: TempleTheme.gold + '22', borderColor: TempleTheme.gold },
-  badgeText: { color: TempleTheme.gold, fontWeight: '700', fontSize: 11 },
+  badgeHighlight: { backgroundColor: theme.gold + '22', borderColor: theme.gold },
+  badgeText: { color: theme.gold, fontWeight: '700', fontSize: 11 },
   radio: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: TempleTheme.textMuted,
+    borderColor: theme.textMuted,
   },
-  radioSelected: { borderColor: TempleTheme.gold, backgroundColor: TempleTheme.gold },
+  radioSelected: { borderColor: theme.gold, backgroundColor: theme.gold },
   featureList: { gap: 4 },
-  featureItem: { color: TempleTheme.textLight, fontSize: 13 },
-  featureMore: { color: TempleTheme.textMuted, fontSize: 12 },
+  featureItem: { color: theme.textLight, fontSize: 13 },
+  featureMore: { color: theme.textMuted, fontSize: 12 },
   compareCard: {
-    backgroundColor: TempleTheme.bgCard,
+    backgroundColor: theme.bgCard,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '24',
+    borderColor: theme.goldDark + '24',
     padding: TempleSpacing.md,
     marginBottom: 12,
   },
   compareTitle: {
-    color: TempleTheme.goldLight,
+    color: theme.goldLight,
     fontWeight: '800',
     fontSize: TempleFonts.body,
     marginBottom: 10,
@@ -263,14 +268,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: TempleTheme.goldDark + '14',
+    borderBottomColor: theme.goldDark + '14',
     gap: 8,
   },
-  compareFeature: { flex: 1.2, color: TempleTheme.textLight, fontSize: 13 },
-  compareFree: { flex: 1, color: TempleTheme.textMuted, fontSize: 12 },
-  comparePaid: { flex: 1, color: TempleTheme.gold, fontSize: 12, fontWeight: '600' },
+  compareFeature: { flex: 1.2, color: theme.textLight, fontSize: 13 },
+  compareFree: { flex: 1, color: theme.textMuted, fontSize: 12 },
+  comparePaid: { flex: 1, color: theme.gold, fontSize: 12, fontWeight: '600' },
   legalNote: {
-    color: TempleTheme.textMuted,
+    color: theme.textMuted,
     fontSize: 11,
     textAlign: 'center',
     lineHeight: 18,
@@ -283,20 +288,20 @@ const styles = StyleSheet.create({
     right: 0,
     padding: TempleSpacing.md,
     paddingBottom: 32,
-    backgroundColor: TempleTheme.bgDark,
+    backgroundColor: theme.bgDark,
     borderTopWidth: 1,
-    borderTopColor: TempleTheme.goldDark + '24',
+    borderTopColor: theme.goldDark + '24',
     gap: 8,
   },
   activateBtn: {
-    backgroundColor: TempleTheme.gold,
+    backgroundColor: theme.gold,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
   },
   activateBtnDisabled: { opacity: 0.6 },
   activateBtnText: {
-    color: TempleTheme.bgDark,
+    color: theme.bgDark,
     fontWeight: '900',
     fontSize: TempleFonts.body,
   },
@@ -305,7 +310,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: TempleTheme.goldDark + '44',
+    borderColor: theme.goldDark + '44',
   },
-  closeBtnText: { color: TempleTheme.textMuted, fontSize: TempleFonts.body },
-});
+  closeBtnText: { color: theme.textMuted, fontSize: TempleFonts.body },
+  });
+}
