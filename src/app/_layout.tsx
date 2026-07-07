@@ -21,6 +21,8 @@ export default function RootLayout() {
       <Stack.Screen name="map" />
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="chat" />
+      <Stack.Screen name="privacy" />
+      <Stack.Screen name="library" />
     </Stack>
   );
 }

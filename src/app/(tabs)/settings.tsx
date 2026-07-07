@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 
 import { DRAW_ANIMATION_PRESETS, normalizeDrawAnimationDuration } from '@/constants/divination';
 import {
@@ -65,6 +66,7 @@ const LANGUAGES: { key: Lang; label: string }[] = [
 export default function SettingsScreen() {
   const { lang, t } = useI18n();
   const layout = useResponsiveLayout();
+  const router = useRouter();
   const { theme, mode: activeThemeMode, setMode } = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [settings, setSettings] = useState<AppSettings>({
@@ -618,7 +620,7 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={styles.themeNote}>* 淺色主題仍在優化中，部分頁面可能顯示深色</Text>
+          <Text style={styles.themeNote}>* 已套用至全站，切換後立即生效</Text>
         </View>
 
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
@@ -640,6 +642,9 @@ export default function SettingsScreen() {
           <Text style={styles.aboutText}>
             目前已加入應驗追蹤、問題潤飾、神明推薦、行動清單、每日專區，以及本機備份還原。
           </Text>
+          <TouchableOpacity onPress={() => router.push('/privacy' as never)}>
+            <Text style={styles.privacyLink}>隱私權政策與服務條款</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={{ height: 60 }} />
@@ -1088,5 +1093,6 @@ function createStyles(theme: ThemeColors) {
     marginBottom: 6,
   },
   aboutText: { fontSize: 11, color: theme.textMuted, lineHeight: 18 },
+  privacyLink: { fontSize: 12, color: theme.gold, fontWeight: '600', marginTop: 10 },
   });
 }

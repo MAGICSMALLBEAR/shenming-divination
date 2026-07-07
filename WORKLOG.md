@@ -1,4 +1,43 @@
-﻿## 2026-07-05 淺色主題重建 + App Store 評分上線 + 功能缺口盤點
+﻿## 2026-07-05（下半場）依優先度清空高/中優先待辦
+
+### 本輪主題
+延續上午的功能缺口盤點，依「高優先→中優先」順序，把不需要外部帳號就能做的項目全部做完。
+
+### 完成項目 1：淺色主題全站套用（收尾）
+- 剩餘 34 個檔案（11 個 Stack 頁面 + 20 個元件）全部從 `TempleTheme` 靜態常數改成 `useAppTheme()` + `createStyles(theme)` 動態模式
+- 全站已無任何 `TempleTheme.` 殘留引用（`grep` 確認）
+- 設定頁「淺色主題仍在優化中」提示已改為「已套用至全站，切換後立即生效」
+- 意外發現並修復：`src/data/temples.ts` 有 3 座廟宇（龍山寺、碧潭福德宮、北港朝天宮）各自被重複建檔兩次、共用同一個 `id`，導致廟宇地圖頁 React key 重複錯誤；已將第二筆重新命名為 `_2` 後綴，內容不變
+
+### 完成項目 2：隱私權政策 / 服務條款頁面
+- 新增 `src/app/privacy.tsx`，內容依本 App 實際資料流程撰寫（本機儲存、AI 解籤傳輸範圍、拍照解籤、GPS 定位、Firebase 雲端同步條件、付費訂閱僅為展示等），並附服務性質聲明（僅供娛樂參考、非專業建議）
+- 從「設定」頁「關於這個版本」區塊新增連結入口
+
+### 完成項目 3：測試 / CI 基礎建設
+| 項目 | 說明 |
+|------|------|
+| 安裝 | `jest-expo`、`jest`、`@types/jest`、`@testing-library/react-native`（依 Expo 官方文件版本） |
+| 設定 | `package.json` 加入 `jest` 設定區塊（含 `@/assets/*` 對應真實 assets 目錄的 moduleNameMapper，否則圖片 require 會解析失敗）；`tsconfig.json` 加入 `types: ["jest"]` |
+| 測試 | 新增 `__tests__/`：`interpretation.test.ts`（含今天修的重複 key bug 的回歸測試）、`godSpecific.test.ts`（濟公 `general` 欄位覆寫 bug 的回歸測試）、`themes.test.ts`、`divination.test.ts`，共 15 個測試全過 |
+| CI | 新增 `.github/workflows/ci.yml`：push/PR 時跑 typecheck + lint + test |
+
+### 完成項目 4：籤詩查詢圖書館
+- 新增 `src/app/library.tsx`：不需抽籤，直接依神明切換籤詩系統、用籤號或關鍵字搜尋、點擊展開看完整籤文/白話/典故
+- 涵蓋全部籤詩系統（雷雨師百首、觀音靈籤、六十甲子、諸葛神數、二十八宿，含 4 套神明專屬版本）
+- 從「更多」頁工具網格新增入口（排在第一位）
+
+### 驗證
+- `npx tsc --noEmit` 全部通過
+- `npm test` 15 個測試全過
+- `npm run lint`、`npm run test -- --ci` 皆已本機驗證可用（CI 會用同樣指令）
+- 用 Playwright 實際操作瀏覽器版本，涵蓋首頁/設定/今日/神明殿/收藏/更多/八字/願望/地圖/統計/多元占卜/隱私政策/籤詩圖書館，確認淺色主題與新功能皆正常、無 console 錯誤
+
+### 尚未處理（需要外部帳號，本輪未觸碰）
+Firebase 接入、IAP 真實付款、Fly.io 後端部署、Crash reporting/Analytics、Apple 登入 — 詳見上方「未來代辦清單」
+
+---
+
+## 2026-07-05 淺色主題重建 + App Store 評分上線 + 功能缺口盤點
 
 ### 本輪主題
 先做一次全 App 功能盤點，找出「架子搭好但沒接上線」的缺口；再依優先度動手修復其中兩項可以獨立完成、不需外部帳號的高優先項目。
@@ -197,7 +236,7 @@
 
 ## 未來代辦清單
 
-> 2026-07-05 更新：#2 已完成；#4 已完成首頁＋設定頁，其餘頁面待續；新增 #10~#14（來自功能缺口盤點）。
+> 2026-07-05 更新：#2、#4、#10、#11、#14 皆已完成。剩餘項目全部需要外部帳號/服務才能繼續。
 
 ### 🔴 高優先（上架前必須）
 
@@ -206,8 +245,8 @@
 | 1 | **Firebase 接入** | 到 console.firebase.google.com 建立專案，填入 `src/services/firebaseConfig.ts` | 填完後雲端同步自動生效 |
 | 2 | ~~**expo-store-review 安裝**~~ ✅ 2026-07-05 完成 | 已安裝套件，並補上 `useDivination.ts` 裡遺漏的呼叫點（原本裝了也不會生效） | — |
 | 3 | **IAP 真實付款** | premiumService.ts 架構已建好，接入 RevenueCat 或 Expo IAP | 目前 AsyncStorage 模擬，不能收費 |
-| 4 | **淺色主題全頁面套用**（進行中） | 已完成首頁 `index.tsx`（含子元件）與設定頁 `settings.tsx`；已建好共用機制 `src/services/themeStore.ts` + `src/hooks/useAppTheme.ts`，其餘約 35 個檔案照同一套 `createStyles(theme)` 模式逐檔轉換即可 | 注意：`app.json` 開了 `reactCompiler`，讀外部可變狀態一律要用 `useSyncExternalStore`，不要用手動 `setTick` 強制重render，否則會被編譯器記憶化卡住 |
-| 10 | **隱私權政策 / 服務條款頁面** | 已用 Firebase Auth 與規劃中的金流，App Store / Google Play 上架強制要求，目前完全沒有 | 新建靜態頁面 + app.json 或官網連結 |
+| 4 | ~~**淺色主題全頁面套用**~~ ✅ 2026-07-05 完成 | 全站 34 個剩餘檔案已全部轉換，`grep TempleTheme.` 全站零殘留 | — |
+| 10 | ~~**隱私權政策 / 服務條款頁面**~~ ✅ 2026-07-05 完成 | 新增 `src/app/privacy.tsx`，從設定頁「關於這個版本」可連結進入 | — |
 
 ### 🟡 中優先（品質提升）
 
@@ -215,7 +254,7 @@
 |---|------|------|
 | 5 | **後端正式部署** | `backend/Dockerfile` + `fly.toml` 已建好，執行 `fly launch` 部署到 Fly.io；更新前端 `EXPO_PUBLIC_AI_API_URL` |
 | 6 | **Firebase Community** | community.tsx 已實作 Firestore 路徑，填入真實 API key 後自動生效 |
-| 11 | **測試 / CI** | 目前完全沒有單元測試或 E2E 測試，也沒有 CI pipeline，上架前屬於風險項目 |
+| 11 | ~~**測試 / CI**~~ ✅ 2026-07-05 完成 | `jest-expo` + `__tests__/`（15 個測試）+ `.github/workflows/ci.yml`（typecheck+lint+test） |
 | 12 | **Crash reporting / Analytics** | 尚未接 Sentry 或 Firebase Analytics 之類工具，上線後出問題會完全不知道 |
 | 13 | **Apple 登入** | `authService.ts` 目前只有 Google／匿名登入；若上 iOS 且提供其他第三方登入，Apple 規定必須同時提供 Sign in with Apple |
 
@@ -226,7 +265,7 @@
 | 7 | **npm 漏洞** | 等 Expo SDK 57 升級時一併解決，詳見上方說明 |
 | 8 | **原生 Widget** | Expo SDK 57+ expo-widgets 套件，屆時將現有 `scheduleFortuneWidgetNotification()` 資料層升接原生 Widget UI |
 | 9 | **Firebase 資料離線快取** | AI 解籤已有 offlineCache.ts，Firebase 讀寫另需 Firestore offline persistence 設定 |
-| 14 | **籤詩查詢圖書館** | 目前只能透過「抽籤」看到籤詩，沒有「瀏覽/查詢全部籤詩」的檢索功能 |
+| 14 | ~~**籤詩查詢圖書館**~~ ✅ 2026-07-05 完成 | 新增 `src/app/library.tsx`，從「更多」頁進入，可切換神明/搜尋/展開籤文 |
 
 ---
 
