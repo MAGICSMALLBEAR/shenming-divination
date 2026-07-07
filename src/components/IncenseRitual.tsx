@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Easing,
   PanResponder,
   Pressable,
   StyleSheet,
@@ -53,7 +54,12 @@ export function IncenseRitual({
   const sceneRef = useRef<View>(null);
   const incensePosition = useRef(new Animated.ValueXY(HAND_INCENSE_START)).current;
   const incenseLift = useRef(new Animated.Value(0)).current;
-  const flameAnim = useRef(new Animated.Value(0)).current;
+  // 三個不同週期的燃燒抖動來源疊加，組合起來才會像真實火苗不規則跳動，
+  // 而不是單一等速明滅。
+  const flameFlickerFast = useRef(new Animated.Value(0)).current;
+  const flameFlickerMid = useRef(new Animated.Value(0)).current;
+  const flameFlickerSlow = useRef(new Animated.Value(0)).current;
+  const emberWispAnim = useRef(new Animated.Value(0)).current;
   const smokeAnim = useRef(new Animated.Value(0)).current;
   const ashPressAnim = useRef(new Animated.Value(0)).current;
   const ashBurstAnim = useRef(new Animated.Value(0)).current;
@@ -95,19 +101,26 @@ export function IncenseRitual({
       return;
     }
 
-    const flameLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(flameAnim, {
-          toValue: 1,
-          duration: 280,
-          useNativeDriver: false,
-        }),
-        Animated.timing(flameAnim, {
-          toValue: 0,
-          duration: 280,
-          useNativeDriver: false,
-        }),
-      ])
+    const flicker = (anim: Animated.Value, duration: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, { toValue: 1, duration, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+          Animated.timing(anim, { toValue: 0, duration, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+        ])
+      );
+
+    const flameLoopFast = flicker(flameFlickerFast, 90);
+    const flameLoopMid = flicker(flameFlickerMid, 165);
+    const flameLoopSlow = flicker(flameFlickerSlow, 240);
+
+    // 香頭的細煙絲：由 0 直接跳回 0 重新升起，模擬持續冒出一縷縷輕煙。
+    const emberWispLoop = Animated.loop(
+      Animated.timing(emberWispAnim, {
+        toValue: 1,
+        duration: 900,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      })
     );
 
     const smokeLoop = Animated.loop(
@@ -125,14 +138,20 @@ export function IncenseRitual({
       ])
     );
 
-    flameLoop.start();
+    flameLoopFast.start();
+    flameLoopMid.start();
+    flameLoopSlow.start();
+    emberWispLoop.start();
     smokeLoop.start();
 
     return () => {
-      flameLoop.stop();
+      flameLoopFast.stop();
+      flameLoopMid.stop();
+      flameLoopSlow.stop();
+      emberWispLoop.stop();
       smokeLoop.stop();
     };
-  }, [flameAnim, smokeAnim, step]);
+  }, [emberWispAnim, flameFlickerFast, flameFlickerMid, flameFlickerSlow, smokeAnim, step]);
 
   const resetIncensePosition = () => {
     Animated.parallel([
@@ -308,9 +327,43 @@ export function IncenseRitual({
     [incenseLift, incensePosition, step, dropZoneRect]
   );
 
-  const flameOpacity = flameAnim.interpolate({
+  // 三層疊加：外層柔光呼吸、中層火苗左右搖擺、內層焰心快速跳動，
+  // 三者週期互質，組合起來才會像真實火苗不規律地跳。
+  const flameGlowOpacity = flameFlickerSlow.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.55, 1],
+    outputRange: [0.35, 0.85],
+  });
+  const flameOuterScaleY = flameFlickerSlow.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.9, 1.22],
+  });
+  const flameOuterScaleX = flameFlickerMid.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.84, 1.12],
+  });
+  const flameSway = flameFlickerMid.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['-6deg', '6deg'],
+  });
+  const flameCoreScale = flameFlickerFast.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.8, 1.2],
+  });
+  const flameCoreOpacity = flameFlickerFast.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.75, 1],
+  });
+  const emberWispTranslateY = emberWispAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -24],
+  });
+  const emberWispOpacity = emberWispAnim.interpolate({
+    inputRange: [0, 0.15, 1],
+    outputRange: [0, 0.4, 0],
+  });
+  const emberWispScale = emberWispAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.5, 1.4],
   });
   const combinedHandTranslateY = Animated.add(incensePosition.y, incenseLift);
   const smokeOpacity = smokeAnim.interpolate({
@@ -500,7 +553,41 @@ export function IncenseRitual({
                   >
                     <View style={[styles.handStickBody, { backgroundColor: ritualStyle.censer.accent }]} />
                     {step === 'lit' ? (
-                      <Animated.View style={[styles.handFlame, { opacity: index === 1 ? flameOpacity : 0.75 }]} />
+                      <View style={styles.flameStack} pointerEvents="none">
+                        <Animated.View
+                          style={[
+                            styles.flameGlow,
+                            { opacity: flameGlowOpacity, transform: [{ scaleY: flameOuterScaleY }] },
+                          ]}
+                        />
+                        <Animated.View
+                          style={[
+                            styles.flameOuter,
+                            {
+                              transform: [
+                                { scaleY: flameOuterScaleY },
+                                { scaleX: flameOuterScaleX },
+                                { rotate: flameSway },
+                              ],
+                            },
+                          ]}
+                        />
+                        <Animated.View
+                          style={[
+                            styles.flameCore,
+                            { opacity: flameCoreOpacity, transform: [{ scale: flameCoreScale }] },
+                          ]}
+                        />
+                        <Animated.View
+                          style={[
+                            styles.emberWisp,
+                            {
+                              opacity: emberWispOpacity,
+                              transform: [{ translateY: emberWispTranslateY }, { scale: emberWispScale }],
+                            },
+                          ]}
+                        />
+                      </View>
                     ) : null}
                   </View>
                 ))}
@@ -707,17 +794,49 @@ function createStyles(theme: ThemeColors) {
     height: 104,
     borderRadius: 2,
   },
-  handFlame: {
+  flameStack: {
     position: 'absolute',
-    top: -11,
-    left: -3,
-    width: 10,
-    height: 16,
-    borderRadius: 6,
+    top: -22,
+    left: -9,
+    width: 22,
+    height: 26,
+    alignItems: 'center',
+  },
+  flameGlow: {
+    position: 'absolute',
+    top: 0,
+    width: 22,
+    height: 26,
+    borderRadius: 12,
     backgroundColor: '#FFB347',
+  },
+  flameOuter: {
+    position: 'absolute',
+    top: 6,
+    width: 11,
+    height: 18,
+    borderRadius: 7,
+    borderBottomLeftRadius: 2,
+    backgroundColor: '#FF9142',
     shadowColor: '#FFD15A',
-    shadowOpacity: 0.55,
+    shadowOpacity: 0.6,
     shadowRadius: 8,
+  },
+  flameCore: {
+    position: 'absolute',
+    top: 13,
+    width: 5,
+    height: 9,
+    borderRadius: 3,
+    backgroundColor: '#FFE9A0',
+  },
+  emberWisp: {
+    position: 'absolute',
+    top: -4,
+    width: 6,
+    height: 10,
+    borderRadius: 3,
+    backgroundColor: '#D9CFC2',
   },
   instruction: {
     fontSize: TempleFonts.body,

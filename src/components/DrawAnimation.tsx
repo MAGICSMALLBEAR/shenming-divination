@@ -26,6 +26,8 @@ const STICKS: readonly { left: number; rotate: string; height: number; selected?
   { left: 116, rotate: '12deg', height: 110 },
 ] as const;
 
+const SELECTED_STICK_INDEX = STICKS.findIndex((stick) => stick.selected);
+
 const PHASES = [
   '誠心默念，神意匯聚',
   '籤筒漸動，靈籤浮起',
@@ -54,9 +56,12 @@ export function DrawAnimation({
   const reducedMotion = systemReducedMotion || lowMotion;
   const auraAnim = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
+  const shakeEnvelope = useRef(new Animated.Value(0)).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
   const chosenLiftAnim = useRef(new Animated.Value(0)).current;
   const chosenDropAnim = useRef(new Animated.Value(0)).current;
+  const impactAnim = useRef(new Animated.Value(1)).current;
+  const stickJitterAnims = useRef(STICKS.map(() => new Animated.Value(0))).current;
   const revealOpacity = useRef(new Animated.Value(0)).current;
   const revealTranslate = useRef(new Animated.Value(16)).current;
   const numberOpacity = useRef(new Animated.Value(0)).current;
@@ -101,9 +106,12 @@ export function DrawAnimation({
       setPhaseIndex(PHASES.length - 1);
       auraAnim.setValue(0.45);
       shakeAnim.setValue(0);
+      shakeEnvelope.setValue(0);
       floatAnim.setValue(0);
       chosenLiftAnim.setValue(1);
       chosenDropAnim.setValue(1);
+      impactAnim.setValue(1);
+      stickJitterAnims.forEach((anim) => anim.setValue(0));
       revealOpacity.setValue(1);
       revealTranslate.setValue(0);
       numberOpacity.setValue(1);
@@ -129,6 +137,20 @@ export function DrawAnimation({
       ]),
       { iterations: motion.shakeIterations }
     );
+    // 每支未中籤的籤枝各自用不同節奏小幅晃動，讓籤筒看起來像一把籤枝互相碰撞，
+    // 而不是整塊硬殼平移。
+    const jitterLoops = stickJitterAnims.map((anim, index) => {
+      if (index === SELECTED_STICK_INDEX) return null;
+      const base = 76 + index * 19;
+      return Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, { toValue: 1, duration: base, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+          Animated.timing(anim, { toValue: -0.8, duration: base + 34, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0.3, duration: base - 12, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0, duration: base + 18, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        ])
+      );
+    });
 
     auraLoop.start();
     floatLoop.start();
@@ -148,21 +170,43 @@ export function DrawAnimation({
     timers.push(setTimeout(() => setPhaseIndex(1), ms * 0.22));
     timers.push(setTimeout(() => setPhaseIndex(2), ms * 0.57));
     timers.push(setTimeout(() => setPhaseIndex(3), ms * 0.8));
-    timers.push(setTimeout(() => shakeLoop.start(), ms * 0.16));
+    timers.push(setTimeout(() => {
+      shakeLoop.start();
+      jitterLoops.forEach((loop) => loop?.start());
+      // 搖晃力道由靜到動漸強，而不是一開始就全力晃動。
+      Animated.timing(shakeEnvelope, {
+        toValue: 1,
+        duration: ms * 0.3,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    }, ms * 0.16));
+    // 天意欲出：籤枝先探頭一下又縮回，製造「快掉出來」的懸念，
+    // 再真正彈出、用彈簧效果自然回彈落定。
+    timers.push(setTimeout(() => {
+      Animated.sequence([
+        Animated.timing(chosenLiftAnim, { toValue: 0.24, duration: ms * 0.045, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(chosenLiftAnim, { toValue: 0.04, duration: ms * 0.05, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      ]).start();
+    }, ms * 0.31));
     timers.push(setTimeout(() => {
       Animated.sequence([
         Animated.timing(chosenLiftAnim, {
           toValue: 1,
-          duration: ms * 0.2,
+          duration: ms * 0.17,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-        Animated.timing(chosenDropAnim, {
+        Animated.spring(chosenDropAnim, {
           toValue: 1,
-          duration: ms * 0.11,
-          easing: Easing.in(Easing.quad),
+          friction: 6,
+          tension: 55,
           useNativeDriver: true,
         }),
+      ]).start();
+      Animated.sequence([
+        Animated.timing(impactAnim, { toValue: 0.97, duration: 70, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.spring(impactAnim, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }),
       ]).start();
     }, ms * 0.4));
     timers.push(setTimeout(() => {
@@ -195,18 +239,27 @@ export function DrawAnimation({
       auraLoop.stop();
       floatLoop.stop();
       shakeLoop.stop();
+      jitterLoops.forEach((loop) => loop?.stop());
     };
-  }, [auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flipAnim, floatAnim, motion.dropDistance, motion.liftDistance, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, soundEnabled]);
+  }, [auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flipAnim, floatAnim, impactAnim, motion.dropDistance, motion.liftDistance, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, shakeEnvelope, soundEnabled, stickJitterAnims]);
 
-  const translateX = useMemo(() => shakeAnim.interpolate({
+  // shakeEnergy = shakeAnim(-1..1) 乘上 shakeEnvelope(0..1)，讓晃動力道從無到有
+  // 漸強，而不是一開始就等幅擺動。
+  const shakeEnergy = useMemo(
+    () => Animated.multiply(shakeAnim, shakeEnvelope),
+    [shakeAnim, shakeEnvelope]
+  );
+
+  const translateX = useMemo(() => shakeEnergy.interpolate({
     inputRange: [-1, 1],
     outputRange: [-motion.shakeAmplitude, motion.shakeAmplitude],
-  }), [shakeAnim, motion.shakeAmplitude]);
+  }), [shakeEnergy, motion.shakeAmplitude]);
 
-  const rotate = useMemo(() => shakeAnim.interpolate({
+  const rotate = useMemo(() => shakeEnergy.interpolate({
     inputRange: [-1, 1],
     outputRange: ['-6deg', '6deg'],
-  }), [shakeAnim]);
+  }), [shakeEnergy]);
+
 
   // auraAnim runs 0→1 in a single loop; bell-curve outputRange recreates the
   // original 0.94→1.1→0.94 pulse without a back-and-forth Animated.sequence
@@ -227,9 +280,15 @@ export function DrawAnimation({
     outputRange: [0, -motion.floatDistance, 0],
   }), [floatAnim, motion.floatDistance]);
 
+  // 中籤的籤枝墜落時會左右擺動、翻轉幾下才定住，而不是筆直落下。
   const chosenStickRotate = useMemo(() => chosenDropAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '18deg'],
+    inputRange: [0, 0.4, 0.7, 1],
+    outputRange: ['0deg', '26deg', '10deg', '18deg'],
+  }), [chosenDropAnim]);
+
+  const chosenStickTranslateX = useMemo(() => chosenDropAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 9, -5],
   }), [chosenDropAnim]);
 
   const progressScaleX = useMemo(() => progressAnim.interpolate({
@@ -360,7 +419,7 @@ export function DrawAnimation({
               {
                 backgroundColor: ritualStyle.censer.body,
                 borderColor: ritualStyle.censer.border,
-                transform: [{ translateX }, { rotate }, { translateY: altarFloat }],
+                transform: [{ translateX }, { rotate }, { translateY: altarFloat }, { scale: impactAnim }],
               },
             ]}
           >
@@ -368,10 +427,30 @@ export function DrawAnimation({
             <View style={styles.sticksRow}>
               {STICKS.map((stick, index) => {
                 const isSelected = Boolean(stick.selected);
+                const jitter = stickJitterAnims[index];
                 const animatedStyle = isSelected ? {
-                  transform: [{ rotate: stick.rotate }, { translateY: chosenStickTranslateY }, { rotate: chosenStickRotate }],
+                  transform: [
+                    { rotate: stick.rotate },
+                    { translateY: chosenStickTranslateY },
+                    { translateX: chosenStickTranslateX },
+                    { rotate: chosenStickRotate },
+                  ],
                 } : {
-                  transform: [{ rotate: stick.rotate }],
+                  transform: [
+                    { rotate: stick.rotate },
+                    {
+                      rotate: Animated.multiply(jitter, shakeEnvelope).interpolate({
+                        inputRange: [-1, 1],
+                        outputRange: ['-3deg', '3deg'],
+                      }),
+                    },
+                    {
+                      translateY: Animated.multiply(jitter, shakeEnvelope).interpolate({
+                        inputRange: [-1, 1],
+                        outputRange: [-3, 3],
+                      }),
+                    },
+                  ],
                 };
 
                 return (
