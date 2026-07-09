@@ -14,11 +14,13 @@ import { Image } from 'expo-image';
 import { RitualStylePicker } from '@/components/RitualStylePicker';
 import { ritualStyles, type RitualStyleKey } from '@/constants/ritual-styles';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { getGodCloseupImage } from '@/data/godImages';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
 import { playIncenseSound } from '@/services/proceduralSound';
 
 interface IncenseRitualProps {
+  godId?: number | null;
   godName: string;
   onComplete: () => void;
   ritualStyleKey: RitualStyleKey;
@@ -37,6 +39,7 @@ interface Rect {
 const HAND_INCENSE_START = { x: 0, y: 0 };
 
 export function IncenseRitual({
+  godId,
   godName,
   onComplete,
   ritualStyleKey,
@@ -49,6 +52,7 @@ export function IncenseRitual({
   const [sceneLayout, setSceneLayout] = useState<{ width: number; height: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const ritualStyle = ritualStyles[ritualStyleKey];
+  const godImage = getGodCloseupImage(godId);
 
   const dropZoneRef = useRef<View>(null);
   const sceneRef = useRef<View>(null);
@@ -432,7 +436,81 @@ export function IncenseRitual({
           measureDropZoneInWindow();
         }}
       >
-        <View style={[styles.altarGlow, { backgroundColor: ritualStyle.glowColor + '18' }]} />
+        <View style={styles.backWall}>
+          <View style={styles.wallPanel} />
+          <View style={[styles.centerHalo, { backgroundColor: ritualStyle.glowColor + '22' }]} />
+          <View style={[styles.ceilingLamp, { borderColor: ritualStyle.chipColor + '66' }]} />
+        </View>
+
+        <View style={styles.shrineFrame}>
+          <View style={[styles.shrineGlow, { backgroundColor: ritualStyle.glowColor + '28' }]} />
+          <View style={styles.godPortraitFrame}>
+            {godImage ? (
+              <Image source={godImage} style={styles.godPortraitImage} contentFit="cover" contentPosition="top" transition={220} />
+            ) : (
+              <View style={styles.godPortraitFallback}>
+                <Text style={styles.godPortraitFallbackText}>{godName.slice(0, 2)}</Text>
+              </View>
+            )}
+            <View style={[styles.godPortraitVeil, { backgroundColor: ritualStyle.glowColor + '12' }]} />
+          </View>
+          <View style={styles.nameTablet}>
+            <Text style={styles.nameTabletText} numberOfLines={1}>{godName}</Text>
+          </View>
+        </View>
+
+        <View style={styles.altarGlowLayer}>
+          <View style={[styles.altarGlow, { backgroundColor: ritualStyle.glowColor + '20' }]} />
+          <View style={[styles.lowGlow, { backgroundColor: ritualStyle.chipColor + '14' }]} />
+        </View>
+
+        <View style={styles.sideLanternLeft}>
+          <View style={styles.lanternCap} />
+          <View style={[styles.sideLanternBody, { borderColor: ritualStyle.chipColor + '88' }]} />
+          <View style={styles.lanternTassel} />
+        </View>
+        <View style={styles.sideLanternRight}>
+          <View style={styles.lanternCap} />
+          <View style={[styles.sideLanternBody, { borderColor: ritualStyle.chipColor + '88' }]} />
+          <View style={styles.lanternTassel} />
+        </View>
+
+        <View style={styles.altarTable}>
+          <View style={styles.tableBackLip} />
+          <View style={styles.tableTop} />
+          <View style={styles.tableFront}>
+            <View style={styles.drawerLine} />
+            <View style={styles.drawerKnob} />
+          </View>
+        </View>
+
+        <View style={styles.leftCandleSet}>
+          <View style={styles.candleFlameGlow} />
+          <View style={styles.candleFlame} />
+          <View style={styles.candleBody} />
+          <View style={styles.candleBase} />
+        </View>
+        <View style={styles.rightCandleSet}>
+          <View style={styles.candleFlameGlow} />
+          <View style={styles.candleFlame} />
+          <View style={styles.candleBody} />
+          <View style={styles.candleBase} />
+        </View>
+
+        <View style={styles.offeringsLeft}>
+          <View style={styles.plate} />
+          <View style={[styles.orange, styles.orangeOne]} />
+          <View style={[styles.orange, styles.orangeTwo]} />
+          <View style={[styles.orange, styles.orangeThree]} />
+        </View>
+        <View style={styles.offeringsRight}>
+          <View style={styles.vase}>
+            <View style={styles.flowerStem} />
+            <View style={[styles.flower, styles.flowerTop]} />
+            <View style={[styles.flower, styles.flowerLeft]} />
+            <View style={[styles.flower, styles.flowerRight]} />
+          </View>
+        </View>
 
         <View style={styles.censerWrap}>
           <Pressable
@@ -628,25 +706,368 @@ function createStyles(theme: ThemeColors) {
   },
   scene: {
     width: '100%',
-    maxWidth: 420,
-    height: 360,
+    maxWidth: 460,
+    height: 430,
     justifyContent: 'flex-end',
     alignItems: 'center',
     marginBottom: TempleSpacing.md,
+    overflow: 'hidden',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '24',
+    backgroundColor: '#17100D',
+  },
+  backWall: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: '#1B100C',
+  },
+  wallPanel: {
+    position: 'absolute',
+    top: 14,
+    left: 26,
+    right: 26,
+    height: 230,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '22',
+    backgroundColor: '#2A1710',
+  },
+  centerHalo: {
+    position: 'absolute',
+    top: 54,
+    alignSelf: 'center',
+    width: 260,
+    height: 210,
+    borderRadius: 130,
+  },
+  ceilingLamp: {
+    position: 'absolute',
+    top: 0,
+    alignSelf: 'center',
+    width: 132,
+    height: 34,
+    borderBottomLeftRadius: 66,
+    borderBottomRightRadius: 66,
+    borderWidth: 1,
+    backgroundColor: '#6A2B20',
+  },
+  shrineFrame: {
+    position: 'absolute',
+    top: 42,
+    width: 176,
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  shrineGlow: {
+    position: 'absolute',
+    top: 8,
+    width: 178,
+    height: 190,
+    borderRadius: 88,
+  },
+  godPortraitFrame: {
+    width: 132,
+    height: 172,
+    borderRadius: 14,
+    borderWidth: 3,
+    borderColor: theme.goldDark,
+    overflow: 'hidden',
+    backgroundColor: '#120A07',
+    shadowColor: theme.goldLight,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.32,
+    shadowRadius: 16,
+    elevation: 5,
+  },
+  godPortraitImage: {
+    width: '100%',
+    height: '100%',
+  },
+  godPortraitVeil: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  godPortraitFallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#342019',
+  },
+  godPortraitFallbackText: {
+    color: theme.goldLight,
+    fontSize: 30,
+    fontWeight: '900',
+  },
+  nameTablet: {
+    marginTop: -8,
+    maxWidth: 166,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '80',
+    backgroundColor: '#2B1710',
+  },
+  nameTabletText: {
+    color: theme.goldLight,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  altarGlowLayer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 48,
+    alignItems: 'center',
+    zIndex: 1,
   },
   altarGlow: {
     position: 'absolute',
     bottom: 46,
-    width: 280,
-    height: 140,
+    width: 300,
+    height: 150,
     borderRadius: 90,
   },
+  lowGlow: {
+    position: 'absolute',
+    bottom: -20,
+    width: 390,
+    height: 110,
+    borderRadius: 80,
+  },
+  sideLanternLeft: {
+    position: 'absolute',
+    top: 58,
+    left: 34,
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  sideLanternRight: {
+    position: 'absolute',
+    top: 58,
+    right: 34,
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  lanternCap: {
+    width: 28,
+    height: 6,
+    borderRadius: 4,
+    backgroundColor: theme.goldDark,
+  },
+  sideLanternBody: {
+    width: 34,
+    height: 50,
+    borderRadius: 17,
+    borderWidth: 1,
+    backgroundColor: '#AE2E24',
+    shadowColor: '#FFB15E',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+  },
+  lanternTassel: {
+    width: 2,
+    height: 18,
+    backgroundColor: theme.goldDark,
+  },
+  altarTable: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+    bottom: 28,
+    height: 112,
+    zIndex: 1,
+  },
+  tableBackLip: {
+    position: 'absolute',
+    left: 18,
+    right: 18,
+    top: 0,
+    height: 18,
+    borderRadius: 8,
+    backgroundColor: '#5A2B18',
+    borderWidth: 1,
+    borderColor: '#9E6737',
+  },
+  tableTop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 12,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: '#7B3D22',
+    borderWidth: 1,
+    borderColor: '#B77B42',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.36,
+    shadowRadius: 16,
+  },
+  tableFront: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    top: 42,
+    height: 70,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+    backgroundColor: '#4A2416',
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: '#8A5833',
+    alignItems: 'center',
+  },
+  drawerLine: {
+    marginTop: 18,
+    width: '72%',
+    height: 1,
+    backgroundColor: '#A67244',
+    opacity: 0.58,
+  },
+  drawerKnob: {
+    marginTop: 10,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: theme.goldDark,
+  },
+  leftCandleSet: {
+    position: 'absolute',
+    left: 82,
+    bottom: 118,
+    alignItems: 'center',
+    zIndex: 4,
+  },
+  rightCandleSet: {
+    position: 'absolute',
+    right: 82,
+    bottom: 118,
+    alignItems: 'center',
+    zIndex: 4,
+  },
+  candleFlameGlow: {
+    position: 'absolute',
+    top: -12,
+    width: 32,
+    height: 38,
+    borderRadius: 20,
+    backgroundColor: '#FFB84A55',
+  },
+  candleFlame: {
+    width: 12,
+    height: 22,
+    borderRadius: 8,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+    backgroundColor: '#FFD36B',
+    shadowColor: '#FFD36B',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.72,
+    shadowRadius: 10,
+  },
+  candleBody: {
+    width: 16,
+    height: 58,
+    borderRadius: 7,
+    backgroundColor: '#F3E5BD',
+    borderWidth: 1,
+    borderColor: '#CDA967',
+  },
+  candleBase: {
+    width: 38,
+    height: 10,
+    borderRadius: 6,
+    backgroundColor: '#6D3A20',
+    borderWidth: 1,
+    borderColor: '#B98248',
+  },
+  offeringsLeft: {
+    position: 'absolute',
+    left: 76,
+    bottom: 70,
+    width: 82,
+    height: 58,
+    zIndex: 3,
+  },
+  plate: {
+    position: 'absolute',
+    bottom: 0,
+    left: 3,
+    right: 3,
+    height: 18,
+    borderRadius: 20,
+    backgroundColor: '#D9C7A3',
+    borderWidth: 1,
+    borderColor: '#9E8354',
+  },
+  orange: {
+    position: 'absolute',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#E98B32',
+    borderWidth: 1,
+    borderColor: '#F3B46C',
+  },
+  orangeOne: { left: 9, bottom: 12 },
+  orangeTwo: { left: 28, bottom: 22 },
+  orangeThree: { right: 8, bottom: 12 },
+  offeringsRight: {
+    position: 'absolute',
+    right: 86,
+    bottom: 68,
+    width: 64,
+    height: 82,
+    alignItems: 'center',
+    zIndex: 3,
+  },
+  vase: {
+    position: 'absolute',
+    bottom: 0,
+    width: 30,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#456864',
+    borderWidth: 1,
+    borderColor: '#A9C9B7',
+    alignItems: 'center',
+  },
+  flowerStem: {
+    position: 'absolute',
+    bottom: 32,
+    width: 3,
+    height: 34,
+    backgroundColor: '#6E8A54',
+  },
+  flower: {
+    position: 'absolute',
+    width: 17,
+    height: 17,
+    borderRadius: 9,
+    backgroundColor: '#D86888',
+    borderWidth: 1,
+    borderColor: '#F0B5C4',
+  },
+  flowerTop: { top: -32, left: 23 },
+  flowerLeft: { top: -18, left: 5 },
+  flowerRight: { top: -14, right: 0 },
   censerWrap: {
     width: 230,
     height: 196,
     alignItems: 'center',
     justifyContent: 'flex-end',
     marginBottom: 34,
+    zIndex: 5,
   },
   dropZone: {
     position: 'absolute',
@@ -736,14 +1157,16 @@ function createStyles(theme: ThemeColors) {
   },
   offerPanel: {
     position: 'absolute',
-    left: 8,
-    top: 14,
-    right: 8,
-    borderRadius: 16,
-    padding: TempleSpacing.md,
-    backgroundColor: theme.bgCard,
+    left: 12,
+    top: 12,
+    width: 150,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    backgroundColor: theme.bgCard + 'E8',
     borderWidth: 1,
-    borderColor: theme.goldDark + '28',
+    borderColor: theme.goldDark + '38',
+    zIndex: 8,
   },
   offerPanelTitleRow: {
     flexDirection: 'row',
@@ -752,7 +1175,7 @@ function createStyles(theme: ThemeColors) {
     marginBottom: 4,
   },
   offerPanelTitle: {
-    fontSize: TempleFonts.body,
+    fontSize: 12,
     fontWeight: '700',
     color: theme.goldLight,
   },
@@ -761,14 +1184,15 @@ function createStyles(theme: ThemeColors) {
     fontWeight: '800',
   },
   offerPanelText: {
-    fontSize: TempleFonts.small,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 16,
     color: theme.textMuted,
   },
   handIncense: {
     position: 'absolute',
     bottom: 6,
     right: 22,
+    zIndex: 9,
     touchAction: 'none',
   },
   handPalm: {

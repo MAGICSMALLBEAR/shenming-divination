@@ -331,6 +331,7 @@ export default function HomeScreen() {
         if (!incenseDone) {
           return (
             <IncenseRitual
+              godId={div.selectedGod?.id}
               godName={div.selectedGod?.name || '神明'}
               onComplete={() => setIncenseDone(true)}
               ritualStyleKey={ritualStyle}
