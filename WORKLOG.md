@@ -1,4 +1,36 @@
-﻿## 2026-07-07 抽籤動畫 + 上香動畫真實感強化
+﻿## 2026-07-09 效能/品質審查 + GitHub/Vercel 部署
+
+### 本輪主題
+先前動畫與狀態管理累積了 7 項效能/記憶體問題，今天進行全面審查並修復。
+
+### 完成項目 1：修復動畫記憶體洩漏
+| 元件 | 問題 | 修法 |
+|------|------|------|
+| **speech.ts** | `Speech.speak()` 無 `onDone` callback，`setInterval` 輪詢 `isSpeaking` 永遠不觸發，Promise 永不 resolve | 改為 `await new Promise`，傳入 `onDone`/`onStopped`/`onError` |
+| **ZhugeNumberInput.tsx** | `Animated.loop` 啟動但無 cleanup，元件卸載後動畫持續執行 | 儲存 loop 參考，`return () => glowLoop.stop()` |
+| **TempleScene.tsx** | 3 個 `Animated.loop`（燈籠搖擺 + 2 蠟燭明滅）全無 cleanup | 儲存 loop 參考，統一 cleanup 函式 |
+| **StarBackground.tsx** | TwinkleStar loop 無 cleanup；GoldFlake 的 `setTimeout` 自我調度在卸載後繼續排程 | 加入 `cancelled` 標記 + `currentAnim` 追蹤 + cleanup |
+
+### 完成項目 2：效能改進
+| 檔案 | 問題 | 修法 |
+|------|------|------|
+| **index.tsx** | 4 次獨立 `getSettings()` 讀取 AsyncStorage | 合併為單次 boot-time `useState`，其餘 effect 依賴該 state |
+| **map.tsx** | `useCallback` 包裝函式但立即呼叫 → 零效益 | 改為 `useMemo` |
+| **map.tsx** | `getAllCities()` 每次 render 重新計算 | 移至模組層級常數 |
+
+### 完成項目 3：GitHub + Vercel 更新
+- Commit + push 到 `origin/master`（`dff9270`）
+- Vercel production 部署成功，首頁/求籤/寺廟等頁面皆返回 200
+- 確認 HTML 結構正確（`zh-TW`，深色主題 `#1C0E06`），PWA 標籤注入正常，API routes（chat/interpret）編譯成功
+
+### 驗證
+- `npx tsc --noEmit` 全部通過
+- `npm test` 15 個測試全過
+- 伺服器啟動無錯誤
+
+---
+
+## 2026-07-07 抽籤動畫 + 上香動畫真實感強化
 
 ### 本輪主題
 使用者反饋抽籤與上香兩段動畫「不夠真實」，針對物理感與燃燒細節重做。
@@ -263,7 +295,7 @@ Firebase 接入、IAP 真實付款、Fly.io 後端部署、Crash reporting/Analy
 
 ## 未來代辦清單
 
-> 2026-07-05 更新：#2、#4、#10、#11、#14 皆已完成。剩餘項目全部需要外部帳號/服務才能繼續。
+> 2026-07-09 更新：#2、#4、#10、#11、#14 已完成；2026-07-09 效能審查 + 7 項修復完成（動畫洩漏/AsyncStorage/useCallback）。剩餘項目全部需要外部帳號/服務才能繼續。
 
 ### 🔴 高優先（上架前必須）
 
