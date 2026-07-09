@@ -26,7 +26,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { addWish } from '@/services/wishTracker';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
 import { playResultSound, startAmbientSound, stopAmbientSound } from '@/services/proceduralSound';
-import { getHistory, getLastPoemContext, getSettings, getFamilyMembers, addFamilyMember, removeFamilyMember, updatePoemConfirmation, type DivinationRecord, type FamilyMember } from '@/services/storage';
+import { getHistory, getLastPoemContext, getSettings, getFamilyMembers, addFamilyMember, removeFamilyMember, updatePoemConfirmation, type AppSettings, type DivinationRecord, type FamilyMember } from '@/services/storage';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritual-styles';
 import { gods, type God } from '@/data/gods';
@@ -71,6 +71,7 @@ export default function HomeScreen() {
   const [showAddFamily, setShowAddFamily] = React.useState(false);
   const [newFamName, setNewFamName] = React.useState('');
   const [newFamRelation, setNewFamRelation] = React.useState('');
+  const [settings, setSettings] = React.useState<AppSettings | null>(null);
   const solarTerm = React.useMemo(() => getCurrentSolarTerm(), []);
 
   // 搖手機求籤：在擲筊步驟偵測搖動
@@ -89,16 +90,19 @@ export default function HomeScreen() {
   const pageMaxWidth = layout.isWideDesktop ? 1180 : layout.isDesktop ? 1080 : layout.contentMaxWidth;
   const selectedGodCardImage = getGodCardImage(div.selectedGod?.id);
 
+  // 設定只在掛載時讀取一次，其餘效果共用同一份，避免重複讀取 AsyncStorage
+  React.useEffect(() => {
+    getSettings().then(setSettings);
+  }, []);
+
   // 載入設定後產生個人化運勢
   React.useEffect(() => {
-    getSettings().then(s => {
-      if (!s?.birthDate) return;
-      const year = parseBirthYear(s.birthDate);
-      if (!year) return;
-      const bazi = calcBazi(year);
-      setFortune(getDailyFortune(bazi));
-    });
-  }, []);
+    if (!settings?.birthDate) return;
+    const year = parseBirthYear(settings.birthDate);
+    if (!year) return;
+    const bazi = calcBazi(year);
+    setFortune(getDailyFortune(bazi));
+  }, [settings]);
 
   // 抽到上上/大吉籤時觸發煙火；進入結果播放音效
   React.useEffect(() => {
@@ -114,38 +118,36 @@ export default function HomeScreen() {
 
   // 環境音效：冥想 / 擲筊步驟啟動，其他步驟停止
   React.useEffect(() => {
+    if (!settings) return;
     const ambientSteps = ['meditate', 'toss-jiaobei'];
-    getSettings().then(s => {
-      if (!s?.ambientSound) return;
+    if (settings.ambientSound) {
       if (ambientSteps.includes(div.step)) {
         startAmbientSound().catch(() => {});
       } else {
         stopAmbientSound();
       }
-    });
+    }
     return () => stopAmbientSound();
-  }, [div.step]);
+  }, [div.step, settings]);
+
   React.useEffect(() => {
-    import('@/services/storage').then(({ getSettings }) => {
-      getSettings().then(s => {
-        if (s) {
-          setStrictMode(s.strictMode || false);
-          setLowMotionMode(Boolean(s.lowMotionMode));
-        }
-      });
-    });
-  }, []);
+    if (!settings) return;
+    setStrictMode(settings.strictMode || false);
+    setLowMotionMode(Boolean(settings.lowMotionMode));
+  }, [settings]);
+
   React.useEffect(() => {
     getLastPoemContext().then((context) => setHasLastPoemContext(Boolean(context)));
   }, []);
 
   React.useEffect(() => {
-    Promise.all([getSettings(), getHistory()]).then(([settings, history]) => {
+    if (!settings) return;
+    getHistory().then((history) => {
       const lastCategory = history[0]?.questionCategory ?? 'general';
       const recommendation = recommendGods({
         questionCategory: lastCategory,
-        birthDate: settings?.birthDate,
-        preferredGodId: settings?.preferredGodId,
+        birthDate: settings.birthDate,
+        preferredGodId: settings.preferredGodId,
         history,
       })[0];
 
@@ -154,7 +156,7 @@ export default function HomeScreen() {
         history.find((record) => (record.verificationStatus ?? 'pending') === 'pending') ?? null
       );
     });
-  }, []);
+  }, [settings]);
 
   // 檢查是否已完成新手引導
   React.useEffect(() => {

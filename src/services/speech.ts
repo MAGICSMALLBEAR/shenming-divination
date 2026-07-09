@@ -5,24 +5,20 @@ import { getDailyBlessing, getRandomBlessing } from '@/data/godBlessings';
 let isSpeaking = false;
 
 export async function speakText(text: string, language: string = 'zh-TW'): Promise<void> {
+  if (isSpeaking) {
+    await stopSpeaking();
+  }
+  isSpeaking = true;
   try {
-    if (isSpeaking) {
-      await stopSpeaking();
-    }
-    isSpeaking = true;
-    await Speech.speak(text, {
-      language,
-      pitch: 1.0,
-      rate: 0.85, // 稍慢，適合籤詩的莊重語調
-    });
-    // 等待說完
-    await new Promise<void>((resolve) => {
-      const check = setInterval(() => {
-        if (!isSpeaking) {
-          clearInterval(check);
-          resolve();
-        }
-      }, 200);
+    await new Promise<void>((resolve, reject) => {
+      Speech.speak(text, {
+        language,
+        pitch: 1.0,
+        rate: 0.85, // 稍慢，適合籤詩的莊重語調
+        onDone: () => resolve(),
+        onStopped: () => resolve(),
+        onError: (error) => reject(error),
+      });
     });
   } catch (error) {
     console.warn('TTS 失敗:', error);

@@ -52,13 +52,15 @@ function TwinkleStar({ star }: { star: Star }) {
   const opacity = useRef(new Animated.Value(star.opacity)).current;
 
   useEffect(() => {
-    Animated.loop(
+    const twinkleLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, { toValue: star.opacity * 0.2, duration: star.twinkleDuration, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
         Animated.timing(opacity, { toValue: star.opacity, duration: star.twinkleDuration, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
       ])
-    ).start();
-  }, []);
+    );
+    twinkleLoop.start();
+    return () => twinkleLoop.stop();
+  }, [opacity, star.opacity, star.twinkleDuration]);
 
   return (
     <Animated.View
@@ -84,13 +86,18 @@ function GoldFlake({ flake }: { flake: Flake }) {
   const rotate = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    let cancelled = false;
+    let pendingTimeout: ReturnType<typeof setTimeout> | null = null;
+    let currentAnim: Animated.CompositeAnimation | null = null;
+
     const run = () => {
+      if (cancelled) return;
       translateY.setValue(-20);
       translateX.setValue(0);
       rotate.setValue(0);
       opacity.setValue(0);
 
-      Animated.sequence([
+      currentAnim = Animated.sequence([
         Animated.delay(flake.delay),
         Animated.parallel([
           Animated.timing(translateY, { toValue: height + 40, duration: flake.duration, easing: Easing.linear, useNativeDriver: false }),
@@ -107,10 +114,20 @@ function GoldFlake({ flake }: { flake: Flake }) {
           ),
           Animated.timing(rotate, { toValue: 1, duration: flake.duration, easing: Easing.linear, useNativeDriver: false }),
         ]),
-      ]).start(() => setTimeout(run, Math.random() * 3000));
+      ]);
+      currentAnim.start(() => {
+        if (cancelled) return;
+        pendingTimeout = setTimeout(run, Math.random() * 3000);
+      });
     };
     run();
-  }, []);
+
+    return () => {
+      cancelled = true;
+      currentAnim?.stop();
+      if (pendingTimeout) clearTimeout(pendingTimeout);
+    };
+  }, [flake.delay, flake.duration, opacity, rotate, translateX, translateY]);
 
   const rotateStr = rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 

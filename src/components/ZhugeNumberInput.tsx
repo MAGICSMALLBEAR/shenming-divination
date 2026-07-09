@@ -18,13 +18,15 @@ export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
   const glowAnim = useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
-    Animated.loop(
+    const glowLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, { toValue: 1, duration: 1800, useNativeDriver: false }),
         Animated.timing(glowAnim, { toValue: 0, duration: 1800, useNativeDriver: false }),
       ])
-    ).start();
-  }, []);
+    );
+    glowLoop.start();
+    return () => glowLoop.stop();
+  }, [glowAnim]);
 
   const handleDigit = (d: string) => {
     if (digits.length >= 6) return;

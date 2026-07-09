@@ -15,32 +15,42 @@ export function TempleScene() {
 
   useEffect(() => {
     // 燈籠搖擺
-    Animated.loop(
+    const lanternLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(lanternSwing, { toValue: 1, duration: 2500, useNativeDriver: false }),
         Animated.timing(lanternSwing, { toValue: -1, duration: 2500, useNativeDriver: false }),
       ])
-    ).start();
+    );
 
     // 燭火搖曳
-    Animated.loop(
+    const candleLoop1 = Animated.loop(
       Animated.sequence([
         Animated.timing(candleFlicker1, { toValue: 0.6, duration: 150, useNativeDriver: false }),
         Animated.timing(candleFlicker1, { toValue: 1, duration: 200, useNativeDriver: false }),
         Animated.timing(candleFlicker1, { toValue: 0.8, duration: 100, useNativeDriver: false }),
         Animated.timing(candleFlicker1, { toValue: 1, duration: 300, useNativeDriver: false }),
       ])
-    ).start();
+    );
 
-    Animated.loop(
+    const candleLoop2 = Animated.loop(
       Animated.sequence([
         Animated.timing(candleFlicker2, { toValue: 1, duration: 180, useNativeDriver: false }),
         Animated.timing(candleFlicker2, { toValue: 0.5, duration: 120, useNativeDriver: false }),
         Animated.timing(candleFlicker2, { toValue: 0.9, duration: 250, useNativeDriver: false }),
         Animated.timing(candleFlicker2, { toValue: 0.7, duration: 180, useNativeDriver: false }),
       ])
-    ).start();
-  }, []);
+    );
+
+    lanternLoop.start();
+    candleLoop1.start();
+    candleLoop2.start();
+
+    return () => {
+      lanternLoop.stop();
+      candleLoop1.stop();
+      candleLoop2.stop();
+    };
+  }, [candleFlicker1, candleFlicker2, lanternSwing]);
 
   const lanternRotate = lanternSwing.interpolate({
     inputRange: [-1, 1], outputRange: ['-8deg', '8deg'],

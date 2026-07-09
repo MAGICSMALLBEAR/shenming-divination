@@ -29,6 +29,9 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 const CHECKIN_KEY = '@temple_checkins';
 const CHECKIN_RADIUS_KM = 0.3;  // 300m
+// TEMPLES 是靜態資料，城市清單不會變，搬到模組層級只算一次，
+// 不用每次畫面重繪都重新跑 Set + sort。
+const CITY_OPTIONS = ['全部', ...getAllCities()];
 
 interface CheckInRecord {
   templeId: string;
@@ -154,9 +157,7 @@ export default function MapScreen() {
     Alert.alert('打卡成功 🙏', `已成功在 ${temple.name} 打卡！\n累計打卡 ${updated.filter(c => c.templeId === temple.id).length} 次。`);
   };
 
-  const cities = ['全部', ...getAllCities()];
-
-  const filteredTemples = useCallback(() => {
+  const temples = useMemo(() => {
     let list = TEMPLES;
     if (selectedCity !== '全部') {
       list = list.filter(t => t.city === selectedCity);
@@ -203,8 +204,6 @@ export default function MapScreen() {
     if (url) Linking.openURL(url);
   };
 
-  const temples = filteredTemples();
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -246,7 +245,7 @@ export default function MapScreen() {
           style={styles.cityScroll}
           contentContainerStyle={styles.cityScrollContent}
         >
-          {cities.map(city => (
+          {CITY_OPTIONS.map(city => (
             <TouchableOpacity
               key={city}
               style={[styles.cityChip, selectedCity === city && styles.cityChipActive]}
