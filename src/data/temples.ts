@@ -111,7 +111,7 @@ export const TEMPLES: Temple[] = [
     id: 'sanxia_zushi',
     name: '三峽祖師廟',
     mainGod: '清水祖師',
-    godIds: [],
+    godIds: [17],
     address: '新北市三峽區長福街1號',
     city: '新北市',
     district: '三峽區',
@@ -351,7 +351,7 @@ export const TEMPLES: Temple[] = [
   // --- 台北市補充 ---
   {
     id: 'longshan_taipei_2',
-    name: '台北龍山寺', mainGod: '觀世音菩薩', godIds: [3],
+    name: '台北龍山寺', mainGod: '觀世音菩薩', godIds: [2],
     address: '台北市萬華區廣州街211號', city: '台北市', district: '萬華區',
     lat: 25.0373, lng: 121.4997, openHours: '06:00–22:00',
     description: '創建於1738年，為台灣最著名的古剎之一，信眾絡繹不絕。',
@@ -362,7 +362,7 @@ export const TEMPLES: Temple[] = [
   },
   {
     id: 'xingtian_taipei',
-    name: '台北行天宮', mainGod: '關聖帝君', godIds: [2],
+    name: '台北行天宮', mainGod: '關聖帝君', godIds: [1],
     address: '台北市中山區民權東路二段109號', city: '台北市', district: '中山區',
     lat: 25.0637, lng: 121.5332, openHours: '04:00–22:30',
     description: '台北最靈驗的關帝廟之一，香火鼎盛，每日信眾如潮。',
@@ -373,7 +373,7 @@ export const TEMPLES: Temple[] = [
   },
   {
     id: 'dizang_xinyi',
-    name: '台北地藏庵（保安宮）', mainGod: '保生大帝', godIds: [4],
+    name: '台北地藏庵（保安宮）', mainGod: '保生大帝', godIds: [5],
     address: '台北市大同區哈密街61號', city: '台北市', district: '大同區',
     lat: 25.0692, lng: 121.5138, openHours: '06:30–21:30',
     description: '主祀保生大帝，是大稻埕地區重要信仰中心，建築精美。',
@@ -386,7 +386,7 @@ export const TEMPLES: Temple[] = [
   // --- 新北市補充 ---
   {
     id: 'bitan_xindian_2',
-    name: '新店碧潭福德宮', mainGod: '福德正神', godIds: [5],
+    name: '新店碧潭福德宮', mainGod: '福德正神', godIds: [6],
     address: '新北市新店區碧潭路22號', city: '新北市', district: '新店區',
     lat: 24.9717, lng: 121.5400, openHours: '06:00–21:00',
     description: '碧潭旁的土地公廟，環境清幽，求財求平安十分靈驗。',
@@ -396,7 +396,7 @@ export const TEMPLES: Temple[] = [
   },
   {
     id: 'tucheng_chenhuang',
-    name: '土城彰化宮', mainGod: '城隍爺', godIds: [6],
+    name: '土城彰化宮', mainGod: '城隍爺', godIds: [14],
     address: '新北市土城區城隆街1號', city: '新北市', district: '土城區',
     lat: 24.9729, lng: 121.4557, openHours: '07:00–21:00',
     description: '土城地區重要城隍廟，司法神明庇佑公道正義。',
@@ -408,7 +408,7 @@ export const TEMPLES: Temple[] = [
   // --- 桃園市補充 ---
   {
     id: 'zhongli_ciji',
-    name: '中壢慈惠堂', mainGod: '瑤池金母', godIds: [],
+    name: '中壢慈惠堂', mainGod: '瑤池金母', godIds: [18],
     address: '桃園市中壢區中山路316號', city: '桃園市', district: '中壢區',
     lat: 24.9601, lng: 121.2238, openHours: '06:00–22:00',
     description: '供奉瑤池金母，是桃園市重要的民間信仰廟宇。',
@@ -418,7 +418,7 @@ export const TEMPLES: Temple[] = [
   },
   {
     id: 'daxi_puji',
-    name: '大溪普濟堂', mainGod: '關聖帝君', godIds: [2],
+    name: '大溪普濟堂', mainGod: '關聖帝君', godIds: [1],
     address: '桃園市大溪區中山路福仁里', city: '桃園市', district: '大溪區',
     lat: 24.8833, lng: 121.2878, openHours: '06:00–21:00',
     description: '北台灣重要的關帝廟，每逢農曆六月廿四關聖帝君聖誕熱鬧非凡。',
@@ -431,7 +431,7 @@ export const TEMPLES: Temple[] = [
   // --- 新竹縣市 ---
   {
     id: 'chenghuang_hsinchu',
-    name: '新竹城隍廟', mainGod: '城隍爺', godIds: [6],
+    name: '新竹城隍廟', mainGod: '城隍爺', godIds: [14],
     address: '新竹市北區中山路75號', city: '新竹市', district: '北區',
     lat: 24.8046, lng: 120.9690, openHours: '06:00–22:00',
     description: '台灣最有名的城隍廟之一，廟口小吃聞名全台，香火鼎盛。',
@@ -442,7 +442,7 @@ export const TEMPLES: Temple[] = [
   },
   {
     id: 'jianhua_hsinchu',
-    name: '新竹天公壇', mainGod: '玉皇大帝', godIds: [],
+    name: '新竹天公壇', mainGod: '玉皇大帝', godIds: [16],
     address: '新竹市東區東大路一段33號', city: '新竹市', district: '東區',
     lat: 24.8043, lng: 121.0020, openHours: '05:00–22:00',
     description: '供奉玉皇大帝，是新竹地區重要的天公廟。',
@@ -477,7 +477,7 @@ export const TEMPLES: Temple[] = [
   },
   {
     id: 'wenchang_taichung',
-    name: '台中文昌廟', mainGod: '文昌帝君', godIds: [7],
+    name: '台中文昌廟', mainGod: '文昌帝君', godIds: [8],
     address: '台中市北屯區文昌街123號', city: '台中市', district: '北屯區',
     lat: 24.1628, lng: 120.7024, openHours: '07:00–21:00',
     description: '台中地區最受學子歡迎的文昌廟，考試前必拜。',
@@ -500,7 +500,7 @@ export const TEMPLES: Temple[] = [
   // --- 南投縣 ---
   {
     id: 'puli_dizang',
-    name: '埔里地藏王廟', mainGod: '地藏王菩薩', godIds: [],
+    name: '埔里地藏王廟', mainGod: '地藏王菩薩', godIds: [19],
     address: '南投縣埔里鎮中山路四段297號', city: '南投縣', district: '埔里鎮',
     lat: 23.9621, lng: 120.9578, openHours: '06:00–21:00',
     description: '埔里鎮重要的地藏信仰中心，祈求超度先人、消災解厄。',
@@ -538,7 +538,7 @@ export const TEMPLES: Temple[] = [
   // --- 嘉義縣市 ---
   {
     id: 'chenghuang_chiayi',
-    name: '嘉義城隍廟', mainGod: '城隍爺', godIds: [6],
+    name: '嘉義城隍廟', mainGod: '城隍爺', godIds: [14],
     address: '嘉義市西區吳鳳北路168號', city: '嘉義市', district: '西區',
     lat: 23.4751, lng: 120.4497, openHours: '06:00–21:30',
     description: '嘉義市歷史最悠久的城隍廟，是地方司法信仰中心。',
@@ -584,7 +584,7 @@ export const TEMPLES: Temple[] = [
   },
   {
     id: 'wumiao_tainan',
-    name: '台南祀典武廟', mainGod: '關聖帝君', godIds: [2],
+    name: '台南祀典武廟', mainGod: '關聖帝君', godIds: [1],
     address: '台南市中西區永福路二段229號', city: '台南市', district: '中西區',
     lat: 22.9985, lng: 120.1997, openHours: '06:00–21:00',
     description: '全台地位最崇高的關帝廟，俗稱「大關帝廟」，為全台武廟之首。',
@@ -597,7 +597,7 @@ export const TEMPLES: Temple[] = [
   // --- 高雄市補充 ---
   {
     id: 'zuoying_zuantian',
-    name: '高雄左營元帝廟', mainGod: '玄天上帝', godIds: [8],
+    name: '高雄左營元帝廟', mainGod: '玄天上帝', godIds: [10],
     address: '高雄市左營區蓮池潭路', city: '高雄市', district: '左營區',
     lat: 22.6930, lng: 120.3002, openHours: '07:00–21:00',
     description: '蓮池潭畔，北極玄天上帝神威顯赫，俗稱「蓮池潭龍虎塔」附近廟宇聚集。',
@@ -607,7 +607,7 @@ export const TEMPLES: Temple[] = [
   },
   {
     id: 'fengshan_chenghuang',
-    name: '鳳山城隍廟', mainGod: '城隍爺', godIds: [6],
+    name: '鳳山城隍廟', mainGod: '城隍爺', godIds: [14],
     address: '高雄市鳳山區城隍里', city: '高雄市', district: '鳳山區',
     lat: 22.6276, lng: 120.3580, openHours: '06:00–21:30',
     description: '鳳山地區重要的城隍信仰廟宇，護佑地方平安。',
@@ -620,7 +620,7 @@ export const TEMPLES: Temple[] = [
   // --- 屏東縣 ---
   {
     id: 'donggang_donglong',
-    name: '東港東隆宮', mainGod: '溫府千歲', godIds: [],
+    name: '東港東隆宮', mainGod: '溫府千歲', godIds: [20],
     address: '屏東縣東港鎮東隆街21-1號', city: '屏東縣', district: '東港鎮',
     lat: 22.4672, lng: 120.4550, openHours: '05:00–23:00',
     description: '台灣王爺信仰重鎮，三年一科迎王祭典為台灣最盛大的民俗活動之一。',
@@ -709,3 +709,5 @@ export function calcDistanceKm(lat1: number, lng1: number, lat2: number, lng2: n
       Math.sin(dLng / 2) * Math.sin(dLng / 2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+
+

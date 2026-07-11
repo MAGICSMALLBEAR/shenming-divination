@@ -6,11 +6,20 @@ import { zhugeShenShuPoems } from './poems/zhugeShenShu';
 import { guanyinLingQianPoems } from './poems/guanyinLingQian';
 import { ershibaxiuPoems } from './poems/ershibaxiu';
 import {
-  baoshengHealthPoems,
   jigongLingQianPoems,
   santaiziBreakthroughPoems,
   yuelaoMarriagePoems,
 } from './poems/godSpecific';
+import {
+  baosheng64Poems,
+  guanyin24Poems,
+  guanyin28Poems,
+  jinqianGua32Poems,
+  lingyinghou60Poems,
+  luzu60Poems,
+  tianhouLingQianPoems,
+  zhusheng30Poems,
+} from './poems/marketCommon';
 
 export interface God {
   id: number;
@@ -25,7 +34,7 @@ export interface God {
   primaryColor: string;
   accentColor: string;
   auraColor: string;
-  category: 'war' | 'compassion' | 'sea' | 'health' | 'wealth' | 'general';
+  category: 'war' | 'compassion' | 'sea' | 'health' | 'wealth' | 'general' | 'heaven' | 'guardian' | 'release' | 'growth';
 }
 
 export const gods: God[] = [
@@ -64,8 +73,8 @@ export const gods: God[] = [
     name: '媽祖',
     title: '天上聖母',
     description: '海上守護神，台灣最普遍的信仰。庇佑航海平安、家庭和樂、事業順遂。',
-    poemSystem: '六十甲子籤',
-    totalPoems: 60,
+    poemSystem: '天后宮靈籤',
+    totalPoems: 100,
     image: require('@/assets/images/gods/mazu.png'),
     blessing: '願媽祖娘娘庇佑，風調雨順，闔家平安，一帆風順。',
     tagline: '聖母護航，闔境平安',
@@ -87,15 +96,15 @@ export const gods: God[] = [
     primaryColor: '#7D2B36',
     accentColor: '#D8A74E',
     auraColor: '#D9B38C',
-    category: 'general',
+    category: 'guardian',
   },
   {
     id: 5,
     name: '保生大帝',
     title: '保生大帝',
     description: '醫藥之神，精通醫術。信眾祈求身體健康、疾病痊癒、藥方有效。',
-    poemSystem: '保生健康籤（雷雨師）',
-    totalPoems: 100,
+    poemSystem: '保生大帝靈籤',
+    totalPoems: 64,
     image: require('@/assets/images/gods/baoshengdadi.png'),
     blessing: '願大帝慈悲醫治，藥到病除，身心安康，福壽綿長。',
     tagline: '慈心濟世，保生安康',
@@ -109,8 +118,8 @@ export const gods: God[] = [
     name: '福德正神',
     title: '福德正神',
     description: '土地之神，掌管一方水土。信眾祈求家宅平安、生意興隆、出入平安。',
-    poemSystem: '六十甲子籤',
-    totalPoems: 60,
+    poemSystem: '金錢卦三十二籤',
+    totalPoems: 32,
     image: require('@/assets/images/gods/fudezhengshen.png'),
     blessing: '願土地公伯庇佑，家宅平安，財源廣進，出入順利。',
     tagline: '厚德載福，招財安宅',
@@ -124,8 +133,8 @@ export const gods: God[] = [
     name: '註生娘娘',
     title: '註生娘娘',
     description: '掌管生育與兒童守護之神。信眾祈求懷孕順產、孩子健康平安長大。',
-    poemSystem: '六十甲子籤',
-    totalPoems: 60,
+    poemSystem: '註生娘娘三十籤',
+    totalPoems: 30,
     image: require('@/assets/images/gods/zhushengniangniang.png'),
     blessing: '願娘娘賜福送子，懷孕順產，孩兒健康，平安長大。',
     tagline: '送子賜福，安產護幼',
@@ -229,23 +238,23 @@ export const gods: God[] = [
     name: '城隍爺',
     title: '城隍爺',
     description: '陰間司法神，掌理地方陰陽兩界事務，明察秋毫、賞善罰惡。職司保境安民、懲奸除惡。信眾祈求官司順利、是非分明、冤屈昭雪、消災解厄。',
-    poemSystem: '雷雨師百首',
-    totalPoems: 100,
+    poemSystem: '靈應侯靈籤',
+    totalPoems: 60,
     image: require('@/assets/images/gods/generated/cards/chenghuangye-card.png'),
     blessing: '願城隍爺明鏡高懸，善有善報，冤屈得雪，是非分明，正義伸張。',
     tagline: '明鏡高懸，善惡分明',
     primaryColor: '#1A1A2E',
     accentColor: '#C9A84C',
     auraColor: '#2D2D44',
-    category: 'war',
+    category: 'release',
   },
   {
     id: 15,
     name: '呂洞賓',
     title: '孚佑帝君',
     description: '八仙中最著名的一位，道教全真派祖師，號純陽子。文武雙全，精通劍術、醫術與丹道。信眾祈求考試功名、身體健康、化解感情糾葛。',
-    poemSystem: '雷雨師百首',
-    totalPoems: 100,
+    poemSystem: '呂祖六十籤',
+    totalPoems: 60,
     image: require('@/assets/images/gods/generated/cards/lvdongbin-card.png'),
     blessing: '願孚佑帝君純陽正氣加持，智慧清明，劍斬煩惱，功成名就，身心康泰。',
     tagline: '一劍斬煩惱，妙筆點功名',
@@ -253,6 +262,156 @@ export const gods: God[] = [
     accentColor: '#E8D5B0',
     auraColor: '#6BAAC4',
     category: 'general',
+  },
+  {
+    id: 16,
+    name: '玉皇上帝',
+    title: '玉皇大天尊',
+    description: '俗稱天公，統御三界十方，主掌天命、祈福、消災與大方向。信眾常於重大決策、家運與年度祈安時請示。',
+    poemSystem: '雷雨師百首',
+    totalPoems: 100,
+    image: require('@/assets/images/gods/generated/cards/yuhuangshangdi-card.png'),
+    blessing: '願天公賜福，天恩浩蕩，家運昌隆，諸事光明。',
+    tagline: '天恩浩蕩，定命開泰',
+    primaryColor: '#B88A18',
+    accentColor: '#66A989',
+    auraColor: '#F4D88A',
+    category: 'heaven',
+  },
+  {
+    id: 17,
+    name: '清水祖師',
+    title: '清水祖師',
+    description: '安溪高僧祖師，台灣北部與漳泉移民信仰重要神明。信眾祈求消災、護境、事業穩定與困厄化解。',
+    poemSystem: '六十甲子籤',
+    totalPoems: 60,
+    image: require('@/assets/images/gods/generated/cards/qingshuizushi-card.png'),
+    blessing: '願祖師公護佑，清心定志，逢凶化吉，家宅安寧。',
+    tagline: '清心護境，逢凶化吉',
+    primaryColor: '#7A5130',
+    accentColor: '#D7A84E',
+    auraColor: '#BDA06D',
+    category: 'guardian',
+  },
+  {
+    id: 18,
+    name: '瑤池金母',
+    title: '瑤池金母',
+    description: '又稱王母娘娘，慈悲護佑、調和陰陽與母性守護。信眾祈求身心安定、家庭和合、靈性指引與貴人助力。',
+    poemSystem: '觀音廿八籤',
+    totalPoems: 28,
+    image: require('@/assets/images/gods/generated/cards/yaochijinmu-card.png'),
+    blessing: '願金母慈光護佑，心安氣和，家門添福，貴人相扶。',
+    tagline: '瑤池慈光，和合添福',
+    primaryColor: '#B95F7A',
+    accentColor: '#7FBF9E',
+    auraColor: '#F4C8D5',
+    category: 'compassion',
+  },
+  {
+    id: 19,
+    name: '地藏王菩薩',
+    title: '地藏王菩薩',
+    description: '大願地藏，救拔幽冥苦厄，安定亡者與生者之心。信眾祈求超拔、化解業障、身心平安與家族和解。',
+    poemSystem: '觀音二十四籤',
+    totalPoems: 24,
+    image: require('@/assets/images/gods/generated/cards/dizangwang-card.png'),
+    blessing: '願地藏菩薩大願護持，苦厄漸消，心燈常明，冤親和解。',
+    tagline: '大願護念，苦厄成光',
+    primaryColor: '#6F4A2E',
+    accentColor: '#D6B35A',
+    auraColor: '#9A7A54',
+    category: 'release',
+  },
+  {
+    id: 20,
+    name: '溫府千歲',
+    title: '溫府千歲',
+    description: '王爺信仰中極具代表性的千歲爺，代天巡狩、驅瘟除煞、保境安民。信眾祈求排除阻礙、家宅平安與地方守護。',
+    poemSystem: '六十甲子籤',
+    totalPoems: 60,
+    image: require('@/assets/images/gods/generated/cards/wenfuqiansui-card.png'),
+    blessing: '願溫府千歲代天巡狩，瘟厄遠離，邪煞退散，闔境平安。',
+    tagline: '巡狩護境，除瘟安民',
+    primaryColor: '#8E2F2F',
+    accentColor: '#D7A84E',
+    auraColor: '#B66553',
+    category: 'guardian',
+  },
+  {
+    id: 21,
+    name: '神農大帝',
+    title: '神農大帝',
+    description: '農業與醫藥始祖，嘗百草、教稼穡。信眾祈求健康調養、農作豐收、飲食安全與實業穩定。',
+    poemSystem: '保生大帝靈籤',
+    totalPoems: 64,
+    image: require('@/assets/images/gods/generated/cards/shennongdadi-card.png'),
+    blessing: '願神農大帝護佑，百草成藥，五穀豐登，身心康健。',
+    tagline: '百草濟世，五穀豐登',
+    primaryColor: '#3E7B45',
+    accentColor: '#D6A84A',
+    auraColor: '#A8D19A',
+    category: 'health',
+  },
+  {
+    id: 22,
+    name: '三官大帝',
+    title: '三官大帝',
+    description: '天官賜福、地官赦罪、水官解厄，主掌祈福、懺悔與化解災厄。適合請示年度運勢、家運與消災解厄。',
+    poemSystem: '金錢卦三十二籤',
+    totalPoems: 32,
+    image: require('@/assets/images/gods/generated/cards/sanguandadi-card.png'),
+    blessing: '願三官大帝賜福赦罪解厄，福德增長，災厄消除。',
+    tagline: '賜福赦罪，水火解厄',
+    primaryColor: '#2E6FA3',
+    accentColor: '#D9AE49',
+    auraColor: '#A7C7E8',
+    category: 'heaven',
+  },
+  {
+    id: 23,
+    name: '三山國王',
+    title: '三山國王',
+    description: '潮汕與客家、閩粵移民重要守護神，護山川、保鄉里、安家業。信眾祈求地方平安、遷移順利與根基穩固。',
+    poemSystem: '六十甲子籤',
+    totalPoems: 60,
+    image: require('@/assets/images/gods/generated/cards/sanshanguowang-card.png'),
+    blessing: '願三山國王護佑山川鄉里，家業穩固，出入平安。',
+    tagline: '三山護土，根基安穩',
+    primaryColor: '#2F6B4F',
+    accentColor: '#D7A84E',
+    auraColor: '#97B69A',
+    category: 'guardian',
+  },
+  {
+    id: 24,
+    name: '廣澤尊王',
+    title: '廣澤尊王',
+    description: '泉州南安重要守護神，少年英靈、護佑地方、事業與家族。信眾祈求突破困境、事業發展與子孫平安。',
+    poemSystem: '六十甲子籤',
+    totalPoems: 60,
+    image: require('@/assets/images/gods/generated/cards/guangzezunwang-card.png'),
+    blessing: '願廣澤尊王英靈護佑，家門有光，事業開展，少年得志。',
+    tagline: '英靈護宅，廣澤開運',
+    primaryColor: '#28704F',
+    accentColor: '#E0B04A',
+    auraColor: '#83C79E',
+    category: 'growth',
+  },
+  {
+    id: 25,
+    name: '開漳聖王',
+    title: '開漳聖王',
+    description: '陳元光將軍，開漳安民、護土拓業，是漳州移民重要信仰。適合請示創業、遷移、地方事務與開局方向。',
+    poemSystem: '六十甲子籤',
+    totalPoems: 60,
+    image: require('@/assets/images/gods/generated/cards/kaizhangshengwang-card.png'),
+    blessing: '願開漳聖王護佑開局順利，拓土安民，事業有成。',
+    tagline: '開疆安民，拓業成局',
+    primaryColor: '#234E73',
+    accentColor: '#D7A84E',
+    auraColor: '#8AA7C1',
+    category: 'growth',
   },
 ];
 
@@ -265,6 +424,9 @@ export const questionCategories = [
   { id: 'study', name: '學業考試', icon: '📚' },
   { id: 'family', name: '家庭家運', icon: '🏠' },
   { id: 'travel', name: '出行遷移', icon: '✈️' },
+  { id: 'blessing', name: '祈福解厄', icon: '🕯️' },
+  { id: 'protection', name: '護境安宅', icon: '🏮' },
+  { id: 'settlement', name: '開局遷移', icon: '🧭' },
   { id: 'general', name: '綜合運勢', icon: '🌟' },
 ];
 
@@ -274,12 +436,22 @@ export function getPoemsByGod(godId: number) {
   if (!god) return leiyushiPoems;
 
   if (god.poemSystem === '六十甲子籤') return jiazi60Poems;
-  if (god.poemSystem === '保生健康籤（雷雨師）') return baoshengHealthPoems;
+  if (god.poemSystem === '天后宮靈籤') return tianhouLingQianPoems;
+  if (god.poemSystem === '保生大帝靈籤') return baosheng64Poems;
+  if (god.poemSystem === '金錢卦三十二籤') return jinqianGua32Poems;
+  if (god.poemSystem === '註生娘娘三十籤') return zhusheng30Poems;
+  if (god.poemSystem === '靈應侯靈籤') return lingyinghou60Poems;
+  if (god.poemSystem === '呂祖六十籤') return luzu60Poems;
   if (god.poemSystem === '濟公活佛籤（雷雨師）') return jigongLingQianPoems;
   if (god.poemSystem === '三太子衝關籤（六十甲子）') return santaiziBreakthroughPoems;
   if (god.poemSystem === '月老姻緣籤（六十甲子）') return yuelaoMarriagePoems;
   if (god.poemSystem === '諸葛神數') return zhugeShenShuPoems;
   if (god.poemSystem === '觀音靈籤') return guanyinLingQianPoems;
+  if (god.poemSystem === '觀音廿八籤') return guanyin28Poems;
+  if (god.poemSystem === '觀音二十四籤') return guanyin24Poems;
   if (god.poemSystem === '二十八宿靈籤') return ershibaxiuPoems;
   return leiyushiPoems;
 }
+
+
+

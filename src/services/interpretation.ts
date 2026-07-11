@@ -122,3 +122,27 @@ export function extractInterpretationSections(text?: string | null): Interpretat
     },
   ];
 }
+
+export function getAiRiskNotice(questionCategory?: string, question?: string): string | null {
+  const text = `${questionCategory ?? ''} ${question ?? ''}`;
+  const hasMedicalRisk = questionCategory === 'health' || /病|痛|癌|醫|藥|手術|懷孕|流產|自殺|輕生|憂鬱/.test(text);
+  const hasLegalRisk = /官司|訴訟|法律|告|合約|契約|法院|警察|犯罪|離婚/.test(text);
+  const hasFinancialRisk = questionCategory === 'wealth' && /投資|股票|貸款|借錢|合約|買房|賣房|保險|加密|虛擬貨幣/.test(text);
+
+  if (hasMedicalRisk) {
+    return '健康與身心問題請優先尋求合格醫療或心理專業協助；籤詩與 AI 解讀只能作為情緒整理與行動提醒。';
+  }
+  if (hasLegalRisk) {
+    return '法律、合約與訴訟問題請諮詢合格律師或相關專業；籤詩與 AI 解讀不能取代正式法律意見。';
+  }
+  if (hasFinancialRisk) {
+    return '重大投資、借貸與資產決策請自行查證並諮詢合格財務專業；籤詩與 AI 解讀不構成投資建議。';
+  }
+
+  return null;
+}
+
+export function getAiInterpretationNotice(questionCategory?: string, question?: string): string {
+  const riskNotice = getAiRiskNotice(questionCategory, question);
+  return riskNotice ?? 'AI 解籤會依籤詩、問題與過往紀錄整理方向，內容僅供參考，重要決定仍請回到現實資訊與專業判斷。';
+}

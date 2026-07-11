@@ -7,8 +7,10 @@ import {
 import {
   normalizeDrawAnimationMode,
   normalizeDrawAnimationStyleKey,
+  normalizeShakeMode,
   type DrawAnimationMode,
   type DrawAnimationStyleKey,
+  type ShakeMode,
 } from '@/constants/draw-animation-styles';
 
 export const STORAGE_KEYS = {
@@ -59,6 +61,7 @@ export interface AppSettings {
   drawAnimationDurationMs?: number;
   drawAnimationMode?: DrawAnimationMode;
   drawAnimationStyleKey?: DrawAnimationStyleKey;
+  shakeMode?: ShakeMode;
   lowMotionMode?: boolean;
   theme?: 'dark' | 'light' | 'system';  // P4: 主題模式
   familyMembers?: FamilyMember[];
@@ -75,6 +78,15 @@ export interface LastPoemContext {
   aiInterpretation?: string;
   question?: string;
   timestamp: number;
+}
+
+export interface VerificationFollowUpSummary {
+  due: DivinationRecord[];
+  upcoming: DivinationRecord[];
+  pending: DivinationRecord[];
+  matchedCount: number;
+  reviewedCount: number;
+  totalCount: number;
 }
 
 let memoryStore: Record<string, string> = {};
@@ -103,6 +115,7 @@ function normalizeSettings(settings: AppSettings): AppSettings {
     ),
     drawAnimationMode: normalizeDrawAnimationMode(settings.drawAnimationMode),
     drawAnimationStyleKey: normalizeDrawAnimationStyleKey(settings.drawAnimationStyleKey),
+    shakeMode: normalizeShakeMode(settings.shakeMode),
   };
 }
 
@@ -164,6 +177,35 @@ export async function isFavorite(poemNumber: number, godName?: string): Promise<
 export async function getHistory(): Promise<DivinationRecord[]> {
   const data = await getItem(STORAGE_KEYS.HISTORY);
   return data ? normalizeRecords(JSON.parse(data)) : [];
+}
+
+export async function getVerificationFollowUps(): Promise<VerificationFollowUpSummary> {
+  const history = await getHistory();
+  const now = Date.now();
+  const pending = history.filter((record) => (record.verificationStatus ?? 'pending') === 'pending');
+  const due = pending.filter(
+    (record) =>
+      (record.verificationDueAt ?? 0) <= now ||
+      (record.verificationFinalDueAt ?? 0) <= now
+  );
+  const dueIds = new Set(due.map((record) => record.id));
+  const upcoming = pending
+    .filter((record) => !dueIds.has(record.id))
+    .sort((left, right) => (left.verificationDueAt ?? 0) - (right.verificationDueAt ?? 0));
+  const matchedCount = history.filter((record) => record.verificationStatus === 'matched').length;
+  const reviewedCount = history.filter((record) => {
+    const status = record.verificationStatus ?? 'pending';
+    return status !== 'pending';
+  }).length;
+
+  return {
+    due,
+    upcoming,
+    pending,
+    matchedCount,
+    reviewedCount,
+    totalCount: history.length,
+  };
 }
 
 export async function setHistory(records: DivinationRecord[]): Promise<void> {
@@ -273,3 +315,4 @@ export async function removeFamilyMember(id: string): Promise<void> {
   const members = await getFamilyMembers();
   await saveFamilyMembers(members.filter(m => m.id !== id));
 }
+

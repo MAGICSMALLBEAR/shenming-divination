@@ -1,4 +1,60 @@
-﻿## 2026-07-09 效能/品質審查 + GitHub/Vercel 部署
+﻿## 2026-07-12 盤點並整理 Codex 未提交的大型功能批次
+
+### 本輪主題
+使用者改用 Codex 進行開發，累積了一大批尚未 commit 的變更（34 個修改檔 + 約 40 個新檔）後額度用盡。本輪任務是盤點這批未提交的工作內容、驗證其正確性，並整理成工作日誌記錄下來（尚未 commit，詳見文末）。
+
+### 盤點結果：這批變更做了什麼
+
+#### 1. 新增 10 位神明，全站神明數由 15 位擴充為 25 位
+玉皇上帝、清水祖師、三官大帝、三山國王、廣澤尊王、開漳聖王，以及地藏王、瑤池金母、文府千歲、神農大帝（依 `src/data/gods.ts` diff 與新增的 `assets/images/gods/generated/{cards,soft,closeups}/*` 圖檔推斷）。新增 4 個神明分類：`heaven`（天界）、`guardian`（護境）、`release`（赦罪解厄）、`growth`（開拓成長）。配套更新：
+- `src/data/godImages.ts` / `godProfiles.ts` / `godBlessings.ts` / `godQuestionGuides.ts` / `oracleCatalog.ts` — 每位新神明的圖片三件套、profile、5 則祝福語、問事引導、籤詩目錄中繼資料
+- `src/data/temples.ts` — 新增對應廟宇資料
+- 新增 3 個問事分類：祈福解厄、護境安宅、開局遷移（`gods.ts` `questionCategories`）
+
+#### 2. 新增多套「有各自身份」的籤詩系統，取代先前共用雷雨師百首的暫代做法
+新檔 `src/data/poems/marketCommon.ts`：天后宮靈籤（媽祖，100 首）、保生大帝靈籤（64 首）、金錢卦三十二籤（福德正神/三官大帝共用）、註生娘娘三十籤、靈應侯靈籤（城隍爺，60 首）、呂祖六十籤、觀音廿八籤、觀音二十四籤。`__tests__/divination.test.ts` 新增回歸測試，逐一驗證每位神明的 `totalPoems` 與實際籤詩陣列長度、`oracleCatalog` 一致，且圖片/profile/祝福語/問事引導皆存在（25 位神明全數通過）。
+
+#### 3. 新增「互動搖籤」抽籤方式 — 使用者的操作真的會決定抽到哪一支籤
+`src/services/seededRandom.ts`（新檔）：`mulberry32` 種子亂數 + `hashShakeTelemetry`，把搖籤過程的拖曳/長按操作序列雜湊成種子。`src/components/DrawAnimation.tsx` 新增 `interactive` 模式：用 `PanResponder` 累積「晃動能量」，達到隨機門檻後才觸發開籤，籤枝彈出時機由真實手勢決定（非單純視覺效果）。`src/services/divination.ts` 的 `drawPoem()` 新增 `seed` 參數，有種子時用 `mulberry32` 決定籤詩索引，取代原本純系統亂數。
+
+新增 `src/components/DrawMethodSelector.tsx`：抽籤前讓使用者選擇「傳統擲筊搖籤／擲筊後自動開籤／直接點籤／心中報數」四種方式，其中「自動開籤」特別標註為網頁版推薦（無法拖曳搖晃時使用）。`src/hooks/useDivination.ts` 新增對應流程狀態機（`choose-draw-method` 步驟、`DrawPhase`/`DrawMethod` 型別、`performAutoDraw`/`performNumberDraw`/`chooseDrawMethod`/`completeShake`）。設定頁新增「搖籤筒方式」（拖曳／長按）選項與即時預覽（含「重新搖一次」測試按鈕）。
+
+#### 4. 新增「驗證回訪」到期提醒機制
+`src/services/storage.ts` 新增 `getVerificationFollowUps()`：依 `verificationDueAt`/`verificationFinalDueAt` 把歷史紀錄分成「已到期」「即將到期」「待驗證」三類，首頁待回訪卡片改為優先顯示已到期項目（原本只是抓第一筆 pending 紀錄）。
+
+#### 5. 新增雲端同步（需 Firebase 設定後才會生效）
+新檔 `src/services/syncService.ts`：以 Firestore 儲存/還原完整備份（`getCloudBackupMeta`/`uploadLocalBackupToCloud`/`restoreCloudBackupToLocal`）。設定頁新增「雲端同步」區塊：未設定 Firebase 時顯示提示、已設定時可匿名登入並上傳/還原/登出。新增 `__tests__/syncService.test.ts`。
+
+#### 6. 新增法遵/透明度頁面
+- `src/app/disclaimer.tsx`（新檔）：免責聲明，涵蓋 AI 解籤、醫療、法律、投資、宗教文化、使用者自主判斷六大分類提醒
+- `src/app/source-audit.tsx`（新檔）：「籤詩校勘」頁，逐一列出每位神明目前籤詩系統的來源型態（傳統骨幹／App 整理／待校勘）、版本標記、完整度說明
+- `src/services/interpretation.ts` 新增 `getAiRiskNotice()`/`getAiInterpretationNotice()`：偵測問題文字含醫療/法律/投資風險關鍵字時，AI 解籤結果會附加對應的專業求助提醒
+- `src/components/PremiumPaywall.tsx` 文案改為明確標註「展示模式」，註明尚未串接真實金流（誠實揭露，避免使用者誤解已可付費）
+- 「更多」頁新增這兩個入口；`src/app/_layout.tsx` 註冊對應路由
+
+#### 7. 神明選擇頁新增搜尋與問事分類篩選
+`src/components/GodSelector.tsx` 新增關鍵字搜尋（比對名稱/稱號/別稱/主掌/籤詩系統）與問事分類篩選（`GOD_CATEGORY_MATCH` 把 11 種問事分類對應到神明分類），因應神明數量擴充到 25 位後的可瀏覽性。`src/services/recommendation.ts` 同步擴充推薦邏輯以涵蓋新分類與新問事類別。
+
+#### 8. PWA 離線體驗強化
+`public/sw.js`、`public/manifest.json`、`scripts/patch-pwa.js` 改寫：Service Worker 快取 app shell、manifest、icons 與近期造訪過的靜態路由，離線時導航會 fallback 回快取的 app shell，讓已載入過的頁面、本機資料、籤詩圖書館、設定在無網路時仍可使用。
+
+#### 9. 原生分頁圖示補齊
+新增 `assets/images/tabIcons/{daily,temple,collection,more,settings}.png`（含 @2x/@3x），修正先前 5 個分頁共用同一張 `explore.png` 佔位圖示的問題（`src/components/app-tabs.tsx`）。
+
+### 驗證
+- `npx tsc --noEmit` 全部通過（0 錯誤）
+- `npm test` 全過：**6 個測試檔、20 個測試**（含新增的 `recommendation.test.ts`、`syncService.test.ts`，以及 `divination.test.ts`/`interpretation.test.ts` 內新增的回歸測試）
+- `npm run lint` 通過，無警告
+- 上述驗證僅涵蓋型別/單元測試層級，尚未實機／瀏覽器操作 QA 互動搖籤、雲端同步、離線 PWA 這三項新增互動流程
+
+### 尚未處理
+- **這批變更目前仍未 commit**，只存在於工作目錄（`git status` 顯示 34 個 modified + 約 40 個 untracked）。是否要 commit + push，待使用者確認後再執行
+- 雲端同步功能程式碼完整，但 Firebase 專案本身仍未設定（沿用先前代辦清單 #1），設定前僅會顯示「尚未設定」提示、不影響其他功能
+- 互動搖籤、雲端同步 UI、PWA 離線 fallback 三項尚未經過瀏覽器實機操作驗證
+
+---
+
+## 2026-07-09 效能/品質審查 + GitHub/Vercel 部署
 
 ### 本輪主題
 先前動畫與狀態管理累積了 7 項效能/記憶體問題，今天進行全面審查並修復。
@@ -295,13 +351,14 @@ Firebase 接入、IAP 真實付款、Fly.io 後端部署、Crash reporting/Analy
 
 ## 未來代辦清單
 
-> 2026-07-09 更新：#2、#4、#10、#11、#14 已完成；2026-07-09 效能審查 + 7 項修復完成（動畫洩漏/AsyncStorage/useCallback）。剩餘項目全部需要外部帳號/服務才能繼續。
+> 2026-07-12 更新：#2、#4、#10、#11、#14 已完成；2026-07-09 效能審查 + 7 項修復完成（動畫洩漏/AsyncStorage/useCallback）；2026-07-12 盤點到一批 Codex 未提交的大批次功能（10 位新神明、互動搖籤、驗證回訪提醒、雲端同步、免責聲明/籤詩校勘頁、PWA 離線強化），詳見上方 2026-07-12 條目，**尚未 commit**。剩餘項目全部需要外部帳號/服務才能繼續。
 
 ### 🔴 高優先（上架前必須）
 
 | # | 項目 | 說明 | 指令/備注 |
 |---|------|------|-----------|
-| 1 | **Firebase 接入** | 到 console.firebase.google.com 建立專案，填入 `src/services/firebaseConfig.ts` | 填完後雲端同步自動生效 |
+| 1 | **Firebase 接入** | 到 console.firebase.google.com 建立專案，填入 `src/services/firebaseConfig.ts`。2026-07-12：`syncService.ts`（備份上傳/還原/匿名登入）已完整實作並過測試，只差真實專案設定 | 填完後雲端同步自動生效 |
+| 15 | **Commit 2026-07-12 批次變更** | 34 個修改檔 + 約 40 個新檔尚未 commit，詳見上方 2026-07-12 工作日誌 | 待使用者確認後執行 |
 | 2 | ~~**expo-store-review 安裝**~~ ✅ 2026-07-05 完成 | 已安裝套件，並補上 `useDivination.ts` 裡遺漏的呼叫點（原本裝了也不會生效） | — |
 | 3 | **IAP 真實付款** | premiumService.ts 架構已建好，接入 RevenueCat 或 Expo IAP | 目前 AsyncStorage 模擬，不能收費 |
 | 4 | ~~**淺色主題全頁面套用**~~ ✅ 2026-07-05 完成 | 全站 34 個剩餘檔案已全部轉換，`grep TempleTheme.` 全站零殘留 | — |

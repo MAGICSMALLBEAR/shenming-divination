@@ -22,11 +22,17 @@ export type FlowStep =
   | 'set-question'
   | 'meditate'
   | 'enter-zhuge-number'
+  | 'choose-draw-method'
   | 'toss-jiaobei'
   | 'drawing'
   | 'reveal-poem'
   | 'ai-interpret'
   | 'result';
+
+// drawing 步驟底下的子階段：shaking = 等待使用者親自搖籤筒（尚未決定籤詩），
+// revealing = 籤枝已跳出，播放既有的開籤演出
+export type DrawPhase = 'shaking' | 'revealing';
+export type DrawMethod = 'jiaobei-shake' | 'jiaobei-auto' | 'direct' | 'number';
 
 export function useDivination() {
   const [step, setStep] = useState<FlowStep>('select-god');
@@ -46,6 +52,8 @@ export function useDivination() {
   const [drawAnimationDurationMs, setDrawAnimationDurationMs] = useState(DRAW_ANIMATION_DEFAULT_MS);
   const [drawAnimationStyleKey, setDrawAnimationStyleKey] =
     useState<DrawAnimationStyleKey>('bronze');
+  const [drawPhase, setDrawPhase] = useState<DrawPhase>('revealing');
+  const [drawMethod, setDrawMethod] = useState<DrawMethod>('jiaobei-shake');
 
   const selectedGod = selectedGodId ? gods.find(g => g.id === selectedGodId) : null;
 
@@ -71,10 +79,10 @@ export function useDivination() {
   const finishMeditation = useCallback(() => {
     const god = selectedGodId ? gods.find(g => g.id === selectedGodId) : null;
     if (god?.poemSystem === '諸葛神數') {
+      setDrawMethod('number');
       setStep('enter-zhuge-number');
     } else {
-      setJiaobeiResults([]);
-      setStep('toss-jiaobei');
+      setStep('choose-draw-method');
     }
   }, [selectedGodId]);
 
@@ -89,13 +97,16 @@ export function useDivination() {
     setStep('drawing');
   }, []);
 
-  const performDraw = useCallback(async (inputZhugeNumber?: number) => {
+  // revealDraw 負責「籤詩已經決定之後」的整段流程：開籤動畫、AI 解籤、存檔。
+  // seed 若有值（來自搖籤筒的操作遙測），一般求籤會用它決定抽到哪一支籤；
+  // 諸葛神數的情況則直接依 inputZhugeNumber 對應固定的卦象，不受 seed 影響。
+  const revealDraw = useCallback(async (inputZhugeNumber?: number, seed?: number) => {
     if (!selectedGodId) return;
     const god = gods.find(g => g.id === selectedGodId);
     const num = inputZhugeNumber ?? zhugeNumber;
     const poem = (god?.poemSystem === '諸葛神數' && num != null)
       ? drawZhugePoem(num)
-      : drawPoem(selectedGodId);
+      : drawPoem(selectedGodId, seed);
     const settings = await getSettings();
     const animationDuration = normalizeDrawAnimationDuration(settings?.drawAnimationDurationMs);
     const animationMode = normalizeDrawAnimationMode(settings?.drawAnimationMode);
@@ -107,7 +118,6 @@ export function useDivination() {
     setPendingPoem(poem);
     setDrawAnimationDurationMs(animationDuration);
     setDrawAnimationStyleKey(animationStyle);
-    setStep('drawing');
     setIsLoading(true);
 
     await new Promise(resolve => setTimeout(resolve, animationDuration));
@@ -182,6 +192,63 @@ export function useDivination() {
     }
   }, [selectedGodId, question, questionCategory, userName, zhugeNumber]);
 
+  // 開始抽籤：諸葛神數已經有使用者輸入的數字，卦象是固定的，不需要搖籤筒，
+  // 直接進入開籤演出；一般籤詩則先進入 shaking 子階段，等使用者親自搖出籤枝
+  // 之後（見 completeShake）才真正決定抽到哪一支。
+  const performDraw = useCallback((inputZhugeNumber?: number) => {
+    if (!selectedGodId) return;
+    const god = gods.find(g => g.id === selectedGodId);
+    setStep('drawing');
+    if (god?.poemSystem === '諸葛神數' && inputZhugeNumber != null) {
+      setDrawPhase('revealing');
+      void revealDraw(inputZhugeNumber);
+      return;
+    }
+    setDrawPhase('shaking');
+  }, [selectedGodId, revealDraw]);
+
+  const performAutoDraw = useCallback((seed?: number) => {
+    if (!selectedGodId) return;
+    setStep('drawing');
+    setDrawPhase('revealing');
+    void revealDraw(undefined, seed ?? (Date.now() + selectedGodId));
+  }, [selectedGodId, revealDraw]);
+
+  const performNumberDraw = useCallback((n: number) => {
+    if (!selectedGodId) return;
+    const god = gods.find(g => g.id === selectedGodId);
+    setZhugeNumber(n);
+    setStep('drawing');
+    setDrawPhase('revealing');
+    if (god?.poemSystem === '諸葛神數') {
+      void revealDraw(n);
+      return;
+    }
+    const seed = (Math.imul(n >>> 0, 2654435761) ^ Math.imul(selectedGodId, 1597334677) ^ Date.now()) >>> 0;
+    void revealDraw(undefined, seed);
+  }, [selectedGodId, revealDraw]);
+
+  const chooseDrawMethod = useCallback((method: DrawMethod) => {
+    setDrawMethod(method);
+    if (method === 'jiaobei-shake' || method === 'jiaobei-auto') {
+      setJiaobeiResults([]);
+      setStep('toss-jiaobei');
+      return;
+    }
+    if (method === 'number') {
+      setStep('enter-zhuge-number');
+      return;
+    }
+    performAutoDraw();
+  }, [performAutoDraw]);
+
+  // 搖籤筒的互動階段結束時呼叫：seed 來自使用者操作遙測的雜湊，
+  // 用來決定實際抽到哪一支籤。
+  const completeShake = useCallback((seed: number) => {
+    setDrawPhase('revealing');
+    void revealDraw(undefined, seed);
+  }, [revealDraw]);
+
   // 收藏/取消收藏
   const toggleFavorite = useCallback(async () => {
     if (!currentRecord) return;
@@ -210,6 +277,8 @@ export function useDivination() {
     setCurrentRecord(null);
     setIsFavorited(false);
     setIsLoading(false);
+    setDrawPhase('revealing');
+    setDrawMethod('jiaobei-shake');
   }, []);
 
   return {
@@ -229,6 +298,8 @@ export function useDivination() {
     toastMessage,
     drawAnimationDurationMs,
     drawAnimationStyleKey,
+    drawPhase,
+    drawMethod,
     // actions
     goToStep,
     selectGod,
@@ -237,6 +308,10 @@ export function useDivination() {
     performJiaobei,
     submitZhugeNumber,
     performDraw,
+    performAutoDraw,
+    performNumberDraw,
+    chooseDrawMethod,
+    completeShake,
     toggleFavorite,
     reset,
     setUserName,

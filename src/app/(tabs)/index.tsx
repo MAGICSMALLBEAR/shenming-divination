@@ -8,6 +8,7 @@ import { GodSelector, QuestionForm } from '@/components/GodSelector';
 import { MeditationScreen } from '@/components/MeditationScreen';
 import { Jiaobei } from '@/components/Jiaobei';
 import { DrawAnimation } from '@/components/DrawAnimation';
+import { DrawMethodSelector } from '@/components/DrawMethodSelector';
 import { PoemCard } from '@/components/PoemCard';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Onboarding, hasOnboarded } from '@/components/Onboarding';
@@ -26,7 +27,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { addWish } from '@/services/wishTracker';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
 import { playResultSound, startAmbientSound, stopAmbientSound } from '@/services/proceduralSound';
-import { getHistory, getLastPoemContext, getSettings, getFamilyMembers, addFamilyMember, removeFamilyMember, updatePoemConfirmation, type AppSettings, type DivinationRecord, type FamilyMember } from '@/services/storage';
+import { getHistory, getLastPoemContext, getSettings, getFamilyMembers, addFamilyMember, removeFamilyMember, updatePoemConfirmation, getVerificationFollowUps, type AppSettings, type DivinationRecord, type FamilyMember, type VerificationFollowUpSummary } from '@/services/storage';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritual-styles';
 import { gods, type God } from '@/data/gods';
@@ -63,6 +64,7 @@ export default function HomeScreen() {
   const [showOnboarding, setShowOnboarding] = React.useState(false);
   const [dailyRecommendation, setDailyRecommendation] = React.useState<GodRecommendation | null>(null);
   const [pendingReview, setPendingReview] = React.useState<DivinationRecord | null>(null);
+  const [reviewSummary, setReviewSummary] = React.useState<VerificationFollowUpSummary | null>(null);
   const [showCrossCompare, setShowCrossCompare] = React.useState(false);
   const [poemConfirming, setPoemConfirming] = React.useState(false);
   const [poemConfirmText, setPoemConfirmText] = React.useState<string | null>(null);
@@ -142,7 +144,7 @@ export default function HomeScreen() {
 
   React.useEffect(() => {
     if (!settings) return;
-    getHistory().then((history) => {
+    Promise.all([getHistory(), getVerificationFollowUps()]).then(([history, followUps]) => {
       const lastCategory = history[0]?.questionCategory ?? 'general';
       const recommendation = recommendGods({
         questionCategory: lastCategory,
@@ -152,9 +154,8 @@ export default function HomeScreen() {
       })[0];
 
       setDailyRecommendation(recommendation ?? null);
-      setPendingReview(
-        history.find((record) => (record.verificationStatus ?? 'pending') === 'pending') ?? null
-      );
+      setReviewSummary(followUps);
+      setPendingReview(followUps.due[0] ?? followUps.upcoming[0] ?? null);
     });
   }, [settings]);
 
@@ -184,14 +185,21 @@ export default function HomeScreen() {
     if (selectedPerson?.id === id) setSelectedPerson(null);
   };
 
-  const showBack = div.step === 'set-question' || div.step === 'meditate' || div.step === 'toss-jiaobei' || div.step === 'enter-zhuge-number';
+  const showBack = div.step === 'set-question' || div.step === 'meditate' || div.step === 'choose-draw-method' || div.step === 'toss-jiaobei' || div.step === 'enter-zhuge-number';
 
   const handleBack = () => {
     switch (div.step) {
       case 'set-question': div.goToStep('select-god'); break;
       case 'meditate': if (incenseDone) { setIncenseDone(false); } else { div.goToStep('set-question'); } break;
-      case 'enter-zhuge-number': div.goToStep('meditate'); break;
-      case 'toss-jiaobei': div.goToStep('meditate'); break;
+      case 'choose-draw-method': div.goToStep('meditate'); break;
+      case 'enter-zhuge-number':
+        if (div.selectedGod?.poemSystem === '諸葛神數') {
+          div.goToStep('meditate');
+        } else {
+          div.goToStep('choose-draw-method');
+        }
+        break;
+      case 'toss-jiaobei': div.goToStep('choose-draw-method'); break;
       default: handleReset();
     }
   };
@@ -245,13 +253,13 @@ export default function HomeScreen() {
       { key: 'select-god', icon: '🏛️' },
       { key: 'set-question', icon: '📝' },
       { key: 'meditate', icon: '🧘' },
-      { key: isZhuge ? 'enter-zhuge-number' : 'toss-jiaobei', icon: isZhuge ? '🔢' : '🎯' },
+      { key: isZhuge ? 'enter-zhuge-number' : 'choose-draw-method', icon: isZhuge ? '🔢' : '🎛️' },
       { key: 'drawing', icon: '🎋' },
       { key: 'result', icon: '✨' },
     ];
     const stepKey = (s: string) => {
       if (s === 'reveal-poem' || s === 'ai-interpret') return 'result';
-      if (s === 'toss-jiaobei' && isZhuge) return 'enter-zhuge-number';
+      if (!isZhuge && (s === 'toss-jiaobei' || s === 'enter-zhuge-number')) return 'choose-draw-method';
       return s;
     };
     const currentIndex = steps.findIndex(s => s.key === stepKey(div.step));
@@ -299,7 +307,7 @@ export default function HomeScreen() {
               />
             ) : null}
             {pendingReview ? (
-              <PendingReviewCard record={pendingReview} onPress={handleReviewRecord} reducedMotion={reducedMotion || lowMotionMode} />
+              <PendingReviewCard record={pendingReview} summary={reviewSummary} onPress={handleReviewRecord} reducedMotion={reducedMotion || lowMotionMode} />
             ) : null}
             {hasLastPoemContext ? (
               <TouchableOpacity style={styles.followUpShortcut} onPress={handleAskFollowUp}>
@@ -342,18 +350,35 @@ export default function HomeScreen() {
           );
         }
         return <MeditationScreen godName={div.selectedGod?.name || '神明'} onComplete={div.finishMeditation} />;
-      case 'enter-zhuge-number':
+      case 'choose-draw-method':
         return (
-          <ZhugeNumberInput
-            onSubmit={(n) => div.performDraw(n)}
+          <DrawMethodSelector
+            godName={div.selectedGod?.name}
+            onSelect={div.chooseDrawMethod}
           />
         );
+      case 'enter-zhuge-number': {
+        const isZhuge = div.selectedGod?.poemSystem === '諸葛神數';
+        return (
+          <ZhugeNumberInput
+            onSubmit={(n) => div.performNumberDraw(n)}
+            title={isZhuge ? undefined : '心中報數'}
+            subtitle={isZhuge ? undefined : '以數取籤・無須晃動'}
+            description={isZhuge ? undefined : '靜心片刻，心中自然浮現一個數字，\n系統會以這個數字作為本次抽籤的心念種子。'}
+            confirmLabel={isZhuge ? undefined : '報數取籤 →'}
+            tip={isZhuge ? undefined : '適合網頁版或不方便搖動裝置時使用'}
+            placeholder={isZhuge ? undefined : '輸入心中數字'}
+            showHexagramHint={isZhuge}
+            showContext={isZhuge}
+          />
+        );
+      }
       case 'toss-jiaobei':
         return (
           <View>
             <Jiaobei
               onToss={div.performJiaobei}
-              onShengbei={div.performDraw}
+              onShengbei={div.drawMethod === 'jiaobei-auto' ? div.performAutoDraw : div.performDraw}
               results={div.jiaobeiResults}
               strictMode={strictMode}
               tossSignal={shakeTossSignal}
@@ -362,7 +387,7 @@ export default function HomeScreen() {
               onStyleChange={setRitualStyle}
             />
             <View style={styles.shakeHint}>
-              <Text style={styles.shakeHintText}>📳 或搖動手機擲筊</Text>
+              <Text style={styles.shakeHintText}>{div.drawMethod === 'jiaobei-auto' ? '聖筊後會自動開籤，不需要搖籤筒' : '📳 或搖動手機擲筊'}</Text>
             </View>
           </View>
         );
@@ -374,6 +399,9 @@ export default function HomeScreen() {
             durationMs={div.drawAnimationDurationMs}
             styleKey={div.drawAnimationStyleKey}
             lowMotion={lowMotionMode}
+            interactive={div.selectedGod?.poemSystem !== '諸葛神數' && div.drawMethod === 'jiaobei-shake'}
+            shakeMode={settings?.shakeMode === 'hold' ? 'hold' : 'drag'}
+            onShakeComplete={div.completeShake}
           />
         );
       case 'reveal-poem':
@@ -765,10 +793,12 @@ function DailyGodRecommendationCard({
 
 function PendingReviewCard({
   record,
+  summary,
   onPress,
   reducedMotion,
 }: {
   record: DivinationRecord;
+  summary?: VerificationFollowUpSummary | null;
   onPress: () => void;
   reducedMotion: boolean;
 }) {
@@ -809,6 +839,17 @@ function PendingReviewCard({
     inputRange: [0, 1],
     outputRange: [theme.warning + '12', theme.goldDark + '1F'],
   });
+  const dueCount = summary?.due.length ?? 0;
+  const pendingCount = summary?.pending.length ?? 1;
+  const daysUntilReview = record.verificationDueAt
+    ? Math.max(0, Math.ceil((record.verificationDueAt - Date.now()) / (24 * 60 * 60 * 1000)))
+    : null;
+  const title = dueCount > 0 ? `${dueCount} 支籤已到回訪時間` : '下一支籤等待回訪';
+  const scheduleText = dueCount > 0
+    ? `共有 ${pendingCount} 支待驗證，先回來標記準不準。`
+    : daysUntilReview === null
+      ? `共有 ${pendingCount} 支待驗證。`
+      : `約 ${daysUntilReview} 天後可做 7 日回訪。`;
 
   return (
     <AnimatedTouchable
@@ -817,10 +858,11 @@ function PendingReviewCard({
       activeOpacity={0.86}
     >
       <View style={styles.pendingReviewMeta}>
-        <Text style={styles.pendingReviewTitle}>有一支籤等待回訪</Text>
+        <Text style={styles.pendingReviewTitle}>{title}</Text>
         <Text style={styles.pendingReviewText} numberOfLines={2}>
           {record.godName} · 第 {record.poem.number} 籤 · {record.question || record.poem.title}
         </Text>
+        <Text style={styles.pendingReviewSchedule}>{scheduleText}</Text>
       </View>
       <Text style={styles.pendingReviewCta}>去驗證</Text>
     </AnimatedTouchable>
@@ -1027,6 +1069,13 @@ function createStyles(theme: ThemeColors) {
     fontSize: 12,
     lineHeight: 18,
   },
+  pendingReviewSchedule: {
+    color: theme.warning,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 4,
+    fontWeight: '700',
+  },
   pendingReviewCta: {
     color: theme.goldLight,
     fontSize: 12,
@@ -1187,3 +1236,5 @@ function createStyles(theme: ThemeColors) {
   actionBtnBlessing: { borderColor: '#E879A0', backgroundColor: '#E879A033' },
   });
 }
+
+

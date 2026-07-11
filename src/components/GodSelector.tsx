@@ -39,6 +39,46 @@ interface QuestionFormProps {
   forWhom?: string;
 }
 
+const GOD_CATEGORY_MATCH: Record<string, God['category'][]> = {
+  career: ['war', 'growth', 'general'],
+  love: ['compassion', 'general'],
+  wealth: ['wealth', 'growth', 'general'],
+  health: ['health', 'compassion', 'release'],
+  study: ['general', 'war', 'growth'],
+  family: ['compassion', 'guardian', 'heaven'],
+  travel: ['sea', 'growth', 'guardian'],
+  blessing: ['heaven', 'release', 'compassion'],
+  protection: ['guardian', 'war', 'release'],
+  settlement: ['growth', 'guardian', 'sea'],
+  general: ['general', 'heaven', 'compassion'],
+};
+
+function matchesGodSearch(god: God, query: string): boolean {
+  const keyword = query.trim().toLowerCase();
+  if (!keyword) return true;
+  const profile = getGodProfile(god.id);
+  return [
+    god.name,
+    god.title,
+    god.tagline,
+    god.description,
+    god.poemSystem,
+    ...(profile?.aliases ?? []),
+    ...(profile?.patronages ?? []),
+    ...(profile?.suitableTopics ?? []),
+  ]
+    .join(' ')
+    .toLowerCase()
+    .includes(keyword);
+}
+
+function matchesQuestionCategory(god: God, categoryId: string): boolean {
+  if (categoryId === 'all') return true;
+  const allowed = GOD_CATEGORY_MATCH[categoryId];
+  if (!allowed) return true;
+  return allowed.includes(god.category);
+}
+
 export function GodSelector({ onSelectGod }: GodSelectorProps) {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
@@ -47,6 +87,8 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
   const [patronGodId, setPatronGodId] = useState<number | null>(null);
   const [preferredGodId, setPreferredGodId] = useState<number | null>(null);
   const [detailGod, setDetailGod] = useState<God | null>(null);
+  const [searchText, setSearchText] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const isCompact = layout.width < 420;
   const columns = layout.isWideDesktop ? 4 : layout.isDesktop ? 3 : isCompact ? 1 : 2;
   const maxContentWidth = layout.isWideDesktop ? 1180 : layout.contentMaxWidth;
@@ -55,6 +97,14 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
     columns === 1
       ? gridWidth
       : (gridWidth - TempleSpacing.sm * (columns - 1)) / columns;
+  const visibleGods = useMemo(
+    () => gods.filter((god) => matchesGodSearch(god, searchText) && matchesQuestionCategory(god, selectedCategory)),
+    [searchText, selectedCategory]
+  );
+  const categoryFilters = useMemo(
+    () => [{ id: 'all', name: '全部神明', icon: '⌘' }, ...questionCategories],
+    []
+  );
 
   useEffect(() => {
     getSettings().then((settings) => {
@@ -75,13 +125,43 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
           : t('selectGodSubtitleDefault')}
       </Text>
 
+      <View style={[styles.selectorTools, { maxWidth: maxContentWidth }]}> 
+        <TextInput
+          style={styles.selectorSearchInput}
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder="搜尋神明、別稱、主掌或籤詩系統"
+          placeholderTextColor={theme.textMuted}
+        />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryFilterContent}
+        >
+          {categoryFilters.map((category) => {
+            const active = selectedCategory === category.id;
+            return (
+              <TouchableOpacity
+                key={category.id}
+                style={[styles.categoryFilterChip, active && styles.categoryFilterChipActive]}
+                onPress={() => setSelectedCategory(category.id)}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.categoryFilterIcon, active && styles.categoryFilterTextActive]}>{category.icon}</Text>
+                <Text style={[styles.categoryFilterText, active && styles.categoryFilterTextActive]}>{category.name}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.scrollArea}
         contentContainerStyle={[styles.scrollContent, { maxWidth: maxContentWidth }]}
       >
         <View style={styles.grid}>
-          {gods.map((god) => (
+          {visibleGods.map((god) => (
             <GodCard
               key={god.id}
               god={god}
@@ -93,6 +173,12 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
               onDetail={() => setDetailGod(god)}
             />
           ))}
+          {visibleGods.length === 0 ? (
+            <View style={styles.emptyGodState}>
+              <Text style={styles.emptyGodTitle}>找不到符合條件的神明</Text>
+              <Text style={styles.emptyGodText}>換個關鍵字，或切回全部神明再試一次。</Text>
+            </View>
+          ) : null}
         </View>
       </ScrollView>
 
@@ -545,6 +631,49 @@ function createStyles(theme: ThemeColors) {
   },
   forWhomText: { color: theme.textLight, fontSize: TempleFonts.small },
   forWhomName: { color: theme.textGold, fontWeight: 'bold' },
+  selectorTools: {
+    width: '100%',
+    alignSelf: 'center',
+    marginBottom: TempleSpacing.md,
+    gap: 8,
+  },
+  selectorSearchInput: {
+    backgroundColor: theme.bgCard,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '45',
+    color: theme.textLight,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: TempleFonts.body,
+  },
+  categoryFilterContent: { gap: 8, paddingRight: TempleSpacing.md },
+  categoryFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '35',
+    backgroundColor: theme.bgCard,
+  },
+  categoryFilterChipActive: {
+    borderColor: theme.gold,
+    backgroundColor: theme.goldDark + '55',
+  },
+  categoryFilterIcon: { color: theme.textMuted, fontSize: 12, fontWeight: '800' },
+  categoryFilterText: { color: theme.textMuted, fontSize: 12, fontWeight: '700' },
+  categoryFilterTextActive: { color: theme.goldLight },
+  emptyGodState: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: TempleSpacing.xl,
+    paddingHorizontal: TempleSpacing.lg,
+  },
+  emptyGodTitle: { color: theme.goldLight, fontSize: TempleFonts.body, fontWeight: '800', marginBottom: 6 },
+  emptyGodText: { color: theme.textMuted, fontSize: TempleFonts.small, textAlign: 'center' },
   scrollArea: { flex: 1 },
   scrollContent: { width: '100%', alignSelf: 'center', paddingBottom: TempleSpacing.lg },
   grid: {
@@ -1013,3 +1142,5 @@ function createModalStyles(theme: ThemeColors) {
   selectBtnText: { fontSize: TempleFonts.heading, fontWeight: '800', color: '#FFF', letterSpacing: 2 },
   });
 }
+
+

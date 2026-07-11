@@ -20,6 +20,7 @@ import {
   drawAnimationStyles,
   getDrawAnimationRitualStyle,
   normalizeDrawAnimationStyleKey,
+  normalizeShakeMode,
 } from '@/constants/draw-animation-styles';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -56,6 +57,8 @@ import {
   type PremiumPlan,
 } from '@/services/premiumService';
 import { THEME_LABELS, type ThemeMode, type ThemeColors } from '@/constants/themes';
+import { onAuthChange, signInAnon, signOutUser, type AuthState } from '@/services/authService';
+import { getCloudBackupMeta, restoreCloudBackupToLocal, uploadLocalBackupToCloud, type CloudBackupMeta } from '@/services/syncService';
 
 const LANGUAGES: { key: Lang; label: string }[] = [
   { key: 'zh-TW', label: '繁體中文' },
@@ -85,6 +88,9 @@ export default function SettingsScreen() {
   const [premiumActive, setPremiumActive] = useState(false);
   const [premiumPlan, setPremiumPlan] = useState<PremiumPlan>('free');
   const [showDrawPreview, setShowDrawPreview] = useState(false);
+  const [authState, setAuthState] = useState<AuthState | null>(null);
+  const [cloudMeta, setCloudMeta] = useState<CloudBackupMeta | null>(null);
+  const [syncBusy, setSyncBusy] = useState(false);
 
   useEffect(() => {
     getPremiumStatus().then(s => {
@@ -93,7 +99,17 @@ export default function SettingsScreen() {
     });
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = onAuthChange((state) => {
+      setAuthState(state);
+      getCloudBackupMeta().then(setCloudMeta);
+    });
+    getCloudBackupMeta().then(setCloudMeta);
+    return unsubscribe;
+  }, []);
+
   const dailyPoem = useMemo(() => getDailyPoem(), []);
+  const [previewShakeKey, setPreviewShakeKey] = useState(0);
   const previewGod = useMemo(
     () => gods.find((god) => god.id === settings.preferredGodId) ?? gods[0],
     [settings.preferredGodId]
@@ -148,6 +164,68 @@ export default function SettingsScreen() {
       Alert.alert('已還原備份', '設定資料已重新載入，其他頁面也會讀到新的本機資料。');
     } catch (error) {
       Alert.alert('還原失敗', error instanceof Error ? error.message : '請確認備份內容格式。');
+    }
+  };
+
+  const refreshCloudMeta = async () => {
+    setCloudMeta(await getCloudBackupMeta());
+  };
+
+  const handleAnonymousSyncLogin = async () => {
+    setSyncBusy(true);
+    try {
+      await signInAnon();
+      await refreshCloudMeta();
+      Alert.alert('已啟用匿名同步', '現在可以把本機資料備份到雲端。');
+    } catch (error) {
+      Alert.alert('登入失敗', error instanceof Error ? error.message : '請稍後再試一次。');
+    } finally {
+      setSyncBusy(false);
+    }
+  };
+
+  const handleCloudUpload = async () => {
+    setSyncBusy(true);
+    try {
+      const meta = await uploadLocalBackupToCloud();
+      setCloudMeta(meta);
+      Alert.alert('已上傳雲端備份', '目前本機資料已保存到雲端最新備份。');
+    } catch (error) {
+      Alert.alert('上傳失敗', error instanceof Error ? error.message : '請稍後再試一次。');
+    } finally {
+      setSyncBusy(false);
+    }
+  };
+
+  const handleCloudRestore = async () => {
+    Alert.alert('從雲端還原', '這會用雲端最新備份覆蓋本機資料，確定要繼續嗎？', [
+      { text: '取消', style: 'cancel' },
+      {
+        text: '還原',
+        onPress: async () => {
+          setSyncBusy(true);
+          try {
+            await restoreCloudBackupToLocal();
+            await loadStoredSettings();
+            await refreshCloudMeta();
+            Alert.alert('已還原雲端備份', '設定與紀錄已重新載入。');
+          } catch (error) {
+            Alert.alert('還原失敗', error instanceof Error ? error.message : '請稍後再試一次。');
+          } finally {
+            setSyncBusy(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleCloudSignOut = async () => {
+    setSyncBusy(true);
+    try {
+      await signOutUser();
+      await refreshCloudMeta();
+    } finally {
+      setSyncBusy(false);
     }
   };
 
@@ -376,6 +454,34 @@ export default function SettingsScreen() {
             })}
           </View>
 
+          <FieldLabel text="搖籤筒方式" />
+          <View style={styles.animationModeRow}>
+            {[
+              { key: 'drag', label: '拖曳搖晃', desc: '按住籤筒，手指前後來回拖曳搖晃。' },
+              { key: 'hold', label: '長按累積', desc: '按住籤筒不放，越久搖晃力道越強。' },
+            ].map((mode) => {
+              const active = normalizeShakeMode(settings.shakeMode) === mode.key;
+
+              return (
+                <TouchableOpacity
+                  key={mode.key}
+                  style={[styles.animationModeCard, active && styles.animationModeCardActive]}
+                  onPress={() =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      shakeMode: mode.key as AppSettings['shakeMode'],
+                    }))
+                  }
+                >
+                  <Text style={[styles.animationModeTitle, active && styles.animationModeTitleActive]}>
+                    {mode.label}
+                  </Text>
+                  <Text style={styles.animationModeDesc}>{mode.desc}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           <FieldLabel text="抽籤筒動畫風格" />
           <View style={styles.animationModeRow}>
             {[
@@ -451,13 +557,23 @@ export default function SettingsScreen() {
           {showDrawPreview ? (
             <View style={styles.drawPreviewPanel}>
               <DrawAnimation
+                key={`preview-${normalizeShakeMode(settings.shakeMode)}-${previewShakeKey}`}
                 god={previewGod}
                 poemNumber={dailyPoem.poem.number}
                 durationMs={settings.lowMotionMode ? 3000 : normalizeDrawAnimationDuration(settings.drawAnimationDurationMs)}
                 styleKey={normalizeDrawAnimationStyleKey(settings.drawAnimationStyleKey)}
                 lowMotion={Boolean(settings.lowMotionMode)}
                 soundEnabled={false}
+                interactive
+                shakeMode={normalizeShakeMode(settings.shakeMode)}
+                onShakeComplete={() => {}}
               />
+              <TouchableOpacity
+                style={styles.previewToggleBtn}
+                onPress={() => setPreviewShakeKey((value) => value + 1)}
+              >
+                <Text style={styles.previewToggleText}>重新搖一次（測試用）</Text>
+              </TouchableOpacity>
             </View>
           ) : null}
         </View>
@@ -542,6 +658,45 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>雲端同步</Text>
+          <View style={styles.syncStatusCard}>
+            <Text style={styles.syncStatusTitle}>
+              {cloudMeta?.configured ? (authState?.isSignedIn ? '已啟用雲端同步' : '尚未登入同步') : 'Firebase 尚未設定'}
+            </Text>
+            <Text style={styles.syncStatusText}>
+              {cloudMeta?.configured
+                ? authState?.isSignedIn
+                  ? `同步 ID：${authState.uid?.slice(0, 8) ?? 'anonymous'} · 最新備份 ${cloudMeta.exportedAt ? new Date(cloudMeta.exportedAt).toLocaleString('zh-TW') : '尚未上傳'}`
+                  : '可用匿名登入先啟用跨裝置備份；正式版可再接 Google / Apple 登入。'
+                : '請先在 src/services/firebaseConfig.ts 填入 Firebase 專案設定。'}
+            </Text>
+          </View>
+
+          <View style={[styles.backupActions, layout.isDesktop && styles.backupActionsDesktop]}>
+            {!authState?.isSignedIn ? (
+              <TouchableOpacity
+                style={[styles.backupBtn, (!cloudMeta?.configured || syncBusy) && styles.disabledBtn]}
+                onPress={handleAnonymousSyncLogin}
+                disabled={!cloudMeta?.configured || syncBusy}
+              >
+                <Text style={styles.backupBtnText}>{syncBusy ? '處理中...' : '啟用匿名同步'}</Text>
+              </TouchableOpacity>
+            ) : (
+              <>
+                <TouchableOpacity style={[styles.backupBtn, syncBusy && styles.disabledBtn]} onPress={handleCloudUpload} disabled={syncBusy}>
+                  <Text style={styles.backupBtnText}>{syncBusy ? '同步中...' : '上傳本機資料'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.backupBtnSecondary, syncBusy && styles.disabledBtn]} onPress={handleCloudRestore} disabled={syncBusy}>
+                  <Text style={styles.backupBtnText}>從雲端還原</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.syncSignOutBtn} onPress={handleCloudSignOut} disabled={syncBusy}>
+                  <Text style={styles.syncSignOutText}>登出同步</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>備份與還原</Text>
           <Text style={styles.backupHint}>
             可將資料匯出成 JSON 備份字串，之後再貼回來還原。
@@ -572,7 +727,7 @@ export default function SettingsScreen() {
               <Text style={styles.premiumActiveTitle}>
                 ✓ 你是 Premium 會員（{SUBSCRIPTION_PLANS.find(p => p.id === premiumPlan)?.name ?? ''}）
               </Text>
-              <Text style={styles.premiumActiveDesc}>解鎖所有功能，享受完整命理體驗</Text>
+              <Text style={styles.premiumActiveDesc}>展示模式已啟用，正式版需接 App Store / Google Play / Stripe 金流</Text>
               <TouchableOpacity
                 style={styles.premiumCancelBtn}
                 onPress={async () => {
@@ -587,9 +742,9 @@ export default function SettingsScreen() {
           ) : (
             <View style={styles.premiumFreeCard}>
               <Text style={styles.premiumFreeTitle}>目前為免費版</Text>
-              <Text style={styles.premiumFreeDesc}>每日 3 次求籤・基礎 AI 解析</Text>
+              <Text style={styles.premiumFreeDesc}>每日 3 次求籤・基礎 AI 解析・正式金流尚未串接</Text>
               <TouchableOpacity style={styles.premiumUpgradeBtn} onPress={() => setShowPaywall(true)}>
-                <Text style={styles.premiumUpgradeBtnText}>升級 Premium — 解鎖完整功能</Text>
+                <Text style={styles.premiumUpgradeBtnText}>展示模式啟用 Premium</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -644,6 +799,12 @@ export default function SettingsScreen() {
           </Text>
           <TouchableOpacity onPress={() => router.push('/privacy' as never)}>
             <Text style={styles.privacyLink}>隱私權政策與服務條款</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/disclaimer' as never)}>
+            <Text style={styles.privacyLink}>免責聲明與專業建議界線</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/source-audit' as never)}>
+            <Text style={styles.privacyLink}>籤詩來源與版本校勘</Text>
           </TouchableOpacity>
         </View>
 
@@ -1011,6 +1172,26 @@ function createStyles(theme: ThemeColors) {
     color: theme.goldLight,
     fontWeight: '700',
   },
+  disabledBtn: { opacity: 0.45 },
+  syncStatusCard: {
+    backgroundColor: theme.bgMedium,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '30',
+    padding: TempleSpacing.md,
+    marginBottom: TempleSpacing.sm,
+  },
+  syncStatusTitle: { color: theme.goldLight, fontSize: TempleFonts.body, fontWeight: '800', marginBottom: 4 },
+  syncStatusText: { color: theme.textMuted, fontSize: TempleFonts.small, lineHeight: 20 },
+  syncSignOutBtn: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.danger + '55',
+  },
+  syncSignOutText: { color: theme.danger, fontWeight: '700' },
   aiInput: {
     backgroundColor: theme.bgCard, borderWidth: 1, borderColor: theme.goldDark + '40',
     borderRadius: 10, padding: TempleSpacing.sm, color: theme.textLight,
@@ -1096,3 +1277,6 @@ function createStyles(theme: ThemeColors) {
   privacyLink: { fontSize: 12, color: theme.gold, fontWeight: '600', marginTop: 10 },
   });
 }
+
+
+

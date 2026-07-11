@@ -1,34 +1,38 @@
-{
-  "id": "tw.shenming-divination",
-  "name": "神明占卜",
-  "short_name": "神明占卜",
-  "description": "線上求籤，九尊神明、一百六十首籤詩，傳統擲筊流程，AI 解籤指引。",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#1C0E06",
-  "theme_color": "#1C0E06",
-  "lang": "zh-TW",
-  "categories": ["lifestyle", "entertainment"],
-  "icons": [
-    {
-      "src": "/assets/images/icon.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/assets/images/favicon.png",
-      "sizes": "64x64",
-      "type": "image/png"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/assets/images/splash-icon.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+﻿{
+    "id":  "tw.shenming-divination",
+    "name":  "神明占卜",
+    "short_name":  "神明占卜",
+    "description":  "台灣廟宇風格線上求籤，25 位神明、多套常見籤詩系統、傳統擲筊流程、回訪追蹤與 AI 解籤指引。",
+    "start_url":  "/",
+    "scope":  "/",
+    "display":  "standalone",
+    "orientation":  "portrait",
+    "background_color":  "#1C0E06",
+    "theme_color":  "#1C0E06",
+    "lang":  "zh-TW",
+    "categories":  [
+                       "lifestyle",
+                       "utilities",
+                       "entertainment"
+                   ],
+    "icons":  [
+                  {
+                      "src":  "/assets/images/icon.png",
+                      "sizes":  "1024x1024",
+                      "type":  "image/png",
+                      "purpose":  "any maskable"
+                  },
+                  {
+                      "src":  "/assets/images/favicon.png",
+                      "sizes":  "64x64",
+                      "type":  "image/png"
+                  }
+              ],
+    "screenshots":  [
+                        {
+                            "src":  "/assets/images/splash-icon.png",
+                            "sizes":  "512x512",
+                            "type":  "image/png"
+                        }
+                    ]
 }

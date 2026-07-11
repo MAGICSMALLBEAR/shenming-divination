@@ -3,6 +3,7 @@ import { getPoemsByGod } from '@/data/gods';
 import type { Poem } from '@/data/poems/leiyushi';
 import type { DivinationRecord } from './storage';
 import { addHistory } from './storage';
+import { mulberry32 } from './seededRandom';
 export { drawZhugePoem } from '@/data/poems/zhugeShenShu';
 
 // 擲筊結果
@@ -24,16 +25,23 @@ export function tossJiaobei(): JiaobeiResult {
 }
 
 // 取得籤詩（均勻分佈的隨機）
-export function drawPoem(godId: number): Poem {
+// seed 若提供（例如來自搖籤筒的操作遙測雜湊），改用種子亂數決定索引，
+// 讓「這支籤是你搖出來的」在技術上也成立；未提供時維持原本的系統亂數。
+export function drawPoem(godId: number, seed?: number): Poem {
   const poems = getPoemsByGod(godId);
-  // 使用 crypto.getRandomValues 在可用時提供更好的隨機性
-  const array = new Uint32Array(1);
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(array);
+  let index: number;
+  if (seed != null) {
+    index = Math.floor(mulberry32(seed)() * poems.length) % poems.length;
   } else {
-    array[0] = Math.floor(Math.random() * 4294967296);
+    // 使用 crypto.getRandomValues 在可用時提供更好的隨機性
+    const array = new Uint32Array(1);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(array);
+    } else {
+      array[0] = Math.floor(Math.random() * 4294967296);
+    }
+    index = array[0] % poems.length;
   }
-  const index = array[0] % poems.length;
   return poems[index];
 }
 

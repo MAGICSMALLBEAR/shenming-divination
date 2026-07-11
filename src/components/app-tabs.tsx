@@ -4,6 +4,15 @@ import { useColorScheme } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { useI18n } from '@/hooks/useI18n';
 
+const tabIconByName = {
+  index: require('@/assets/images/tabIcons/home.png'),
+  daily: require('@/assets/images/tabIcons/daily.png'),
+  temple: require('@/assets/images/tabIcons/temple.png'),
+  collection: require('@/assets/images/tabIcons/collection.png'),
+  more: require('@/assets/images/tabIcons/more.png'),
+  settings: require('@/assets/images/tabIcons/settings.png'),
+} as const;
+
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
@@ -17,50 +26,32 @@ export default function AppTabs() {
     >
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>{t('drawLots')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
-          renderingMode="template"
-        />
+        <NativeTabs.Trigger.Icon src={tabIconByName.index} renderingMode="template" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="daily">
         <NativeTabs.Trigger.Label>{t('today')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
+        <NativeTabs.Trigger.Icon src={tabIconByName.daily} renderingMode="template" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="temple">
         <NativeTabs.Trigger.Label>{t('temple')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
+        <NativeTabs.Trigger.Icon src={tabIconByName.temple} renderingMode="template" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="collection">
         <NativeTabs.Trigger.Label>{t('collection')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
+        <NativeTabs.Trigger.Icon src={tabIconByName.collection} renderingMode="template" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="more">
         <NativeTabs.Trigger.Label>{t('more')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
+        <NativeTabs.Trigger.Icon src={tabIconByName.more} renderingMode="template" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Label>{t('settings')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
+        <NativeTabs.Trigger.Icon src={tabIconByName.settings} renderingMode="template" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

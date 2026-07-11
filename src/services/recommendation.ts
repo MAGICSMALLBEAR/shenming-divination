@@ -9,14 +9,17 @@ export interface GodRecommendation {
 }
 
 const CATEGORY_MATCH: Record<string, God['category'][]> = {
-  career: ['war', 'general'],
+  career: ['war', 'growth', 'general'],
   love: ['compassion', 'general'],
-  wealth: ['wealth', 'general'],
-  health: ['health', 'compassion'],
-  study: ['general', 'war'],
-  family: ['compassion', 'general'],
-  travel: ['sea', 'general'],
-  general: ['general', 'compassion'],
+  wealth: ['wealth', 'growth', 'general'],
+  health: ['health', 'compassion', 'release'],
+  study: ['general', 'war', 'growth'],
+  family: ['compassion', 'guardian', 'heaven'],
+  travel: ['sea', 'growth', 'guardian'],
+  blessing: ['heaven', 'release', 'compassion'],
+  protection: ['guardian', 'war', 'release'],
+  settlement: ['growth', 'guardian', 'sea'],
+  general: ['general', 'heaven', 'compassion'],
 };
 
 export interface RecommendGodOptions {
@@ -72,6 +75,21 @@ export function recommendGods(options: RecommendGodOptions): GodRecommendation[]
       if (options.questionCategory === 'love' && god.category === 'compassion') {
         score += 2;
         reasons.push('適合感情與人際修復');
+      }
+
+      if (options.questionCategory === 'blessing' && ['heaven', 'release'].includes(god.category)) {
+        score += 2;
+        reasons.push('適合祈福解厄方向');
+      }
+
+      if (options.questionCategory === 'protection' && ['guardian', 'war'].includes(god.category)) {
+        score += 2;
+        reasons.push('適合護境安宅方向');
+      }
+
+      if (options.questionCategory === 'settlement' && ['growth', 'sea'].includes(god.category)) {
+        score += 2;
+        reasons.push('適合開局遷移方向');
       }
 
       return {

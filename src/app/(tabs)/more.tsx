@@ -33,6 +33,8 @@ const TOOLS: ToolEntry[] = [
   { route: '/stats', label: '統計分析', icon: '📊', desc: '求籤記錄・趨勢圖表' },
   { route: '/wishes', label: '願望清單', icon: '🙏', desc: '許願・還願進度' },
   { route: '/map', label: '廟宇地圖', icon: '🗺️', desc: 'GPS 定位・打卡評論' },
+  { route: '/source-audit', label: '籤詩校勘', icon: '🧾', desc: '來源・版本・完整度' },
+  { route: '/disclaimer', label: '免責聲明', icon: '⚖️', desc: 'AI・醫療・法律界線' },
 ];
 
 export default function MoreScreen() {

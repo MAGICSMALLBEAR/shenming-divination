@@ -1,6 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 
-type GodCategory = 'war' | 'compassion' | 'sea' | 'health' | 'wealth' | 'general';
+type GodCategory = 'war' | 'compassion' | 'sea' | 'health' | 'wealth' | 'general' | 'heaven' | 'guardian' | 'release' | 'growth';
 
 export type RitualStyleKey = 'bronze' | 'celadon' | 'cinnabar';
 
@@ -178,12 +178,16 @@ export function getDefaultRitualStyleKey(
   switch (god.category) {
     case 'compassion':
     case 'health':
+    case 'release':
       return 'celadon';
     case 'sea':
+    case 'growth':
       return 'cinnabar';
     case 'wealth':
       return god.id === 6 ? 'bronze' : 'cinnabar';
     case 'war':
+    case 'heaven':
+    case 'guardian':
       return 'bronze';
     default:
       return god.id && god.id % 2 === 0 ? 'cinnabar' : 'bronze';

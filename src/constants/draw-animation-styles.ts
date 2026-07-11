@@ -77,6 +77,13 @@ export function normalizeDrawAnimationMode(value?: string | null): DrawAnimation
   return value === 'fixed' ? 'fixed' : 'random';
 }
 
+// 搖籤筒互動方式：drag = 手指拖曳搖晃，hold = 按住不放累積搖晃能量
+export type ShakeMode = 'drag' | 'hold';
+
+export function normalizeShakeMode(value?: string | null): ShakeMode {
+  return value === 'hold' ? 'hold' : 'drag';
+}
+
 export function normalizeDrawAnimationStyleKey(
   value?: string | null,
   fallback: DrawAnimationStyleKey = 'bronze'

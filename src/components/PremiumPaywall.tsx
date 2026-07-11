@@ -54,11 +54,11 @@ export function PremiumPaywall({ visible, onClose, featureName, onActivated }: P
           {/* 標題 */}
           <View style={styles.header}>
             <Text style={styles.crown}>👑</Text>
-            <Text style={styles.title}>神明占卜 Premium</Text>
+            <Text style={styles.title}>神明占卜 Premium 展示模式</Text>
             {featureName && (
               <Text style={styles.featureHint}>「{featureName}」為付費功能</Text>
             )}
-            <Text style={styles.subtitle}>解鎖完整命理體驗，讓神明完整指引你的人生</Text>
+            <Text style={styles.subtitle}>目前為展示版權益開關，正式上架前需串接 App Store、Google Play 或 Stripe 金流。</Text>
           </View>
 
           {alreadyPremium && (
@@ -153,7 +153,7 @@ export function PremiumPaywall({ visible, onClose, featureName, onActivated }: P
               disabled={activating}
             >
               <Text style={styles.activateBtnText}>
-                {activating ? '處理中...' : `升級 ${SUBSCRIPTION_PLANS.find(p => p.id === selectedPlan)?.name}`}
+                {activating ? '處理中...' : `展示啟用 ${SUBSCRIPTION_PLANS.find(p => p.id === selectedPlan)?.name}`}
               </Text>
             </TouchableOpacity>
           )}
@@ -315,3 +315,4 @@ function createStyles(theme: ThemeColors) {
   closeBtnText: { color: theme.textMuted, fontSize: TempleFonts.body },
   });
 }
+

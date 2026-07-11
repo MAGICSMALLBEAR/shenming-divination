@@ -1,6 +1,7 @@
-import {
+﻿import {
   extractInterpretationSections,
   formatStructuredInterpretation,
+  getAiInterpretationNotice,
   normalizeInterpretationText,
 } from '@/services/interpretation';
 
@@ -68,3 +69,11 @@ describe('formatStructuredInterpretation', () => {
     expect(result).toBe('【一句結論】\nhello');
   });
 });
+describe('getAiInterpretationNotice', () => {
+  it('adds professional caution for high-risk AI interpretation topics', () => {
+    expect(getAiInterpretationNotice('health', '我需要開刀嗎')).toContain('醫療');
+    expect(getAiInterpretationNotice('wealth', '可以借錢投資股票嗎')).toContain('投資建議');
+    expect(getAiInterpretationNotice('general', '這份合約會不會有官司')).toContain('法律意見');
+  });
+});
+

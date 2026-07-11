@@ -1,4 +1,4 @@
-// 孔明神數 - 報數輸入介面
+// 孔明神數 / 報數取籤 - 數字輸入介面
 import React, { useMemo, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView } from 'react-native';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
@@ -8,9 +8,27 @@ import { getZhugeNumberContext } from '@/data/poems/zhugeShenShu';
 
 interface ZhugeNumberInputProps {
   onSubmit: (number: number) => void;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  confirmLabel?: string;
+  tip?: string;
+  placeholder?: string;
+  showHexagramHint?: boolean;
+  showContext?: boolean;
 }
 
-export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
+export function ZhugeNumberInput({
+  onSubmit,
+  title = '諸葛神數',
+  subtitle = '思之數・報數問卦',
+  description = '靜心冥想片刻，\n心中浮現一個數字，\n即為天機所示之卦象。',
+  confirmLabel = '報數問卦 →',
+  tip = '數字無上限，取模對應 64 卦',
+  placeholder = '請報一數',
+  showHexagramHint = true,
+  showContext = true,
+}: ZhugeNumberInputProps) {
   const { theme } = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [digits, setDigits] = React.useState<string>('');
@@ -56,39 +74,37 @@ export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
   });
 
   const numberContext = React.useMemo(() => {
+    if (!showContext) return null;
     const n = parseInt(digits, 10);
     return digits && !isNaN(n) && n > 0 ? getZhugeNumberContext(n) : null;
-  }, [digits]);
+  }, [digits, showContext]);
 
-  const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
 
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scroll}
     >
-      {/* 說明 */}
       <View style={styles.header}>
-        <Text style={styles.title}>諸葛神數</Text>
-        <Text style={styles.subtitle}>思之數・報數問卦</Text>
-        <Text style={styles.desc}>
-          靜心冥想片刻，{'\n'}心中浮現一個數字，{'\n'}即為天機所示之卦象。
-        </Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.subtitle}>{subtitle}</Text>
+        <Text style={styles.desc}>{description}</Text>
       </View>
 
-      {/* 六十四卦示意 */}
-      <View style={styles.hexagramHint}>
-        <Text style={styles.hexagramText}>☰ ☱ ☲ ☳ ☴ ☵ ☶ ☷</Text>
-        <Text style={styles.hexagramLabel}>六十四卦・易經推演</Text>
-      </View>
+      {showHexagramHint ? (
+        <View style={styles.hexagramHint}>
+          <Text style={styles.hexagramText}>☰ ☱ ☲ ☳ ☴ ☵ ☶ ☷</Text>
+          <Text style={styles.hexagramLabel}>六十四卦・易經推演</Text>
+        </View>
+      ) : null}
 
-      {/* 數字顯示區 */}
       <Animated.View style={[styles.displayBox, { borderColor: glowColor }]}>
         <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
           {digits ? (
             <Text style={styles.displayNumber}>{digits}</Text>
           ) : (
-            <Text style={styles.displayPlaceholder}>請報一數</Text>
+            <Text style={styles.displayPlaceholder}>{placeholder}</Text>
           )}
         </Animated.View>
       </Animated.View>
@@ -100,7 +116,6 @@ export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
         </View>
       ) : null}
 
-      {/* 數字鍵盤 */}
       <View style={styles.keypad}>
         {keys.map((key, i) => {
           if (key === '') return <View key={i} style={styles.keyEmpty} />;
@@ -120,7 +135,6 @@ export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
         })}
       </View>
 
-      {/* 操作按鈕 */}
       <View style={styles.actions}>
         <TouchableOpacity style={styles.clearBtn} onPress={handleClear}>
           <Text style={styles.clearBtnText}>清除</Text>
@@ -130,11 +144,11 @@ export function ZhugeNumberInput({ onSubmit }: ZhugeNumberInputProps) {
           onPress={handleConfirm}
           disabled={!digits}
         >
-          <Text style={styles.confirmBtnText}>報數問卦 →</Text>
+          <Text style={styles.confirmBtnText}>{confirmLabel}</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.tip}>數字無上限，取模對應 64 卦</Text>
+      <Text style={styles.tip}>{tip}</Text>
     </ScrollView>
   );
 }
@@ -148,11 +162,13 @@ function createStyles(theme: ThemeColors) {
   header: { alignItems: 'center', marginBottom: TempleSpacing.md },
   title: {
     fontSize: 28, fontWeight: '900', color: theme.goldLight,
-    letterSpacing: 6, marginBottom: 4,
+    letterSpacing: 4, marginBottom: 4,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: TempleFonts.body, color: theme.gold,
-    fontWeight: '600', letterSpacing: 3, marginBottom: TempleSpacing.sm,
+    fontWeight: '600', letterSpacing: 2, marginBottom: TempleSpacing.sm,
+    textAlign: 'center',
   },
   desc: {
     fontSize: TempleFonts.small, color: theme.textMuted,
@@ -232,7 +248,7 @@ function createStyles(theme: ThemeColors) {
     backgroundColor: theme.red, alignItems: 'center',
   },
   confirmBtnDisabled: { opacity: 0.4 },
-  confirmBtnText: { fontSize: TempleFonts.body, fontWeight: '700', color: theme.goldLight, letterSpacing: 2 },
-  tip: { fontSize: 11, color: theme.textMuted + '80', marginTop: 4 },
+  confirmBtnText: { fontSize: TempleFonts.body, fontWeight: '700', color: theme.goldLight, letterSpacing: 2, textAlign: 'center' },
+  tip: { fontSize: 11, color: theme.textMuted + '80', marginTop: 4, textAlign: 'center' },
   });
 }

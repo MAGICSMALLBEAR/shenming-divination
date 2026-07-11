@@ -17,7 +17,7 @@ import { PoemComments } from './PoemComments';
 import { AskFollowUp } from './AskFollowUp';
 import { ShareCardView } from './ShareCardView';
 import { captureAndShare } from '@/services/shareCard';
-import { extractInterpretationSections } from '@/services/interpretation';
+import { extractInterpretationSections, getAiInterpretationNotice } from '@/services/interpretation';
 import { buildActionPlan } from '@/services/actionPlan';
 import { addWish } from '@/services/wishTracker';
 import { updateVerification, type DivinationRecord, type VerificationStatus } from '@/services/storage';
@@ -156,6 +156,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
   const godProfile = getGodProfile(god?.id);
   const oracleCatalog = getOracleCatalogByGodId(god?.id);
   const aiSections = useMemo(() => extractInterpretationSections(aiInterpretation), [aiInterpretation]);
+  const aiNotice = useMemo(() => getAiInterpretationNotice(questionCategory, question), [questionCategory, question]);
   const actionPlan = useMemo(
     () => buildActionPlan({ poem, questionCategory, question }),
     [poem, questionCategory, question]
@@ -515,6 +516,9 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
       {aiInterpretation ? (
         <Animated.View style={[styles.aiCard, { opacity: aiFadeAnim }]}>
           <Text style={styles.aiLabel}>{godName}慈悲開示</Text>
+          <View style={styles.aiNoticeBox}>
+            <Text style={styles.aiNoticeText}>{aiNotice}</Text>
+          </View>
           {aiSections.map((section, index) => (
             <View key={`${section.key}-${index}`} style={styles.aiSection}>
               <Text style={styles.aiSectionTitle}>{section.title}</Text>
@@ -952,6 +956,15 @@ function createStyles(theme: ThemeColors) {
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.goldLight },
   aiCard: { backgroundColor: theme.bgCard, borderRadius: 16, padding: TempleSpacing.lg, borderWidth: 1.5, borderColor: theme.gold },
   aiLabel: { fontSize: TempleFonts.heading, fontWeight: '700', color: theme.goldLight, marginBottom: TempleSpacing.md, textAlign: 'center' },
+  aiNoticeBox: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.warning + '55',
+    backgroundColor: theme.warning + '12',
+    padding: TempleSpacing.sm,
+    marginBottom: TempleSpacing.md,
+  },
+  aiNoticeText: { color: theme.textMuted, fontSize: 12, lineHeight: 18 },
   aiSection: {
     marginBottom: TempleSpacing.md,
     paddingBottom: TempleSpacing.sm,
@@ -970,3 +983,4 @@ function createStyles(theme: ThemeColors) {
   aiEmpty: { height: 4 },
   });
 }
+

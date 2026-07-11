@@ -15,10 +15,10 @@ import { useI18n } from '@/hooks/useI18n';
 
 const tabs = [
   { name: 'index', href: '/' as const, labelKey: 'drawLots', icon: '🏛️' },
-  { name: 'daily', href: '/daily' as any, labelKey: 'today', icon: '📅' },
-  { name: 'temple', href: '/temple' as any, labelKey: 'temple', icon: '🪔' },
+  { name: 'daily', href: '/daily' as const, labelKey: 'today', icon: '📅' },
+  { name: 'temple', href: '/temple' as const, labelKey: 'temple', icon: '🪔' },
   { name: 'collection', href: '/collection' as const, labelKey: 'collection', icon: '💾' },
-  { name: 'more', href: '/more' as any, labelKey: 'more', icon: '🔮' },
+  { name: 'more', href: '/more' as const, labelKey: 'more', icon: '🔮' },
   { name: 'settings', href: '/settings' as const, labelKey: 'settings', icon: '⚙️' },
 ];
 
@@ -31,8 +31,8 @@ export default function AppTabs() {
           <CustomTabList t={t}>
             {tabs.map((tab) => (
               <TabTrigger key={tab.name} name={tab.name} href={tab.href} asChild>
-                <TabButton>
-                  <ThemedText type="small">{t(tab.labelKey!)}</ThemedText>
+                <TabButton icon={tab.icon}>
+                  <ThemedText type="small">{t(tab.labelKey)}</ThemedText>
                 </TabButton>
               </TabTrigger>
             ))}
@@ -44,13 +44,14 @@ export default function AppTabs() {
   );
 }
 
-export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
+export function TabButton({ children, isFocused, icon, ...props }: TabTriggerSlotProps & { icon?: string }) {
   return (
     <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
         type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
         style={[styles.tabButtonView, isFocused && styles.tabButtonActive]}
       >
+        {icon ? <ThemedText type="small" style={styles.tabIcon}>{icon}</ThemedText> : null}
         <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
           {children}
         </ThemedText>
@@ -66,7 +67,7 @@ export function CustomTabList(props: TabListProps & { t: (key: string) => string
 
   return (
     <View {...restProps} style={[styles.tabListContainer, isMobile && { padding: Spacing.two }]}>
-      <ThemedView type="backgroundElement" style={[styles.innerContainer, isMobile && { paddingHorizontal: Spacing.three }]}>
+      <ThemedView type="backgroundElement" style={[styles.innerContainer, isMobile && { paddingHorizontal: Spacing.three }]}> 
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -118,7 +119,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressed: { opacity: 0.7 },
-  tabButtonView: { paddingVertical: Spacing.one, paddingHorizontal: 10, borderRadius: Spacing.three },
+  tabButtonView: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: 10,
+    borderRadius: Spacing.three,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  tabIcon: { lineHeight: 16 },
   tabButtonActive: { borderWidth: 1, borderColor: '#C9A96E44' },
   brandText: { marginRight: 'auto', paddingRight: 16 },
   brandTextMobile: { marginRight: 8 },

@@ -1,6 +1,6 @@
 // 抽籤動畫元件
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, PanResponder } from 'react-native';
 import { Image } from 'expo-image';
 import type { God } from '@/data/gods';
 import { getGodSoftImage } from '@/data/godImages';
@@ -9,12 +9,14 @@ import {
   drawAnimationStyles,
   getDrawAnimationRitualStyle,
   type DrawAnimationStyleKey,
+  type ShakeMode,
 } from '@/constants/draw-animation-styles';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
 import { playDrawSound } from '@/services/proceduralSound';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { hashShakeTelemetry, type ShakeTelemetrySample } from '@/services/seededRandom';
 
 const STICKS: readonly { left: number; rotate: string; height: number; selected?: boolean }[] = [
   { left: 8, rotate: '-12deg', height: 112 },
@@ -42,6 +44,11 @@ interface DrawAnimationProps {
   styleKey?: DrawAnimationStyleKey;
   lowMotion?: boolean;
   soundEnabled?: boolean;
+  // interactive：true 時籤枝不會自動跳出，使用者必須親自「搖籤筒」
+  // （依 shakeMode 用拖曳或長按）才會決定籤詩、進入既有的開籤演出。
+  interactive?: boolean;
+  shakeMode?: ShakeMode;
+  onShakeComplete?: (seed: number) => void;
 }
 
 export function DrawAnimation({
@@ -51,6 +58,9 @@ export function DrawAnimation({
   styleKey = 'bronze',
   lowMotion = false,
   soundEnabled = true,
+  interactive = false,
+  shakeMode = 'drag',
+  onShakeComplete,
 }: DrawAnimationProps) {
   const systemReducedMotion = useReducedMotion();
   const reducedMotion = systemReducedMotion || lowMotion;
@@ -75,6 +85,20 @@ export function DrawAnimation({
   const { theme } = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // ── 互動搖籤前置階段（interactive）用的狀態 ──────────────────────
+  // popped：使用者是否已經把籤枝搖出來了。非互動模式一律視為已跳出，
+  // 完全維持原本自動播放的行為。
+  const [popped, setPopped] = useState(!interactive);
+  const energyRef = useRef(0);
+  const thresholdRef = useRef(0.55 + Math.random() * 0.35);
+  const telemetryRef = useRef<ShakeTelemetrySample[]>([]);
+  const phaseStartRef = useRef(Date.now());
+  const dragAccumRef = useRef(0);
+  const lastTouchRef = useRef<{ x: number; y: number } | null>(null);
+  const isPressedRef = useRef(false);
+  const holdStreakRef = useRef(0);
+  const peekMilestonesRef = useRef({ p1: false, p2: false });
+
   const highlightColor = god?.accentColor || theme.goldLight;
   const primaryColor = god?.primaryColor || theme.redLight;
   const auraColor = god?.auraColor || '#F4D39B';
@@ -98,7 +122,114 @@ export function DrawAnimation({
     )
   ), [chosenDropAnim, chosenLiftAnim]);
 
+  // 香爐光暈與浮動屬於裝飾性動畫，跟「有沒有搖籤筒」無關，
+  // 全程（含互動搖籤前置階段）持續播放，避免搖籤/開籤切換時重啟造成跳動。
   useEffect(() => {
+    if (reducedMotion) {
+      auraAnim.setValue(0.45);
+      floatAnim.setValue(0);
+      return;
+    }
+    const auraLoop = Animated.loop(
+      Animated.timing(auraAnim, { toValue: 1, duration: 2800, easing: Easing.inOut(Easing.sin), useNativeDriver: true })
+    );
+    const floatLoop = Animated.loop(
+      Animated.timing(floatAnim, { toValue: 1, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true })
+    );
+    auraLoop.start();
+    floatLoop.start();
+    return () => {
+      auraLoop.stop();
+      floatLoop.stop();
+    };
+  }, [auraAnim, floatAnim, reducedMotion]);
+
+  // 互動搖籤前置階段：等使用者親自搖出籤枝（拖曳或長按皆會累積「晃動能量」），
+  // 達到隨機門檻才把操作遙測雜湊成種子，交給下面的開籤演出。
+  useEffect(() => {
+    if (!interactive || popped) return;
+
+    if (reducedMotion) {
+      onShakeComplete?.(hashShakeTelemetry([{ t: 0, effort: 1 }]));
+      setPopped(true);
+      return;
+    }
+
+    phaseStartRef.current = Date.now();
+    energyRef.current = 0;
+    thresholdRef.current = 0.55 + Math.random() * 0.35;
+    telemetryRef.current = [];
+    peekMilestonesRef.current = { p1: false, p2: false };
+    holdStreakRef.current = 0;
+    shakeEnvelope.setValue(0);
+    setPhaseIndex(0);
+
+    const idleLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: true }),
+      ])
+    );
+    idleLoop.start();
+
+    const tick = setInterval(() => {
+      let effort = 0;
+      if (shakeMode === 'hold') {
+        if (isPressedRef.current) {
+          holdStreakRef.current += 1;
+          effort = 0.05 + Math.min(holdStreakRef.current, 20) * 0.004;
+        } else {
+          holdStreakRef.current = 0;
+          effort = -0.03;
+        }
+      } else {
+        const moved = dragAccumRef.current;
+        dragAccumRef.current = 0;
+        effort = moved > 0 ? Math.min(0.16, moved / 260) : -0.025;
+      }
+
+      energyRef.current = Math.max(0, energyRef.current + effort);
+      telemetryRef.current.push({ t: Date.now() - phaseStartRef.current, effort });
+      if (telemetryRef.current.length > 400) telemetryRef.current.shift();
+
+      const envelope = Math.min(1, energyRef.current / thresholdRef.current);
+      shakeEnvelope.setValue(envelope);
+      progressAnim.setValue(envelope);
+
+      if (!peekMilestonesRef.current.p1 && envelope >= 0.35) {
+        peekMilestonesRef.current.p1 = true;
+        setPhaseIndex(1);
+        Animated.sequence([
+          Animated.timing(chosenLiftAnim, { toValue: 0.22, duration: 130, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(chosenLiftAnim, { toValue: 0.03, duration: 160, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+        ]).start();
+      }
+      if (!peekMilestonesRef.current.p2 && envelope >= 0.68) {
+        peekMilestonesRef.current.p2 = true;
+        setPhaseIndex(2);
+        Animated.sequence([
+          Animated.timing(chosenLiftAnim, { toValue: 0.4, duration: 110, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(chosenLiftAnim, { toValue: 0.08, duration: 140, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+        ]).start();
+      }
+
+      if (energyRef.current >= thresholdRef.current) {
+        clearInterval(tick);
+        idleLoop.stop();
+        const seed = hashShakeTelemetry(telemetryRef.current);
+        onShakeComplete?.(seed);
+        setPopped(true);
+      }
+    }, 110);
+
+    return () => {
+      clearInterval(tick);
+      idleLoop.stop();
+    };
+  }, [interactive, popped, reducedMotion, shakeMode, motion.shakeDuration, onShakeComplete, chosenLiftAnim, shakeAnim, shakeEnvelope, progressAnim]);
+
+  useEffect(() => {
+    if (interactive && !popped) return;
     if (soundEnabled) {
       playDrawSound();
     }
@@ -124,12 +255,6 @@ export function DrawAnimation({
     }
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    const auraLoop = Animated.loop(
-      Animated.timing(auraAnim, { toValue: 1, duration: 2800, easing: Easing.inOut(Easing.sin), useNativeDriver: true })
-    );
-    const floatLoop = Animated.loop(
-      Animated.timing(floatAnim, { toValue: 1, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true })
-    );
     const shakeLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: true }),
@@ -152,8 +277,9 @@ export function DrawAnimation({
       );
     });
 
-    auraLoop.start();
-    floatLoop.start();
+    // 若是互動搖籤流程，籤枝在前置階段已經跳出來了，這裡的 progress bar
+    // 改用來表示「開籤演出」本身的進度，所以要從 0 重新開始。
+    progressAnim.setValue(0);
     Animated.timing(progressAnim, {
       toValue: 1,
       duration: ms,
@@ -167,20 +293,28 @@ export function DrawAnimation({
     paperAnim.setValue(0);
     flipAnim.setValue(0);
 
-    timers.push(setTimeout(() => setPhaseIndex(1), ms * 0.22));
-    timers.push(setTimeout(() => setPhaseIndex(2), ms * 0.57));
-    timers.push(setTimeout(() => setPhaseIndex(3), ms * 0.8));
-    timers.push(setTimeout(() => {
-      shakeLoop.start();
-      jitterLoops.forEach((loop) => loop?.start());
-      // 搖晃力道由靜到動漸強，而不是一開始就全力晃動。
-      Animated.timing(shakeEnvelope, {
-        toValue: 1,
-        duration: ms * 0.3,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-    }, ms * 0.16));
+    if (interactive) {
+      // 前置階段已經用搖籤能量把 phaseIndex 帶到 2（天意已定），
+      // 這裡直接進到最後一句「聖示將明」。
+      setPhaseIndex(3);
+    } else {
+      timers.push(setTimeout(() => setPhaseIndex(1), ms * 0.22));
+      timers.push(setTimeout(() => setPhaseIndex(2), ms * 0.57));
+      timers.push(setTimeout(() => setPhaseIndex(3), ms * 0.8));
+      // 非互動（自動播放）才需要重新演一次搖籤筒的劇本；互動模式的搖晃
+      // 已經是使用者剛剛真的做過的動作，籤枝跳出後不需要再搖一次。
+      timers.push(setTimeout(() => {
+        shakeLoop.start();
+        jitterLoops.forEach((loop) => loop?.start());
+        // 搖晃力道由靜到動漸強，而不是一開始就全力晃動。
+        Animated.timing(shakeEnvelope, {
+          toValue: 1,
+          duration: ms * 0.3,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }).start();
+      }, ms * 0.16));
+    }
     // 天意欲出：籤枝先探頭一下又縮回，製造「快掉出來」的懸念，
     // 再真正彈出、用彈簧效果自然回彈落定。
     timers.push(setTimeout(() => {
@@ -236,12 +370,10 @@ export function DrawAnimation({
 
     return () => {
       timers.forEach(clearTimeout);
-      auraLoop.stop();
-      floatLoop.stop();
       shakeLoop.stop();
       jitterLoops.forEach((loop) => loop?.stop());
     };
-  }, [auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flipAnim, floatAnim, impactAnim, motion.dropDistance, motion.liftDistance, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, shakeEnvelope, soundEnabled, stickJitterAnims]);
+  }, [interactive, popped, auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flipAnim, floatAnim, impactAnim, motion.dropDistance, motion.liftDistance, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, shakeEnvelope, soundEnabled, stickJitterAnims]);
 
   // shakeEnergy = shakeAnim(-1..1) 乘上 shakeEnvelope(0..1)，讓晃動力道從無到有
   // 漸強，而不是一開始就等幅擺動。
@@ -331,10 +463,45 @@ export function DrawAnimation({
     outputRange: [motion.paperRotateStart, '8deg', '0deg'],
   }), [flipAnim, motion.paperRotateStart]);
 
+  const isShaking = interactive && !popped;
+
+  // 拖曳模式跟長按模式共用同一個 PanResponder：
+  // - PanResponder 底層同時支援滑鼠與觸控（react-native-web 上兩者都會走 Responder 系統），
+  //   如果拖曳跟長按各自只接原生的 mouse/touch 事件，會在特定平台上完全失效（例如長按若只接
+  //   onTouchStart，滑鼠使用者在網頁版就永遠按不動）。
+  // - 拖曳模式：手指前後來回移動的距離會累積「晃動能量」。
+  // - 長按模式：只在乎「有沒有按住」，用 grant/release 切換 isPressedRef。
+  const panResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => isShaking,
+    onMoveShouldSetPanResponder: () => isShaking,
+    onPanResponderGrant: (evt) => {
+      isPressedRef.current = true;
+      lastTouchRef.current = { x: evt.nativeEvent.pageX, y: evt.nativeEvent.pageY };
+    },
+    onPanResponderMove: (evt) => {
+      if (shakeMode !== 'drag') return;
+      const { pageX, pageY } = evt.nativeEvent;
+      if (lastTouchRef.current) {
+        const dx = pageX - lastTouchRef.current.x;
+        const dy = pageY - lastTouchRef.current.y;
+        dragAccumRef.current += Math.hypot(dx, dy);
+      }
+      lastTouchRef.current = { x: pageX, y: pageY };
+    },
+    onPanResponderRelease: () => { isPressedRef.current = false; lastTouchRef.current = null; },
+    onPanResponderTerminate: () => { isPressedRef.current = false; lastTouchRef.current = null; },
+  }), [shakeMode, isShaking]);
+  const shakeTouchHandlers = panResponder.panHandlers;
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>抽籤中</Text>
       <Text style={styles.subtitle}>{activePhase}</Text>
+      {isShaking ? (
+        <Text style={[styles.shakeInstruction, { color: highlightColor }]}>
+          {shakeMode === 'drag' ? '按住籤筒，前後來回搖晃' : '按住籤筒不放，讓它越搖越用力'}
+        </Text>
+      ) : null}
       <View style={[styles.styleBadge, { borderColor: ritualStyle.chipColor + '66' }]}>
         <Text style={[styles.styleBadgeText, { color: ritualStyle.chipColor }]}>
           {drawStyle.label}
@@ -414,6 +581,7 @@ export function DrawAnimation({
           </View>
 
           <Animated.View
+            {...(isShaking ? shakeTouchHandlers : {})}
             style={[
               styles.qiantong,
               {
@@ -570,6 +738,11 @@ function createStyles(theme: ThemeColors) {
   subtitle: {
     fontSize: TempleFonts.small,
     color: theme.textMuted,
+    marginBottom: TempleSpacing.sm,
+  },
+  shakeInstruction: {
+    fontSize: TempleFonts.small,
+    fontWeight: '700',
     marginBottom: TempleSpacing.sm,
   },
   styleBadge: {
