@@ -123,6 +123,21 @@ export async function playDrawSound() {
   if (!played) synthShaker();
 }
 
+// 單次竹籤碰撞；互動階段由呼叫端節流，避免連續載入與聲音過密。
+export async function playStickClack(intensity = 0.5) {
+  const level = Math.max(0.2, Math.min(1, intensity));
+  if (Platform.OS === 'web') {
+    synth('triangle', 300 + level * 170, 0.035 + level * 0.025, 0.035 + level * 0.055);
+    synth('sine', 120 + level * 60, 0.055, 0.018 + level * 0.025, 0.012);
+    return;
+  }
+  try {
+    await Haptics.selectionAsync();
+  } catch {}
+  if (level > 0.72) {
+    await playNativeSound(tryRequire('draw'));
+  }
+}
 // 上香 — 木魚聲
 export async function playIncenseSound() {
   try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft); } catch {}

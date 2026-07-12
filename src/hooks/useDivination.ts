@@ -1,5 +1,5 @@
 // 求籤流程 Hook - 管理完整求籤狀態機
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { Poem } from '@/data/poems/leiyushi';
 import { DRAW_ANIMATION_DEFAULT_MS, normalizeDrawAnimationDuration } from '@/constants/divination';
 import {
@@ -52,6 +52,8 @@ export function useDivination() {
   const [drawAnimationDurationMs, setDrawAnimationDurationMs] = useState(DRAW_ANIMATION_DEFAULT_MS);
   const [drawAnimationStyleKey, setDrawAnimationStyleKey] =
     useState<DrawAnimationStyleKey>('bronze');
+  const animationResolverRef = useRef<(() => void) | null>(null);
+  const shakeCompletedRef = useRef(false);
   const [drawPhase, setDrawPhase] = useState<DrawPhase>('revealing');
   const [drawMethod, setDrawMethod] = useState<DrawMethod>('jiaobei-shake');
 
@@ -92,6 +94,10 @@ export function useDivination() {
     return result;
   }, []);
 
+  const finishDrawAnimation = useCallback(() => {
+    animationResolverRef.current?.();
+  }, []);
+
   const submitZhugeNumber = useCallback((n: number) => {
     setZhugeNumber(n);
     setStep('drawing');
@@ -120,7 +126,12 @@ export function useDivination() {
     setDrawAnimationStyleKey(animationStyle);
     setIsLoading(true);
 
-    await new Promise(resolve => setTimeout(resolve, animationDuration));
+    await new Promise<void>((resolve) => {
+      let fallback: ReturnType<typeof setTimeout>;
+      animationResolverRef.current = () => { clearTimeout(fallback); resolve(); };
+      fallback = setTimeout(() => animationResolverRef.current?.(), animationDuration + 1200);
+    });
+    animationResolverRef.current = null;
 
     setDrawnPoem(poem);
     setPendingPoem(null);
@@ -197,6 +208,7 @@ export function useDivination() {
   // 之後（見 completeShake）才真正決定抽到哪一支。
   const performDraw = useCallback((inputZhugeNumber?: number) => {
     if (!selectedGodId) return;
+    shakeCompletedRef.current = false;
     const god = gods.find(g => g.id === selectedGodId);
     setStep('drawing');
     if (god?.poemSystem === '諸葛神數' && inputZhugeNumber != null) {
@@ -245,7 +257,9 @@ export function useDivination() {
   // 搖籤筒的互動階段結束時呼叫：seed 來自使用者操作遙測的雜湊，
   // 用來決定實際抽到哪一支籤。
   const completeShake = useCallback((seed: number) => {
-    setDrawPhase('revealing');
+        if (shakeCompletedRef.current) return;
+    shakeCompletedRef.current = true;
+setDrawPhase('revealing');
     void revealDraw(undefined, seed);
   }, [revealDraw]);
 
@@ -264,6 +278,9 @@ export function useDivination() {
   }, [currentRecord, isFavorited, showToast]);
 
   const reset = useCallback(() => {
+    animationResolverRef.current?.();
+    animationResolverRef.current = null;
+    shakeCompletedRef.current = false;
     setStep('select-god');
     setSelectedGodId(null);
     setQuestion('');
@@ -312,6 +329,7 @@ export function useDivination() {
     performNumberDraw,
     chooseDrawMethod,
     completeShake,
+    finishDrawAnimation,
     toggleFavorite,
     reset,
     setUserName,
@@ -320,3 +338,5 @@ export function useDivination() {
     showToast,
   };
 }
+
+

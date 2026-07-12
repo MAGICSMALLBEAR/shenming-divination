@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, PanResponder } from 'react-native';
 import { Image } from 'expo-image';
+import * as Haptics from 'expo-haptics';
 import type { God } from '@/data/gods';
 import { getGodSoftImage } from '@/data/godImages';
 import { DRAW_ANIMATION_DEFAULT_MS } from '@/constants/divination';
@@ -14,19 +15,33 @@ import {
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
-import { playDrawSound } from '@/services/proceduralSound';
+import { playDrawSound, playStickClack } from '@/services/proceduralSound';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { hashShakeTelemetry, type ShakeTelemetrySample } from '@/services/seededRandom';
 
-const STICKS: readonly { left: number; rotate: string; height: number; selected?: boolean }[] = [
-  { left: 8, rotate: '-12deg', height: 112 },
-  { left: 24, rotate: '-6deg', height: 124 },
-  { left: 42, rotate: '-2deg', height: 132 },
-  { left: 61, rotate: '0deg', height: 146, selected: true },
-  { left: 80, rotate: '3deg', height: 132 },
-  { left: 98, rotate: '8deg', height: 122 },
-  { left: 116, rotate: '12deg', height: 110 },
-] as const;
+interface StickDefinition {
+  left: number;
+  rotate: string;
+  height: number;
+  depth: 'back' | 'middle' | 'front';
+  width: number;
+  selected?: boolean;
+}
+
+const STICKS: readonly StickDefinition[] = Array.from({ length: 27 }, (_, index) => {
+  const column = index % 14;
+  const depthIndex = Math.floor(index / 9);
+  const depth: StickDefinition['depth'] = depthIndex === 0 ? 'back' : depthIndex === 1 ? 'middle' : 'front';
+  const selected = index === 13;
+  return {
+    left: 5 + column * 9.7 + (depthIndex % 2) * 3,
+    rotate: String(((index * 7) % 19) - 9) + 'deg',
+    height: selected ? 150 : 105 + ((index * 17) % 38),
+    depth,
+    width: depth === 'front' ? 10 : 9,
+    selected,
+  };
+});
 
 const SELECTED_STICK_INDEX = STICKS.findIndex((stick) => stick.selected);
 
@@ -34,7 +49,7 @@ const PHASES = [
   '誠心默念，神意匯聚',
   '籤筒漸動，靈籤浮起',
   '天意已定，籤枝落下',
-  '聖示將明，請稍候片刻',
+  '靈籤落定，翻面示號',
 ];
 
 interface DrawAnimationProps {
@@ -49,6 +64,7 @@ interface DrawAnimationProps {
   interactive?: boolean;
   shakeMode?: ShakeMode;
   onShakeComplete?: (seed: number) => void;
+  onComplete?: () => void;
 }
 
 export function DrawAnimation({
@@ -61,6 +77,7 @@ export function DrawAnimation({
   interactive = false,
   shakeMode = 'drag',
   onShakeComplete,
+  onComplete,
 }: DrawAnimationProps) {
   const systemReducedMotion = useReducedMotion();
   const reducedMotion = systemReducedMotion || lowMotion;
@@ -79,9 +96,12 @@ export function DrawAnimation({
   const flashAnim = useRef(new Animated.Value(0)).current;
   const paperAnim = useRef(new Animated.Value(0)).current;
   const flipAnim = useRef(new Animated.Value(0)).current;
+  const flightAnim = useRef(new Animated.Value(0)).current;
+  const flightFlipAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [trackWidth, setTrackWidth] = useState(220);
+  const [effortHint, setEffortHint] = useState('捧穩籤筒，緩緩來回搖動');
   const { theme } = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -98,6 +118,8 @@ export function DrawAnimation({
   const isPressedRef = useRef(false);
   const holdStreakRef = useRef(0);
   const peekMilestonesRef = useRef({ p1: false, p2: false });
+  const lastClackRef = useRef(0);
+  const completedRef = useRef(false);
 
   const highlightColor = god?.accentColor || theme.goldLight;
   const primaryColor = god?.primaryColor || theme.redLight;
@@ -193,12 +215,22 @@ export function DrawAnimation({
       if (telemetryRef.current.length > 400) telemetryRef.current.shift();
 
       const envelope = Math.min(1, energyRef.current / thresholdRef.current);
+      const now = Date.now();
+      if (soundEnabled && effort > 0.025 && now - lastClackRef.current > 420) {
+        lastClackRef.current = now;
+        playStickClack(envelope).catch(() => {});
+      }
       shakeEnvelope.setValue(envelope);
       progressAnim.setValue(envelope);
+
+      if (envelope < 0.18) setEffortHint(effort > 0 ? '很好，保持來回的節奏' : '請按住籤筒開始搖動');
+      else if (envelope < 0.62) setEffortHint('節奏正好，請繼續');
+      else setEffortHint('靈籤漸起，保持平穩');
 
       if (!peekMilestonesRef.current.p1 && envelope >= 0.35) {
         peekMilestonesRef.current.p1 = true;
         setPhaseIndex(1);
+        Haptics.selectionAsync().catch(() => {});
         Animated.sequence([
           Animated.timing(chosenLiftAnim, { toValue: 0.22, duration: 130, easing: Easing.out(Easing.quad), useNativeDriver: true }),
           Animated.timing(chosenLiftAnim, { toValue: 0.03, duration: 160, easing: Easing.in(Easing.quad), useNativeDriver: true }),
@@ -207,6 +239,7 @@ export function DrawAnimation({
       if (!peekMilestonesRef.current.p2 && envelope >= 0.68) {
         peekMilestonesRef.current.p2 = true;
         setPhaseIndex(2);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
         Animated.sequence([
           Animated.timing(chosenLiftAnim, { toValue: 0.4, duration: 110, easing: Easing.out(Easing.quad), useNativeDriver: true }),
           Animated.timing(chosenLiftAnim, { toValue: 0.08, duration: 140, easing: Easing.in(Easing.quad), useNativeDriver: true }),
@@ -217,6 +250,7 @@ export function DrawAnimation({
         clearInterval(tick);
         idleLoop.stop();
         const seed = hashShakeTelemetry(telemetryRef.current);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
         onShakeComplete?.(seed);
         setPopped(true);
       }
@@ -230,6 +264,7 @@ export function DrawAnimation({
 
   useEffect(() => {
     if (interactive && !popped) return;
+    completedRef.current = false;
     if (soundEnabled) {
       playDrawSound();
     }
@@ -250,11 +285,19 @@ export function DrawAnimation({
       flashAnim.setValue(0);
       paperAnim.setValue(1);
       flipAnim.setValue(1);
+      flightAnim.setValue(1);
+      flightFlipAnim.setValue(1);
       progressAnim.setValue(1);
-      return;
+      const reducedTimer = setTimeout(() => {
+        if (!completedRef.current) { completedRef.current = true; onComplete?.(); }
+      }, 0);
+      return () => clearTimeout(reducedTimer);
     }
 
     const timers: ReturnType<typeof setTimeout>[] = [];
+    timers.push(setTimeout(() => {
+      if (!completedRef.current) { completedRef.current = true; onComplete?.(); }
+    }, ms * 1.06));
     const shakeLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: true }),
@@ -265,7 +308,7 @@ export function DrawAnimation({
     // 每支未中籤的籤枝各自用不同節奏小幅晃動，讓籤筒看起來像一把籤枝互相碰撞，
     // 而不是整塊硬殼平移。
     const jitterLoops = stickJitterAnims.map((anim, index) => {
-      if (index === SELECTED_STICK_INDEX) return null;
+      if (index === SELECTED_STICK_INDEX || index % 2 === 1) return null;
       const base = 76 + index * 19;
       return Animated.loop(
         Animated.sequence([
@@ -292,6 +335,8 @@ export function DrawAnimation({
     flashAnim.setValue(0);
     paperAnim.setValue(0);
     flipAnim.setValue(0);
+    flightAnim.setValue(0);
+    flightFlipAnim.setValue(0);
 
     if (interactive) {
       // 前置階段已經用搖籤能量把 phaseIndex 帶到 2（天意已定），
@@ -327,53 +372,65 @@ export function DrawAnimation({
       Animated.sequence([
         Animated.timing(chosenLiftAnim, {
           toValue: 1,
-          duration: ms * 0.17,
+          duration: ms * 0.13,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-        Animated.spring(chosenDropAnim, {
+        Animated.timing(flightAnim, {
           toValue: 1,
-          friction: 6,
-          tension: 55,
+          duration: ms * 0.3,
+          easing: Easing.inOut(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(({ finished }) => {
+        if (!finished) return;
+        playStickClack(1).catch(() => {});
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      });
       Animated.sequence([
         Animated.timing(impactAnim, { toValue: 0.97, duration: 70, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.spring(impactAnim, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }),
       ]).start();
     }, ms * 0.4));
     timers.push(setTimeout(() => {
+      Animated.timing(flightFlipAnim, {
+        toValue: 1,
+        duration: ms * 0.2,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    }, ms * 0.7));
+    timers.push(setTimeout(() => {
       Animated.sequence([
         Animated.timing(flashAnim, { toValue: 1, duration: ms * 0.04, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.timing(flashAnim, { toValue: 0, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       ]).start();
-    }, ms * 0.68));
+    }, ms * 0.76));
     timers.push(setTimeout(() => {
       Animated.parallel([
         Animated.timing(paperAnim, { toValue: 1, duration: ms * 0.16, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
         Animated.timing(flipAnim, { toValue: 1, duration: ms * 0.28, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
       ]).start();
-    }, ms * 0.6));
+    }, ms * 0.82));
     timers.push(setTimeout(() => {
       Animated.parallel([
         Animated.timing(revealOpacity, { toValue: 1, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.timing(revealTranslate, { toValue: 0, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       ]).start();
-    }, ms * 0.73));
+    }, ms * 0.9));
     timers.push(setTimeout(() => {
       Animated.parallel([
         Animated.timing(numberOpacity, { toValue: 1, duration: ms * 0.09, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.spring(numberScale, { toValue: 1, tension: 90, friction: 8, useNativeDriver: true }),
       ]).start();
-    }, ms * 0.63));
+    }, ms * 0.78));
 
     return () => {
       timers.forEach(clearTimeout);
       shakeLoop.stop();
       jitterLoops.forEach((loop) => loop?.stop());
     };
-  }, [interactive, popped, auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flipAnim, floatAnim, impactAnim, motion.dropDistance, motion.liftDistance, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, shakeEnvelope, soundEnabled, stickJitterAnims]);
+  }, [interactive, popped, onComplete, auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flightAnim, flightFlipAnim, flipAnim, floatAnim, impactAnim, motion.dropDistance, motion.liftDistance, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, shakeEnvelope, soundEnabled, stickJitterAnims]);
 
   // shakeEnergy = shakeAnim(-1..1) 乘上 shakeEnvelope(0..1)，讓晃動力道從無到有
   // 漸強，而不是一開始就等幅擺動。
@@ -463,6 +520,45 @@ export function DrawAnimation({
     outputRange: [motion.paperRotateStart, '8deg', '0deg'],
   }), [flipAnim, motion.paperRotateStart]);
 
+  const flyingStickOpacity = useMemo(() => flightAnim.interpolate({
+    inputRange: [0, 0.04, 1],
+    outputRange: [0, 1, 1],
+  }), [flightAnim]);
+
+  const flyingStickX = useMemo(() => flightAnim.interpolate({
+    inputRange: [0, 0.42, 1],
+    outputRange: [0, 22, -12],
+  }), [flightAnim]);
+
+  const flyingStickY = useMemo(() => flightAnim.interpolate({
+    inputRange: [0, 0.38, 0.82, 1],
+    outputRange: [0, -48, 118, 126],
+  }), [flightAnim]);
+
+  const flyingStickRotate = useMemo(() => flightAnim.interpolate({
+    inputRange: [0, 0.4, 0.82, 1],
+    outputRange: ['0deg', '30deg', '96deg', '90deg'],
+  }), [flightAnim]);
+
+  const flyingStickScale = useMemo(() => flightAnim.interpolate({
+    inputRange: [0, 0.45, 0.88, 1],
+    outputRange: [1, 1.08, 0.98, 1],
+  }), [flightAnim]);
+
+  const flyingStickFlip = useMemo(() => flightFlipAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ['0deg', '90deg', '180deg'],
+  }), [flightFlipAnim]);
+
+  const flyingNumberOpacity = useMemo(() => flightFlipAnim.interpolate({
+    inputRange: [0, 0.54, 0.72, 1],
+    outputRange: [0, 0, 1, 1],
+  }), [flightFlipAnim]);
+
+  const selectedIn筒Opacity = useMemo(() => flightAnim.interpolate({
+    inputRange: [0, 0.06, 1],
+    outputRange: [1, 0, 0],
+  }), [flightAnim]);
   const isShaking = interactive && !popped;
 
   // 拖曳模式跟長按模式共用同一個 PanResponder：
@@ -499,7 +595,7 @@ export function DrawAnimation({
       <Text style={styles.subtitle}>{activePhase}</Text>
       {isShaking ? (
         <Text style={[styles.shakeInstruction, { color: highlightColor }]}>
-          {shakeMode === 'drag' ? '按住籤筒，前後來回搖晃' : '按住籤筒不放，讓它越搖越用力'}
+          {shakeMode === 'drag' ? effortHint : '按住籤筒不放，讓它越搖越用力'}
         </Text>
       ) : null}
       <View style={[styles.styleBadge, { borderColor: ritualStyle.chipColor + '66' }]}>
@@ -558,12 +654,7 @@ export function DrawAnimation({
         />
 
         <Animated.View style={[styles.altarGlow, { transform: [{ translateY: altarFloat }] }]}>
-          <Image
-            source={ritualStyle.censer.placedSprite}
-            style={styles.censerSprite}
-            contentFit="contain"
-            transition={200}
-          />
+
           <View style={styles.stickShadowRow}>
             {STICKS.map((stick, index) => (
               <View
@@ -580,23 +671,31 @@ export function DrawAnimation({
             ))}
           </View>
 
+          <View style={styles.contactShadow} />
           <Animated.View
             {...(isShaking ? shakeTouchHandlers : {})}
             style={[
               styles.qiantong,
               {
-                backgroundColor: ritualStyle.censer.body,
-                borderColor: ritualStyle.censer.border,
+                backgroundColor: 'transparent',
+                borderColor: 'transparent',
                 transform: [{ translateX }, { rotate }, { translateY: altarFloat }, { scale: impactAnim }],
               },
             ]}
           >
-            <View style={[styles.qiantongLip, { backgroundColor: ritualStyle.censer.lip }]} />
+            <Image
+              source={ritualStyle.censer.realisticHolderSprite}
+              style={styles.realisticHolder}
+              contentFit={'fill'}
+              cachePolicy="memory-disk"
+            />
+            <View style={[styles.qiantongInner, { backgroundColor: ritualStyle.censer.border }]} />
             <View style={styles.sticksRow}>
               {STICKS.map((stick, index) => {
                 const isSelected = Boolean(stick.selected);
                 const jitter = stickJitterAnims[index];
                 const animatedStyle = isSelected ? {
+                  opacity: selectedIn筒Opacity,
                   transform: [
                     { rotate: stick.rotate },
                     { translateY: chosenStickTranslateY },
@@ -629,18 +728,57 @@ export function DrawAnimation({
                       {
                         left: stick.left,
                         height: stick.height,
-                        backgroundColor: isSelected ? ritualStyle.censer.accent : '#E8D7B2',
-                        borderColor: isSelected ? highlightColor : ritualStyle.censer.baseBorder,
+                        width: stick.width,
+                        opacity: stick.depth === 'back' ? 0.72 : stick.depth === 'middle' ? 0.88 : 1,
+                        zIndex: isSelected ? 40 : stick.depth === 'front' ? 30 : stick.depth === 'middle' ? 20 : 10,
+                        backgroundColor: 'transparent',
+                        borderColor: 'transparent',
                       },
                       animatedStyle,
                     ]}
                   >
-                    <View style={[styles.stickTip, { backgroundColor: isSelected ? primaryColor : ritualStyle.censer.ornament }]} />
+                    <Image
+                      source={ritualStyle.censer.realisticStickSprite}
+                      style={styles.realisticStick}
+                      contentFit={'fill'}
+              cachePolicy="memory-disk"
+                    />
                   </Animated.View>
                 );
               })}
             </View>
-            <Text style={[styles.qiantongText, { color: ritualStyle.censer.accent }]}>籤</Text>
+            <View style={[styles.qiantongLip, { backgroundColor: ritualStyle.censer.lip }]} />
+            <View style={[styles.qiantongSheen, { borderColor: ritualStyle.censer.accent + '55' }]} />
+
+          </Animated.View>
+        </Animated.View>
+
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.flyingStick,
+            {
+              backgroundColor: 'transparent',
+              borderColor: 'transparent',
+              opacity: flyingStickOpacity,
+              transform: [
+                { perspective: 700 },
+                { translateX: flyingStickX },
+                { translateY: flyingStickY },
+                { rotateZ: flyingStickRotate },
+                { rotateY: flyingStickFlip },
+                { scale: flyingStickScale },
+              ],
+            },
+          ]}
+        >
+          <Image
+            source={ritualStyle.censer.realisticStickSprite}
+            style={styles.realisticFlyingStick}
+            contentFit={'fill'}
+          />
+          <Animated.View style={[styles.flyingNumberPlate, { opacity: flyingNumberOpacity }]}>
+            <Text style={styles.flyingNumberLabel}>第 {poemNumber ?? '?'} 籤</Text>
           </Animated.View>
         </Animated.View>
       </View>
@@ -864,6 +1002,52 @@ function createStyles(theme: ThemeColors) {
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 14 },
   },
+  realisticHolder: {
+    position: 'absolute',
+    width: 158,
+    height: 172,
+    bottom: -12,
+    zIndex: 0,
+  },
+  realisticStick: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
+  realisticFlyingStick: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
+  contactShadow: {
+    position: 'absolute',
+    bottom: 2,
+    width: 142,
+    height: 24,
+    borderRadius: 999,
+    backgroundColor: 'rgba(12, 7, 4, 0.38)',
+    transform: [{ scaleX: 1.12 }],
+  },
+  qiantongInner: {
+    position: 'absolute',
+    top: 7,
+    width: 136,
+    height: 22,
+    borderRadius: 14,
+    opacity: 0.92,
+    zIndex: 1,
+  },
+  qiantongSheen: {
+    position: 'absolute',
+    top: 34,
+    bottom: 18,
+    left: 13,
+    width: 24,
+    borderLeftWidth: 2,
+    borderRadius: 18,
+    opacity: 0.62,
+    zIndex: 62,
+  },
   qiantongLip: {
     position: 'absolute',
     top: 12,
@@ -890,6 +1074,59 @@ function createStyles(theme: ThemeColors) {
   stickTip: {
     width: '100%',
     height: 16,
+  },
+  stickGrain: {
+    position: 'absolute',
+    top: 22,
+    bottom: 8,
+    left: 2,
+    width: 1,
+    backgroundColor: 'rgba(112, 73, 32, 0.22)',
+  },
+  flyingStick: {
+    position: 'absolute',
+    top: 42,
+    left: 133,
+    width: 14,
+    height: 148,
+    borderRadius: 7,
+    borderWidth: 1,
+    overflow: 'hidden',
+    zIndex: 100,
+    shadowColor: '#000',
+    shadowOpacity: 0.34,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 18,
+  },
+  flyingStickTip: {
+    width: '100%',
+    height: 18,
+  },
+  flyingStickGrain: {
+    position: 'absolute',
+    top: 24,
+    bottom: 10,
+    left: 3,
+    width: 1,
+    backgroundColor: 'rgba(90, 54, 22, 0.25)',
+  },
+  flyingNumberPlate: {
+    position: 'absolute',
+    top: 32,
+    bottom: 10,
+    left: 1,
+    right: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotateY: '180deg' }],
+  },
+  flyingNumberLabel: {
+    color: '#5B260F',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '900',
+    textAlign: 'center',
   },
   phaseDots: {
     flexDirection: 'row',
@@ -991,3 +1228,5 @@ function createStyles(theme: ThemeColors) {
   },
   });
 }
+
+

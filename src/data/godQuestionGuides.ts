@@ -228,6 +228,94 @@ const guides: Record<number, GodQuestionGuide> = {
       { category: 'wealth', text: '開局所需資源是否足夠，哪個風險要先控管？' },
     ],
   },
+  26: {
+    title: '玄壇元帥問事法',
+    intro: '適合問正財、生意、合作與資源風險；先列成本、現金流與責任條件。',
+    preferredCategories: ['wealth', 'career', 'general'],
+    steps: ['說明財務目標', '列出成本與合作條件', '請示先守財或可開源'],
+    prompts: [
+      { category: 'wealth', text: '目前這項投入的財務風險，最需要先控制哪一項？' },
+      { category: 'career', text: '這個合作是否值得推進，責任與利益該如何談清楚？' },
+      { category: 'general', text: '眼前應先守住資源，還是可以逐步開拓？' },
+    ],
+  },
+  27: {
+    title: '虎爺問事法',
+    intro: '適合問家宅、孩童、安全與守財；問題宜直接聚焦眼前風險。',
+    preferredCategories: ['family', 'wealth', 'general'],
+    steps: ['說明需要守護的人事物', '問風險來源', '請示先做哪個防護'],
+    prompts: [
+      { category: 'family', text: '家宅與家人近期最需要注意哪一項安全問題？' },
+      { category: 'wealth', text: '目前求財時，最該避免哪種急躁或漏洞？' },
+      { category: 'general', text: '眼前這件事是否應先觀察與防守？' },
+    ],
+  },
+  28: {
+    title: '九天玄女問事法',
+    intro: '適合問策略、競爭、團隊與危機；先描述局勢，再問進退與布局。',
+    preferredCategories: ['career', 'wealth', 'general'],
+    steps: ['整理全局與目標', '分清主要阻力', '請示時機與資源配置'],
+    prompts: [
+      { category: 'career', text: '這個競爭局勢中，我應該先布局哪一步？' },
+      { category: 'wealth', text: '目前資源應集中主攻，還是保留後手？' },
+      { category: 'general', text: '這件事現在適合進、守，還是暫退觀勢？' },
+    ],
+  },
+  29: {
+    title: '太歲星君問事法',
+    intro: '適合問年度風險、作息與重大變動；把時間範圍和計畫說清楚。',
+    preferredCategories: ['general', 'health', 'wealth'],
+    steps: ['說明年度目標', '問主要風險', '請示應建立的規律與緩衝'],
+    prompts: [
+      { category: 'general', text: '今年最需要留意的風險與修正方向是什麼？' },
+      { category: 'health', text: '今年在作息與健康管理上，最該先穩住哪一點？' },
+      { category: 'wealth', text: '今年重大財務安排應保留多少緩衝與退路？' },
+    ],
+  },
+  30: {
+    title: '臨水夫人問事法',
+    intro: '適合問婦幼照護、親子安全與家庭支持；健康問題仍須配合專業醫療。',
+    preferredCategories: ['health', 'family', 'general'],
+    steps: ['說明照護現況', '問主要風險與壓力', '請示可先建立的支持'],
+    prompts: [
+      { category: 'health', text: '目前的身心與照護安排，最需要先調整哪一部分？' },
+      { category: 'family', text: '家庭照顧責任應如何分工，才能彼此支持？' },
+      { category: 'general', text: '眼前最該優先保護與安頓的是什麼？' },
+    ],
+  },
+  31: {
+    title: '義民爺問事法',
+    intro: '適合問團隊、地方、責任與共同利益；把相關人物與長期影響說清楚。',
+    preferredCategories: ['career', 'family', 'general'],
+    steps: ['說明共同目標', '問責任是否公平', '請示如何守義又維持團結'],
+    prompts: [
+      { category: 'career', text: '團隊目前的責任與利益如何調整才公平？' },
+      { category: 'family', text: '關於家園與共同資源，我們最該先守住什麼？' },
+      { category: 'general', text: '這件事如何兼顧原則與眾人的長期利益？' },
+    ],
+  },
+  32: {
+    title: '至聖先師問事法',
+    intro: '適合問學習、教育、志向與品德；先說目前程度與實際困難。',
+    preferredCategories: ['study', 'career', 'general'],
+    steps: ['描述學習問題', '問方法而非只問結果', '請示能長期實踐的功課'],
+    prompts: [
+      { category: 'study', text: '目前學習最需要補強的方法或基礎是什麼？' },
+      { category: 'career', text: '為了長期發展，我該培養哪項能力與品德？' },
+      { category: 'general', text: '眼前這個選擇是否符合我的志向與責任？' },
+    ],
+  },
+  33: {
+    title: '藥師佛問事法',
+    intro: '適合問健康照護、求醫心態與復原規律；籤意不能代替診斷。',
+    preferredCategories: ['health', 'general', 'family'],
+    steps: ['說明已知健康狀況', '問照護與心態', '請示如何建立規律並尋求協助'],
+    prompts: [
+      { category: 'health', text: '面對目前健康狀況，我該先建立哪種照護規律？' },
+      { category: 'general', text: '如何安定焦慮，理性安排下一步求助？' },
+      { category: 'family', text: '家人之間如何分工，才能提供穩定照護？' },
+    ],
+  },
 };
 
 export function getGodQuestionGuide(godId?: number | null): GodQuestionGuide {

@@ -3,26 +3,22 @@ import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } fr
 import { useRouter } from 'expo-router';
 
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
-import { gods } from '@/data/gods';
-import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
+import { auditAllOracles, type OracleAuditRow } from '@/services/oracleAudit';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
 
-function statusLabel(sourceType: string) {
-  if (sourceType.includes('傳統')) return '傳統骨幹';
-  if (sourceType.includes('App')) return 'App 整理';
-  return '待校勘';
+function statusLabel(row: OracleAuditRow) {
+  if (row.status === 'critical') return '需要修補';
+  if (row.status === 'review') return '等待校勘';
+  return '結構完整';
 }
 
 export default function SourceAuditScreen() {
   const router = useRouter();
   const { theme } = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const rows = useMemo(
-    () => gods.map((god) => ({ god, catalog: getOracleCatalogByGodId(god.id) })),
-    []
-  );
-  const totalPoems = rows.reduce((sum, row) => sum + row.catalog.totalPoems, 0);
+  const audit = useMemo(() => auditAllOracles(), []);
+  const rows = audit.rows;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -36,12 +32,14 @@ export default function SourceAuditScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryNumber}>{rows.length}</Text>
-          <Text style={styles.summaryLabel}>位神明</Text>
-          <Text style={styles.summaryText}>目前目錄共標示 {totalPoems} 首籤詩。部分籤系統為 App 白話整理版，後續仍可補逐字傳統定本、異文與宮廟來源索引。</Text>
+          <Text style={styles.summaryNumber}>{audit.completeCount} / {rows.length}</Text>
+          <Text style={styles.summaryLabel}>套籤系結構完整</Text>
+          <Text style={styles.summaryText}>目前共映射 {audit.totalMappedPoems} 首籤詩；{audit.criticalCount} 套有結構缺口，{audit.reviewCount} 套等待來源或重複內容校勘。部分籤系統為 App 白話整理版，後續仍可補逐字傳統定本、異文與宮廟來源索引。</Text>
         </View>
 
-        {rows.map(({ god, catalog }) => (
+        {rows.map((row) => {
+          const { god, catalog } = row;
+          return (
           <View key={god.id} style={styles.card}>
             <View style={styles.cardHeader}>
               <View style={styles.cardTitleGroup}>
@@ -49,16 +47,19 @@ export default function SourceAuditScreen() {
                 <Text style={styles.systemName}>{catalog.label} · {catalog.totalPoems} 首</Text>
               </View>
               <View style={[styles.statusPill, { borderColor: god.accentColor + '66' }]}>
-                <Text style={[styles.statusText, { color: god.accentColor }]}>{statusLabel(catalog.sourceType)}</Text>
+                <Text style={[styles.statusText, { color: god.accentColor }]}>{statusLabel(row)}</Text>
               </View>
             </View>
 
             <Text style={styles.sourceNote}>{catalog.sourceNote}</Text>
             <Text style={styles.versionText}>版本：{catalog.versionTag}</Text>
+            <Text style={styles.auditText}>欄位完整度 {row.completenessPercent}% · 原文唯一 {row.uniqueContentCount}/{row.poemCount}</Text>
             <Text style={styles.metaTitle}>完整度</Text>
             <Text style={styles.metaText}>{catalog.completenessNote}</Text>
             <Text style={styles.metaTitle}>適用題型</Text>
             <Text style={styles.metaText}>{catalog.suitabilityNote}</Text>
+            {row.errors.map((issue) => <Text key={`error-${god.id}-${issue}`} style={styles.errorText}>需修補：{issue}</Text>)}
+            {row.warnings.map((issue) => <Text key={`warning-${god.id}-${issue}`} style={styles.warningText}>待校勘：{issue}</Text>)}
             <View style={styles.chipRow}>
               {catalog.strengths.map((item) => (
                 <View key={`${god.id}-${item}`} style={styles.chip}>
@@ -67,7 +68,8 @@ export default function SourceAuditScreen() {
               ))}
             </View>
           </View>
-        ))}
+          );
+        })}
 
         <View style={styles.nextCard}>
           <Text style={styles.nextTitle}>建議校勘流程</Text>
@@ -125,6 +127,9 @@ function createStyles(theme: ThemeColors) {
     statusText: { fontSize: 11, fontWeight: '800' },
     sourceNote: { color: theme.textMuted, fontSize: TempleFonts.small, lineHeight: 21, marginBottom: 8 },
     versionText: { color: theme.gold, fontSize: 12, fontWeight: '800', marginBottom: 8 },
+    auditText: { color: theme.textLight, fontSize: 12, fontWeight: '700', marginBottom: 6 },
+    errorText: { color: theme.danger, fontSize: 12, lineHeight: 18, marginTop: 5 },
+    warningText: { color: theme.warning, fontSize: 12, lineHeight: 18, marginTop: 5 },
     metaTitle: { color: theme.goldLight, fontSize: 12, fontWeight: '800', marginTop: 6, marginBottom: 3 },
     metaText: { color: theme.textMuted, fontSize: 12, lineHeight: 18 },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },

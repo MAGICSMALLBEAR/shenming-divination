@@ -402,6 +402,7 @@ export default function HomeScreen() {
             interactive={div.selectedGod?.poemSystem !== '諸葛神數' && div.drawMethod === 'jiaobei-shake'}
             shakeMode={settings?.shakeMode === 'hold' ? 'hold' : 'drag'}
             onShakeComplete={div.completeShake}
+            onComplete={div.finishDrawAnimation}
           />
         );
       case 'reveal-poem':
@@ -1236,5 +1237,6 @@ function createStyles(theme: ThemeColors) {
   actionBtnBlessing: { borderColor: '#E879A0', backgroundColor: '#E879A033' },
   });
 }
+
 
 

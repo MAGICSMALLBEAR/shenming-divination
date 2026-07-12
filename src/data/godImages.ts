@@ -132,6 +132,46 @@ const godImagesById: Record<number, GodImageSet> = {
     soft: require('@/assets/images/gods/generated/soft/kaizhangshengwang-soft.png'),
     closeup: require('@/assets/images/gods/generated/closeups/kaizhangshengwang-closeup.png'),
   },
+  26: {
+    card: require('@/assets/images/gods/generated/cards/zhaogongming-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/zhaogongming-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/zhaogongming-card.png'),
+  },
+  27: {
+    card: require('@/assets/images/gods/generated/cards/huye-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/huye-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/huye-card.png'),
+  },
+  28: {
+    card: require('@/assets/images/gods/generated/cards/jiutianxuannu-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/jiutianxuannu-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/jiutianxuannu-card.png'),
+  },
+  29: {
+    card: require('@/assets/images/gods/generated/cards/taisui-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/taisui-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/taisui-card.png'),
+  },
+  30: {
+    card: require('@/assets/images/gods/generated/cards/linshuifuren-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/linshuifuren-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/linshuifuren-card.png'),
+  },
+  31: {
+    card: require('@/assets/images/gods/generated/cards/yiminye-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/yiminye-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/yiminye-card.png'),
+  },
+  32: {
+    card: require('@/assets/images/gods/generated/cards/confucius-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/confucius-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/confucius-card.png'),
+  },
+  33: {
+    card: require('@/assets/images/gods/generated/cards/medicinebuddha-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/medicinebuddha-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/medicinebuddha-card.png'),
+  },
 };
 
 export function getGodCardImage(godId?: number | null): ImageSourcePropType | null {

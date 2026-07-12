@@ -27,6 +27,8 @@ import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getHistory, getSettings } from '@/services/storage';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useI18n } from '@/hooks/useI18n';
+import { filterGods } from '@/services/godFilter';
+import { rankGods } from '@/services/godRanking';
 
 interface GodSelectorProps {
   onSelectGod: (godId: number) => void;
@@ -39,46 +41,6 @@ interface QuestionFormProps {
   forWhom?: string;
 }
 
-const GOD_CATEGORY_MATCH: Record<string, God['category'][]> = {
-  career: ['war', 'growth', 'general'],
-  love: ['compassion', 'general'],
-  wealth: ['wealth', 'growth', 'general'],
-  health: ['health', 'compassion', 'release'],
-  study: ['general', 'war', 'growth'],
-  family: ['compassion', 'guardian', 'heaven'],
-  travel: ['sea', 'growth', 'guardian'],
-  blessing: ['heaven', 'release', 'compassion'],
-  protection: ['guardian', 'war', 'release'],
-  settlement: ['growth', 'guardian', 'sea'],
-  general: ['general', 'heaven', 'compassion'],
-};
-
-function matchesGodSearch(god: God, query: string): boolean {
-  const keyword = query.trim().toLowerCase();
-  if (!keyword) return true;
-  const profile = getGodProfile(god.id);
-  return [
-    god.name,
-    god.title,
-    god.tagline,
-    god.description,
-    god.poemSystem,
-    ...(profile?.aliases ?? []),
-    ...(profile?.patronages ?? []),
-    ...(profile?.suitableTopics ?? []),
-  ]
-    .join(' ')
-    .toLowerCase()
-    .includes(keyword);
-}
-
-function matchesQuestionCategory(god: God, categoryId: string): boolean {
-  if (categoryId === 'all') return true;
-  const allowed = GOD_CATEGORY_MATCH[categoryId];
-  if (!allowed) return true;
-  return allowed.includes(god.category);
-}
-
 export function GodSelector({ onSelectGod }: GodSelectorProps) {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
@@ -89,6 +51,7 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
   const [detailGod, setDetailGod] = useState<God | null>(null);
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectorHistory, setSelectorHistory] = useState<Awaited<ReturnType<typeof getHistory>>>([]);
   const isCompact = layout.width < 420;
   const columns = layout.isWideDesktop ? 4 : layout.isDesktop ? 3 : isCompact ? 1 : 2;
   const maxContentWidth = layout.isWideDesktop ? 1180 : layout.contentMaxWidth;
@@ -97,17 +60,20 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
     columns === 1
       ? gridWidth
       : (gridWidth - TempleSpacing.sm * (columns - 1)) / columns;
-  const visibleGods = useMemo(
-    () => gods.filter((god) => matchesGodSearch(god, searchText) && matchesQuestionCategory(god, selectedCategory)),
-    [searchText, selectedCategory]
-  );
+  const visibleGods = useMemo(() => {
+    const filtered = filterGods(gods, searchText, selectedCategory);
+    return rankGods(filtered, {
+      categoryId: selectedCategory, preferredGodId, patronGodId, history: selectorHistory,
+    }).map((item) => item.god);
+  }, [patronGodId, preferredGodId, searchText, selectedCategory, selectorHistory]);
   const categoryFilters = useMemo(
     () => [{ id: 'all', name: '全部神明', icon: '⌘' }, ...questionCategories],
     []
   );
 
   useEffect(() => {
-    getSettings().then((settings) => {
+    Promise.all([getSettings(), getHistory()]).then(([settings, records]) => {
+      setSelectorHistory(records);
       setPreferredGodId(settings?.preferredGodId ?? null);
       if (!settings?.birthDate) return;
       const year = parseBirthYear(settings.birthDate);
@@ -132,6 +98,7 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
           onChangeText={setSearchText}
           placeholder="搜尋神明、別稱、主掌或籤詩系統"
           placeholderTextColor={theme.textMuted}
+          accessibilityLabel="搜尋神明"
         />
         <ScrollView
           horizontal
@@ -146,6 +113,9 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
                 style={[styles.categoryFilterChip, active && styles.categoryFilterChipActive]}
                 onPress={() => setSelectedCategory(category.id)}
                 activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel={'篩選' + category.name}
+                accessibilityState={{ selected: active }}
               >
                 <Text style={[styles.categoryFilterIcon, active && styles.categoryFilterTextActive]}>{category.icon}</Text>
                 <Text style={[styles.categoryFilterText, active && styles.categoryFilterTextActive]}>{category.name}</Text>
@@ -153,6 +123,14 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
             );
           })}
         </ScrollView>
+        <View style={styles.filterMetaRow}>
+          <Text style={styles.filterMetaText}>顯示 {visibleGods.length} / {gods.length} 位神明</Text>
+          {searchText.trim() || selectedCategory !== 'all' ? (
+            <TouchableOpacity onPress={() => { setSearchText(''); setSelectedCategory('all'); }} accessibilityRole="button" accessibilityLabel="清除搜尋與分類條件">
+              <Text style={styles.clearFilterText}>清除條件</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
 
       <ScrollView
@@ -215,7 +193,7 @@ function GodCard({
   const cardImage = getGodCardImage(god.id);
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.86} style={[styles.cardWrapper, { width }, cardStyle]}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.86} style={[styles.cardWrapper, { width }, cardStyle]} accessibilityRole="button" accessibilityLabel={'選擇' + god.name + '，' + god.tagline}>
       <View style={[styles.godCard, { borderColor: god.accentColor + '66' }]}>
         <View style={styles.badgeRow}>
           {isPatron ? (
@@ -247,6 +225,8 @@ function GodCard({
           style={[styles.detailBtn, { borderColor: god.accentColor + '50' }]}
           onPress={onDetail}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={'查看' + god.name + '詳細資料'}
         >
           <Text style={[styles.detailBtnText, { color: god.accentColor }]}>查看詳細</Text>
         </TouchableOpacity>
@@ -265,7 +245,7 @@ function GodDetailModal({ god, onClose, onSelect }: { god: God; onClose: () => v
     <Modal visible={true} animationType="slide" transparent={false} onRequestClose={onClose}>
       <SafeAreaView style={modalStyles.safeArea}>
         <View style={modalStyles.header}>
-          <TouchableOpacity onPress={onClose} style={modalStyles.closeBtn}>
+          <TouchableOpacity onPress={onClose} style={modalStyles.closeBtn} accessibilityRole="button" accessibilityLabel="關閉神明詳情">
             <Text style={modalStyles.closeBtnText}>✕ 關閉</Text>
           </TouchableOpacity>
           <Text style={modalStyles.headerTitle}>神明詳情</Text>
@@ -480,7 +460,7 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
             onChangeText={setUserName}
             placeholder="可輸入名字，或保持空白"
             placeholderTextColor={theme.textMuted}
-          />
+          accessibilityLabel="輸入稱呼"        />
           <View style={styles.nameButtons}>
             {['自己', '家人', '朋友'].map((name) => (
               <TouchableOpacity
@@ -666,6 +646,9 @@ function createStyles(theme: ThemeColors) {
   categoryFilterIcon: { color: theme.textMuted, fontSize: 12, fontWeight: '800' },
   categoryFilterText: { color: theme.textMuted, fontSize: 12, fontWeight: '700' },
   categoryFilterTextActive: { color: theme.goldLight },
+  filterMetaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 24 },
+  filterMetaText: { color: theme.textMuted, fontSize: 12 },
+  clearFilterText: { color: theme.goldLight, fontSize: 12, fontWeight: '800' },
   emptyGodState: {
     width: '100%',
     alignItems: 'center',
@@ -1142,5 +1125,13 @@ function createModalStyles(theme: ThemeColors) {
   selectBtnText: { fontSize: TempleFonts.heading, fontWeight: '800', color: '#FFF', letterSpacing: 2 },
   });
 }
+
+
+
+
+
+
+
+
 
 

@@ -71,6 +71,24 @@ export const drawAnimationStyles: Record<DrawAnimationStyleKey, DrawAnimationSty
       paperRotateStart: '88deg',
     },
   },
+  ebony: {
+    key: 'ebony',
+    label: '黑檀描金',
+    summary: '沉穩、內斂，黑檀木紋與描金細節帶出莊重儀式感。',
+    motion: {
+      shakeAmplitude: 16, shakeDuration: 105, shakeIterations: 11, floatDistance: 5,
+      liftDistance: -62, dropDistance: 104, flashScale: 1.38, paperRotateStart: '70deg',
+    },
+  },
+  jade: {
+    key: 'jade',
+    label: '白玉蓮華',
+    summary: '清雅、柔和，白玉蓮華與金邊呈現澄澈平安感。',
+    motion: {
+      shakeAmplitude: 9, shakeDuration: 145, shakeIterations: 8, floatDistance: 4,
+      liftDistance: -54, dropDistance: 94, flashScale: 1.24, paperRotateStart: '54deg',
+    },
+  },
 };
 
 export function normalizeDrawAnimationMode(value?: string | null): DrawAnimationMode {

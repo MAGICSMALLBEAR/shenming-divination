@@ -184,6 +184,108 @@ export const lingyinghou60Poems = buildMarketPoems({
   actions: ['先把證據與事實整理好', '正直處理勝過口舌爭勝', '合約文書務必留痕', '不要替模糊承諾背責', '界線清楚是保護自己', '冤屈宜循正道申明'],
 });
 
+export const zhaogongming60Poems = buildMarketPoems({
+  idOffset: 8000,
+  count: 60,
+  label: '五路財神六十籤',
+  ganzhiPrefix: '玄壇',
+  focusKey: 'wealth',
+  focusLabel: '五路招財',
+  titleSeed: '玄壇聚財・',
+  storySeed: '本系統以趙公明護商、守信、聚財與風險節制的信仰語境整理，為 App 專屬白話籤系；',
+  motifs: ['玄壇開路', '五路財臨', '黑虎守庫', '金鞭定局', '寶庫生光', '商道有信', '利市來朝', '財星入戶'],
+  actions: ['先守信用再求財', '盤清現金流再擴張', '正財可取偏財宜慎', '合作條件務必寫清', '先止漏再談開源', '有利也要留風險餘地'],
+});
+
+export const huye36Poems = buildMarketPoems({
+  idOffset: 8100,
+  count: 36,
+  label: '虎爺護境三十六籤',
+  ganzhiPrefix: '虎將',
+  focusKey: 'general',
+  focusLabel: '護境招財',
+  titleSeed: '虎將巡境・',
+  storySeed: '本系統以虎爺守廟、護童、驅邪與民間招財信仰為語境整理，為 App 專屬白話籤系；',
+  motifs: ['金虎巡門', '虎鈴輕響', '山君守庫', '虎威鎮煞', '童身得護', '虎步生風', '門庭清吉', '錢母有緣'],
+  actions: ['先顧安全再求進展', '小心口舌與急躁', '守住家門與孩子平安', '正當求財不走捷徑', '察覺不對就先退開', '把環境整理乾淨再行動'],
+});
+
+export const jiutian49Poems = buildMarketPoems({
+  idOffset: 8200,
+  count: 49,
+  label: '玄女兵法四十九籤',
+  ganzhiPrefix: '玄女',
+  focusKey: 'career',
+  focusLabel: '策略布局',
+  titleSeed: '玄女授策・',
+  storySeed: '本系統以九天玄女智慧、兵法、護佑與女性力量的信仰語境整理，為 App 專屬策略型白話籤系；',
+  motifs: ['九天垂象', '玄女授策', '星圖展卷', '鳳旗定向', '寶劍藏鋒', '雲陣開門', '月臺觀勢', '天書有序'],
+  actions: ['先看全局再動一步', '藏鋒蓄勢等待時機', '分清主次再配置資源', '情報不足不宜硬攻', '以柔制剛保留後手', '選對盟友勝過單打獨鬥'],
+});
+
+export const taisui60Poems = buildMarketPoems({
+  idOffset: 8300,
+  count: 60,
+  label: '甲子太歲六十籤',
+  ganzhiPrefix: '太歲',
+  focusKey: 'general',
+  focusLabel: '流年安定',
+  titleSeed: '太歲鎮年・',
+  storySeed: '本系統以六十甲子、值年守護與流年自省為語境整理，為 App 專屬年度指引，並非代替正式安太歲科儀；',
+  motifs: ['歲星臨位', '甲子循環', '星君鎮年', '斗柄回春', '元辰得護', '流年有序', '歲序更新', '星曜漸明'],
+  actions: ['先修正能控制的風險', '年度大事宜留緩衝', '守規律比求速成重要', '出行財務都要多一層準備', '遇沖突先退讓一步', '以行善與責任累積福德'],
+});
+export const linshui36Poems = buildMarketPoems({
+  idOffset: 8400,
+  count: 36,
+  label: '臨水夫人護幼三十六籤',
+  ganzhiPrefix: '臨水',
+  focusKey: 'health',
+  focusLabel: '婦幼守護',
+  titleSeed: '臨水護生・',
+  storySeed: '本系統以臨水夫人陳靖姑護佑婦女、孕產、孩童與家庭照護的信仰語境整理，為 App 專屬白話籤系；',
+  motifs: ['臨水護生', '紅燈照宅', '鳳冠垂佑', '清流安胎', '慈劍護門', '花蕊得護', '母子平安', '香火暖家'],
+  actions: ['身體不適應及早就醫', '照護責任要共同分擔', '先安頓身心再做決定', '家庭期待需要說清楚', '保護孩子也要照顧自己', '遇到風險務必尋求專業協助'],
+});
+
+export const yimin40Poems = buildMarketPoems({
+  idOffset: 8500,
+  count: 40,
+  label: '義民忠義四十籤',
+  ganzhiPrefix: '義民',
+  focusKey: 'career',
+  focusLabel: '忠義守土',
+  titleSeed: '義民守望・',
+  storySeed: '本系統以臺灣客家義民信仰中的忠義、守土、團結與公共責任為語境整理，為 App 專屬白話籤系；',
+  motifs: ['義旗守望', '忠魂護土', '庄頭同心', '藍衫聚力', '家園得守', '眾志成城', '公義有聲', '祖訓長明'],
+  actions: ['先顧共同利益再爭個人得失', '責任分工務必公平', '團結比單打獨鬥更有力', '守住原則但避免意氣', '重大決定要讓眾人知情', '以長期家園為考量'],
+});
+
+export const confucius64Poems = buildMarketPoems({
+  idOffset: 8600,
+  count: 64,
+  label: '至聖修學六十四籤',
+  ganzhiPrefix: '至聖',
+  focusKey: 'study',
+  focusLabel: '修學立德',
+  titleSeed: '至聖教誨・',
+  storySeed: '本系統以孔子修學、立德、禮義與因材施教的思想語境整理，為 App 專屬教育型白話籤系；',
+  motifs: ['杏壇春風', '詩書啟卷', '禮門漸開', '君子慎獨', '溫故知新', '有教無類', '學而時習', '仁心立志'],
+  actions: ['先建立每日可持續的學習', '不懂就問並反覆練習', '品德與能力要一起成長', '選擇適合自己的方法', '先修正基礎再追求速度', '以誠信完成每一份責任'],
+});
+
+export const medicineBuddha48Poems = buildMarketPoems({
+  idOffset: 8700,
+  count: 48,
+  label: '藥師琉璃四十八籤',
+  ganzhiPrefix: '藥師',
+  focusKey: 'health',
+  focusLabel: '琉璃安身',
+  titleSeed: '藥師願光・',
+  storySeed: '本系統以藥師佛十二大願、身心安定、正念照護與求醫智慧為語境整理，為 App 專屬白話籤系；',
+  motifs: ['琉璃光明', '藥樹舒葉', '淨水入盂', '蓮座安穩', '願光照身', '晨鐘定心', '善藥得時', '慈光護念'],
+  actions: ['健康問題應尋求專業診療', '規律作息是復原根基', '先安定焦慮再安排照護', '遵從合理醫囑不迷信偏方', '照顧身體也照顧情緒', '需要協助時主動求助'],
+});
 export const marketCommonPoemSystems = {
   tianhouLingQianPoems,
   luzu60Poems,
@@ -193,4 +295,12 @@ export const marketCommonPoemSystems = {
   guanyin24Poems,
   jinqianGua32Poems,
   lingyinghou60Poems,
+  zhaogongming60Poems,
+  huye36Poems,
+  jiutian49Poems,
+  taisui60Poems,
+  linshui36Poems,
+  yimin40Poems,
+  confucius64Poems,
+  medicineBuddha48Poems,
 } as const;
