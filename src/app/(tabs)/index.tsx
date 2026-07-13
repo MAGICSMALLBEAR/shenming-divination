@@ -191,7 +191,7 @@ export default function HomeScreen() {
     switch (div.step) {
       case 'set-question': div.goToStep('select-god'); break;
       case 'meditate': if (incenseDone) { setIncenseDone(false); } else { div.goToStep('set-question'); } break;
-      case 'choose-draw-method': div.goToStep('meditate'); break;
+      case 'choose-draw-method': setIncenseDone(false); div.goToStep('set-question'); break;
       case 'enter-zhuge-number':
         if (div.selectedGod?.poemSystem === '諸葛神數') {
           div.goToStep('meditate');
@@ -375,7 +375,7 @@ export default function HomeScreen() {
       }
       case 'toss-jiaobei':
         return (
-          <View>
+          <View style={styles.fullScreen}>
             <Jiaobei
               onToss={div.performJiaobei}
               onShengbei={div.drawMethod === 'jiaobei-auto' ? div.performAutoDraw : div.performDraw}

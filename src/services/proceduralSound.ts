@@ -1,22 +1,24 @@
-// 廟宇音效服務 — expo-av（Native）+ Web Audio API（Web）+ Haptics
+// 廟宇音效服務 — expo-audio（Native）+ Web Audio API（Web）+ Haptics
 // Native: 播放內嵌音檔；Web: 合成音效；兩者皆加 Haptics
 import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 
 // ─── Native 音檔（放於 assets/sounds/） ───────────────────────
 // 若音檔不存在則靜默降級為合成音
-let SoundLib: any = null;
+let audioModeReady = false;
 
-async function getSound(require_path: any): Promise<any | null> {
+async function ensureAudioMode() {
+  if (audioModeReady) return;
+  await setAudioModeAsync({ playsInSilentMode: true });
+  audioModeReady = true;
+}
+
+async function getSound(require_path: any): Promise<AudioPlayer | null> {
   if (Platform.OS === 'web') return null;
   try {
-    if (!SoundLib) {
-      const { Audio } = require('expo-av');
-      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-      SoundLib = Audio;
-    }
-    const { sound } = await SoundLib.Sound.createAsync(require_path, { shouldPlay: false });
-    return sound;
+    await ensureAudioMode();
+    return createAudioPlayer(require_path);
   } catch {
     return null;
   }
@@ -26,11 +28,13 @@ async function playNativeSound(require_path: any) {
   const sound = await getSound(require_path);
   if (!sound) return false;
   try {
-    await sound.setPositionAsync(0);
-    await sound.playAsync();
-    setTimeout(() => sound.unloadAsync().catch(() => {}), 3000);
+    sound.play();
+    setTimeout(() => {
+      try { sound.release(); } catch {}
+    }, 3000);
     return true;
   } catch {
+    try { sound.release(); } catch {}
     return false;
   }
 }
@@ -221,16 +225,17 @@ export async function startAmbientSound() {
   if (Platform.OS !== 'web') {
     // Native: loop incense sound softly at lower volume
     try {
-      if (!SoundLib) {
-        const { Audio } = require('expo-av');
-        await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-        SoundLib = Audio;
-      }
-      const { sound } = await SoundLib.Sound.createAsync(
-        require('../../assets/sounds/incense.mp3'),
-        { shouldPlay: true, isLooping: true, volume: 0.3 }
-      );
-      ambientNodes.push({ stop: () => sound.unloadAsync().catch(() => {}) });
+      await ensureAudioMode();
+      const sound = createAudioPlayer(require('../../assets/sounds/incense.mp3'));
+      sound.loop = true;
+      sound.volume = 0.3;
+      sound.play();
+      ambientNodes.push({
+        stop: () => {
+          try { sound.pause(); } catch {}
+          try { sound.release(); } catch {}
+        },
+      });
     } catch {}
     return;
   }

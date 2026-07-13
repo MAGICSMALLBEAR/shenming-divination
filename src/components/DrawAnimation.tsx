@@ -1,11 +1,12 @@
 // 抽籤動畫元件
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, PanResponder, Platform, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import type { God } from '@/data/gods';
 import { getGodSoftImage } from '@/data/godImages';
 import { DRAW_ANIMATION_DEFAULT_MS } from '@/constants/divination';
+import { DRAW_TIMELINE } from '@/constants/draw-timeline';
 import {
   drawAnimationStyles,
   getDrawAnimationRitualStyle,
@@ -19,6 +20,8 @@ import { playDrawSound, playStickClack } from '@/services/proceduralSound';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { hashShakeTelemetry, type ShakeTelemetrySample } from '@/services/seededRandom';
 
+const USE_NATIVE_DRIVER = Platform.OS !== 'web';
+
 interface StickDefinition {
   left: number;
   rotate: string;
@@ -28,13 +31,13 @@ interface StickDefinition {
   selected?: boolean;
 }
 
-const STICKS: readonly StickDefinition[] = Array.from({ length: 27 }, (_, index) => {
-  const column = index % 14;
-  const depthIndex = Math.floor(index / 9);
+const STICKS: readonly StickDefinition[] = Array.from({ length: 19 }, (_, index) => {
+  const column = index % 10;
+  const depthIndex = Math.floor(index / 7);
   const depth: StickDefinition['depth'] = depthIndex === 0 ? 'back' : depthIndex === 1 ? 'middle' : 'front';
-  const selected = index === 13;
+  const selected = index === 9;
   return {
-    left: 5 + column * 9.7 + (depthIndex % 2) * 3,
+    left: 5 + column * 14.2 + (depthIndex % 2) * 3,
     rotate: String(((index * 7) % 19) - 9) + 'deg',
     height: selected ? 150 : 105 + ((index * 17) % 38),
     depth,
@@ -48,7 +51,8 @@ const SELECTED_STICK_INDEX = STICKS.findIndex((stick) => stick.selected);
 const PHASES = [
   '誠心默念，神意匯聚',
   '籤筒漸動，靈籤浮起',
-  '天意已定，籤枝落下',
+  '天意已定，靈籤出筒',
+  '靈籤飛落供桌',
   '靈籤落定，翻面示號',
 ];
 
@@ -87,7 +91,7 @@ export function DrawAnimation({
   const floatAnim = useRef(new Animated.Value(0)).current;
   const chosenLiftAnim = useRef(new Animated.Value(0)).current;
   const chosenDropAnim = useRef(new Animated.Value(0)).current;
-  const impactAnim = useRef(new Animated.Value(1)).current;
+  const impactAnim = useRef(new Animated.Value(0)).current;
   const stickJitterAnims = useRef(STICKS.map(() => new Animated.Value(0))).current;
   const revealOpacity = useRef(new Animated.Value(0)).current;
   const revealTranslate = useRef(new Animated.Value(16)).current;
@@ -98,6 +102,7 @@ export function DrawAnimation({
   const flipAnim = useRef(new Animated.Value(0)).current;
   const flightAnim = useRef(new Animated.Value(0)).current;
   const flightFlipAnim = useRef(new Animated.Value(0)).current;
+  const flightExitAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [trackWidth, setTrackWidth] = useState(220);
@@ -153,10 +158,10 @@ export function DrawAnimation({
       return;
     }
     const auraLoop = Animated.loop(
-      Animated.timing(auraAnim, { toValue: 1, duration: 2800, easing: Easing.inOut(Easing.sin), useNativeDriver: true })
+      Animated.timing(auraAnim, { toValue: 1, duration: 2800, easing: Easing.inOut(Easing.sin), useNativeDriver: USE_NATIVE_DRIVER })
     );
     const floatLoop = Animated.loop(
-      Animated.timing(floatAnim, { toValue: 1, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true })
+      Animated.timing(floatAnim, { toValue: 1, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: USE_NATIVE_DRIVER })
     );
     auraLoop.start();
     floatLoop.start();
@@ -188,8 +193,8 @@ export function DrawAnimation({
 
     const idleLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(shakeAnim, { toValue: -1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER }),
       ])
     );
     idleLoop.start();
@@ -232,8 +237,8 @@ export function DrawAnimation({
         setPhaseIndex(1);
         Haptics.selectionAsync().catch(() => {});
         Animated.sequence([
-          Animated.timing(chosenLiftAnim, { toValue: 0.22, duration: 130, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(chosenLiftAnim, { toValue: 0.03, duration: 160, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+          Animated.timing(chosenLiftAnim, { toValue: 0.22, duration: 130, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+          Animated.timing(chosenLiftAnim, { toValue: 0.03, duration: 160, easing: Easing.in(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
         ]).start();
       }
       if (!peekMilestonesRef.current.p2 && envelope >= 0.68) {
@@ -241,8 +246,8 @@ export function DrawAnimation({
         setPhaseIndex(2);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
         Animated.sequence([
-          Animated.timing(chosenLiftAnim, { toValue: 0.4, duration: 110, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(chosenLiftAnim, { toValue: 0.08, duration: 140, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+          Animated.timing(chosenLiftAnim, { toValue: 0.4, duration: 110, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+          Animated.timing(chosenLiftAnim, { toValue: 0.08, duration: 140, easing: Easing.in(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
         ]).start();
       }
 
@@ -262,12 +267,15 @@ export function DrawAnimation({
     };
   }, [interactive, popped, reducedMotion, shakeMode, motion.shakeDuration, onShakeComplete, chosenLiftAnim, shakeAnim, shakeEnvelope, progressAnim]);
 
+
+
+  // 互動搖籤前置階段：等使用者親自搖出籤枝（拖曳或長按皆會累積「晃動能量」），
+  // 達到隨機門檻才把操作遙測雜湊成種子，交給下面的開籤演出。
   useEffect(() => {
     if (interactive && !popped) return;
     completedRef.current = false;
-    if (soundEnabled) {
-      playDrawSound();
-    }
+    if (soundEnabled) playDrawSound();
+
     if (reducedMotion) {
       setPhaseIndex(PHASES.length - 1);
       auraAnim.setValue(0.45);
@@ -276,7 +284,7 @@ export function DrawAnimation({
       floatAnim.setValue(0);
       chosenLiftAnim.setValue(1);
       chosenDropAnim.setValue(1);
-      impactAnim.setValue(1);
+      impactAnim.setValue(0);
       stickJitterAnims.forEach((anim) => anim.setValue(0));
       revealOpacity.setValue(1);
       revealTranslate.setValue(0);
@@ -287,6 +295,7 @@ export function DrawAnimation({
       flipAnim.setValue(1);
       flightAnim.setValue(1);
       flightFlipAnim.setValue(1);
+      flightExitAnim.setValue(1);
       progressAnim.setValue(1);
       const reducedTimer = setTimeout(() => {
         if (!completedRef.current) { completedRef.current = true; onComplete?.(); }
@@ -295,41 +304,33 @@ export function DrawAnimation({
     }
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    timers.push(setTimeout(() => {
-      if (!completedRef.current) { completedRef.current = true; onComplete?.(); }
-    }, ms * 1.06));
     const shakeLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(shakeAnim, { toValue: -1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER }),
       ]),
       { iterations: motion.shakeIterations }
     );
-    // 每支未中籤的籤枝各自用不同節奏小幅晃動，讓籤筒看起來像一把籤枝互相碰撞，
-    // 而不是整塊硬殼平移。
     const jitterLoops = stickJitterAnims.map((anim, index) => {
-      if (index === SELECTED_STICK_INDEX || index % 2 === 1) return null;
-      const base = 76 + index * 19;
+      if (index === SELECTED_STICK_INDEX || index % 2 === 1 || STICKS[index].depth === 'back') return null;
+      const base = 84 + index * 17;
       return Animated.loop(
         Animated.sequence([
-          Animated.timing(anim, { toValue: 1, duration: base, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-          Animated.timing(anim, { toValue: -0.8, duration: base + 34, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-          Animated.timing(anim, { toValue: 0.3, duration: base - 12, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-          Animated.timing(anim, { toValue: 0, duration: base + 18, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 1, duration: base, easing: Easing.inOut(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+          Animated.timing(anim, { toValue: -0.8, duration: base + 34, easing: Easing.inOut(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+          Animated.timing(anim, { toValue: 0.3, duration: base - 12, easing: Easing.inOut(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+          Animated.timing(anim, { toValue: 0, duration: base + 18, easing: Easing.inOut(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
         ])
       );
     });
 
-    // 若是互動搖籤流程，籤枝在前置階段已經跳出來了，這裡的 progress bar
-    // 改用來表示「開籤演出」本身的進度，所以要從 0 重新開始。
     progressAnim.setValue(0);
-    Animated.timing(progressAnim, {
-      toValue: 1,
-      duration: ms,
-      easing: Easing.linear,
-      useNativeDriver: true,
-    }).start();
-
+    Animated.timing(progressAnim, { toValue: 1, duration: ms * DRAW_TIMELINE.finish, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER }).start();
+    chosenLiftAnim.setValue(interactive ? 0.08 : 0);
+    chosenDropAnim.setValue(0);
+    impactAnim.setValue(0);
+    revealOpacity.setValue(0);
+    revealTranslate.setValue(16);
     numberOpacity.setValue(0);
     numberScale.setValue(0.84);
     flashAnim.setValue(0);
@@ -337,101 +338,95 @@ export function DrawAnimation({
     flipAnim.setValue(0);
     flightAnim.setValue(0);
     flightFlipAnim.setValue(0);
+    flightExitAnim.setValue(0);
+    setPhaseIndex(interactive ? 1 : 0);
 
-    if (interactive) {
-      // 前置階段已經用搖籤能量把 phaseIndex 帶到 2（天意已定），
-      // 這裡直接進到最後一句「聖示將明」。
-      setPhaseIndex(3);
-    } else {
-      timers.push(setTimeout(() => setPhaseIndex(1), ms * 0.22));
-      timers.push(setTimeout(() => setPhaseIndex(2), ms * 0.57));
-      timers.push(setTimeout(() => setPhaseIndex(3), ms * 0.8));
-      // 非互動（自動播放）才需要重新演一次搖籤筒的劇本；互動模式的搖晃
-      // 已經是使用者剛剛真的做過的動作，籤枝跳出後不需要再搖一次。
+    if (!interactive) {
       timers.push(setTimeout(() => {
+        setPhaseIndex(1);
         shakeLoop.start();
         jitterLoops.forEach((loop) => loop?.start());
-        // 搖晃力道由靜到動漸強，而不是一開始就全力晃動。
         Animated.timing(shakeEnvelope, {
-          toValue: 1,
-          duration: ms * 0.3,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: true,
+          toValue: 1, duration: ms * 0.24, easing: Easing.in(Easing.cubic), useNativeDriver: USE_NATIVE_DRIVER,
         }).start();
-      }, ms * 0.16));
-    }
-    // 天意欲出：籤枝先探頭一下又縮回，製造「快掉出來」的懸念，
-    // 再真正彈出、用彈簧效果自然回彈落定。
-    timers.push(setTimeout(() => {
-      Animated.sequence([
-        Animated.timing(chosenLiftAnim, { toValue: 0.24, duration: ms * 0.045, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.timing(chosenLiftAnim, { toValue: 0.04, duration: ms * 0.05, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      }, ms * DRAW_TIMELINE.shakeStart));
+      timers.push(setTimeout(() => {
+        Animated.sequence([
+          Animated.timing(chosenLiftAnim, { toValue: 0.24, duration: ms * 0.045, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+          Animated.timing(chosenLiftAnim, { toValue: 0.04, duration: ms * 0.05, easing: Easing.in(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+        ]).start();
+      }, ms * DRAW_TIMELINE.peek));
+    } else {
+      Animated.parallel([
+        Animated.timing(shakeEnvelope, { toValue: 0, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
       ]).start();
-    }, ms * 0.31));
+    }
+
     timers.push(setTimeout(() => {
+      setPhaseIndex(2);
+      shakeLoop.stop();
+      jitterLoops.forEach((loop) => loop?.stop());
+      Animated.parallel([
+        Animated.timing(shakeEnvelope, { toValue: 0, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+      ]).start();
       Animated.sequence([
-        Animated.timing(chosenLiftAnim, {
-          toValue: 1,
-          duration: ms * 0.13,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(flightAnim, {
-          toValue: 1,
-          duration: ms * 0.3,
-          easing: Easing.inOut(Easing.cubic),
-          useNativeDriver: true,
-        }),
+        Animated.timing(chosenLiftAnim, { toValue: 1, duration: ms * 0.1, easing: Easing.out(Easing.cubic), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(flightAnim, { toValue: 1, duration: ms * 0.25, easing: Easing.inOut(Easing.cubic), useNativeDriver: USE_NATIVE_DRIVER }),
       ]).start(({ finished }) => {
         if (!finished) return;
+        setPhaseIndex(4);
         playStickClack(1).catch(() => {});
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        Animated.sequence([
+          Animated.timing(impactAnim, { toValue: 1, duration: 65, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+          Animated.spring(impactAnim, { toValue: 0, friction: 5, tension: 150, useNativeDriver: USE_NATIVE_DRIVER }),
+        ]).start();
       });
-      Animated.sequence([
-        Animated.timing(impactAnim, { toValue: 0.97, duration: 70, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.spring(impactAnim, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }),
-      ]).start();
-    }, ms * 0.4));
+    }, ms * DRAW_TIMELINE.launch));
+    timers.push(setTimeout(() => setPhaseIndex(3), ms * DRAW_TIMELINE.flight));
     timers.push(setTimeout(() => {
-      Animated.timing(flightFlipAnim, {
-        toValue: 1,
-        duration: ms * 0.2,
-        easing: Easing.inOut(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-    }, ms * 0.7));
+      Animated.timing(flightFlipAnim, { toValue: 1, duration: ms * 0.14, easing: Easing.inOut(Easing.cubic), useNativeDriver: USE_NATIVE_DRIVER }).start();
+    }, ms * DRAW_TIMELINE.land));
     timers.push(setTimeout(() => {
       Animated.sequence([
-        Animated.timing(flashAnim, { toValue: 1, duration: ms * 0.04, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.timing(flashAnim, { toValue: 0, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(flashAnim, { toValue: 1, duration: ms * 0.04, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(flashAnim, { toValue: 0, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
       ]).start();
-    }, ms * 0.76));
+    }, ms * DRAW_TIMELINE.flash));
+
     timers.push(setTimeout(() => {
       Animated.parallel([
-        Animated.timing(paperAnim, { toValue: 1, duration: ms * 0.16, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
-        Animated.timing(flipAnim, { toValue: 1, duration: ms * 0.28, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
-      ]).start();
-    }, ms * 0.82));
-    timers.push(setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(revealOpacity, { toValue: 1, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.timing(revealTranslate, { toValue: 0, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      ]).start();
-    }, ms * 0.9));
-    timers.push(setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(numberOpacity, { toValue: 1, duration: ms * 0.09, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.spring(numberScale, { toValue: 1, tension: 90, friction: 8, useNativeDriver: true }),
-      ]).start();
-    }, ms * 0.78));
+        Animated.timing(flightExitAnim, { toValue: 1, duration: ms * DRAW_TIMELINE.flyingExitDuration, easing: Easing.in(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(paperAnim, { toValue: 1, duration: ms * 0.14, easing: Easing.out(Easing.back(1.25)), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(flipAnim, { toValue: 1, duration: ms * DRAW_TIMELINE.paperFlipDuration, easing: Easing.inOut(Easing.cubic), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.sequence([
+          Animated.delay(ms * DRAW_TIMELINE.numberDelay),
+          Animated.parallel([
+            Animated.timing(numberOpacity, { toValue: 1, duration: ms * DRAW_TIMELINE.finalRevealDuration, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+            Animated.spring(numberScale, { toValue: 1, tension: 90, friction: 8, useNativeDriver: USE_NATIVE_DRIVER }),
+          ]),
+        ]),
+      ]).start(({ finished }) => {
+        if (!finished) return;
+        Animated.parallel([
+          Animated.timing(revealOpacity, { toValue: 1, duration: ms * DRAW_TIMELINE.finalRevealDuration, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+          Animated.timing(revealTranslate, { toValue: 0, duration: ms * DRAW_TIMELINE.finalRevealDuration, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+        ]).start(({ finished: revealFinished }) => {
+          if (!revealFinished || completedRef.current) return;
+          completedRef.current = true;
+          onComplete?.();
+        });
+      });
+    }, ms * DRAW_TIMELINE.handoff));
 
     return () => {
       timers.forEach(clearTimeout);
       shakeLoop.stop();
       jitterLoops.forEach((loop) => loop?.stop());
     };
-  }, [interactive, popped, onComplete, auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flightAnim, flightFlipAnim, flipAnim, floatAnim, impactAnim, motion.dropDistance, motion.liftDistance, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, shakeEnvelope, soundEnabled, stickJitterAnims]);
-
+  }, [interactive, popped, onComplete, auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flightAnim, flightExitAnim, flightFlipAnim, flipAnim, floatAnim, impactAnim, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, shakeEnvelope, soundEnabled, stickJitterAnims]);
   // shakeEnergy = shakeAnim(-1..1) 乘上 shakeEnvelope(0..1)，讓晃動力道從無到有
   // 漸強，而不是一開始就等幅擺動。
   const shakeEnergy = useMemo(
@@ -520,11 +515,30 @@ export function DrawAnimation({
     outputRange: [motion.paperRotateStart, '8deg', '0deg'],
   }), [flipAnim, motion.paperRotateStart]);
 
-  const flyingStickOpacity = useMemo(() => flightAnim.interpolate({
-    inputRange: [0, 0.04, 1],
-    outputRange: [0, 1, 1],
-  }), [flightAnim]);
+  const flightExitOpacity = useMemo(() => flightExitAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0],
+  }), [flightExitAnim]);
 
+  const flyingStickOpacity = useMemo(() => Animated.multiply(
+    flightAnim.interpolate({ inputRange: [0, 0.04, 1], outputRange: [0, 1, 1] }),
+    flightExitOpacity
+  ), [flightAnim, flightExitOpacity]);
+
+  const landingBounceY = useMemo(() => impactAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -7],
+  }), [impactAnim]);
+  const flyingShadowOpacity = useMemo(() => Animated.multiply(
+    flightAnim.interpolate({ inputRange: [0, 0.45, 0.82, 1], outputRange: [0, 0.08, 0.28, 0.5] }),
+    flightExitOpacity
+  ), [flightAnim, flightExitOpacity]);
+  const flyingShadowScaleX = useMemo(() => flightAnim.interpolate({
+    inputRange: [0, 0.45, 0.82, 1], outputRange: [0.35, 0.55, 1.15, 1.35],
+  }), [flightAnim]);
+  const flyingShadowScaleY = useMemo(() => impactAnim.interpolate({
+    inputRange: [0, 1], outputRange: [1, 0.58],
+  }), [impactAnim]);
   const flyingStickX = useMemo(() => flightAnim.interpolate({
     inputRange: [0, 0.42, 1],
     outputRange: [0, 22, -12],
@@ -559,6 +573,27 @@ export function DrawAnimation({
     inputRange: [0, 0.06, 1],
     outputRange: [1, 0, 0],
   }), [flightAnim]);
+  const stickAnimatedStyles = useMemo(() => STICKS.map((stick, index) => {
+    if (stick.selected) {
+      return {
+        opacity: selectedIn筒Opacity,
+        transform: [
+          { rotate: stick.rotate },
+          { translateY: chosenStickTranslateY },
+          { translateX: chosenStickTranslateX },
+          { rotate: chosenStickRotate },
+        ],
+      };
+    }
+    const jitterEnergy = Animated.multiply(stickJitterAnims[index], shakeEnvelope);
+    return {
+      transform: [
+        { rotate: stick.rotate },
+        { rotate: jitterEnergy.interpolate({ inputRange: [-1, 1], outputRange: ['-3deg', '3deg'] }) },
+        { translateY: jitterEnergy.interpolate({ inputRange: [-1, 1], outputRange: [-3, 3] }) },
+      ],
+    };
+  }), [chosenStickRotate, chosenStickTranslateX, chosenStickTranslateY, selectedIn筒Opacity, shakeEnvelope, stickJitterAnims]);
   const isShaking = interactive && !popped;
 
   // 拖曳模式跟長按模式共用同一個 PanResponder：
@@ -590,7 +625,12 @@ export function DrawAnimation({
   const shakeTouchHandlers = panResponder.panHandlers;
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      scrollEnabled={!isShaking}
+    >
       <Text style={styles.title}>抽籤中</Text>
       <Text style={styles.subtitle}>{activePhase}</Text>
       {isShaking ? (
@@ -656,7 +696,7 @@ export function DrawAnimation({
         <Animated.View style={[styles.altarGlow, { transform: [{ translateY: altarFloat }] }]}>
 
           <View style={styles.stickShadowRow}>
-            {STICKS.map((stick, index) => (
+            {STICKS.filter((_, index) => index % 2 === 0).map((stick, index) => (
               <View
                 key={`${stick.left}-${index}`}
                 style={[
@@ -679,7 +719,7 @@ export function DrawAnimation({
               {
                 backgroundColor: 'transparent',
                 borderColor: 'transparent',
-                transform: [{ translateX }, { rotate }, { translateY: altarFloat }, { scale: impactAnim }],
+                transform: [{ translateX }, { rotate }, { translateY: altarFloat }],
               },
             ]}
           >
@@ -693,33 +733,7 @@ export function DrawAnimation({
             <View style={styles.sticksRow}>
               {STICKS.map((stick, index) => {
                 const isSelected = Boolean(stick.selected);
-                const jitter = stickJitterAnims[index];
-                const animatedStyle = isSelected ? {
-                  opacity: selectedIn筒Opacity,
-                  transform: [
-                    { rotate: stick.rotate },
-                    { translateY: chosenStickTranslateY },
-                    { translateX: chosenStickTranslateX },
-                    { rotate: chosenStickRotate },
-                  ],
-                } : {
-                  transform: [
-                    { rotate: stick.rotate },
-                    {
-                      rotate: Animated.multiply(jitter, shakeEnvelope).interpolate({
-                        inputRange: [-1, 1],
-                        outputRange: ['-3deg', '3deg'],
-                      }),
-                    },
-                    {
-                      translateY: Animated.multiply(jitter, shakeEnvelope).interpolate({
-                        inputRange: [-1, 1],
-                        outputRange: [-3, 3],
-                      }),
-                    },
-                  ],
-                };
-
+                const animatedStyle = stickAnimatedStyles[index];
                 return (
                   <Animated.View
                     key={`${stick.left}-${index}`}
@@ -755,6 +769,11 @@ export function DrawAnimation({
 
         <Animated.View
           pointerEvents="none"
+          style={[styles.flyingGroundShadow, { opacity: flyingShadowOpacity, transform: [{ scaleX: flyingShadowScaleX }, { scaleY: flyingShadowScaleY }] }]}
+        />
+
+        <Animated.View
+          pointerEvents="none"
           style={[
             styles.flyingStick,
             {
@@ -765,6 +784,7 @@ export function DrawAnimation({
                 { perspective: 700 },
                 { translateX: flyingStickX },
                 { translateY: flyingStickY },
+                { translateY: landingBounceY },
                 { rotateZ: flyingStickRotate },
                 { rotateY: flyingStickFlip },
                 { scale: flyingStickScale },
@@ -776,6 +796,7 @@ export function DrawAnimation({
             source={ritualStyle.censer.realisticStickSprite}
             style={styles.realisticFlyingStick}
             contentFit={'fill'}
+            cachePolicy="memory-disk"
           />
           <Animated.View style={[styles.flyingNumberPlate, { opacity: flyingNumberOpacity }]}>
             <Text style={styles.flyingNumberLabel}>第 {poemNumber ?? '?'} 籤</Text>
@@ -853,19 +874,24 @@ export function DrawAnimation({
         ]}
       >
         <Text style={[styles.revealCardTitle, { color: highlightColor }]}>聖意已定</Text>
-        <Text style={styles.revealCardText}>靈籤即將揭曉，請保持一念澄明。</Text>
+        <Text style={styles.revealCardText}>第 {poemNumber ?? '?'} 籤已落定，請恭讀聖意。</Text>
       </Animated.View>
-    </View>
+    </ScrollView>
   );
 }
 
 function createStyles(theme: ThemeColors) {
   return StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
+    width: '100%',
+  },
+  container: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: TempleSpacing.lg,
+    paddingVertical: TempleSpacing.lg,
   },
   title: {
     fontSize: TempleFonts.subtitle,
@@ -930,7 +956,8 @@ function createStyles(theme: ThemeColors) {
     marginTop: 4,
   },
   animationStage: {
-    width: 280,
+    width: '100%',
+    maxWidth: 320,
     height: 260,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1082,6 +1109,16 @@ function createStyles(theme: ThemeColors) {
     left: 2,
     width: 1,
     backgroundColor: 'rgba(112, 73, 32, 0.22)',
+  },
+  flyingGroundShadow: {
+    position: 'absolute',
+    top: 231,
+    left: 91,
+    width: 98,
+    height: 13,
+    borderRadius: 999,
+    backgroundColor: 'rgba(10, 6, 3, 0.62)',
+    zIndex: 80,
   },
   flyingStick: {
     position: 'absolute',

@@ -4,6 +4,7 @@ import {
   Easing,
   PanResponder,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -85,17 +86,22 @@ export function IncenseRitual({
   };
 
   const measureDropZoneInWindow = () => {
-    // Set layout-based rect immediately (reliable fallback for web)
-    const fromLayout = calcDropZoneFromLayout();
-    if (fromLayout) {
-      setDropZoneRect(fromLayout);
-    }
-    // Also try measureInWindow for screen coordinates (better for drag detection)
     requestAnimationFrame(() => {
       dropZoneRef.current?.measureInWindow((x, y, width, height) => {
         if (width && height) {
           setDropZoneRect({ x, y, width, height });
+          return;
         }
+
+        const relativeRect = calcDropZoneFromLayout();
+        if (!relativeRect) return;
+        sceneRef.current?.measureInWindow((sceneX, sceneY) => {
+          setDropZoneRect({
+            ...relativeRect,
+            x: sceneX + relativeRect.x,
+            y: sceneY + relativeRect.y,
+          });
+        });
       });
     });
   };
@@ -265,34 +271,15 @@ export function IncenseRitual({
     });
   };
 
-  const isInsideDropZone = (_screenX: number, _screenY: number) => {
-    // Use scene-relative coordinates for reliable cross-platform detection
-    if (!sceneLayout) return false;
+  const isInsideDropZone = (screenX: number, screenY: number) => {
+    if (!dropZoneRect) return false;
 
-    const { width: sw, height: sh } = sceneLayout;
-    // Drop zone bounds in scene coordinates
-    const dzX = (sw - 230) / 2 + (230 - 110) / 2; // centered in censerWrap
-    const dzY = sh - 196 - 34 + 22; // censerWrap bottom + dropZone top
-    const dzW = 110;
-    const dzH = 82;
-
-    // Current incense center in scene coords (natural pos + current drag offset)
-     
-    const curX = (incensePosition.x as any)._value as number;
-     
-    const curY = (incensePosition.y as any)._value as number;
-     
-    const curLift = (incenseLift as any)._value as number;
-    const handCx = sw - 35 + curX;
-    const handCy = sh - 62 + curY + curLift;
-
-    // Expanded hit area for easier targeting (increased for Web/Mobile ease of use)
-    const margin = 140;
+    const margin = 36;
     return (
-      handCx >= dzX - margin &&
-      handCx <= dzX + dzW + margin &&
-      handCy >= dzY - margin &&
-      handCy <= dzY + dzH + margin
+      screenX >= dropZoneRect.x - margin &&
+      screenX <= dropZoneRect.x + dropZoneRect.width + margin &&
+      screenY >= dropZoneRect.y - margin &&
+      screenY <= dropZoneRect.y + dropZoneRect.height + margin
     );
   };
 
@@ -422,7 +409,11 @@ export function IncenseRitual({
   const showHandIncense = step !== 'placed';
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={styles.title}>{'\u4e0a\u9999\u5100\u5f0f'}</Text>
       <Text style={styles.godName}>{`\u5411 ${godName} \u7a1f\u544a\u5fc3\u610f`}</Text>
       <RitualStylePicker value={ritualStyleKey} onChange={onStyleChange} />
@@ -513,16 +504,6 @@ export function IncenseRitual({
         </View>
 
         <View style={styles.censerWrap}>
-          <Pressable
-            ref={dropZoneRef}
-            style={styles.dropZone}
-            onLayout={measureDropZoneInWindow}
-            onPress={() => {
-              if (step === 'lit') {
-                placeIncenseInCenser();
-              }
-            }}
-          />
 
           {(step === 'lit' || step === 'placed') && (
             <Animated.View
@@ -592,6 +573,19 @@ export function IncenseRitual({
               ]}
             />
           )}
+
+          <Pressable
+            ref={dropZoneRef}
+            style={styles.dropZone}
+            onLayout={measureDropZoneInWindow}
+            onPress={() => {
+              if (step === 'lit') {
+                placeIncenseInCenser();
+              }
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={step === 'lit' ? '將香奉入香爐' : '香爐'}
+          />
         </View>
 
         <View style={styles.offerPanel}>
@@ -615,7 +609,13 @@ export function IncenseRitual({
             ]}
             {...(step === 'lit' ? panResponder.panHandlers : {})}
           >
-            <TouchableOpacity activeOpacity={step === 'idle' ? 0.85 : 1} onPress={step === 'idle' ? handleLight : undefined}>
+            <TouchableOpacity
+              activeOpacity={step === 'idle' ? 0.85 : 1}
+              onPress={step === 'idle' ? handleLight : undefined}
+              hitSlop={18}
+              accessibilityRole="button"
+              accessibilityLabel={step === 'idle' ? '點燃香火' : '已點燃的香'}
+            >
               <View style={styles.handPalm} />
               <View style={styles.bundleWrap}>
                 {[0, 1, 2].map((index) => (
@@ -677,21 +677,50 @@ export function IncenseRitual({
 
       <Text style={styles.instruction}>{instruction}</Text>
 
-      {step === 'idle' ? (
-        <TouchableOpacity style={styles.lightBtn} onPress={handleLight}>
-          <Text style={styles.lightBtnText}>{'\u9ede\u71c3\u9999\u706b'}</Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
+      <View style={styles.actionRow}>
+        {step === 'idle' ? (
+          <TouchableOpacity
+            style={styles.lightBtn}
+            onPress={handleLight}
+            accessibilityRole="button"
+            accessibilityLabel="點燃香火"
+          >
+            <Text style={styles.lightBtnText}>{'\u9ede\u71c3\u9999\u706b'}</Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {step === 'lighting' ? (
+          <View style={[styles.lightBtn, styles.lightBtnDisabled]} accessibilityRole="text">
+            <Text style={styles.lightBtnText}>{'\u9999\u706b\u9ede\u71c3\u4e2d\u2026'}</Text>
+          </View>
+        ) : null}
+
+        {step === 'lit' ? (
+          <TouchableOpacity
+            style={[styles.lightBtn, styles.offerBtn]}
+            onPress={placeIncenseInCenser}
+            accessibilityRole="button"
+            accessibilityLabel="將香奉入香爐"
+          >
+            <Text style={styles.lightBtnText}>{'\u5c07\u9999\u5949\u5165\u9999\u7210'}</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+    </ScrollView>
   );
 }
 
 function createStyles(theme: ThemeColors) {
   return StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
+    width: '100%',
+  },
+  container: {
+    flexGrow: 1,
     alignItems: 'center',
     paddingHorizontal: TempleSpacing.md,
+    paddingBottom: TempleSpacing.xl,
   },
   title: {
     fontSize: TempleFonts.subtitle,
@@ -1276,6 +1305,18 @@ function createStyles(theme: ThemeColors) {
     backgroundColor: theme.red,
     borderWidth: 1,
     borderColor: theme.gold,
+  },
+  actionRow: {
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: TempleSpacing.md,
+  },
+  offerBtn: {
+    backgroundColor: '#7A3E17',
+  },
+  lightBtnDisabled: {
+    opacity: 0.68,
   },
   lightBtnText: {
     fontSize: TempleFonts.body,

@@ -1,6 +1,6 @@
 // 冥想引導元件
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView, useWindowDimensions } from 'react-native';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
@@ -38,12 +38,12 @@ export function MeditationScreen({ godName, onComplete }: MeditationProps) {
 
     const timer = setInterval(() => {
       setSeconds(prev => {
-        if (prev >= 5) {
+        const next = Math.min(5, prev + 1);
+        if (next === 5) {
           clearInterval(timer);
           setIsReady(true);
-          return prev;
         }
-        return prev + 1;
+        return next;
       });
     }, 1000);
 
@@ -54,7 +54,12 @@ export function MeditationScreen({ godName, onComplete }: MeditationProps) {
   }, []);
 
   return (
-    <Animated.View style={[styles.container, isCompact && styles.containerCompact, { opacity: fadeAnim }]}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <Animated.View style={[styles.container, isCompact && styles.containerCompact, { opacity: fadeAnim }]}>
       <Animated.View style={[styles.glow, { transform: [{ scale: pulseAnim }] }]} />
 
       <Text style={[styles.godName, isCompact && styles.godNameCompact]}>{godName}</Text>
@@ -76,7 +81,8 @@ export function MeditationScreen({ godName, onComplete }: MeditationProps) {
           ))}
         </View>
         <Text style={styles.progressText}>
-          {isReady ? '已完成靜心 · 可以擲筊' : `靜心冥想中... ${5 - seconds}`}
+          {isReady ? '\u5df2\u5b8c\u6210\u975c\u5fc3 \u00b7 \u53ef\u4ee5\u9078\u64c7\u62bd\u7c64\u65b9\u5f0f' : `\u975c\u5fc3\u51a5\u60f3\u4e2d... ${5 - seconds}`}
+
         </Text>
       </View>
 
@@ -86,20 +92,31 @@ export function MeditationScreen({ godName, onComplete }: MeditationProps) {
         disabled={!isReady}
       >
         <Text style={[styles.continueBtnText, isReady && styles.continueBtnTextActive]}>
-          {isReady ? '開始擲筊' : '請靜心等待...'}
+          {isReady ? '\u9078\u64c7\u62bd\u7c64\u65b9\u5f0f' : '\u8acb\u975c\u5fc3\u7b49\u5f85...'}
+
         </Text>
       </TouchableOpacity>
-    </Animated.View>
+      </Animated.View>
+    </ScrollView>
   );
 }
 
 function createStyles(theme: ThemeColors) {
   return StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  container: {
+    flexGrow: 1,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: TempleSpacing.lg,
+    paddingVertical: TempleSpacing.lg,
   },
   containerCompact: {
     paddingHorizontal: TempleSpacing.md,

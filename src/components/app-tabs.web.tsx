@@ -71,7 +71,8 @@ export function CustomTabList(props: TabListProps & { t: (key: string) => string
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.scrollContent, isMobile && { gap: 6 }]}
+          style={styles.tabScroll}
+          contentContainerStyle={[styles.scrollContent, isMobile && styles.scrollContentMobile]}
         >
           {!isMobile && (
             <ThemedText type="smallBold" style={styles.brandText}>
@@ -109,14 +110,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexGrow: 1,
+    width: '100%',
+    minWidth: 0,
     maxWidth: MaxContentWidth,
+  },
+  tabScroll: {
+    flex: 1,
+    minWidth: 0,
   },
   scrollContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
+  },
+  scrollContentMobile: {
+    gap: 6,
+    justifyContent: 'flex-start',
+    paddingRight: Spacing.three,
   },
   pressed: { opacity: 0.7 },
   tabButtonView: {

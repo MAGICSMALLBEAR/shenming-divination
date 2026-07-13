@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 
 import {
@@ -24,8 +24,17 @@ export function RitualStylePicker({ value, onChange }: RitualStylePickerProps) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>AI 風格</Text>
-      <View style={styles.row}>
+      <View style={styles.labelRow}>
+        <Text style={styles.label}>{'\u9078\u64c7\u5100\u5f0f\u8cea\u611f'}</Text>
+        <Text style={styles.swipeHint}>{'\u5de6\u53f3\u6ed1\u52d5\u9078\u64c7'}</Text>
+      </View>
+      <ScrollView
+        horizontal
+        nestedScrollEnabled
+        showsHorizontalScrollIndicator={false}
+        style={styles.selectorScroll}
+        contentContainerStyle={styles.row}
+      >
         {ritualStyleOrder.map((styleKey) => {
           const styleDef = ritualStyles[styleKey];
           const selected = styleKey === value;
@@ -41,6 +50,9 @@ export function RitualStylePicker({ value, onChange }: RitualStylePickerProps) {
                 },
               ]}
               onPress={() => onChange(styleKey)}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              accessibilityLabel={'\u9078\u64c7' + styleDef.label + '\u5100\u5f0f\u8cea\u611f'}
             >
               <View style={styles.thumbRow}>
                 <AtlasThumb crop={styleDef.preview.censer} width={74} height={54} />
@@ -49,14 +61,17 @@ export function RitualStylePicker({ value, onChange }: RitualStylePickerProps) {
                   <AtlasThumb crop={styleDef.preview.flat} width={28} height={28} />
                 </View>
               </View>
-              <Text style={[styles.title, selected && { color: styleDef.chipColor }]}>
-                {styleDef.label}
-              </Text>
+              <View style={styles.titleRow}>
+                <Text style={[styles.title, selected && { color: styleDef.chipColor }]}>
+                  {styleDef.label}
+                </Text>
+                {selected ? <Text style={[styles.selectedMark, { color: styleDef.chipColor }]}>✓</Text> : null}
+              </View>
               <Text style={styles.summary}>{styleDef.summary}</Text>
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -100,20 +115,32 @@ function createStyles(theme: ThemeColors) {
     maxWidth: 420,
     marginBottom: TempleSpacing.md,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: TempleSpacing.xs,
+  },
   label: {
     fontSize: TempleFonts.small,
+    color: theme.textLight,
+    fontWeight: '700',
+  },
+  swipeHint: {
+    fontSize: 10,
     color: theme.textMuted,
-    marginBottom: TempleSpacing.xs,
+  },
+  selectorScroll: {
+    width: '100%',
   },
   row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: TempleSpacing.sm,
+    paddingRight: TempleSpacing.md,
   },
   card: {
-    flexBasis: '31%',
-    flexGrow: 1,
-    minWidth: 108,
+    width: 148,
+    minHeight: 150,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.goldDark + '28',
@@ -136,11 +163,20 @@ function createStyles(theme: ThemeColors) {
     gap: 6,
     marginTop: 6,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
   title: {
     fontSize: 12,
     fontWeight: '800',
     color: theme.goldLight,
-    marginBottom: 4,
+  },
+  selectedMark: {
+    fontSize: 13,
+    fontWeight: '900',
   },
   summary: {
     fontSize: 10,

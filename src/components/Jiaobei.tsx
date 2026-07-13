@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { Animated, Easing, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 
 import { ParticleEffect } from '@/components/ParticleEffect';
@@ -10,6 +10,8 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
 import type { JiaobeiResult } from '@/services/divination';
 import { playShengbeiSound, playTossSound, vibrateLight } from '@/services/proceduralSound';
+
+const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 
 interface JiaobeiProps {
   onToss: () => JiaobeiResult;
@@ -76,7 +78,7 @@ export function Jiaobei({
       toValue: 1,
       duration: lowMotion ? 420 : 980,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
+      useNativeDriver: USE_NATIVE_DRIVER,
     }).start(async () => {
       const result = onToss();
       setCurrentResult(result);
@@ -97,13 +99,13 @@ export function Jiaobei({
           toValue: 1,
           friction: 7,
           tension: 72,
-          useNativeDriver: true,
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.spring(resultFade, {
           toValue: 1,
           friction: 7,
           tension: 62,
-          useNativeDriver: true,
+          useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ]).start(() => {
         setIsAnimating(false);
@@ -231,10 +233,15 @@ export function Jiaobei({
   const resultInfo = currentResult ? getResultInfo(currentResult, theme) : null;
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      nestedScrollEnabled
+      showsVerticalScrollIndicator={false}
+    >
       <ParticleEffect active={showParticle && !lowMotion} type="gold" />
 
-      <Text style={styles.title}>{'\u64f2\u676f\u8acb\u793a'}</Text>
+      <Text style={styles.title}>{'\u64f2\u7b4a\u8acb\u793a'}</Text>
       <Text style={styles.attemptText}>
         {attemptLabel}
         {strictMode ? (
@@ -300,9 +307,19 @@ export function Jiaobei({
       </View>
 
       {!currentResult && !isAnimating ? (
-        <TouchableOpacity style={styles.tossBtn} onPress={handleToss}>
-          <Text style={styles.tossBtnText}>{'\u64f2\u676f'}</Text>
-        </TouchableOpacity>
+        <View style={styles.primaryAction}>
+          <Text style={styles.actionHint}>
+            {'\u96d9\u624b\u5408\u638c\u9ed8\u5ff5\u554f\u984c\uff0c\u518d\u6309\u4e0b\u64f2\u7b4a\u8acb\u793a'}
+          </Text>
+          <TouchableOpacity
+            style={styles.tossBtn}
+            onPress={handleToss}
+            accessibilityRole="button"
+            accessibilityLabel={'\u64f2\u7b4a\u8acb\u793a'}
+          >
+            <Text style={styles.tossBtnText}>{'\u64f2\u7b4a\u8acb\u793a'}</Text>
+          </TouchableOpacity>
+        </View>
       ) : null}
 
       {strictMode && currentResult === 'shengbei' && !isAnimating && !strictComplete ? (
@@ -330,7 +347,7 @@ export function Jiaobei({
           })}
         </View>
       ) : null}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -462,10 +479,15 @@ function getResultInfo(result: JiaobeiResult, theme: ThemeColors) {
 
 function createStyles(theme: ThemeColors) {
   return StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
+    width: '100%',
+  },
+  container: {
+    flexGrow: 1,
     alignItems: 'center',
     paddingHorizontal: TempleSpacing.md,
+    paddingBottom: TempleSpacing.xxl,
   },
   title: {
     fontSize: TempleFonts.subtitle,
@@ -492,10 +514,15 @@ function createStyles(theme: ThemeColors) {
   stage: {
     width: '100%',
     maxWidth: 420,
-    height: 320,
+    height: 276,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: TempleSpacing.lg,
+    marginBottom: TempleSpacing.md,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '32',
+    backgroundColor: theme.bgCard + 'A8',
+    overflow: 'hidden',
   },
   floorGlow: {
     position: 'absolute',
@@ -583,18 +610,34 @@ function createStyles(theme: ThemeColors) {
     color: theme.warning,
     fontWeight: '600',
   },
+  primaryAction: {
+    width: '100%',
+    maxWidth: 420,
+    alignItems: 'center',
+    gap: TempleSpacing.sm,
+  },
+  actionHint: {
+    color: theme.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
   tossBtn: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
+    width: '100%',
+    minHeight: 52,
+    borderRadius: 14,
     backgroundColor: theme.red,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: theme.goldDark,
+    borderWidth: 2,
+    borderColor: theme.gold,
+    shadowColor: theme.goldLight,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
   },
   tossBtnText: {
-    fontSize: TempleFonts.heading,
+    fontSize: TempleFonts.body,
     fontWeight: '900',
     color: theme.goldLight,
   },

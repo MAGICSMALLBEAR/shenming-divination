@@ -193,8 +193,9 @@ function GodCard({
   const cardImage = getGodCardImage(god.id);
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.86} style={[styles.cardWrapper, { width }, cardStyle]} accessibilityRole="button" accessibilityLabel={'選擇' + god.name + '，' + god.tagline}>
+    <View style={[styles.cardWrapper, { width }, cardStyle]}>
       <View style={[styles.godCard, { borderColor: god.accentColor + '66' }]}>
+        <TouchableOpacity onPress={onPress} activeOpacity={0.86} accessibilityRole="button" accessibilityLabel={'選擇' + god.name + '，' + god.tagline}>
         <View style={styles.badgeRow}>
           {isPatron ? (
             <View style={[styles.badge, { backgroundColor: god.primaryColor }]}>
@@ -221,6 +222,7 @@ function GodCard({
         <Text style={styles.godPoem}>
           {god.poemSystem} · {god.totalPoems} 首
         </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.detailBtn, { borderColor: god.accentColor + '50' }]}
           onPress={onDetail}
@@ -231,7 +233,7 @@ function GodCard({
           <Text style={[styles.detailBtnText, { color: god.accentColor }]}>查看詳細</Text>
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 

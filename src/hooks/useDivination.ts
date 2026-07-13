@@ -129,7 +129,7 @@ export function useDivination() {
     await new Promise<void>((resolve) => {
       let fallback: ReturnType<typeof setTimeout>;
       animationResolverRef.current = () => { clearTimeout(fallback); resolve(); };
-      fallback = setTimeout(() => animationResolverRef.current?.(), animationDuration + 1200);
+      fallback = setTimeout(() => animationResolverRef.current?.(), animationDuration * 1.4 + 500);
     });
     animationResolverRef.current = null;
 
