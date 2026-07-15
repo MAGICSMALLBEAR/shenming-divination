@@ -1,3 +1,32 @@
+## 2026-07-16 二十八宿靈籤補完整原文 + npm 漏洞複查
+
+### 本輪主題
+延續前一輪籤詩真實性稽核，處理當時列為「尚未處理」的兩個項目：npm 漏洞是否有安全修法、二十八宿靈籤（玄天上帝用）補完整傳統原文。
+
+### npm 漏洞複查
+- `npm audit --json` 逐一檢查每個漏洞的 `fixAvailable`，發現 `npm audit fix` 會把 `expo` 從目前的 SDK 56 **降級到 46.0.21**（`isSemVerMajor: true`）—— 這是大幅倒退版本，會讓 `expo-audio`、`expo-glass-effect`、`NativeTabs` 等現用 API 全部失效，直接把 App 弄壞。
+- 結論：維持現狀是正確判斷，這項確實卡在等 Expo SDK 57 修好 `@expo/config-plugins` 依賴鏈，AI 端沒有安全的自動修復手段。
+
+### 二十八宿靈籤補完整原文
+- 用 WebSearch 查證二十八宿的傳統源頭其實是黃曆「值日吉凶歌訣」（修造、嫁娶、安葬擇日用），每宿完整原文為 8 句（4 個對句），逐字查證確認 28 宿全數吻合多個獨立來源。
+- 發現重要落差：App 舊版只取每首前 2 句真原文，後 2 句是**改寫過的**、刻意換成溫和說法（例如把「懸絕吊頸禍重重」換成「求謀作事費心機」），沒有註明這是改寫版。原因是傳統原文語氣偏重（常涉及死亡、疾病、離散等黃曆凶兆用語），直接放進求籤問事的 App 情境會太嚇人。
+- 與使用者確認處理方式，選定「改用完整傳統 8 句原文」。逐一比對 28 宿的 8 句全文，改寫 `src/data/poems/ershibaxiu.ts`：
+  - `content`：全部改為傳統歌訣完整 8 句原文
+  - `level`：依原文吉凶輕重重新標定（原文明確凶兆的維持「下下」，不再软化）
+  - `vernacular`／`story`／`jieYue`：依真實原文重新撰寫，忠於原意但轉譯為現代可理解的請示提醒語氣（吉時給出具體行動方向；凶時明確提醒謹慎、暫緩重大決定，而非隱藏警示）
+- 同步更新 `oracleCatalog.ts` 玄天上帝籤系條目，誠實標示「傳統籤系（二十八宿值日歌訣）+ 玄天上帝專屬白話解讀」
+
+### 驗證
+- `npx tsc --noEmit` 全部通過
+- `npm test` 13 個測試檔、52 個測試全過
+- `npm run lint` 通過，無警告
+
+### 尚未處理
+- 虎爺、義民爺、臨水夫人等小眾神明目前借用通用籤系（六十甲子/雷雨師/觀音），若要找到真正專屬的傳統籤系文獻，需要使用者提供或指定可靠來源
+- npm 漏洞持續卡在 Expo SDK 57
+
+---
+
 ## 2026-07-15 籤詩真實性稽核與修復（18 位神明改用真傳統籤系）
 
 ### 本輪主題
@@ -486,37 +515,39 @@ Firebase 接入、IAP 真實付款、Fly.io 後端部署、Crash reporting/Analy
 
 ## 未來代辦清單
 
-> 2026-07-12 更新：#2、#4、#10、#11、#14 已完成；2026-07-09 效能審查 + 7 項修復完成（動畫洩漏/AsyncStorage/useCallback）；2026-07-12 盤點到一批 Codex 未提交的大批次功能（10 位新神明、互動搖籤、驗證回訪提醒、雲端同步、免責聲明/籤詩校勘頁、PWA 離線強化），詳見上方 2026-07-12 條目，**尚未 commit**。剩餘項目全部需要外部帳號/服務才能繼續。
+> 2026-07-15 更新：全面重新核對現況（見下表逐項驗證結果）。#2、#4、#10、#11、#14、#15 已完成。籤詩真實性問題（18 位神明假籤詩）已於 2026-07-15 修復，詳見上方條目。剩餘項目全部需要外部帳號/服務才能繼續，AI 無法自行完成。
 
 ### 🔴 高優先（上架前必須）
 
-| # | 項目 | 說明 | 指令/備注 |
-|---|------|------|-----------|
-| 1 | **Firebase 接入** | 到 console.firebase.google.com 建立專案，填入 `src/services/firebaseConfig.ts`。2026-07-12：`syncService.ts`（備份上傳/還原/匿名登入）已完整實作並過測試，只差真實專案設定 | 填完後雲端同步自動生效 |
-| 15 | **Commit 2026-07-12 批次變更** | 34 個修改檔 + 約 40 個新檔尚未 commit，詳見上方 2026-07-12 工作日誌 | 待使用者確認後執行 |
-| 2 | ~~**expo-store-review 安裝**~~ ✅ 2026-07-05 完成 | 已安裝套件，並補上 `useDivination.ts` 裡遺漏的呼叫點（原本裝了也不會生效） | — |
-| 3 | **IAP 真實付款** | premiumService.ts 架構已建好，接入 RevenueCat 或 Expo IAP | 目前 AsyncStorage 模擬，不能收費 |
-| 4 | ~~**淺色主題全頁面套用**~~ ✅ 2026-07-05 完成 | 全站 34 個剩餘檔案已全部轉換，`grep TempleTheme.` 全站零殘留 | — |
-| 10 | ~~**隱私權政策 / 服務條款頁面**~~ ✅ 2026-07-05 完成 | 新增 `src/app/privacy.tsx`，從設定頁「關於這個版本」可連結進入 | — |
+| # | 項目 | 現況 | 說明 |
+|---|------|------|------|
+| 1 | **Firebase 接入** | ❌ 未設定 | `firebaseConfig.ts` 仍是 `YOUR_API_KEY` 佔位符；`syncService.ts`（備份上傳/還原/匿名登入）程式碼已完整實作並過測試，只差真實專案設定 |
+| 3 | **IAP 真實付款** | ❌ 未接 | `premiumService.ts` 仍用 AsyncStorage 模擬訂閱狀態，PaywallUI 已明確標示「展示模式」；需接 RevenueCat 或 Expo IAP 才能真的收費 |
+| 2 | ~~**expo-store-review 安裝**~~ | ✅ 完成 | — |
+| 4 | ~~**淺色主題全頁面套用**~~ | ✅ 完成 | — |
+| 10 | ~~**隱私權政策 / 服務條款頁面**~~ | ✅ 完成 | — |
+| 15 | ~~**Commit 2026-07-12 批次變更**~~ | ✅ 完成 | 已於 2026-07-12～14 陸續 commit + push |
 
 ### 🟡 中優先（品質提升）
 
-| # | 項目 | 說明 |
-|---|------|------|
-| 5 | **後端正式部署** | `backend/Dockerfile` + `fly.toml` 已建好，執行 `fly launch` 部署到 Fly.io；更新前端 `EXPO_PUBLIC_AI_API_URL` |
-| 6 | **Firebase Community** | community.tsx 已實作 Firestore 路徑，填入真實 API key 後自動生效 |
-| 11 | ~~**測試 / CI**~~ ✅ 2026-07-05 完成 | `jest-expo` + `__tests__/`（15 個測試）+ `.github/workflows/ci.yml`（typecheck+lint+test） |
-| 12 | **Crash reporting / Analytics** | 尚未接 Sentry 或 Firebase Analytics 之類工具，上線後出問題會完全不知道 |
-| 13 | **Apple 登入** | `authService.ts` 目前只有 Google／匿名登入；若上 iOS 且提供其他第三方登入，Apple 規定必須同時提供 Sign in with Apple |
+| # | 項目 | 現況 | 說明 |
+|---|------|------|------|
+| 5 | **後端正式部署（原生 App 用）** | ⚠️ 部分完成 | Web/PWA 版已改用 Vercel Serverless（`api/interpret.js`／`api/chat.js`）不再需要獨立後端；但若要出 iOS/Android 原生版，仍需 `fly launch` 部署 `backend/`（Dockerfile + fly.toml 已備好），因為原生 App 無法呼叫相對路徑 |
+| 6 | **Firebase Community** | ❌ 未設定 | 與 #1 同一個 Firebase 專案，設定好即自動生效 |
+| 12 | **Crash reporting / Analytics** | ❌ 未接 | 尚未安裝 Sentry 或 Firebase Analytics，上線後出問題會完全不知道 |
+| 13 | **Apple 登入** | ❌ 未接 | `authService.ts` 目前**只有匿名登入**（比先前紀錄更少，Google 登入也還沒做）；若上 iOS 且提供第三方登入，Apple 規定須同時提供 Sign in with Apple |
+| 11 | ~~**測試 / CI**~~ | ✅ 完成，且持續擴充 | 目前 13 個測試檔、52 個測試，`.github/workflows/ci.yml` |
 
 ### 🟢 低優先（長期優化）
 
-| # | 項目 | 說明 |
-|---|------|------|
-| 7 | **npm 漏洞** | 等 Expo SDK 57 升級時一併解決，詳見上方說明 |
-| 8 | **原生 Widget** | Expo SDK 57+ expo-widgets 套件，屆時將現有 `scheduleFortuneWidgetNotification()` 資料層升接原生 Widget UI |
-| 9 | **Firebase 資料離線快取** | AI 解籤已有 offlineCache.ts，Firebase 讀寫另需 Firestore offline persistence 設定 |
-| 14 | ~~**籤詩查詢圖書館**~~ ✅ 2026-07-05 完成 | 新增 `src/app/library.tsx`，從「更多」頁進入，可切換神明/搜尋/展開籤文 |
+| # | 項目 | 現況 | 說明 |
+|---|------|------|------|
+| 7 | **npm 漏洞** | ⚠️ 仍在，已複查 | 2026-07-16 確認 `npm audit fix` 會把 expo 降到 SDK 46（大倒退，會弄壞現用 API），沒有安全的自動修復手段，只能等 Expo SDK 57 |
+| 8 | **原生 Widget** | 🔒 卡在 SDK 57 | 待 `expo-widgets` 套件釋出 |
+| 9 | **Firebase 資料離線快取** | ❌ 未設定 | 與 #1 同批，需 Firestore offline persistence 設定 |
+| 14 | ~~**籤詩查詢圖書館**~~ | ✅ 完成 | — |
+| 16 | ~~**二十八宿靈籤補完整原文**~~ | ✅ 2026-07-16 完成 | 全數改為傳統歌訣完整 8 句原文，level/白話/解曰同步依真實原文重寫 |
+| 17 | **小眾神明專屬籤系文獻** | 待使用者提供來源 | 虎爺、義民爺、臨水夫人等目前借用通用籤系（六十甲子/雷雨師/觀音），若要找到真正專屬的傳統籤系文獻，需要使用者提供或指定可靠來源 |
 
 ---
 

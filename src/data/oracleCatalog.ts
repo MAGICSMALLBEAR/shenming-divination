@@ -163,13 +163,13 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
       return entry({
         label: '玄天二十八宿籤',
         totalPoems: 28,
-        sourceNote: '以二十八星宿為序，每宿一籤，搭配玄天上帝鎮煞、護境與穩局的請示語境。',
-        completenessNote: '28 宿筆數完整；後續可補星宿方位、值日宜忌與道教科儀脈絡。',
+        sourceNote: '底本為傳統黃曆「二十八宿值日吉凶歌訣」（修造、嫁娶、安葬擇日用），籤文為傳統歌訣完整原文（逐字沿用，含 8 句全文），搭配玄天上帝鎮煞、護境與穩局的請示語境。',
+        completenessNote: '28 宿筆數完整，籤文原文為傳統定本；原文部分語氣較重（涉及傳統擇日凶兆），白話與分類解曰已在忠於原意的前提下轉譯為現代可理解的請示提醒。',
         strengths: ['消災制煞', '家宅平安', '穩固局勢'],
-        sourceType: '星宿籤系 + App 白話修訂',
-        editionNote: '目前為內建二十八宿白話版，保留星宿序列並補分類解曰。',
+        sourceType: '傳統籤系（二十八宿值日歌訣）+ 玄天上帝專屬白話解讀',
+        editionNote: '二十八宿原文不改，補上分類解曰與典故前言，供求籤問事情境使用。',
         suitabilityNote: '適合問家宅、消災、是非小人、事業穩固與行動時機。',
-        versionTag: 'xuantian-28-focused-v1',
+        versionTag: 'xuantian-ershibaxiu-28-full-v2',
       });
     case 11:
       return entry({
