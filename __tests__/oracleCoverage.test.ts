@@ -38,12 +38,12 @@ describe('oracle coverage and dedicated deity systems', () => {
   });
 
   it('provides independent focused arrays for the six strengthened systems', () => {
-    expect(mazuFocusedPoems).toHaveLength(100);
+    expect(mazuFocusedPoems).toHaveLength(60);
     expect(wenchangFocusedPoems).toHaveLength(100);
     expect(xuantianFocusedPoems).toHaveLength(28);
-    expect(chenghuangFocusedPoems).toHaveLength(60);
-    expect(jinmuFocusedPoems).toHaveLength(28);
-    expect(dizangFocusedPoems).toHaveLength(24);
+    expect(chenghuangFocusedPoems).toHaveLength(100);
+    expect(jinmuFocusedPoems).toHaveLength(100);
+    expect(dizangFocusedPoems).toHaveLength(100);
 
     expect(mazuFocusedPoems[0].jieYue.travel).toContain('聖母護航專解');
     expect(wenchangFocusedPoems[0].jieYue.study).toContain('功名學業專解');

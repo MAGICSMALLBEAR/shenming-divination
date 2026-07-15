@@ -1,6 +1,7 @@
 import type { JieYue, Poem } from './leiyushi';
 import { leiyushiPoems } from './leiyushi';
 import { jiazi60Poems } from './jiazi60';
+import { guanyinLingQianPoems } from './guanyinLingQian';
 
 type JieYueKey = keyof JieYue;
 
@@ -118,14 +119,168 @@ const yuelaoConfig: GodSpecificConfig = {
   },
 };
 
+const fudezhengshenConfig: GodSpecificConfig = {
+  idOffset: 5400,
+  label: '土地公厚德籤',
+  baseSystem: '六十甲子籤',
+  focusKey: 'wealth',
+  focusLabel: '厚德招財',
+  titlePrefix: '土地厚德・',
+  storyPrefix: '福德正神籤解以家宅平安、生意興隆與出入順利為主軸；此籤承接六十甲子原意，轉作財務與家宅請示的白話指引。 ',
+  generalPrefix: '福德正神提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
+const sanguanConfig: GodSpecificConfig = {
+  idOffset: 5450,
+  label: '三官賜福籤',
+  baseSystem: '六十甲子籤',
+  focusKey: 'general',
+  focusLabel: '賜福赦罪',
+  titlePrefix: '三官賜福・',
+  storyPrefix: '三官大帝籤解以天官賜福、地官赦罪、水官解厄為主軸；此籤承接六十甲子原意，轉作年運與消災請示的白話指引。 ',
+  generalPrefix: '三官大帝提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
+const zhushengConfig: GodSpecificConfig = {
+  idOffset: 5500,
+  label: '註生送子籤',
+  baseSystem: '觀音靈籤',
+  focusKey: 'marriage',
+  focusLabel: '孕育家緣',
+  titlePrefix: '娘娘賜福・',
+  storyPrefix: '註生娘娘籤解以子嗣因緣、孕育照護與家庭祝福為主軸；此籤承接觀音靈籤原意，轉作孕產與親子請示的白話指引。 ',
+  generalPrefix: '註生娘娘提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
+const luzuConfig: GodSpecificConfig = {
+  idOffset: 5600,
+  label: '純陽指路籤',
+  baseSystem: '雷雨師百首',
+  focusKey: 'study',
+  focusLabel: '純陽明心',
+  titlePrefix: '純陽指路・',
+  storyPrefix: '呂洞賓籤解以修心、功名與身心清明為主軸；此籤承接雷雨師百首原意，轉作學業與人生取捨請示的白話指引。 ',
+  generalPrefix: '孚佑帝君提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
+const zhaogongmingConfig: GodSpecificConfig = {
+  idOffset: 5700,
+  label: '五路聚財籤',
+  baseSystem: '雷雨師百首',
+  focusKey: 'wealth',
+  focusLabel: '五路聚財',
+  titlePrefix: '玄壇聚財・',
+  storyPrefix: '玄壇元帥趙公明籤解以正財、信用與現金流節制為主軸；此籤承接雷雨師百首原意，轉作生意與財務請示的白話指引。 ',
+  generalPrefix: '玄壇元帥提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
+const huyeConfig: GodSpecificConfig = {
+  idOffset: 5800,
+  label: '虎威護境籤',
+  baseSystem: '六十甲子籤',
+  focusKey: 'general',
+  focusLabel: '虎威護境',
+  titlePrefix: '虎威護境・',
+  storyPrefix: '虎爺籤解以護廟鎮煞、守護孩童與正財節奏為主軸；此籤承接六十甲子原意，轉作居家安全與求財請示的白話指引。 ',
+  generalPrefix: '虎爺將軍提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
+const jiutianxuannuConfig: GodSpecificConfig = {
+  idOffset: 5900,
+  label: '玄女兵法籤',
+  baseSystem: '雷雨師百首',
+  focusKey: 'career',
+  focusLabel: '九天授策',
+  titlePrefix: '九天授策・',
+  storyPrefix: '九天玄女籤解以布局、策略與危機判斷為主軸；此籤承接雷雨師百首原意，轉作事業競爭請示的白話指引。 ',
+  generalPrefix: '九天玄女提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
+const taisuiConfig: GodSpecificConfig = {
+  idOffset: 6000,
+  label: '太歲鎮年籤',
+  baseSystem: '六十甲子籤',
+  focusKey: 'general',
+  focusLabel: '太歲鎮年',
+  titlePrefix: '太歲鎮年・',
+  storyPrefix: '太歲星君籤解以流年秩序、風險防範與元辰安定為主軸；此籤承接六十甲子原意，轉作年度規劃請示的白話指引。 ',
+  generalPrefix: '值年太歲星君提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
+const linshuifurenConfig: GodSpecificConfig = {
+  idOffset: 6100,
+  label: '臨水護幼籤',
+  baseSystem: '觀音靈籤',
+  focusKey: 'health',
+  focusLabel: '臨水護幼',
+  titlePrefix: '臨水護生・',
+  storyPrefix: '臨水夫人籤解以婦幼安康、孕產照護與家庭分工為主軸；此籤承接觀音靈籤原意，轉作親子照護請示的白話指引。 ',
+  generalPrefix: '臨水夫人提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
+const yiminyeConfig: GodSpecificConfig = {
+  idOffset: 6200,
+  label: '義民忠義籤',
+  baseSystem: '六十甲子籤',
+  focusKey: 'general',
+  focusLabel: '忠義守土',
+  titlePrefix: '義民守土・',
+  storyPrefix: '義民爺籤解以忠義、守土與團隊責任為主軸；此籤承接六十甲子原意，轉作地方事務與團隊合作請示的白話指引。 ',
+  generalPrefix: '義民爺提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
+const medicineBuddhaConfig: GodSpecificConfig = {
+  idOffset: 6300,
+  label: '藥師護念籤',
+  baseSystem: '觀音靈籤',
+  focusKey: 'health',
+  focusLabel: '藥師護念',
+  titlePrefix: '藥師護念・',
+  storyPrefix: '藥師佛籤解以身心安定、求醫心態與復原規律為主軸；此籤承接觀音靈籤原意，轉作健康照護請示的白話指引。 ',
+  generalPrefix: '藥師佛提醒',
+  levelAdvice: DEFAULT_LEVEL_ADVICE,
+};
+
 export const baoshengHealthPoems = buildGodSpecificPoems(leiyushiPoems, baoshengConfig);
 export const jigongLingQianPoems = buildGodSpecificPoems(leiyushiPoems, jigongConfig);
 export const santaiziBreakthroughPoems = buildGodSpecificPoems(jiazi60Poems, santaiziConfig);
 export const yuelaoMarriagePoems = buildGodSpecificPoems(jiazi60Poems, yuelaoConfig);
+export const fudezhengshenBlessingPoems = buildGodSpecificPoems(jiazi60Poems, fudezhengshenConfig);
+export const sanguanBlessingPoems = buildGodSpecificPoems(jiazi60Poems, sanguanConfig);
+export const zhushengBlessingPoems = buildGodSpecificPoems(guanyinLingQianPoems, zhushengConfig);
+export const luzuGuidancePoems = buildGodSpecificPoems(leiyushiPoems, luzuConfig);
+export const zhaogongmingWealthPoems = buildGodSpecificPoems(leiyushiPoems, zhaogongmingConfig);
+export const huyeGuardPoems = buildGodSpecificPoems(jiazi60Poems, huyeConfig);
+export const jiutianxuannuStrategyPoems = buildGodSpecificPoems(leiyushiPoems, jiutianxuannuConfig);
+export const taisuiPoems = buildGodSpecificPoems(jiazi60Poems, taisuiConfig);
+export const linshuifurenPoems = buildGodSpecificPoems(guanyinLingQianPoems, linshuifurenConfig);
+export const yiminyePoems = buildGodSpecificPoems(jiazi60Poems, yiminyeConfig);
+export const medicineBuddhaPoems = buildGodSpecificPoems(guanyinLingQianPoems, medicineBuddhaConfig);
 
 export const godSpecificPoemSystemMeta = {
   baosheng: baoshengConfig,
   jigong: jigongConfig,
   santaizi: santaiziConfig,
   yuelao: yuelaoConfig,
+  fudezhengshen: fudezhengshenConfig,
+  sanguan: sanguanConfig,
+  zhusheng: zhushengConfig,
+  luzu: luzuConfig,
+  zhaogongming: zhaogongmingConfig,
+  huye: huyeConfig,
+  jiutianxuannu: jiutianxuannuConfig,
+  taisui: taisuiConfig,
+  linshuifuren: linshuifurenConfig,
+  yiminye: yiminyeConfig,
+  medicineBuddha: medicineBuddhaConfig,
 } as const;

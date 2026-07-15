@@ -1,9 +1,8 @@
 import type { JieYue, Poem } from './leiyushi';
 import { leiyushiPoems } from './leiyushi';
+import { jiazi60Poems } from './jiazi60';
+import { guanyinLingQianPoems } from './guanyinLingQian';
 import { ershibaxiuPoems } from './ershibaxiu';
-import {
-  guanyin24Poems, guanyin28Poems, lingyinghou60Poems, tianhouLingQianPoems,
-} from './marketCommon';
 
 type JieYueKey = keyof JieYue;
 
@@ -42,12 +41,12 @@ const configs = {
   mazu: {
     idOffset: 7000,
     systemName: '媽祖天后百籤',
-    versionTag: 'mazu-tianhou-100-focused-v1',
-    baseSystem: '天后宮靈籤 App 白話整理版',
+    versionTag: 'mazu-jiazi-60-focused-v2',
+    baseSystem: '六十甲子籤',
     focusKey: 'travel',
     focusLabel: '聖母護航',
     titlePrefix: '媽祖聖示・',
-    storyPrefix: '本解讀層聚焦媽祖護航、家宅與遠行平安；底本為 App 天后宮百籤整理版，並非特定宮廟唯一定本。 ',
+    storyPrefix: '本解讀層聚焦媽祖護航、家宅與遠行平安；底本為六十甲子籤（媽祖廟、王爺廟、天公廟等廟宇通用之傳統籤系）。 ',
     generalPrefix: '媽祖提醒',
   },
   wenchang: {
@@ -75,43 +74,43 @@ const configs = {
   chenghuang: {
     idOffset: 7500,
     systemName: '城隍明鑑六十籤',
-    versionTag: 'chenghuang-60-focused-v1',
-    baseSystem: '靈應侯六十籤 App 白話整理版',
+    versionTag: 'chenghuang-leiyushi-100-focused-v2',
+    baseSystem: '雷雨師百首',
     focusKey: 'career',
     focusLabel: '公道文書',
     titlePrefix: '城隍明鑑・',
-    storyPrefix: '本解讀層聚焦是非、公道、契約與責任歸屬；底本為靈應侯六十籤 App 整理版。 ',
+    storyPrefix: '本解讀層聚焦是非、公道、契約與責任歸屬；底本為雷雨師百首（行天宮、城隍廟、文武廟等廟宇通用之傳統籤系）。 ',
     generalPrefix: '城隍爺提醒',
   },
   jinmu: {
     idOffset: 7600,
     systemName: '金母慈光二十八籤',
-    versionTag: 'jinmu-28-focused-v1',
-    baseSystem: '觀音廿八籤 App 白話整理版',
+    versionTag: 'jinmu-guanyin-100-focused-v2',
+    baseSystem: '觀音靈籤',
     focusKey: 'general',
     focusLabel: '慈光和合',
     titlePrefix: '金母慈示・',
-    storyPrefix: '本解讀層聚焦身心和合、家庭、女性長輩緣與貴人助力；底本為觀音廿八籤 App 整理版。 ',
+    storyPrefix: '本解讀層聚焦身心和合、家庭、女性長輩緣與貴人助力；底本為觀音靈籤（觀音廟宇通用之傳統籤系）。 ',
     generalPrefix: '瑤池金母提醒',
   },
   dizang: {
     idOffset: 7700,
     systemName: '地藏大願二十四籤',
-    versionTag: 'dizang-24-focused-v1',
-    baseSystem: '觀音二十四籤 App 白話整理版',
+    versionTag: 'dizang-guanyin-100-focused-v2',
+    baseSystem: '觀音靈籤',
     focusKey: 'health',
     focusLabel: '安心解厄',
     titlePrefix: '地藏願行・',
-    storyPrefix: '本解讀層聚焦失落安頓、家族牽掛、苦厄化解與修心；底本為觀音二十四籤 App 整理版。 ',
+    storyPrefix: '本解讀層聚焦失落安頓、家族牽掛、苦厄化解與修心；底本為觀音靈籤（觀音廟宇通用之傳統籤系）。 ',
     generalPrefix: '地藏菩薩提醒',
   },
 } as const satisfies Record<string, DeityFocusConfig>;
 
-export const mazuFocusedPoems = buildDeityFocusedPoems(tianhouLingQianPoems, configs.mazu);
+export const mazuFocusedPoems = buildDeityFocusedPoems(jiazi60Poems, configs.mazu);
 export const wenchangFocusedPoems = buildDeityFocusedPoems(leiyushiPoems, configs.wenchang);
 export const xuantianFocusedPoems = buildDeityFocusedPoems(ershibaxiuPoems, configs.xuantian);
-export const chenghuangFocusedPoems = buildDeityFocusedPoems(lingyinghou60Poems, configs.chenghuang);
-export const jinmuFocusedPoems = buildDeityFocusedPoems(guanyin28Poems, configs.jinmu);
-export const dizangFocusedPoems = buildDeityFocusedPoems(guanyin24Poems, configs.dizang);
+export const chenghuangFocusedPoems = buildDeityFocusedPoems(leiyushiPoems, configs.chenghuang);
+export const jinmuFocusedPoems = buildDeityFocusedPoems(guanyinLingQianPoems, configs.jinmu);
+export const dizangFocusedPoems = buildDeityFocusedPoems(guanyinLingQianPoems, configs.dizang);
 
 export const deityFocusedSystemMeta = configs;

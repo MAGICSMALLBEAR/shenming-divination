@@ -17,25 +17,19 @@ import {
   jigongLingQianPoems,
   santaiziBreakthroughPoems,
   yuelaoMarriagePoems,
+  fudezhengshenBlessingPoems,
+  sanguanBlessingPoems,
+  zhushengBlessingPoems,
+  luzuGuidancePoems,
+  zhaogongmingWealthPoems,
+  huyeGuardPoems,
+  jiutianxuannuStrategyPoems,
+  taisuiPoems,
+  linshuifurenPoems,
+  yiminyePoems,
+  medicineBuddhaPoems,
+  baoshengHealthPoems,
 } from './poems/godSpecific';
-import {
-  baosheng64Poems,
-  guanyin24Poems,
-  guanyin28Poems,
-  jinqianGua32Poems,
-  lingyinghou60Poems,
-  luzu60Poems,
-  tianhouLingQianPoems,
-  zhusheng30Poems,
-  zhaogongming60Poems,
-  huye36Poems,
-  jiutian49Poems,
-  taisui60Poems,
-  linshui36Poems,
-  yimin40Poems,
-  confucius64Poems,
-  medicineBuddha48Poems,
-} from './poems/marketCommon';
 
 export interface God {
   id: number;
@@ -90,7 +84,7 @@ export const gods: God[] = [
     title: '天上聖母',
     description: '海上守護神，台灣最普遍的信仰。庇佑航海平安、家庭和樂、事業順遂。',
     poemSystem: '媽祖天后百籤',
-    totalPoems: 100,
+    totalPoems: 60,
     image: require('@/assets/images/gods/mazu.png'),
     blessing: '願媽祖娘娘庇佑，風調雨順，闔家平安，一帆風順。',
     tagline: '聖母護航，闔境平安',
@@ -120,7 +114,7 @@ export const gods: God[] = [
     title: '保生大帝',
     description: '醫藥之神，精通醫術。信眾祈求身體健康、疾病痊癒、藥方有效。',
     poemSystem: '保生大帝靈籤',
-    totalPoems: 64,
+    totalPoems: 100,
     image: require('@/assets/images/gods/baoshengdadi.png'),
     blessing: '願大帝慈悲醫治，藥到病除，身心安康，福壽綿長。',
     tagline: '慈心濟世，保生安康',
@@ -134,8 +128,8 @@ export const gods: God[] = [
     name: '福德正神',
     title: '福德正神',
     description: '土地之神，掌管一方水土。信眾祈求家宅平安、生意興隆、出入平安。',
-    poemSystem: '金錢卦三十二籤',
-    totalPoems: 32,
+    poemSystem: '土地公厚德籤',
+    totalPoems: 60,
     image: require('@/assets/images/gods/fudezhengshen.png'),
     blessing: '願土地公伯庇佑，家宅平安，財源廣進，出入順利。',
     tagline: '厚德載福，招財安宅',
@@ -149,8 +143,8 @@ export const gods: God[] = [
     name: '註生娘娘',
     title: '註生娘娘',
     description: '掌管生育與兒童守護之神。信眾祈求懷孕順產、孩子健康平安長大。',
-    poemSystem: '註生娘娘三十籤',
-    totalPoems: 30,
+    poemSystem: '註生送子籤',
+    totalPoems: 100,
     image: require('@/assets/images/gods/zhushengniangniang.png'),
     blessing: '願娘娘賜福送子，懷孕順產，孩兒健康，平安長大。',
     tagline: '送子賜福，安產護幼',
@@ -255,7 +249,7 @@ export const gods: God[] = [
     title: '城隍爺',
     description: '陰間司法神，掌理地方陰陽兩界事務，明察秋毫、賞善罰惡。職司保境安民、懲奸除惡。信眾祈求官司順利、是非分明、冤屈昭雪、消災解厄。',
     poemSystem: '城隍明鑑六十籤',
-    totalPoems: 60,
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/chenghuangye-card.png'),
     blessing: '願城隍爺明鏡高懸，善有善報，冤屈得雪，是非分明，正義伸張。',
     tagline: '明鏡高懸，善惡分明',
@@ -269,8 +263,8 @@ export const gods: God[] = [
     name: '呂洞賓',
     title: '孚佑帝君',
     description: '八仙中最著名的一位，道教全真派祖師，號純陽子。文武雙全，精通劍術、醫術與丹道。信眾祈求考試功名、身體健康、化解感情糾葛。',
-    poemSystem: '呂祖六十籤',
-    totalPoems: 60,
+    poemSystem: '純陽指路籤',
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/lvdongbin-card.png'),
     blessing: '願孚佑帝君純陽正氣加持，智慧清明，劍斬煩惱，功成名就，身心康泰。',
     tagline: '一劍斬煩惱，妙筆點功名',
@@ -315,7 +309,7 @@ export const gods: God[] = [
     title: '瑤池金母',
     description: '又稱王母娘娘，慈悲護佑、調和陰陽與母性守護。信眾祈求身心安定、家庭和合、靈性指引與貴人助力。',
     poemSystem: '金母慈光二十八籤',
-    totalPoems: 28,
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/yaochijinmu-card.png'),
     blessing: '願金母慈光護佑，心安氣和，家門添福，貴人相扶。',
     tagline: '瑤池慈光，和合添福',
@@ -330,7 +324,7 @@ export const gods: God[] = [
     title: '地藏王菩薩',
     description: '大願地藏，救拔幽冥苦厄，安定亡者與生者之心。信眾祈求超拔、化解業障、身心平安與家族和解。',
     poemSystem: '地藏大願二十四籤',
-    totalPoems: 24,
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/dizangwang-card.png'),
     blessing: '願地藏菩薩大願護持，苦厄漸消，心燈常明，冤親和解。',
     tagline: '大願護念，苦厄成光',
@@ -360,7 +354,7 @@ export const gods: God[] = [
     title: '神農大帝',
     description: '農業與醫藥始祖，嘗百草、教稼穡。信眾祈求健康調養、農作豐收、飲食安全與實業穩定。',
     poemSystem: '保生大帝靈籤',
-    totalPoems: 64,
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/shennongdadi-card.png'),
     blessing: '願神農大帝護佑，百草成藥，五穀豐登，身心康健。',
     tagline: '百草濟世，五穀豐登',
@@ -374,8 +368,8 @@ export const gods: God[] = [
     name: '三官大帝',
     title: '三官大帝',
     description: '天官賜福、地官赦罪、水官解厄，主掌祈福、懺悔與化解災厄。適合請示年度運勢、家運與消災解厄。',
-    poemSystem: '金錢卦三十二籤',
-    totalPoems: 32,
+    poemSystem: '三官賜福籤',
+    totalPoems: 60,
     image: require('@/assets/images/gods/generated/cards/sanguandadi-card.png'),
     blessing: '願三官大帝賜福赦罪解厄，福德增長，災厄消除。',
     tagline: '賜福赦罪，水火解厄',
@@ -434,8 +428,8 @@ export const gods: God[] = [
     name: '玄壇元帥趙公明',
     title: '玄壇元帥・五路財神',
     description: '道教財神與護商之神，統領招寶、納珍、招財、利市四位正神。適合請示生意、正財、合作、現金流與風險取捨。',
-    poemSystem: '五路財神六十籤',
-    totalPoems: 60,
+    poemSystem: '五路聚財籤',
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/zhaogongming-card.png'),
     blessing: '願玄壇元帥護商聚財，守信得利，財庫安穩，五路亨通。',
     tagline: '五路聚財，守信護商',
@@ -449,8 +443,8 @@ export const gods: God[] = [
     name: '虎爺',
     title: '虎將軍・下壇將軍',
     description: '臺灣宮廟常見的守護神獸，護廟鎮煞、守護孩童，也有咬錢招財的民間信仰。適合請示安全、家宅、孩童與求財節奏。',
-    poemSystem: '虎爺護境三十六籤',
-    totalPoems: 36,
+    poemSystem: '虎威護境籤',
+    totalPoems: 60,
     image: require('@/assets/images/gods/generated/cards/huye-card.png'),
     blessing: '願虎爺將軍鎮守家門，護童保平安，邪煞遠離，正財入庫。',
     tagline: '虎威護境，咬錢守福',
@@ -464,8 +458,8 @@ export const gods: God[] = [
     name: '九天玄女',
     title: '九天玄女娘娘',
     description: '道教女仙與智慧、兵法、護佑之神。適合請示事業布局、競爭策略、團隊合作、危機判斷與女性力量。',
-    poemSystem: '玄女兵法四十九籤',
-    totalPoems: 49,
+    poemSystem: '玄女兵法籤',
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/jiutianxuannu-card.png'),
     blessing: '願九天玄女賜智慧與膽識，觀勢定策，化險為夷，所行有方。',
     tagline: '九天授策，玄機定局',
@@ -479,7 +473,7 @@ export const gods: God[] = [
     name: '太歲星君',
     title: '值年太歲星君',
     description: '六十甲子元辰星宿輪值守護之神，主掌一歲禍福與流年秩序。適合請示年度規劃、風險防範、健康作息與重大變動。',
-    poemSystem: '甲子太歲六十籤',
+    poemSystem: '太歲鎮年籤',
     totalPoems: 60,
     image: require('@/assets/images/gods/generated/cards/taisui-card.png'),
     blessing: '願值年太歲星君鎮年護運，元辰光彩，災厄消減，歲歲平安。',
@@ -494,8 +488,8 @@ export const gods: God[] = [
     name: '臨水夫人',
     title: '順天聖母・臨水夫人',
     description: '陳靖姑信仰中的婦幼守護神，護佑婦女、孕產、孩童與家庭照護。適合請示孕育照顧、親子安全、家庭分工與身心安定。',
-    poemSystem: '臨水夫人護幼三十六籤',
-    totalPoems: 36,
+    poemSystem: '臨水護幼籤',
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/linshuifuren-card.png'),
     blessing: '願臨水夫人護佑婦幼安康，母子平安，家庭和順，身心有依。',
     tagline: '臨水護生，婦幼安康',
@@ -509,8 +503,8 @@ export const gods: God[] = [
     name: '義民爺',
     title: '褒忠義民爺',
     description: '臺灣客家義民信仰象徵忠義、守土、團結與公共責任。適合請示地方事務、團隊合作、家園守護、責任分工與公義。',
-    poemSystem: '義民忠義四十籤',
-    totalPoems: 40,
+    poemSystem: '義民忠義籤',
+    totalPoems: 60,
     image: require('@/assets/images/gods/generated/cards/yiminye-card.png'),
     blessing: '願義民爺護佑鄉里團結，忠義長存，家園安定，公道得彰。',
     tagline: '忠義守土，眾志成城',
@@ -524,8 +518,8 @@ export const gods: God[] = [
     name: '孔子',
     title: '大成至聖先師',
     description: '儒家至聖先師，重視修學、仁義、禮樂與因材施教。適合請示學習方法、師生關係、品德修養、教育與人生志向。',
-    poemSystem: '至聖修學六十四籤',
-    totalPoems: 64,
+    poemSystem: '文昌功名百籤',
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/confucius-card.png'),
     blessing: '願至聖先師啟迪智慧，修學有成，立德立志，言行有禮。',
     tagline: '杏壇啟智，修學立德',
@@ -539,8 +533,8 @@ export const gods: God[] = [
     name: '藥師佛',
     title: '藥師琉璃光如來',
     description: '東方淨琉璃世界教主，以十二大願護念眾生身心安樂。適合請示健康照護、求醫心態、復原作息、情緒安定與慈悲行動。',
-    poemSystem: '藥師琉璃四十八籤',
-    totalPoems: 48,
+    poemSystem: '藥師護念籤',
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/medicinebuddha-card.png'),
     blessing: '願藥師琉璃光照護身心，病苦得緩，智慧求醫，安穩復原。',
     tagline: '琉璃願光，安身護心',
@@ -572,33 +566,29 @@ export function getPoemsByGod(godId: number) {
   if (!god) return leiyushiPoems;
 
   if (god.poemSystem === '六十甲子籤') return jiazi60Poems;
-  if (god.poemSystem === '五路財神六十籤') return zhaogongming60Poems;
-  if (god.poemSystem === '虎爺護境三十六籤') return huye36Poems;
-  if (god.poemSystem === '玄女兵法四十九籤') return jiutian49Poems;
-  if (god.poemSystem === '甲子太歲六十籤') return taisui60Poems;
-  if (god.poemSystem === '臨水夫人護幼三十六籤') return linshui36Poems;
-  if (god.poemSystem === '義民忠義四十籤') return yimin40Poems;
-  if (god.poemSystem === '至聖修學六十四籤') return confucius64Poems;
-  if (god.poemSystem === '藥師琉璃四十八籤') return medicineBuddha48Poems;
   if (god.poemSystem === '媽祖天后百籤') return mazuFocusedPoems;
   if (god.poemSystem === '文昌功名百籤') return wenchangFocusedPoems;
   if (god.poemSystem === '玄天二十八宿籤') return xuantianFocusedPoems;
   if (god.poemSystem === '城隍明鑑六十籤') return chenghuangFocusedPoems;
   if (god.poemSystem === '金母慈光二十八籤') return jinmuFocusedPoems;
   if (god.poemSystem === '地藏大願二十四籤') return dizangFocusedPoems;
-  if (god.poemSystem === '天后宮靈籤') return tianhouLingQianPoems;
-  if (god.poemSystem === '保生大帝靈籤') return baosheng64Poems;
-  if (god.poemSystem === '金錢卦三十二籤') return jinqianGua32Poems;
-  if (god.poemSystem === '註生娘娘三十籤') return zhusheng30Poems;
-  if (god.poemSystem === '靈應侯靈籤') return lingyinghou60Poems;
-  if (god.poemSystem === '呂祖六十籤') return luzu60Poems;
+  if (god.poemSystem === '保生大帝靈籤') return baoshengHealthPoems;
+  if (god.poemSystem === '土地公厚德籤') return fudezhengshenBlessingPoems;
+  if (god.poemSystem === '三官賜福籤') return sanguanBlessingPoems;
+  if (god.poemSystem === '註生送子籤') return zhushengBlessingPoems;
+  if (god.poemSystem === '純陽指路籤') return luzuGuidancePoems;
+  if (god.poemSystem === '五路聚財籤') return zhaogongmingWealthPoems;
+  if (god.poemSystem === '虎威護境籤') return huyeGuardPoems;
+  if (god.poemSystem === '玄女兵法籤') return jiutianxuannuStrategyPoems;
+  if (god.poemSystem === '太歲鎮年籤') return taisuiPoems;
+  if (god.poemSystem === '臨水護幼籤') return linshuifurenPoems;
+  if (god.poemSystem === '義民忠義籤') return yiminyePoems;
+  if (god.poemSystem === '藥師護念籤') return medicineBuddhaPoems;
   if (god.poemSystem === '濟公活佛籤（雷雨師）') return jigongLingQianPoems;
   if (god.poemSystem === '三太子衝關籤（六十甲子）') return santaiziBreakthroughPoems;
   if (god.poemSystem === '月老姻緣籤（六十甲子）') return yuelaoMarriagePoems;
   if (god.poemSystem === '諸葛神數') return zhugeShenShuPoems;
   if (god.poemSystem === '觀音靈籤') return guanyinLingQianPoems;
-  if (god.poemSystem === '觀音廿八籤') return guanyin28Poems;
-  if (god.poemSystem === '觀音二十四籤') return guanyin24Poems;
   if (god.poemSystem === '二十八宿靈籤') return ershibaxiuPoems;
   return leiyushiPoems;
 }
