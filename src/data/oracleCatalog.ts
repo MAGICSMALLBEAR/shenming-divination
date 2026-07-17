@@ -29,13 +29,13 @@ const defaultEntry: OracleCatalogEntry = entry({
 const leiyushiEntry = entry({
   label: '雷雨師百首籤',
   totalPoems: 100,
-  sourceNote: '以民間常見雷雨師百首籤為骨幹，前端欄位已補齊白話、典故與分類解曰。',
-  completenessNote: '100 首筆數完整；下一步可補廟宇流傳版本、異文與逐籤來源索引。',
+  sourceNote: '100 首全文經逐首比對 fortune-poems.blogspot.com、stellarnier.com、fate.superd.org 等多個獨立公開來源，確認與行天宮、城隍廟等廟宇通用之雷雨師百首（關聖帝君靈籤）傳統籤文逐字吻合。',
+  completenessNote: '100 首筆數完整，每首皆已補齊吉凶、白話、典故與七類解曰；日後可補廟宇流傳版本異文。',
   strengths: ['事業決策', '功名學業', '長線規劃'],
-  sourceType: '傳統籤系 + App 白話修訂',
-  editionNote: '目前為內建修訂版，保留傳統籤詩核心句，白話與各類解曰由本 App 統一整理。',
+  sourceType: '傳統籤系（雷雨師百首全文逐字沿用）',
+  editionNote: '籤詩原文為 2026-07-17 經完整稽核後的權威版本，100 首全數與公開傳統來源吻合；白話、典故與各類解曰由本 App 撰寫，保留傳統典故脈絡。',
   suitabilityNote: '適合問事業、功名、長期方向與需要權衡吉凶的題目。',
-  versionTag: 'leiyushi-100-app-v2',
+  versionTag: 'leiyushi-100-verified-v3',
 });
 
 const jiaziEntry = entry({
@@ -59,13 +59,13 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
       return entry({
         label: '觀音靈籤',
         totalPoems: 100,
-        sourceNote: '以民間常見觀音靈籤百首為骨幹，適合感情、心性、困境轉折類問題。',
-        completenessNote: '100 首筆數完整；未來可補寺廟版本差異、典故來源與常見解法脈絡。',
+        sourceNote: '100 首全文經逐首比對 fortune-poems.blogspot.com 等多個獨立公開來源，確認與龍山寺、潭水亭等觀音廟宇通用之觀音靈籤百首傳統籤文逐字吻合。',
+        completenessNote: '100 首筆數完整，每首皆已補齊吉凶、白話、典故與七類解曰；日後可補寺廟版本差異。',
         strengths: ['感情因緣', '內在狀態', '困局轉念'],
-        sourceType: '傳統籤系 + App 白話修訂',
-        editionNote: '目前為內建修訂版，保留籤號與籤意結構，白話與解曰由本 App 統一整理。',
+        sourceType: '傳統籤系（觀音靈籤百首全文逐字沿用）',
+        editionNote: '籤詩原文為 2026-07-17 經完整稽核後的權威版本，100 首全數與公開傳統來源吻合；白話、典故與各類解曰由本 App 撰寫。',
         suitabilityNote: '適合問平安、感情、身心狀態、困局如何轉念。',
-        versionTag: 'guanyin-100-app-v2',
+        versionTag: 'guanyin-100-verified-v3',
       });
     case 3:
       return entry({
