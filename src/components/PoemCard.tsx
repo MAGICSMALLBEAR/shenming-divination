@@ -157,6 +157,17 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
   const oracleCatalog = getOracleCatalogByGodId(god?.id);
   const aiSections = useMemo(() => extractInterpretationSections(aiInterpretation), [aiInterpretation]);
   const aiNotice = useMemo(() => getAiInterpretationNotice(questionCategory, question), [questionCategory, question]);
+  const sectionMeta: Record<string, { icon: string; accent: string }> = {
+    summary: { icon: '🔮', accent: godAccent },
+    state:   { icon: '📊', accent: '#7EB8DA' },
+    insight: { icon: '💡', accent: '#D4A843' },
+    actions: { icon: '🎯', accent: '#6BAF7B' },
+    cautions:{ icon: '⚠️', accent: '#D4785C' },
+    avoid:   { icon: '🚫', accent: '#C05050' },
+    history: { icon: '🗂️', accent: '#8B8BBA' },
+    followUp:{ icon: '💬', accent: '#5C9AC0' },
+  };
+  const defaultMeta = { icon: '✨', accent: theme.gold + '80' };
   const actionPlan = useMemo(
     () => buildActionPlan({ poem, questionCategory, question }),
     [poem, questionCategory, question]
@@ -519,16 +530,21 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
           <View style={styles.aiNoticeBox}>
             <Text style={styles.aiNoticeText}>{aiNotice}</Text>
           </View>
-          {aiSections.map((section, index) => (
-            <View key={`${section.key}-${index}`} style={styles.aiSection}>
-              <Text style={styles.aiSectionTitle}>{section.title}</Text>
-              {section.lines.map((line, lineIndex) => (
-                <Text key={lineIndex} style={styles.aiText}>
-                  {line}
+          {aiSections.map((section, index) => {
+            const meta = sectionMeta[section.key] ?? defaultMeta;
+            return (
+              <View key={`${section.key}-${index}`} style={[styles.aiSectionCard, { borderLeftColor: meta.accent }]}>
+                <Text style={styles.aiSectionTitle}>
+                  {meta.icon}  {section.title}
                 </Text>
-              ))}
-            </View>
-          ))}
+                {section.lines.map((line, lineIndex) => (
+                  <Text key={lineIndex} style={styles.aiText}>
+                    {line}
+                  </Text>
+                ))}
+              </View>
+            );
+          })}
         </Animated.View>
       ) : null}
 
@@ -965,22 +981,22 @@ function createStyles(theme: ThemeColors) {
     marginBottom: TempleSpacing.md,
   },
   aiNoticeText: { color: theme.textMuted, fontSize: 12, lineHeight: 18 },
-  aiSection: {
-    marginBottom: TempleSpacing.md,
-    paddingBottom: TempleSpacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.goldDark + '16',
+  aiSectionCard: {
+    marginBottom: TempleSpacing.sm,
+    paddingLeft: TempleSpacing.md,
+    paddingRight: TempleSpacing.md,
+    paddingVertical: TempleSpacing.sm,
+    borderRadius: 10,
+    borderLeftWidth: 3,
+    backgroundColor: theme.bgDark + '44',
   },
   aiSectionTitle: {
     fontSize: TempleFonts.body,
-    color: theme.gold,
+    color: theme.goldLight,
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: 6,
   },
-  aiText: { fontSize: TempleFonts.body, color: theme.textLight, lineHeight: 28, marginBottom: 4 },
-  aiHeader: { fontWeight: '700', color: theme.goldLight, marginTop: TempleSpacing.sm },
-  aiBlessing: { fontWeight: '700', color: theme.gold, textAlign: 'center', marginTop: TempleSpacing.md },
-  aiEmpty: { height: 4 },
+  aiText: { fontSize: TempleFonts.small, color: theme.textLight, lineHeight: 24, marginBottom: 2 },
   });
 }
 
