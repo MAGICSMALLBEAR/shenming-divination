@@ -595,7 +595,7 @@ function createStyles(theme: ThemeColors) {
   return StyleSheet.create({
   container: { flex: 1, paddingHorizontal: TempleSpacing.md },
   title: {
-    fontSize: TempleFonts.title,
+    fontSize: TempleFonts.heading,
     fontWeight: '900',
     color: theme.goldLight,
     textAlign: 'center',
@@ -605,7 +605,7 @@ function createStyles(theme: ThemeColors) {
     fontSize: TempleFonts.small,
     color: theme.textMuted,
     textAlign: 'center',
-    marginBottom: TempleSpacing.lg,
+    marginBottom: TempleSpacing.sm,
   },
   forWhomBanner: {
     backgroundColor: theme.bgCard, borderRadius: 10, borderWidth: 1, borderColor: theme.gold,

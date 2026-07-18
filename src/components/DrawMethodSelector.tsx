@@ -58,7 +58,7 @@ export function DrawMethodSelector({ godName = '神明', onSelect }: DrawMethodS
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Draw System</Text>
+        <Text style={styles.eyebrow}>求籤方式</Text>
         <Text style={styles.title}>選擇抽籤方式</Text>
         <Text style={styles.subtitle}>向{godName}請示前，選一種最適合你現在裝置與心境的方式。</Text>
       </View>

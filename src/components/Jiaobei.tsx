@@ -251,7 +251,7 @@ export function Jiaobei({
       {strictMode ? (
         <Text style={styles.strictModeNote}>嚴謹模式：需累積三次聖筊才會進入抽籤。</Text>
       ) : null}
-      <RitualStylePicker value={ritualStyleKey} onChange={onStyleChange} />
+      <RitualStylePicker value={ritualStyleKey} onChange={onStyleChange} compact />
 
       <View style={styles.stage}>
         <View style={[styles.floorGlow, { backgroundColor: ritualStyle.glowColor + '16' }]} />

@@ -1,6 +1,6 @@
 // 首頁 - 神明占卜主流程
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share, Animated, Easing, Modal, TextInput, type ImageSourcePropType } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share, Animated, Easing, Modal, TextInput, ScrollView, type ImageSourcePropType } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useDivination } from '@/hooks/useDivination';
@@ -520,42 +520,49 @@ export default function HomeScreen() {
   const renderActions = () => {
     if (div.step === 'result' && div.drawnPoem) {
       return (
-        <View style={[styles.actionBar, isCompact && styles.actionBarCompact]}>
-          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={div.toggleFavorite}>
-            <Text style={styles.actionBtnIcon}>{div.isFavorited ? '💔' : '💾'}</Text>
-            <Text style={styles.actionBtnText}>{div.isFavorited ? '已收藏' : '收藏'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet, wishAdded && styles.actionBtnDone]} onPress={handleAddWish} disabled={wishAdded}>
-            <Text style={styles.actionBtnIcon}>{wishAdded ? '✅' : '🙏'}</Text>
-            <Text style={styles.actionBtnText}>{wishAdded ? '已許願' : '許願'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleSpeak}>
-            <Text style={styles.actionBtnIcon}>{isSpeaking ? '⏹️' : '🎙️'}</Text>
-            <Text style={styles.actionBtnText}>{isSpeaking ? '停止' : '朗讀'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleShare}>
-            <Text style={styles.actionBtnIcon}>📤</Text>
-            <Text style={styles.actionBtnText}>分享</Text>
-          </TouchableOpacity>
-          {isGoodFortune ? (
-            <TouchableOpacity style={[styles.actionBtn, styles.actionBtnBlessing, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleShareBlessing}>
-              <Text style={styles.actionBtnIcon}>🌸</Text>
-              <Text style={styles.actionBtnText}>送祝福</Text>
+        <View style={styles.actionBarWrap}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.actionBarScroll}
+            contentContainerStyle={[styles.actionBar, isCompact && styles.actionBarCompact]}
+          >
+            <TouchableOpacity style={[styles.actionBtn, isTablet && styles.actionBtnTablet]} onPress={div.toggleFavorite}>
+              <Text style={styles.actionBtnIcon}>{div.isFavorited ? '💔' : '💾'}</Text>
+              <Text style={styles.actionBtnText}>{div.isFavorited ? '已收藏' : '收藏'}</Text>
             </TouchableOpacity>
-          ) : null}
-          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleReviewRecord}>
-            <Text style={styles.actionBtnIcon}>🧭</Text>
-            <Text style={styles.actionBtnText}>回訪</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleConfirmPoem} disabled={poemConfirming}>
-            <Text style={styles.actionBtnIcon}>筊</Text>
-            <Text style={styles.actionBtnText}>{poemConfirmText ? '已確認' : poemConfirming ? '確認中' : '確認此籤'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleAskFollowUp}>
-            <Text style={styles.actionBtnIcon}>AI</Text>
-            <Text style={styles.actionBtnText}>追問</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, styles.actionBtnPrimary, isCompact && styles.actionBtnCompact, isTablet && styles.actionBtnTablet]} onPress={handleReset}>
+            <TouchableOpacity style={[styles.actionBtn, isTablet && styles.actionBtnTablet, wishAdded && styles.actionBtnDone]} onPress={handleAddWish} disabled={wishAdded}>
+              <Text style={styles.actionBtnIcon}>{wishAdded ? '✅' : '🙏'}</Text>
+              <Text style={styles.actionBtnText}>{wishAdded ? '已許願' : '許願'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionBtn, isTablet && styles.actionBtnTablet]} onPress={handleSpeak}>
+              <Text style={styles.actionBtnIcon}>{isSpeaking ? '⏹️' : '🎙️'}</Text>
+              <Text style={styles.actionBtnText}>{isSpeaking ? '停止' : '朗讀'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionBtn, isTablet && styles.actionBtnTablet]} onPress={handleShare}>
+              <Text style={styles.actionBtnIcon}>📤</Text>
+              <Text style={styles.actionBtnText}>分享</Text>
+            </TouchableOpacity>
+            {isGoodFortune ? (
+              <TouchableOpacity style={[styles.actionBtn, styles.actionBtnBlessing, isTablet && styles.actionBtnTablet]} onPress={handleShareBlessing}>
+                <Text style={styles.actionBtnIcon}>🌸</Text>
+                <Text style={styles.actionBtnText}>送祝福</Text>
+              </TouchableOpacity>
+            ) : null}
+            <TouchableOpacity style={[styles.actionBtn, isTablet && styles.actionBtnTablet]} onPress={handleReviewRecord}>
+              <Text style={styles.actionBtnIcon}>🧭</Text>
+              <Text style={styles.actionBtnText}>回訪</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionBtn, isTablet && styles.actionBtnTablet]} onPress={handleConfirmPoem} disabled={poemConfirming}>
+              <Text style={styles.actionBtnIcon}>筊</Text>
+              <Text style={styles.actionBtnText}>{poemConfirmText ? '已確認' : poemConfirming ? '確認中' : '確認此籤'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionBtn, isTablet && styles.actionBtnTablet]} onPress={handleAskFollowUp}>
+              <Text style={styles.actionBtnIcon}>AI</Text>
+              <Text style={styles.actionBtnText}>追問</Text>
+            </TouchableOpacity>
+          </ScrollView>
+          <TouchableOpacity style={styles.actionBtnResetPinned} onPress={handleReset}>
             <Text style={styles.actionBtnIcon}>🔄</Text>
             <Text style={[styles.actionBtnText, styles.actionBtnTextPrimary]}>再求一籤</Text>
           </TouchableOpacity>
@@ -1148,10 +1155,15 @@ function createStyles(theme: ThemeColors) {
   selectedGodTagline: { fontSize: 12, fontWeight: '600', marginTop: 2, marginBottom: 4 },
   selectedGodDesc: { fontSize: TempleFonts.small, color: theme.textMuted, marginTop: 2 },
   selectedGodTextCompact: { textAlign: 'center' },
-  actionBar: {
-    flexDirection: 'row', justifyContent: 'center', gap: TempleSpacing.sm, flexWrap: 'wrap',
-    paddingHorizontal: TempleSpacing.md, paddingVertical: TempleSpacing.sm,
+  actionBarWrap: {
     borderTopWidth: 1, borderTopColor: theme.goldDark + '20', backgroundColor: theme.bgDark,
+  },
+  actionBarScroll: {
+    flexGrow: 0,
+  },
+  actionBar: {
+    flexDirection: 'row', alignItems: 'center', gap: TempleSpacing.sm,
+    paddingHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.sm, paddingBottom: 4,
   },
   actionBarCompact: { paddingHorizontal: 12 },
   actionBtn: {
@@ -1159,9 +1171,13 @@ function createStyles(theme: ThemeColors) {
     paddingVertical: TempleSpacing.sm, borderRadius: 10, backgroundColor: theme.bgCard,
     borderWidth: 1, borderColor: theme.goldDark + '30', gap: 6,
   },
-  actionBtnCompact: { width: '100%', justifyContent: 'center' },
   actionBtnTablet: { minWidth: 180 },
-  actionBtnPrimary: { backgroundColor: theme.red, borderColor: theme.goldDark },
+  actionBtnResetPinned: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    marginHorizontal: TempleSpacing.md, marginTop: 4, marginBottom: TempleSpacing.sm,
+    paddingVertical: TempleSpacing.sm, borderRadius: 10, gap: 6,
+    backgroundColor: theme.red, borderWidth: 1, borderColor: theme.goldDark,
+  },
   actionBtnDone: { opacity: 0.6, borderColor: theme.success + '60' },
   actionBtnIcon: { fontSize: 16 },
   actionBtnText: { fontSize: TempleFonts.small, color: theme.textLight, fontWeight: '600' },
