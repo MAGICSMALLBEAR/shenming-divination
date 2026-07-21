@@ -51,6 +51,53 @@
 
 ---
 
+---
+
+## 2026-07-21 功能缺口補強：多語系、Sentry、無障礙 + 全站功能盤點
+
+### 本輪主題
+接續 7/19 UI 精簡，全面盤點「還有哪些功能沒做」並由 AI 獨立完成可做的部分。
+
+### 全站功能盤點結果
+用 Explore agent 掃描全站路由、元件、服務後發現：
+- **已完成約 85%**：7 套籤詩系統、完整儀式流程、33 位神明、60+ 廟宇、八字/紫微/合婚、收藏/驗證回訪、社群/分享、訂閱 UI（demo 模式）、13 個測試檔
+- **部分完成**：Firebase 程式碼完整但未設定、i18n 僅 35 key、無障礙僅 4 元件、訂閱未接真實金流
+- **尚未做**：Crash reporting、Analytics、Apple 登入
+
+### 本輪完成（AI 可獨立做的 3 項）
+
+#### 1. 多語系 i18n 擴充
+- `src/services/i18n.ts`：從 35 個 key 擴充到 **433 個 key**（zh-TW/en/ja）
+- 涵蓋 25 個區塊：導覽、選神、問事、上香、靜心、抽籤方式、擲筊、抽籤動畫、籤詩結果、AI 解籤、設定、收藏、廟宇、今日、更多、統計、願望、地圖、社群、圖書館、八字、合婚、諮詢、聊天、通用
+- `src/app/(tabs)/settings.tsx`：71 處硬編碼中文改為 `t()` 呼叫
+- `src/app/onboarding.tsx`：10 處硬編碼中文改為 `t()` 呼叫
+- `src/components/app-tabs.tsx`：確認已使用 `t()`，無需變更
+
+#### 2. Sentry 錯誤追蹤
+- 安裝 `@sentry/react-native`（Expo SDK 56 相容）
+- 新增 `src/services/sentry.ts`：`initSentry()` / `captureError()` / `captureMessage()`
+- `src/app/_layout.tsx`：App 啟動時初始化 Sentry
+- `src/components/ErrorBoundary.tsx`：捕獲渲染錯誤時同步回報 Sentry
+- DSN 欄位留空，填寫後立即生效；dev 模式自動略過
+
+#### 3. 無障礙標籤補齊
+- GodSelector.tsx：8 個 accessibilityLabel + 7 個 role
+- Jiaobei.tsx：3 個 label + 3 個 role
+- DrawMethodSelector.tsx：4 個 label（每張方法卡）
+- MeditationScreen.tsx、PoemCard.tsx、RitualStylePicker.tsx
+- 共 **6 個元件、20 個 accessibilityLabel、18 個 accessibilityRole**
+
+### 驗證
+- `npx tsc --noEmit`：通過
+- `npm test`：13 個測試檔、52 個測試全過
+- `npm run lint`：無警告
+- Playwright 煙霧測試：onboarding → 選神正常、0 console error
+
+### Git
+- `8cbd0b9` — feat: 多語系擴充、Sentry 錯誤追蹤、無障礙標籤補齊（15 files, +938/-81）
+
+---
+
 ## 2026-07-19 動畫流程與 UI 精簡強化（6 項）
 
 ### 本輪主題
@@ -670,7 +717,7 @@ Firebase 接入、IAP 真實付款、Fly.io 後端部署、Crash reporting/Analy
 
 ## 未來代辦清單
 
-> 2026-07-19 更新：全站籤詩真實性稽核已完成（7/15–18），UI/動畫流程 6 項精簡強化已完成（7/19）。以下為剩餘未完成項目，全部需要外部帳號/服務才能繼續，AI 無法獨立完成。
+> 2026-07-21 更新：全站籤詩稽核完成（7/15–18）、UI 精簡完成（7/19）、i18n/Sentry/a11y 補強完成（7/21）。以下剩餘 7 項全部需要外部帳號/服務，AI 無法獨立完成。
 
 ### 🔴 高優先（上架前必須）
 
@@ -695,10 +742,14 @@ Firebase 接入、IAP 真實付款、Fly.io 後端部署、Crash reporting/Analy
 | 7 | **原生 Widget** | 🔒 SDK 57 | 待 `expo-widgets` 套件釋出 |
 | 8 | **小眾神明專屬籤系文獻** | 👤 待使用者 | 虎爺、義民爺、臨水夫人等目前借用通用籤系，若要真正專屬的傳統籤系需使用者提供來源 |
 
-### ✅ 近期已完成（2026-07-12 ~ 2026-07-19）
+### ✅ 近期已完成（2026-07-12 ~ 2026-07-21）
 
 | # | 項目 | 完成日期 |
 |---|------|----------|
+| — | 多語系 i18n 擴充（35→433 key） | 7/21 |
+| — | Sentry 錯誤追蹤接入 | 7/21 |
+| — | 無障礙標籤補齊（6 元件 20 標籤） | 7/21 |
+| — | i18n 元件更新（settings + onboarding） | 7/21 |
 | — | Draw System 除錯標籤改為中文 | 7/19 |
 | — | Onboarding 重複歡迎畫面移除 | 7/19 |
 | — | 質感選擇器 compact 模式（擲筊頁不再重複佔位） | 7/19 |
