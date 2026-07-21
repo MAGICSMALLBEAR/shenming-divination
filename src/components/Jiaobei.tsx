@@ -298,7 +298,7 @@ export function Jiaobei({
               <Text style={styles.strictCompleteText}>{'三次聖筊已成，可以請示抽籤。'}</Text>
             ) : null}
             {currentResult !== 'shengbei' && !isAnimating ? (
-              <TouchableOpacity style={styles.retryBtn} onPress={handleToss}>
+              <TouchableOpacity style={styles.retryBtn} onPress={handleToss} accessibilityRole="button" accessibilityLabel="\u518d\u64f2\u4e00\u6b21">
                 <Text style={styles.retryBtnText}>{'\u518d\u64f2\u4e00\u6b21'}</Text>
               </TouchableOpacity>
             ) : null}
@@ -323,13 +323,13 @@ export function Jiaobei({
       ) : null}
 
       {strictMode && currentResult === 'shengbei' && !isAnimating && !strictComplete ? (
-        <TouchableOpacity style={styles.nextTossBtn} onPress={handleToss}>
+        <TouchableOpacity style={styles.nextTossBtn} onPress={handleToss} accessibilityRole="button" accessibilityLabel="繼續擲筊">
           <Text style={styles.nextTossBtnText}>{'繼續擲筊 ' + Math.min(3, visibleStrictCount + 1) + '/3'}</Text>
         </TouchableOpacity>
       ) : null}
 
       {strictComplete && !isAnimating ? (
-        <TouchableOpacity style={styles.drawBtn} onPress={onShengbei}>
+        <TouchableOpacity style={styles.drawBtn} onPress={onShengbei} accessibilityRole="button" accessibilityLabel="\u8056\u676f\u5df2\u6210\uff0c\u958b\u59cb\u62bd\u7c64">
           <Text style={styles.drawBtnText}>{'\u8056\u676f\u5df2\u6210\uff0c\u958b\u59cb\u62bd\u7c64'}</Text>
         </TouchableOpacity>
       ) : null}

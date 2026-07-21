@@ -70,6 +70,8 @@ export function DrawMethodSelector({ godName = '神明', onSelect }: DrawMethodS
             style={[styles.card, option.badge && styles.cardRecommended]}
             onPress={() => onSelect(option.id)}
             activeOpacity={0.82}
+            accessibilityRole="button"
+            accessibilityLabel={option.title}
           >
             <View style={styles.cardHeader}>
               <Text style={styles.icon}>{option.icon}</Text>

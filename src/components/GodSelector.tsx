@@ -335,6 +335,8 @@ function GodDetailModal({ god, onClose, onSelect }: { god: God; onClose: () => v
             style={[modalStyles.selectBtn, { backgroundColor: god.primaryColor }]}
             onPress={onSelect}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={'向' + god.name + '求籤'}
           >
             <Text style={modalStyles.selectBtnText}>向 {god.name} 求籤</Text>
           </TouchableOpacity>
@@ -447,6 +449,8 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
                   setCategory(prompt.category);
                   setQuestion(prompt.text);
                 }}
+                accessibilityRole="button"
+                accessibilityLabel="使用範例問題"
               >
                 <Text style={styles.guidePromptText}>{prompt.text}</Text>
               </TouchableOpacity>
@@ -469,6 +473,8 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
                 key={name}
                 style={[styles.nameBtn, userName === name && styles.nameBtnActive]}
                 onPress={() => setUserName(name)}
+                accessibilityRole="button"
+                accessibilityLabel={'快速稱呼：' + name}
               >
                 <Text style={[styles.nameBtnText, userName === name && styles.nameBtnTextActive]}>
                   {name}
@@ -486,6 +492,9 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
                 key={cat.id}
                 style={[styles.categoryChip, category === cat.id && styles.categoryChipActive]}
                 onPress={() => setCategory(cat.id)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: category === cat.id }}
+                accessibilityLabel={'問題類型：' + cat.name}
               >
                 <Text style={styles.categoryIcon}>{cat.icon}</Text>
                 <Text
@@ -510,6 +519,7 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
             numberOfLines={3}
             maxLength={80}
             textAlignVertical="top"
+            accessibilityLabel="輸入想問的事情"
           />
           <View style={styles.questionMetaRow}>
             <Text style={styles.questionCount}>{question.length} / 80</Text>
@@ -544,7 +554,7 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
         <View style={styles.assistCard}>
           <Text style={styles.assistTitle}>問題潤飾</Text>
           {drafts.map((draft) => (
-            <TouchableOpacity key={draft} style={styles.draftChip} onPress={() => setQuestion(draft)}>
+            <TouchableOpacity key={draft} style={styles.draftChip} onPress={() => setQuestion(draft)} accessibilityRole="button" accessibilityLabel="使用潤飾草稿">
               <Text style={styles.draftText}>{draft}</Text>
             </TouchableOpacity>
           ))}
@@ -562,6 +572,8 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
                 <TouchableOpacity
                   style={styles.switchBtn}
                   onPress={() => onSwitchGod(item.god.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={'改請示' + item.god.name}
                 >
                   <Text style={styles.switchBtnText}>改請示</Text>
                 </TouchableOpacity>
@@ -581,6 +593,8 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
           style={[styles.submitBtn, !question.trim() && styles.submitBtnDisabled]}
           onPress={() => question.trim() && onSubmit(question.trim(), category, userName.trim())}
           disabled={!question.trim()}
+          accessibilityRole="button"
+          accessibilityLabel={question.trim() ? '開始求籤' : '請先輸入問題'}
         >
           <Text style={styles.submitBtnText}>{questionQuality.tone === 'needs-work' ? t('continueAnyway') : t('startDivination')}</Text>
         </TouchableOpacity>

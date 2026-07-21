@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { initThemeFromSettings } from '@/services/themeStore';
+import { initSentry } from '@/services/sentry';
 
 export default function RootLayout() {
   useEffect(() => {
     initThemeFromSettings();
+    initSentry();
   }, []);
 
   return (

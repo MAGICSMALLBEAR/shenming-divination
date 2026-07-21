@@ -199,7 +199,7 @@ export default function SettingsScreen() {
 
   const handleCloudRestore = async () => {
     Alert.alert('從雲端還原', '這會用雲端最新備份覆蓋本機資料，確定要繼續嗎？', [
-      { text: '取消', style: 'cancel' },
+      { text: t('commonCancel'), style: 'cancel' },
       {
         text: '還原',
         onPress: async () => {
@@ -305,7 +305,7 @@ export default function SettingsScreen() {
 
         <View style={styles.dailyCard}>
           <Text style={styles.dailyLabel}>
-            今日籤詩 · {dailyPoem.date} {dailyPoem.dayOfWeek}
+            {t('todayPoem')} · {dailyPoem.date} {dailyPoem.dayOfWeek}
           </Text>
           <Text style={styles.dailyContent}>
             第 {dailyPoem.poem.number} 籤 · {dailyPoem.poem.level}
@@ -315,7 +315,7 @@ export default function SettingsScreen() {
 
         <View style={[styles.sectionGrid, layout.isDesktop && styles.sectionGridDesktop]}>
           <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
-            <Text style={styles.sectionTitle}>語言 / Language</Text>
+            <Text style={styles.sectionTitle}>{t('settingsLanguageLabel')}</Text>
             <View style={styles.godSelector}>
               {LANGUAGES.map((l) => (
                 <TouchableOpacity
@@ -340,23 +340,23 @@ export default function SettingsScreen() {
           </View>
 
           <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
-            <Text style={styles.sectionTitle}>個人化設定</Text>
+            <Text style={styles.sectionTitle}>{t('settingsPersonalization')}</Text>
 
-            <FieldLabel text="稱呼" />
+            <FieldLabel text={t('settingsUserNameLabel')} />
             <TextInput
               style={styles.input}
               value={settings.userName}
               onChangeText={(value) => setSettings((prev) => ({ ...prev, userName: value }))}
-              placeholder="輸入名字或暱稱"
+              placeholder={t('settingsUserNamePlaceholder')}
               placeholderTextColor={theme.textMuted}
             />
 
-            <FieldLabel text="出生年份" />
+            <FieldLabel text={t('settingsBirthYearLabel')} />
             <TextInput
               style={styles.input}
               value={settings.birthDate}
               onChangeText={(value) => setSettings((prev) => ({ ...prev, birthDate: value }))}
-              placeholder="例如：1996 或 民國 85"
+              placeholder={t('settingsBirthYearPlaceholder')}
               placeholderTextColor={theme.textMuted}
             />
 
@@ -372,7 +372,7 @@ export default function SettingsScreen() {
             </View>
           ) : null}
 
-            <FieldLabel text="常用神明" />
+            <FieldLabel text={t('settingsPreferredGod')} />
             <View style={styles.godSelector}>
               {gods.map((god) => {
                 const isPatron =
@@ -395,7 +395,7 @@ export default function SettingsScreen() {
                         settings.preferredGodId === god.id && styles.godChipTextActive,
                       ]}
                     >
-                      {isPatron ? '守護 · ' : ''}
+                      {isPatron ? `${t('settingsPatronPrefix')}` : ''}
                       {god.name}
                     </Text>
                   </TouchableOpacity>
@@ -406,10 +406,10 @@ export default function SettingsScreen() {
         </View>
 
         <View style={[styles.section, layout.isDesktop && styles.fullWidthSection]}>
-          <Text style={styles.sectionTitle}>求籤流程</Text>
+          <Text style={styles.sectionTitle}>{t('settingsDivinationFlow')}</Text>
           <ToggleRow
-            label="嚴謹擲筊模式"
-            description="開啟後需累積三次聖筊，才會進入抽籤。"
+            label={t('settingsStrictMode')}
+            description={t('settingsStrictModeDesc')}
             value={Boolean(settings.strictMode)}
             onToggle={() =>
               setSettings((prev) => ({ ...prev, strictMode: !prev.strictMode }))
@@ -417,15 +417,15 @@ export default function SettingsScreen() {
           />
 
           <ToggleRow
-            label="低動畫 / 省電模式"
-            description="減少背景、煙霧、粒子與長動畫，低階手機會更穩。"
+            label={t('settingsLowMotion')}
+            description={t('settingsLowMotionDesc')}
             value={Boolean(settings.lowMotionMode)}
             onToggle={() =>
               setSettings((prev) => ({ ...prev, lowMotionMode: !prev.lowMotionMode }))
             }
           />
 
-          <FieldLabel text="抽籤動畫長度" />
+          <FieldLabel text={t('settingsAnimDuration')} />
           <View style={styles.durationGrid}>
             {DRAW_ANIMATION_PRESETS.map((preset) => {
               const active =
@@ -454,11 +454,11 @@ export default function SettingsScreen() {
             })}
           </View>
 
-          <FieldLabel text="搖籤筒方式" />
+          <FieldLabel text={t('settingsShakeMode')} />
           <View style={styles.animationModeRow}>
             {[
-              { key: 'drag', label: '拖曳搖晃', desc: '按住籤筒，手指前後來回拖曳搖晃。' },
-              { key: 'hold', label: '長按累積', desc: '按住籤筒不放，越久搖晃力道越強。' },
+              { key: 'drag', label: t('shakeModeDrag'), desc: t('shakeModeDragDesc') },
+              { key: 'hold', label: t('shakeModeHold'), desc: t('shakeModeHoldDesc') },
             ].map((mode) => {
               const active = normalizeShakeMode(settings.shakeMode) === mode.key;
 
@@ -482,11 +482,11 @@ export default function SettingsScreen() {
             })}
           </View>
 
-          <FieldLabel text="抽籤筒動畫風格" />
+          <FieldLabel text={t('settingsAnimStyle')} />
           <View style={styles.animationModeRow}>
             {[
-              { key: 'random', label: '隨機輪播', desc: '每次求籤自動換一種香爐與籤筒動畫。' },
-              { key: 'fixed', label: '固定風格', desc: '永遠使用下方指定的一種抽籤格式。' },
+              { key: 'random', label: t('animModeRandom'), desc: t('animModeRandomDesc') },
+              { key: 'fixed', label: t('animModeFixed'), desc: t('animModeFixedDesc') },
             ].map((mode) => {
               const active = settings.drawAnimationMode === mode.key;
 
@@ -550,7 +550,7 @@ export default function SettingsScreen() {
             onPress={() => setShowDrawPreview((value) => !value)}
           >
             <Text style={styles.previewToggleText}>
-              {showDrawPreview ? '收起動畫預覽' : '預覽目前抽籤動畫'}
+              {showDrawPreview ? t('previewAnimToggleHide') : t('previewAnimToggle')}
             </Text>
           </TouchableOpacity>
 
@@ -572,39 +572,39 @@ export default function SettingsScreen() {
                 style={styles.previewToggleBtn}
                 onPress={() => setPreviewShakeKey((value) => value + 1)}
               >
-                <Text style={styles.previewToggleText}>重新搖一次（測試用）</Text>
+                <Text style={styles.previewToggleText}>{t('previewAnimRetry')}</Text>
               </TouchableOpacity>
             </View>
           ) : null}
         </View>
 
         <View style={[styles.section, layout.isDesktop && styles.fullWidthSection]}>
-          <Text style={styles.sectionTitle}>通知</Text>
+          <Text style={styles.sectionTitle}>{t('settingsNotifications')}</Text>
 
           <ToggleRow
-            label="每日籤詩提醒"
-            description="每天 7:30 推送今日籤詩與提醒。"
+            label={t('settingsDailyNotif')}
+            description={t('settingsDailyNotifDesc')}
             value={Boolean(settings.dailyNotification)}
             onToggle={handleToggleDailyNotification}
           />
 
           <ToggleRow
-            label="神明聖誕提醒"
-            description="在神明聖誕前一天晚間提醒你。"
+            label={t('settingsBirthdayNotif')}
+            description={t('settingsBirthdayNotifDesc')}
             value={Boolean(settings.birthdayNotification)}
             onToggle={handleToggleBirthdayNotification}
           />
 
           <ToggleRow
-            label="每日運勢看板（Widget 替代）"
-            description="每天 08:00 推送節氣、神諭與宜忌，在通知中心提供類 Widget 體驗。"
+            label={t('settingsFortuneWidget')}
+            description={t('settingsFortuneWidgetDesc')}
             value={Boolean((settings as any).fortuneWidget)}
             onToggle={handleToggleFortuneWidget}
           />
 
           <ToggleRow
-            label="廟宇環境音效"
-            description="冥想與求籤步驟播放低頻鐘鳴環境音，營造廟宇氛圍。"
+            label={t('settingsAmbientSound')}
+            description={t('settingsAmbientSoundDesc')}
             value={Boolean(settings.ambientSound)}
             onToggle={async () => {
               const next = !settings.ambientSound;
@@ -617,7 +617,7 @@ export default function SettingsScreen() {
 
         {lunarInfo ? (
           <View style={styles.lunarCard}>
-            <Text style={styles.sectionTitle}>今日農曆</Text>
+            <Text style={styles.sectionTitle}>{t('settingsLunarToday')}</Text>
             <Text style={styles.lunarDate}>
               農曆 {lunarInfo.lunarMonth}月{lunarInfo.lunarDay}日
             </Text>
@@ -632,15 +632,15 @@ export default function SettingsScreen() {
 
         {/* AI 設定 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>AI 解籤設定</Text>
+          <Text style={styles.sectionTitle}>{t('settingsAiTitle')}</Text>
           <Text style={styles.backupHint}>
-            可自訂 AI 伺服器網址，或直接填入 API Key 讓 App 繞過後端直連 AI（需支援 Anthropic/OpenAI 相容 API）。
+            {t('settingsAiDesc')}
           </Text>
           <TextInput
             style={styles.aiInput}
             value={(settings as any).aiServerUrl || ''}
             onChangeText={v => setSettings(prev => ({ ...prev, aiServerUrl: v || undefined }) as any)}
-            placeholder="AI 伺服器網址（選填）"
+            placeholder={t('settingsAiServerPlaceholder')}
             placeholderTextColor={theme.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -649,7 +649,7 @@ export default function SettingsScreen() {
             style={styles.aiInput}
             value={(settings as any).aiApiKey || ''}
             onChangeText={v => setSettings(prev => ({ ...prev, aiApiKey: v || undefined }) as any)}
-            placeholder="API Key（選填，例如 sk-ant-...）"
+            placeholder={t('settingsAiKeyPlaceholder')}
             placeholderTextColor={theme.textMuted}
             secureTextEntry
             autoCapitalize="none"
@@ -658,10 +658,10 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>雲端同步</Text>
+          <Text style={styles.sectionTitle}>{t('settingsCloudSync')}</Text>
           <View style={styles.syncStatusCard}>
             <Text style={styles.syncStatusTitle}>
-              {cloudMeta?.configured ? (authState?.isSignedIn ? '已啟用雲端同步' : '尚未登入同步') : 'Firebase 尚未設定'}
+              {cloudMeta?.configured ? (authState?.isSignedIn ? t('settingsCloudEnabled') : t('settingsCloudNotSignedIn')) : t('settingsCloudNotConfigured')}
             </Text>
             <Text style={styles.syncStatusText}>
               {cloudMeta?.configured
@@ -679,41 +679,41 @@ export default function SettingsScreen() {
                 onPress={handleAnonymousSyncLogin}
                 disabled={!cloudMeta?.configured || syncBusy}
               >
-                <Text style={styles.backupBtnText}>{syncBusy ? '處理中...' : '啟用匿名同步'}</Text>
+                <Text style={styles.backupBtnText}>{syncBusy ? t('settingsProcessing') : t('settingsCloudEnableBtn')}</Text>
               </TouchableOpacity>
             ) : (
               <>
                 <TouchableOpacity style={[styles.backupBtn, syncBusy && styles.disabledBtn]} onPress={handleCloudUpload} disabled={syncBusy}>
-                  <Text style={styles.backupBtnText}>{syncBusy ? '同步中...' : '上傳本機資料'}</Text>
+                  <Text style={styles.backupBtnText}>{syncBusy ? t('settingsSyncing') : t('settingsCloudUploadBtn')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.backupBtnSecondary, syncBusy && styles.disabledBtn]} onPress={handleCloudRestore} disabled={syncBusy}>
-                  <Text style={styles.backupBtnText}>從雲端還原</Text>
+                  <Text style={styles.backupBtnText}>{t('settingsCloudRestoreBtn')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.syncSignOutBtn} onPress={handleCloudSignOut} disabled={syncBusy}>
-                  <Text style={styles.syncSignOutText}>登出同步</Text>
+                  <Text style={styles.syncSignOutText}>{t('settingsCloudSignOutBtn')}</Text>
                 </TouchableOpacity>
               </>
             )}
           </View>
         </View>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>備份與還原</Text>
+          <Text style={styles.sectionTitle}>{t('settingsBackup')}</Text>
           <Text style={styles.backupHint}>
-            可將資料匯出成 JSON 備份字串，之後再貼回來還原。
+            {t('settingsBackupDesc')}
           </Text>
           <View style={[styles.backupActions, layout.isDesktop && styles.backupActionsDesktop]}>
             <TouchableOpacity style={styles.backupBtn} onPress={handleExportBackup}>
-              <Text style={styles.backupBtnText}>匯出並複製備份</Text>
+              <Text style={styles.backupBtnText}>{t('settingsExportBtn')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.backupBtnSecondary} onPress={handleImportBackup}>
-              <Text style={styles.backupBtnText}>貼上內容並還原</Text>
+              <Text style={styles.backupBtnText}>{t('settingsImportBtn')}</Text>
             </TouchableOpacity>
           </View>
           <TextInput
             style={styles.backupInput}
             value={backupText}
             onChangeText={setBackupText}
-            placeholder="備份 JSON 會顯示在這裡，也可以手動貼上舊備份。"
+            placeholder={t('settingsBackupPlaceholder')}
             placeholderTextColor={theme.textMuted}
             multiline
           />
@@ -721,7 +721,7 @@ export default function SettingsScreen() {
 
         {/* Premium 訂閱 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>👑 Premium 訂閱</Text>
+          <Text style={styles.sectionTitle}>{t('settingsPremium')}</Text>
           {premiumActive ? (
             <View style={styles.premiumActiveCard}>
               <Text style={styles.premiumActiveTitle}>
@@ -736,15 +736,15 @@ export default function SettingsScreen() {
                   setPremiumPlan('free');
                 }}
               >
-                <Text style={styles.premiumCancelBtnText}>取消訂閱</Text>
+                <Text style={styles.premiumCancelBtnText}>{t('settingsPremiumCancelBtn')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.premiumFreeCard}>
-              <Text style={styles.premiumFreeTitle}>目前為免費版</Text>
-              <Text style={styles.premiumFreeDesc}>每日 3 次求籤・基礎 AI 解析・正式金流尚未串接</Text>
+              <Text style={styles.premiumFreeTitle}>{t('settingsPremiumFree')}</Text>
+              <Text style={styles.premiumFreeDesc}>{t('settingsPremiumFreeDesc')}</Text>
               <TouchableOpacity style={styles.premiumUpgradeBtn} onPress={() => setShowPaywall(true)}>
-                <Text style={styles.premiumUpgradeBtnText}>展示模式啟用 Premium</Text>
+                <Text style={styles.premiumUpgradeBtnText}>{t('settingsPremiumUpgradeBtn')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -752,7 +752,7 @@ export default function SettingsScreen() {
 
         {/* 主題設定 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎨 外觀主題</Text>
+          <Text style={styles.sectionTitle}>{t('settingsTheme')}</Text>
           <View style={styles.godSelector}>
             {(Object.entries(THEME_LABELS) as [ThemeMode, string][]).map(([mode, label]) => (
               <TouchableOpacity
@@ -775,11 +775,11 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={styles.themeNote}>* 已套用至全站，切換後立即生效</Text>
+          <Text style={styles.themeNote}>{t('settingsThemeApplied')}</Text>
         </View>
 
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>{saved ? '已儲存設定' : '儲存設定'}</Text>
+          <Text style={styles.saveBtnText}>{saved ? t('settingsSaved') : t('settingsSaveBtn')}</Text>
         </TouchableOpacity>
 
         <PremiumPaywall
@@ -793,18 +793,18 @@ export default function SettingsScreen() {
         />
 
         <View style={styles.aboutSection}>
-          <Text style={styles.aboutTitle}>關於這個版本</Text>
+          <Text style={styles.aboutTitle}>{t('settingsAbout')}</Text>
           <Text style={styles.aboutText}>
-            目前已加入應驗追蹤、問題潤飾、神明推薦、行動清單、每日專區，以及本機備份還原。
+            {t('settingsAboutText')}
           </Text>
           <TouchableOpacity onPress={() => router.push('/privacy' as never)}>
-            <Text style={styles.privacyLink}>隱私權政策與服務條款</Text>
+            <Text style={styles.privacyLink}>{t('settingsPrivacyLink')}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/disclaimer' as never)}>
-            <Text style={styles.privacyLink}>免責聲明與專業建議界線</Text>
+            <Text style={styles.privacyLink}>{t('settingsDisclaimerLink')}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/source-audit' as never)}>
-            <Text style={styles.privacyLink}>籤詩來源與版本校勘</Text>
+            <Text style={styles.privacyLink}>{t('settingsSourceAuditLink')}</Text>
           </TouchableOpacity>
         </View>
 

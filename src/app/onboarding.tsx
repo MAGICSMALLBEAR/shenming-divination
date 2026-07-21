@@ -16,6 +16,8 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
+import { t } from '@/services/i18n';
 import type { ThemeColors } from '@/constants/themes';
 import { gods } from '@/data/gods';
 import { getGodCardImage } from '@/data/godImages';
@@ -37,25 +39,25 @@ interface Step {
 const STEPS: Step[] = [
   {
     id: 'welcome',
-    title: '歡迎來到神明占卜',
+    title: t('onboardingStep1Title'),
     subtitle: '台灣傳統神明文化 × 現代 AI 解析\n帶你連結神明智慧，指引人生方向',
     emoji: '🏛️',
   },
   {
     id: 'birthdate',
-    title: '設定你的生辰年份',
+    title: t('onboardingStep2Title'),
     subtitle: '讓神明依你的生肖與五行，給予最適合你的指引',
     emoji: '🌟',
   },
   {
     id: 'patron',
-    title: '認識你的守護神',
+    title: t('onboardingStep3Title'),
     subtitle: '根據你的生肖，這位神明與你特別有緣',
     emoji: '🙏',
   },
   {
     id: 'notifications',
-    title: '開啟每日指引通知',
+    title: t('onboardingStep4Title'),
     subtitle: '每天早晨收到今日籤詩與神明祝福\n讓神明陪伴你迎接新的一天',
     emoji: '🔔',
   },
@@ -63,6 +65,7 @@ const STEPS: Step[] = [
 
 export default function OnboardingScreen() {
   const { theme } = useAppTheme();
+  const { t: tFn } = useI18n();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [currentStep, setCurrentStep] = useState(0);
   const [birthDate, setBirthDate] = useState('');
@@ -164,7 +167,7 @@ export default function OnboardingScreen() {
         {/* Step 1: 生辰年份 */}
         {currentStep === 1 && (
           <View style={styles.inputBlock}>
-            <Text style={styles.inputLabel}>出生年份（西元）</Text>
+            <Text style={styles.inputLabel}>{tFn('settingsBirthYearLabel')}</Text>
             <TextInput
               style={styles.input}
               value={birthDate}
@@ -247,7 +250,7 @@ export default function OnboardingScreen() {
             onPress={handleNext}
             disabled={!canProceed}
           >
-            <Text style={styles.nextBtnText}>下一步</Text>
+            <Text style={styles.nextBtnText}>{tFn('commonNext')}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -256,18 +259,18 @@ export default function OnboardingScreen() {
             disabled={completing}
           >
             <Text style={styles.nextBtnText}>
-              {completing ? '設定中...' : '開始使用'}
+              {completing ? tFn('commonLoading') : tFn('startUsing')}
             </Text>
           </TouchableOpacity>
         )}
         {currentStep > 0 && (
           <TouchableOpacity style={styles.backBtn} onPress={() => goToStep(currentStep - 1)}>
-            <Text style={styles.backBtnText}>上一步</Text>
+            <Text style={styles.backBtnText}>{tFn('commonPrev')}</Text>
           </TouchableOpacity>
         )}
         {currentStep === 0 && (
           <TouchableOpacity style={styles.skipBtn} onPress={handleComplete}>
-            <Text style={styles.skipBtnText}>跳過設定</Text>
+            <Text style={styles.skipBtnText}>{tFn('skipOnboarding')}</Text>
           </TouchableOpacity>
         )}
       </View>

@@ -457,6 +457,8 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
                   savedActionIndex === index && styles.actionWishBtnDone,
                 ]}
                 onPress={() => handleSaveActionWish(step, index)}
+                accessibilityRole="button"
+                accessibilityLabel={savedActionIndex === index ? '已加入願望' : '加入願望追蹤'}
               >
                 <Text style={styles.actionWishBtnText}>
                   {savedActionIndex === index ? '已加入' : '7天追蹤'}
@@ -487,24 +489,26 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
                     verificationStatus === status && { borderColor: verificationMeta[status].color, backgroundColor: verificationMeta[status].color + '14' },
                   ]}
                   onPress={() => handleQuickVerification(status)}
+                  accessibilityRole="button"
+                  accessibilityLabel={'標記為' + verificationMeta[status].label}
                 >
                   <Text style={styles.verificationMiniBtnText}>{verificationMeta[status].label}</Text>
                 </TouchableOpacity>
               ))}
-              <TouchableOpacity style={styles.verificationMiniLink} onPress={() => router.push('/collection?tab=history' as never)}>
+              <TouchableOpacity style={styles.verificationMiniLink} onPress={() => router.push('/collection?tab=history' as never)} accessibilityRole="button" accessibilityLabel="打開回顧">
                 <Text style={styles.verificationMiniLinkText}>打開回顧</Text>
               </TouchableOpacity>
             </View>
           </View>
         ) : null}
         <View style={[styles.actionRow, isCompact && styles.actionRowCompact]}>
-          <TouchableOpacity style={[styles.copyBtn, styles.actionBtnHalf]} onPress={handleCopy}>
+          <TouchableOpacity style={[styles.copyBtn, styles.actionBtnHalf]} onPress={handleCopy} accessibilityRole="button" accessibilityLabel="複製籤詩">
             <Text style={styles.copyBtnText}>{copied ? '✓ 已複製' : '📋 複製'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.communityBtn, styles.actionBtnHalf]} onPress={() => router.push('/community' as never)}>
+          <TouchableOpacity style={[styles.communityBtn, styles.actionBtnHalf]} onPress={() => router.push('/community' as never)} accessibilityRole="button" accessibilityLabel="社群交流">
             <Text style={styles.communityBtnText}>💬 社群交流</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.shareCardBtn, styles.actionBtnHalf]} onPress={handleShareCard} disabled={sharing}>
+          <TouchableOpacity style={[styles.shareCardBtn, styles.actionBtnHalf]} onPress={handleShareCard} disabled={sharing} accessibilityRole="button" accessibilityLabel="圖卡分享">
             <Text style={styles.shareCardBtnText}>{sharing ? '產生中…' : '🖼️ 圖卡分享'}</Text>
           </TouchableOpacity>
         </View>

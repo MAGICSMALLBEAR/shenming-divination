@@ -49,7 +49,7 @@ export function RitualStylePicker({ value, onChange, compact = false }: RitualSt
       <View style={styles.labelRow}>
         <Text style={styles.label}>{'\u9078\u64c7\u5100\u5f0f\u8cea\u611f'}</Text>
         {compact ? (
-          <Pressable onPress={() => setExpanded(false)} accessibilityRole="button">
+          <Pressable onPress={() => setExpanded(false)} accessibilityRole="button" accessibilityLabel="\u6536\u8d77\u5100\u5f0f\u8cea\u611f\u9078\u64c7">
             <Text style={styles.swipeHint}>{'\u6536\u8d77'}</Text>
           </Pressable>
         ) : (

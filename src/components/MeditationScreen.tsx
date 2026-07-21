@@ -90,6 +90,8 @@ export function MeditationScreen({ godName, onComplete }: MeditationProps) {
         style={[styles.continueBtn, isCompact && styles.continueBtnCompact, isReady && styles.continueBtnActive]}
         onPress={isReady ? onComplete : undefined}
         disabled={!isReady}
+        accessibilityRole="button"
+        accessibilityLabel={isReady ? '選擇抽籤方式' : '請靜心等待'}
       >
         <Text style={[styles.continueBtnText, isReady && styles.continueBtnTextActive]}>
           {isReady ? '\u9078\u64c7\u62bd\u7c64\u65b9\u5f0f' : '\u8acb\u975c\u5fc3\u7b49\u5f85...'}

@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
+import { captureError } from '@/services/sentry';
 
 interface Props {
   children: React.ReactNode;
@@ -34,6 +35,7 @@ class ErrorBoundaryClass extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
+    captureError(error, { componentStack: errorInfo.componentStack ?? '' });
   }
 
   handleReset = () => {
