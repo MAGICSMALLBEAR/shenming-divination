@@ -85,6 +85,9 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
     case 23:
     case 24:
     case 25:
+    case 34:
+    case 35:
+    case 37:
       return jiaziEntry;
     case 5:
     case 21:
@@ -338,6 +341,30 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
         editionNote: '觀音原籤不改，新增藥師護念向標題、典故前言與照護解曰，聚焦合理求醫與情緒安定。',
         suitabilityNote: '適合問照護安排、健康焦慮、復原作息與家庭支持。',
         versionTag: 'medicinebuddha-guanyin-100-focused-v2',
+      });
+    case 36:
+      return entry({
+        label: '瑤池賜福籤',
+        totalPoems: 100,
+        sourceNote: '底本為觀音靈籤（傳統籤系，籤文逐字沿用），加入瑤池王母娘娘長壽、和合與圓滿的白話解讀層。',
+        completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依王母信仰改寫。',
+        strengths: ['家庭和合', '長壽健康', '姻緣圓滿'],
+        sourceType: '傳統籤系（觀音靈籤）+ 王母娘娘專屬白話解讀',
+        editionNote: '觀音原籤不改，新增瑤池賜福向標題、典故前言與和合解曰，聚焦家庭、健康與福緣。',
+        suitabilityNote: '適合問家庭關係、長輩健康、姻緣發展與福分累積。',
+        versionTag: 'wangmu-guanyin-100-focused-v1',
+      });
+    case 38:
+      return entry({
+        label: '東嶽鎮嶽籤',
+        totalPoems: 100,
+        sourceNote: '底本為觀音靈籤（傳統籤系，籤文逐字沿用），加入東嶽仁聖大帝延壽、消災與家運的白話解讀層。',
+        completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依東嶽信仰改寫。',
+        strengths: ['家運昌隆', '延壽增福', '消災解厄'],
+        sourceType: '傳統籤系（觀音靈籤）+ 東嶽大帝專屬白話解讀',
+        editionNote: '觀音原籤不改，新增東嶽鎮嶽向標題、典故前言與家運解曰，聚焦安穩、因果與大方向。',
+        suitabilityNote: '適合問家運方向、長輩福壽、重大決策與消災解厄。',
+        versionTag: 'dongyue-guanyin-100-focused-v1',
       });
     default:
       return defaultEntry;

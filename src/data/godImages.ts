@@ -172,6 +172,31 @@ const godImagesById: Record<number, GodImageSet> = {
     soft: require('@/assets/images/gods/generated/cards/medicinebuddha-card.png'),
     closeup: require('@/assets/images/gods/generated/cards/medicinebuddha-card.png'),
   },
+  34: {
+    card: require('@/assets/images/gods/generated/cards/jigonghuofo-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/jigonghuofo-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/jigonghuofo-card.png'),
+  },
+  35: {
+    card: require('@/assets/images/gods/generated/cards/xuantianshangdi-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/xuantianshangdi-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/xuantianshangdi-card.png'),
+  },
+  36: {
+    card: require('@/assets/images/gods/generated/cards/yaochijinmu-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/yaochijinmu-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/yaochijinmu-card.png'),
+  },
+  37: {
+    card: require('@/assets/images/gods/generated/cards/guangzezunwang-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/guangzezunwang-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/guangzezunwang-card.png'),
+  },
+  38: {
+    card: require('@/assets/images/gods/generated/cards/yuhuangshangdi-card.png'),
+    soft: require('@/assets/images/gods/generated/cards/yuhuangshangdi-card.png'),
+    closeup: require('@/assets/images/gods/generated/cards/yuhuangshangdi-card.png'),
+  },
 };
 
 export function getGodCardImage(godId?: number | null): ImageSourcePropType | null {

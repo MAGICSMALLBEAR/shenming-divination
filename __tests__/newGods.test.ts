@@ -15,6 +15,11 @@ describe('deity expansion batches', () => {
     { id: 31, name: '義民爺', count: 60, guideNeedle: '義民爺' },
     { id: 32, name: '孔子', count: 100, guideNeedle: '至聖先師' },
     { id: 33, name: '藥師佛', count: 100, guideNeedle: '藥師佛' },
+    { id: 34, name: '齊天大聖', count: 60, guideNeedle: '齊天大聖' },
+    { id: 35, name: '鍾馗', count: 60, guideNeedle: '鍾馗天師' },
+    { id: 36, name: '王母娘娘', count: 100, guideNeedle: '王母娘娘' },
+    { id: 37, name: '巧聖先師', count: 60, guideNeedle: '巧聖先師' },
+    { id: 38, name: '東嶽大帝', count: 100, guideNeedle: '東嶽大帝' },
   ];
 
   it.each(expected)('fully configures $name', ({ id, name, count, guideNeedle }) => {

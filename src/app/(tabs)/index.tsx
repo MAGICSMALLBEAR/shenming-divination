@@ -964,7 +964,7 @@ function createStyles(theme: ThemeColors) {
     borderWidth: 1, borderColor: theme.goldDark, borderRadius: 10,
     paddingVertical: 10, alignItems: 'center',
   },
-  crossCompareToggleText: { color: theme.gold, fontSize: 14, fontWeight: '700' },
+  crossCompareToggleText: { color: theme.gold, fontSize: 14, fontWeight: TempleFonts.bold },
   container: { flex: 1 },
   pageShell: { flex: 1, width: '100%', alignSelf: 'center' },
   header: {
@@ -977,7 +977,7 @@ function createStyles(theme: ThemeColors) {
     borderBottomColor: theme.goldDark + '20',
   },
   headerCompact: { paddingHorizontal: 12 },
-  appTitle: { fontSize: TempleFonts.heading, fontWeight: '700', color: theme.goldLight },
+  appTitle: { fontSize: TempleFonts.hero, fontWeight: TempleFonts.heavy, color: theme.goldLight, letterSpacing: TempleFonts.lsHeading },
   appTitleCompact: { fontSize: 17, flex: 1, marginHorizontal: 8, textAlign: 'center' },
   backBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: theme.bgCard, borderWidth: 1, borderColor: theme.goldDark + '30', minWidth: 60, alignItems: 'center' },
   backBtnText: { fontSize: 12, color: theme.textMuted },
@@ -987,7 +987,7 @@ function createStyles(theme: ThemeColors) {
   backBtnTextCompact: { fontSize: 11 },
   stepIndicator: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    paddingVertical: TempleSpacing.sm, paddingHorizontal: TempleSpacing.md,
+    paddingVertical: TempleSpacing.md, paddingHorizontal: TempleSpacing.md,
   },
   stepIndicatorCompact: { paddingHorizontal: 12 },
   stepItem: { flexDirection: 'row', alignItems: 'center' },
@@ -1029,14 +1029,14 @@ function createStyles(theme: ThemeColors) {
   recommendText: { flex: 1 },
   recommendEyebrow: {
     fontSize: 11,
-    fontWeight: '900',
+    fontWeight: TempleFonts.black,
     letterSpacing: 2,
     marginBottom: 4,
   },
   recommendName: {
     fontSize: TempleFonts.heading,
     color: theme.goldLight,
-    fontWeight: '900',
+    fontWeight: TempleFonts.black,
     marginBottom: 4,
   },
   recommendReason: {
@@ -1069,7 +1069,7 @@ function createStyles(theme: ThemeColors) {
   pendingReviewTitle: {
     color: theme.goldLight,
     fontSize: TempleFonts.small,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
     marginBottom: 4,
   },
   pendingReviewText: {
@@ -1082,12 +1082,12 @@ function createStyles(theme: ThemeColors) {
     fontSize: 11,
     lineHeight: 16,
     marginTop: 4,
-    fontWeight: '700',
+    fontWeight: TempleFonts.bold,
   },
   pendingReviewCta: {
     color: theme.goldLight,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
   },
   followUpShortcut: {
     marginHorizontal: TempleSpacing.md,
@@ -1100,7 +1100,7 @@ function createStyles(theme: ThemeColors) {
   },
   followUpShortcutTitle: {
     fontSize: TempleFonts.body,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
     color: theme.goldLight,
     marginBottom: 4,
   },
@@ -1149,10 +1149,10 @@ function createStyles(theme: ThemeColors) {
   selectedGodPortraitOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   selectedGodMeta: { flex: 1 },
   selectedGodMetaCompact: { alignSelf: 'stretch' },
-  selectedGodTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 },
-  selectedGodName: { fontSize: TempleFonts.heading, fontWeight: '700', color: theme.goldLight },
+  selectedGodTitle: { fontSize: 11, fontWeight: TempleFonts.bold, letterSpacing: 1, marginBottom: 4 },
+  selectedGodName: { fontSize: TempleFonts.heading, fontWeight: TempleFonts.bold, color: theme.goldLight },
   selectedGodNameCompact: { textAlign: 'center' },
-  selectedGodTagline: { fontSize: 12, fontWeight: '600', marginTop: 2, marginBottom: 4 },
+  selectedGodTagline: { fontSize: 12, fontWeight: TempleFonts.semibold, marginTop: 2, marginBottom: 4 },
   selectedGodDesc: { fontSize: TempleFonts.small, color: theme.textMuted, marginTop: 2 },
   selectedGodTextCompact: { textAlign: 'center' },
   actionBarWrap: {
@@ -1180,7 +1180,7 @@ function createStyles(theme: ThemeColors) {
   },
   actionBtnDone: { opacity: 0.6, borderColor: theme.success + '60' },
   actionBtnIcon: { fontSize: 16 },
-  actionBtnText: { fontSize: TempleFonts.small, color: theme.textLight, fontWeight: '600' },
+  actionBtnText: { fontSize: TempleFonts.small, color: theme.textLight, fontWeight: TempleFonts.semibold },
   actionBtnTextPrimary: { color: theme.goldLight },
   toast: {
     position: 'absolute', bottom: 100, alignSelf: 'center',
@@ -1188,7 +1188,7 @@ function createStyles(theme: ThemeColors) {
     borderRadius: 20, elevation: 4,
   },
   toastCompact: { left: 16, right: 16, bottom: 88 },
-  toastText: { color: '#FFF', fontSize: TempleFonts.small, fontWeight: '600' },
+  toastText: { color: '#FFF', fontSize: TempleFonts.small, fontWeight: TempleFonts.semibold },
   wishBindLayer: {
     position: 'absolute',
     top: 0,
@@ -1229,8 +1229,8 @@ function createStyles(theme: ThemeColors) {
   },
   wishBindSealText: {
     color: theme.goldLight,
-    fontSize: 28,
-    fontWeight: '900',
+    fontSize: TempleFonts.title,
+    fontWeight: TempleFonts.black,
   },
   wishBindSpark: {
     position: 'absolute',
@@ -1243,13 +1243,13 @@ function createStyles(theme: ThemeColors) {
   // 新增家人 Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24 },
   modalCard: { backgroundColor: theme.bgCard, borderRadius: 16, padding: 24, width: '100%', maxWidth: 360, borderWidth: 1, borderColor: theme.gold },
-  modalTitle: { fontSize: TempleFonts.heading, color: theme.textGold, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
+  modalTitle: { fontSize: TempleFonts.heading, color: theme.textGold, fontWeight: TempleFonts.bold, marginBottom: 16, textAlign: 'center' },
   modalInput: { backgroundColor: theme.bgMedium, borderRadius: 8, borderWidth: 1, borderColor: theme.gold, padding: 10, color: theme.textLight, fontSize: TempleFonts.body, marginBottom: 10 } as any,
   modalBtnRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
   modalCancelBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: theme.textMuted, alignItems: 'center' },
   modalCancelText: { color: theme.textMuted, fontSize: TempleFonts.body },
   modalConfirmBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: theme.gold, alignItems: 'center' },
-  modalConfirmText: { color: theme.bgDark, fontSize: TempleFonts.body, fontWeight: 'bold' },
+  modalConfirmText: { color: theme.bgDark, fontSize: TempleFonts.body, fontWeight: TempleFonts.bold },
   actionBtnBlessing: { borderColor: '#E879A0', backgroundColor: '#E879A033' },
   });
 }

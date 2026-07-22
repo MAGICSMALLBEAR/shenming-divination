@@ -316,6 +316,61 @@ const guides: Record<number, GodQuestionGuide> = {
       { category: 'family', text: '家人之間如何分工，才能提供穩定照護？' },
     ],
   },
+  34: {
+    title: '齊天大聖問事法',
+    intro: '適合問突破難關、化解小人與行動策略；大聖爺喜歡直接明快的問題。',
+    preferredCategories: ['career', 'general', 'family'],
+    steps: ['先說明想突破的關卡', '問是否有隱性障礙', '請示最該出手的時機與方式'],
+    prompts: [
+      { category: 'career', text: '眼前這個難關，我該硬闖、繞路，還是先變個法子？' },
+      { category: 'general', text: '最近是否有小人或看不見的阻力在干擾我？' },
+      { category: 'family', text: '家中目前的狀況，該用什麼新的角度來面對？' },
+    ],
+  },
+  35: {
+    title: '鍾馗天師問事法',
+    intro: '適合問驅邪、家宅平安、小人退散與是非化解；問題宜直接清楚。',
+    preferredCategories: ['protection', 'family', 'general'],
+    steps: ['先說明不安的來源', '問是否需驅邪或防護', '請示守住平安的具體做法'],
+    prompts: [
+      { category: 'protection', text: '家中或身邊是否有不好的氣息需要化解？' },
+      { category: 'family', text: '家人近期平安最需要注意哪一方面？' },
+      { category: 'general', text: '身邊的小人與是非，該如何防範與化解？' },
+    ],
+  },
+  36: {
+    title: '王母娘娘問事法',
+    intro: '適合問長壽健康、家庭和合、姻緣圓滿與貴人助力；語氣宜柔和恭敬。',
+    preferredCategories: ['family', 'love', 'health'],
+    steps: ['先說明所求的福分', '問如何和合與圓滿', '請示該如何累積福緣'],
+    prompts: [
+      { category: 'family', text: '家中相處該如何調整，才能更和諧圓滿？' },
+      { category: 'love', text: '這段姻緣是否值得用心栽培與等待？' },
+      { category: 'health', text: '關於長輩或自身的健康，近期該如何守護？' },
+    ],
+  },
+  37: {
+    title: '巧聖先師問事法',
+    intro: '適合問技術精進、工程專案、創業開局與技能學習；先備好細節再問。',
+    preferredCategories: ['career', 'settlement', 'wealth'],
+    steps: ['先說明專案或技術目標', '問基礎是否穩固', '請示最該補強的能力或步驟'],
+    prompts: [
+      { category: 'career', text: '目前專案或技術上，最該先補強哪個基礎？' },
+      { category: 'settlement', text: '這個新局或工程方向是否值得投入？' },
+      { category: 'wealth', text: '創業或投資所需的資源與技術是否成熟？' },
+    ],
+  },
+  38: {
+    title: '東嶽大帝問事法',
+    intro: '適合問家運、延壽增福、消災解厄與重大決策；問題宜莊重清楚。',
+    preferredCategories: ['general', 'health', 'family'],
+    steps: ['先稟明所求大事', '問天時與因果', '請示該守、該進或該化解'],
+    prompts: [
+      { category: 'general', text: '關於家運與整體方向，近期最該先穩住什麼？' },
+      { category: 'health', text: '家人長輩的健康與福壽，該如何用心守護？' },
+      { category: 'family', text: '家中有無需要化解的隱性牽掛或因果？' },
+    ],
+  },
 };
 
 export function getGodQuestionGuide(godId?: number | null): GodQuestionGuide {

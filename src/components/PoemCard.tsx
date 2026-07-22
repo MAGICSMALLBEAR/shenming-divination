@@ -371,9 +371,9 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
           <Text style={[styles.themeIcon, isCompact && styles.themeIconCompact]}>{poemTheme.icon}</Text>
           <View style={styles.themeTags}>
             <Text style={[styles.luckyColor, { backgroundColor: poemTheme.luckyColor + '30', borderColor: poemTheme.luckyColor }]}>
-              幸運色 <Text style={{ color: poemTheme.luckyColor, fontWeight: '700' }}>{poemTheme.luckyColorName}</Text>
+              幸運色 <Text style={{ color: poemTheme.luckyColor, fontWeight: TempleFonts.bold }}>{poemTheme.luckyColorName}</Text>
             </Text>
-            <Text style={styles.luckyNumber}>幸運數 <Text style={{ color: theme.goldLight, fontWeight: '700' }}>{poemTheme.luckyNumber}</Text></Text>
+            <Text style={styles.luckyNumber}>幸運數 <Text style={{ color: theme.goldLight, fontWeight: TempleFonts.bold }}>{poemTheme.luckyNumber}</Text></Text>
           </View>
         </View>
 
@@ -584,7 +584,7 @@ function createStyles(theme: ThemeColors) {
   scroll: { flex: 1 },
   scrollContent: { width: '100%', alignSelf: 'center', paddingHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.sm },
   poemCard: {
-    borderRadius: 16, borderWidth: 1.5,
+    borderRadius: 16, borderWidth: 1,
     marginBottom: TempleSpacing.md, overflow: 'hidden',
     backgroundColor: theme.bgCard,
     position: 'relative',
@@ -610,7 +610,7 @@ function createStyles(theme: ThemeColors) {
     alignItems: 'center',
     gap: TempleSpacing.md,
     paddingHorizontal: TempleSpacing.md,
-    paddingVertical: TempleSpacing.md,
+    paddingVertical: TempleSpacing.lg,
     borderBottomWidth: 1,
     backgroundColor: 'rgba(26,18,16,0.34)',
   },
@@ -640,19 +640,19 @@ function createStyles(theme: ThemeColors) {
   godOracleTextCompact: { textAlign: 'center', alignSelf: 'stretch' },
   godOracleEyebrow: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
     letterSpacing: 2,
     marginBottom: 3,
   },
   godOracleName: {
     fontSize: TempleFonts.heading,
     color: theme.goldLight,
-    fontWeight: '900',
+    fontWeight: TempleFonts.black,
     marginBottom: 4,
   },
   godOracleTagline: {
     fontSize: TempleFonts.small,
-    fontWeight: '700',
+    fontWeight: TempleFonts.bold,
   },
   questionSummary: {
     marginHorizontal: TempleSpacing.md,
@@ -669,7 +669,7 @@ function createStyles(theme: ThemeColors) {
   questionSummaryLabel: {
     color: theme.gold,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
     letterSpacing: 2,
     marginBottom: 4,
   },
@@ -695,7 +695,7 @@ function createStyles(theme: ThemeColors) {
   },
   metadataTitle: {
     fontSize: TempleFonts.body,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
   },
   metadataCount: {
     fontSize: 12,
@@ -704,7 +704,7 @@ function createStyles(theme: ThemeColors) {
   metadataLabel: {
     fontSize: TempleFonts.small,
     color: theme.goldLight,
-    fontWeight: '700',
+    fontWeight: TempleFonts.bold,
     marginBottom: 4,
   },
   metadataText: {
@@ -720,7 +720,7 @@ function createStyles(theme: ThemeColors) {
   },
   metadataSubTitle: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: TempleFonts.bold,
     color: theme.goldLight,
     marginTop: TempleSpacing.sm,
     marginBottom: 6,
@@ -742,7 +742,7 @@ function createStyles(theme: ThemeColors) {
   metadataChipText: {
     fontSize: 11,
     color: theme.textLight,
-    fontWeight: '600',
+    fontWeight: TempleFonts.semibold,
   },
   metadataBullet: {
     fontSize: 12,
@@ -773,10 +773,10 @@ function createStyles(theme: ThemeColors) {
   poemHeaderCompact: { alignItems: 'flex-start', gap: TempleSpacing.xs },
   poemMetaBlock: { flex: 1, marginRight: TempleSpacing.sm },
   poemMeta: { flexDirection: 'row', alignItems: 'center', gap: TempleSpacing.sm },
-  poemNumber: { fontSize: TempleFonts.heading, fontWeight: '700', color: theme.goldLight },
-  poemTitle: { fontSize: TempleFonts.body, color: theme.textLight, fontWeight: '600', marginTop: 4 },
+  poemNumber: { fontSize: TempleFonts.heading, fontWeight: TempleFonts.bold, color: theme.goldLight },
+  poemTitle: { fontSize: TempleFonts.body, color: theme.textLight, fontWeight: TempleFonts.semibold, marginTop: 4 },
   levelBadge: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
-  levelText: { fontSize: 12, fontWeight: '700' },
+  levelText: { fontSize: 12, fontWeight: TempleFonts.bold },
   ganzhi: { fontSize: TempleFonts.small, color: theme.textMuted },
   ganzhiCompact: { marginTop: 4 },
   poemContentArea: {
@@ -803,27 +803,27 @@ function createStyles(theme: ThemeColors) {
     borderWidth: 1,
     borderColor: '#C89B4A',
   },
-  poemLine: { fontSize: TempleFonts.poem, lineHeight: 34, color: '#2C1810', fontWeight: '700', letterSpacing: 3 },
+  poemLine: { fontSize: TempleFonts.poem, lineHeight: 34, color: '#2C1810', fontWeight: TempleFonts.bold, letterSpacing: 3 },
   poemLineCompact: { fontSize: 16, lineHeight: 30, letterSpacing: 2 },
   storyArea: {
     marginHorizontal: TempleSpacing.md, marginBottom: TempleSpacing.md,
     padding: TempleSpacing.sm, backgroundColor: theme.bgDark + '40', borderRadius: 8,
   },
-  storyLabel: { fontSize: TempleFonts.small, color: theme.goldLight, fontWeight: '600', marginBottom: 4 },
+  storyLabel: { fontSize: TempleFonts.small, color: theme.goldLight, fontWeight: TempleFonts.semibold, marginBottom: 4 },
   storyText: { fontSize: TempleFonts.small, color: theme.textMuted, lineHeight: 20 },
   vernacularArea: { marginHorizontal: TempleSpacing.md, marginBottom: TempleSpacing.md },
-  vernacularLabel: { fontSize: TempleFonts.small, color: theme.goldLight, fontWeight: '600', marginBottom: 4 },
+  vernacularLabel: { fontSize: TempleFonts.small, color: theme.goldLight, fontWeight: TempleFonts.semibold, marginBottom: 4 },
   vernacularText: { fontSize: TempleFonts.body, color: theme.textLight, lineHeight: 24 },
   jieYueArea: { marginHorizontal: TempleSpacing.md, paddingTop: TempleSpacing.md, borderTopWidth: 1, borderTopColor: theme.goldDark + '30', marginBottom: TempleSpacing.sm },
-  jieYueLabel: { fontSize: TempleFonts.small, color: theme.goldLight, fontWeight: '700', marginBottom: TempleSpacing.sm },
+  jieYueLabel: { fontSize: TempleFonts.small, color: theme.goldLight, fontWeight: TempleFonts.bold, marginBottom: TempleSpacing.sm },
   jieYueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: TempleSpacing.xs },
   jieYueItem: { backgroundColor: theme.bgDark + '60', padding: TempleSpacing.sm, borderRadius: 8, alignItems: 'center' },
   jieYueItemHighlighted: { backgroundColor: theme.goldDark + '25', borderWidth: 1.5, borderColor: theme.gold },
   jieYueIcon: { fontSize: 16, marginBottom: 2 },
   jieYueItemLabel: { fontSize: 10, color: theme.textMuted, marginBottom: 2 },
-  jieYueItemLabelHL: { color: theme.goldLight, fontWeight: '700' },
+  jieYueItemLabelHL: { color: theme.goldLight, fontWeight: TempleFonts.bold },
   jieYueItemValue: { fontSize: 10, color: theme.textLight, textAlign: 'center' },
-  jieYueItemValueHL: { color: theme.goldLight, fontWeight: '600' },
+  jieYueItemValueHL: { color: theme.goldLight, fontWeight: TempleFonts.semibold },
   actionPlanCard: {
     marginHorizontal: TempleSpacing.md,
     marginBottom: TempleSpacing.md,
@@ -836,7 +836,7 @@ function createStyles(theme: ThemeColors) {
   actionPlanTitle: {
     fontSize: TempleFonts.body,
     color: theme.goldLight,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
     marginBottom: 10,
   },
   actionPlanRow: {
@@ -861,7 +861,7 @@ function createStyles(theme: ThemeColors) {
     backgroundColor: theme.goldDark + '40',
     color: theme.goldLight,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: TempleFonts.bold,
   },
   actionPlanText: {
     flex: 1,
@@ -883,7 +883,7 @@ function createStyles(theme: ThemeColors) {
   actionWishBtnText: {
     color: theme.goldLight,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: TempleFonts.bold,
   },
   verificationMiniCard: {
     marginHorizontal: TempleSpacing.md,
@@ -904,7 +904,7 @@ function createStyles(theme: ThemeColors) {
   verificationMiniTitle: {
     color: theme.goldLight,
     fontSize: TempleFonts.body,
-    fontWeight: '900',
+    fontWeight: TempleFonts.black,
   },
   verificationMiniBadge: {
     borderWidth: 1,
@@ -912,7 +912,7 @@ function createStyles(theme: ThemeColors) {
     paddingHorizontal: 10,
     paddingVertical: 4,
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
     overflow: 'hidden',
   },
   verificationMiniText: {
@@ -937,7 +937,7 @@ function createStyles(theme: ThemeColors) {
   verificationMiniBtnText: {
     color: theme.textLight,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: TempleFonts.bold,
   },
   verificationMiniLink: {
     borderRadius: 999,
@@ -948,7 +948,7 @@ function createStyles(theme: ThemeColors) {
   verificationMiniLinkText: {
     color: theme.goldLight,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
   },
   actionRow: { flexDirection: 'row', gap: TempleSpacing.sm, marginHorizontal: TempleSpacing.md, marginTop: TempleSpacing.sm, marginBottom: TempleSpacing.xs },
   actionRowCompact: { flexDirection: 'column', marginHorizontal: 12 },
@@ -966,7 +966,7 @@ function createStyles(theme: ThemeColors) {
   communityBtnText: {
     color: theme.textLight,
     fontSize: TempleFonts.small,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
   },  shareCardBtn: { paddingVertical: 10, alignItems: 'center', borderRadius: 8, borderWidth: 1, borderColor: theme.gold + '50', backgroundColor: theme.bgCard },
   shareCardBtnText: { fontSize: TempleFonts.small, color: theme.gold },
   hiddenCard: { position: 'absolute', top: -9999, left: -9999, opacity: 0 },
@@ -974,8 +974,8 @@ function createStyles(theme: ThemeColors) {
   aiLoadingText: { fontSize: TempleFonts.body, color: theme.textMuted, marginBottom: TempleSpacing.sm },
   loadingDots: { flexDirection: 'row', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.goldLight },
-  aiCard: { backgroundColor: theme.bgCard, borderRadius: 16, padding: TempleSpacing.lg, borderWidth: 1.5, borderColor: theme.gold },
-  aiLabel: { fontSize: TempleFonts.heading, fontWeight: '700', color: theme.goldLight, marginBottom: TempleSpacing.md, textAlign: 'center' },
+  aiCard: { backgroundColor: theme.bgCard, borderRadius: 14, padding: TempleSpacing.lg, borderWidth: 1, borderColor: theme.gold },
+  aiLabel: { fontSize: TempleFonts.heading, fontWeight: TempleFonts.bold, color: theme.goldLight, marginBottom: TempleSpacing.md, textAlign: 'center' },
   aiNoticeBox: {
     borderRadius: 10,
     borderWidth: 1,
@@ -997,7 +997,7 @@ function createStyles(theme: ThemeColors) {
   aiSectionTitle: {
     fontSize: TempleFonts.body,
     color: theme.goldLight,
-    fontWeight: '800',
+    fontWeight: TempleFonts.heavy,
     marginBottom: 6,
   },
   aiText: { fontSize: TempleFonts.small, color: theme.textLight, lineHeight: 24, marginBottom: 2 },
