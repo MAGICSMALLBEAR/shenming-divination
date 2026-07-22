@@ -1,6 +1,6 @@
 # Generated God Portrait Assets
 
-This directory contains generated PNG portraits for all 25 deities used by the app.
+This directory contains generated PNG portraits for all 38 deities used by the app.
 
 ## Folders
 
@@ -39,6 +39,19 @@ This directory contains generated PNG portraits for all 25 deities used by the a
 | `wenfuqiansui` | Wenfu Qiansui |
 | `yaochijinmu` | Yaochi Jinmu |
 | `yuhuangshangdi` | Yuhuang Shangdi |
+| `zhaogongming` | Xuantan Yuanshuai Zhao Gongming |
+| `huye` | Huye / Tiger General |
+| `jiutianxuannu` | Jiutian Xuannu |
+| `taisui` | Taisui Xingjun |
+| `linshuifuren` | Linshui Furen |
+| `yiminye` | Yimin Ye |
+| `confucius` | Confucius |
+| `medicinebuddha` | Medicine Buddha |
+| `qitiandasheng` | Qitian Dasheng / Sun Wukong |
+| `zhongkui` | Zhong Kui |
+| `wangmuniangniang` | Wangmu Niangniang |
+| `qiaoshengxianshi` | Qiaosheng Xianshi / Lu Ban |
+| `dongyuedadi` | Dongyue Dadi |
 
 Each slug has three generated assets:
 

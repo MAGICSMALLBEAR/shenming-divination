@@ -377,7 +377,7 @@ export default function CollectionScreen() {
   const renderRecord = (record: DivinationRecord, isFavorite: boolean) => (
     <View
       key={record.id}
-      style={[styles.recordCard, layout.isDesktop && styles.recordCardDesktop]}
+      style={[styles.recordCard, layout.isTablet && styles.recordCardDesktop]}
     >
       <View style={styles.recordHeader}>
         <View style={styles.recordMeta}>
@@ -709,7 +709,7 @@ export default function CollectionScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.listContent,
-            layout.isDesktop && styles.listContentDesktop,
+            layout.isTablet && styles.listContentDesktop,
           ]}
         >
           {!filteredRecords.length ? (

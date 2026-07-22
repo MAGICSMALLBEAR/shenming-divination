@@ -102,6 +102,9 @@ export default function DailyScreen() {
       >
         <Text style={styles.pageTitle}>今日專區</Text>
 
+        <View style={[styles.desktopColumns, layout.isDesktop && styles.desktopColumnsRow]}>
+          <View style={[styles.desktopLeftCol, layout.isDesktop && styles.desktopLeftColDesktop]}>
+
         {/* 今日農民曆 */}
         {lunarInfo && (
           <View style={styles.card}>
@@ -235,6 +238,9 @@ export default function DailyScreen() {
             ))}
           </View>
         )}
+
+          </View>
+          <View style={[styles.desktopRightCol, layout.isDesktop && styles.desktopRightColDesktop]}>
 
         <View style={[styles.heroGrid, layout.isDesktop && styles.heroGridDesktop]}>
           {/* 今日運勢 */}
@@ -398,6 +404,9 @@ export default function DailyScreen() {
           )}
         </View>
 
+          </View>
+        </View>
+
         {/* 今日心情日記 */}
         <View style={styles.card}>
           <TouchableOpacity
@@ -474,6 +483,12 @@ function createStyles(theme: ThemeColors) {
   heroGrid: {},
   heroGridDesktop: { flexDirection: 'row', gap: TempleSpacing.md },
   heroCard: { flex: 1 },
+  desktopColumns: {},
+  desktopColumnsRow: { flexDirection: 'row', gap: TempleSpacing.md, alignItems: 'flex-start' },
+  desktopLeftCol: {},
+  desktopLeftColDesktop: { flex: 1, minWidth: 320 },
+  desktopRightCol: {},
+  desktopRightColDesktop: { flex: 1, minWidth: 320 },
   cardTitle: {
     color: theme.goldLight,
     fontWeight: '800',

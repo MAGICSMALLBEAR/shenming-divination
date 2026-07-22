@@ -86,10 +86,10 @@ export default function TempleScreen() {
   );
   const recentRecords = useMemo(() => records.slice(0, 8), [records]);
 
-  const columns = layout.isWideDesktop ? 4 : layout.isDesktop ? 3 : layout.isPhone ? 1 : 2;
+  const columns = layout.isWideDesktop ? 5 : layout.isDesktop ? 5 : layout.isTablet ? 3 : 2;
   const cardGap = TempleSpacing.sm;
   const gridWidth = Math.min(layout.width - layout.gutter * 2, layout.contentMaxWidth);
-  const cardWidth = columns === 1 ? gridWidth : (gridWidth - cardGap * (columns - 1)) / columns;
+  const cardWidth = (gridWidth - cardGap * (columns - 1)) / columns;
 
   const loadRecords = useCallback(async () => {
     setRecords(await getTempleRecords());

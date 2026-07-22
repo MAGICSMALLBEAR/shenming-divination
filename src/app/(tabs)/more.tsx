@@ -42,15 +42,21 @@ export default function MoreScreen() {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
   const s = useMemo(() => createStyles(theme), [theme]);
-  const columns = layout.isDesktop ? 3 : 2;
+  const columns = layout.isDesktop ? 4 : layout.isTablet ? 3 : 3;
 
   return (
     <SafeAreaView style={s.safe}>
       <DecorativeBg pattern="diamond" />
-      <ScrollView contentContainerStyle={s.scroll}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[
+          s.scroll,
+          { maxWidth: layout.contentMaxWidth, alignSelf: 'center' as any, width: '100%' as any },
+        ]}
+      >
         <Text style={s.title}>更多工具</Text>
         <Text style={s.subtitle}>探索所有占卜與命理功能</Text>
-        <View style={[s.grid, { maxWidth: 600 }]}>
+        <View style={[s.grid, { maxWidth: layout.isDesktop ? 900 : 600 }]}>
           {TOOLS.map((tool) => (
             <TouchableOpacity
               key={tool.route}

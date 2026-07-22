@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import type { ThemeColors } from '@/constants/themes';
 import { gods, getPoemsByGod, questionCategories, type God } from '@/data/gods';
 import type { Poem } from '@/data/poems/leiyushi';
@@ -96,7 +97,8 @@ function searchableText(row: LibraryRow): string {
 export default function LibraryScreen() {
   const router = useRouter();
   const { theme } = useAppTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const layout = useResponsiveLayout();
+  const styles = useMemo(() => createStyles(theme, layout), [theme, layout]);
   const [selectedGodId, setSelectedGodId] = useState<GodFilter>('all');
   const [selectedLevel, setSelectedLevel] = useState<LevelFilter>('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -150,156 +152,318 @@ export default function LibraryScreen() {
         <Text style={styles.subtitle}>搜尋神明、籤號、籤文、典故或白話解讀</Text>
       </View>
 
-      <ScrollView style={styles.filters} contentContainerStyle={styles.filtersContent}>
-        <TextInput
-          style={styles.searchInput}
-          value={query}
-          onChangeText={setQuery}
-          placeholder="輸入籤號、神明、關鍵字或一句籤文"
-          placeholderTextColor={theme.textMuted}
-        />
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipScrollContent}>
-          <TouchableOpacity
-            style={[styles.godChip, selectedGodId === 'all' && styles.godChipActive]}
-            onPress={() => { setSelectedGodId('all'); setExpandedKey(null); }}
-          >
-            <Text style={[styles.godChipText, selectedGodId === 'all' && styles.godChipTextActive]}>全部神明</Text>
-          </TouchableOpacity>
-          {gods.map((god) => (
-            <TouchableOpacity
-              key={god.id}
-              style={[styles.godChip, selectedGodId === god.id && styles.godChipActive]}
-              onPress={() => { setSelectedGodId(god.id); setExpandedKey(null); }}
-            >
-              <Text style={[styles.godChipText, selectedGodId === god.id && styles.godChipTextActive]}>
-                {god.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipScrollContent}>
-          {categoryFilters.map((category) => {
-            const active = selectedCategory === category.id;
-            return (
+      {layout.isDesktop ? (
+        <View style={styles.desktopBody}>
+          <ScrollView style={styles.filterSidebar} contentContainerStyle={styles.filterSidebarContent}>
+            <TextInput
+              style={styles.searchInput}
+              value={query}
+              onChangeText={setQuery}
+              placeholder="輸入籤號、神明、關鍵字或一句籤文"
+              placeholderTextColor={theme.textMuted}
+            />
+            <Text style={[styles.systemLabel, { fontSize: 13 }]}>神明</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               <TouchableOpacity
-                key={category.id}
-                style={[styles.filterChip, active && styles.filterChipActive]}
-                onPress={() => { setSelectedCategory(category.id); setExpandedKey(null); }}
+                style={[styles.godChip, selectedGodId === 'all' && styles.godChipActive]}
+                onPress={() => { setSelectedGodId('all'); setExpandedKey(null); }}
               >
-                <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{category.icon} {category.name}</Text>
+                <Text style={[styles.godChipText, selectedGodId === 'all' && styles.godChipTextActive]}>全部</Text>
               </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        <View style={styles.levelRow}>
-          {levelFilters.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.levelChip, selectedLevel === item.id && styles.levelChipActive]}
-              onPress={() => { setSelectedLevel(item.id); setExpandedKey(null); }}
-            >
-              <Text style={[styles.levelChipText, selectedLevel === item.id && styles.levelChipTextActive]}>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.systemLabel}>
-            {selectedGod ? `${selectedGod.name} · ${selectedGod.poemSystem}` : '全部神明籤詩庫'}
-          </Text>
-          <Text style={styles.systemMeta}>共 {allRows.length} 首，符合 {filteredRows.length} 首</Text>
-          {selectedCatalog ? (
-            <Text style={styles.systemHint}>{selectedCatalog.label} · {selectedCatalog.sourceType} · {selectedCatalog.versionTag}</Text>
-          ) : (
-            <Text style={styles.systemHint}>可跨神明與籤系統搜尋，展開後可看來源版本與適用題型。</Text>
-          )}
-          {(query || selectedGodId !== 'all' || selectedCategory !== 'all' || selectedLevel !== 'all') ? (
-            <TouchableOpacity style={styles.resetBtn} onPress={resetFilters}>
-              <Text style={styles.resetBtnText}>清除篩選</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
-      </ScrollView>
-
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-        {filteredRows.map((row) => {
-          const key = `${row.god.id}-${row.poem.number}`;
-          const isOpen = expandedKey === key;
-          const catalog = getOracleCatalogByGodId(row.god.id);
-          const adviceKey = CATEGORY_TO_JIEYUE[selectedCategory] ?? 'general';
-          const categoryAdvice = row.poem.jieYue?.[adviceKey] ?? row.poem.jieYue?.general;
-
-          return (
-            <TouchableOpacity
-              key={key}
-              style={styles.poemCard}
-              onPress={() => setExpandedKey(isOpen ? null : key)}
-              activeOpacity={0.85}
-            >
-              <View style={styles.poemHeader}>
-                <View style={styles.poemTitleGroup}>
-                  <Text style={styles.poemGod}>{row.god.name}</Text>
-                  <Text style={styles.poemTitle} numberOfLines={1}>第 {row.poem.number} 籤 · {row.poem.title}</Text>
-                </View>
-                <Text style={[styles.poemLevel, { color: levelColor(row.poem.level, theme), borderColor: levelColor(row.poem.level, theme) + '55' }]}>
-                  {row.poem.level}
-                </Text>
-              </View>
-
-              {isOpen ? (
-                <View style={styles.poemDetail}>
-                  <View style={styles.divider} />
-                  <Text style={styles.catalogLabel}>{catalog.label} · {catalog.versionTag}</Text>
-                  {row.poem.content.split('\n').map((line, index) => (
-                    <Text key={index} style={styles.poemLine}>{line}</Text>
-                  ))}
-                  <Text style={styles.poemVernacular}>{row.poem.vernacular}</Text>
-                  {categoryAdvice ? <Text style={styles.poemAdvice}>問事提示：{categoryAdvice}</Text> : null}
-                  {row.poem.story ? <Text style={styles.poemStory}>典故：{row.poem.story}</Text> : null}
-                  <Text style={styles.sourceNote}>來源版本：{catalog.sourceType}。{catalog.editionNote}</Text>
-                </View>
+              {gods.map((god) => (
+                <TouchableOpacity
+                  key={god.id}
+                  style={[styles.godChip, selectedGodId === god.id && styles.godChipActive]}
+                  onPress={() => { setSelectedGodId(god.id); setExpandedKey(null); }}
+                >
+                  <Text style={[styles.godChipText, selectedGodId === god.id && styles.godChipTextActive]}>
+                    {god.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={[styles.systemLabel, { fontSize: 13 }]}>題型</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {categoryFilters.map((category) => {
+                const active = selectedCategory === category.id;
+                return (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={[styles.filterChip, active && styles.filterChipActive]}
+                    onPress={() => { setSelectedCategory(category.id); setExpandedKey(null); }}
+                  >
+                    <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{category.icon} {category.name}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <Text style={[styles.systemLabel, { fontSize: 13 }]}>吉凶</Text>
+            <View style={styles.levelRow}>
+              {levelFilters.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.levelChip, selectedLevel === item.id && styles.levelChipActive]}
+                  onPress={() => { setSelectedLevel(item.id); setExpandedKey(null); }}
+                >
+                  <Text style={[styles.levelChipText, selectedLevel === item.id && styles.levelChipTextActive]}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.summaryCard}>
+              <Text style={styles.systemLabel}>
+                {selectedGod ? `${selectedGod.name} · ${selectedGod.poemSystem}` : '全部神明籤詩庫'}
+              </Text>
+              <Text style={styles.systemMeta}>共 {allRows.length} 首，符合 {filteredRows.length} 首</Text>
+              {selectedCatalog ? (
+                <Text style={styles.systemHint}>{selectedCatalog.label} · {selectedCatalog.sourceType} · {selectedCatalog.versionTag}</Text>
               ) : (
-                <Text style={styles.poemPreview} numberOfLines={1}>
-                  {row.poem.content.split('\n')[0]}
-                </Text>
+                <Text style={styles.systemHint}>可跨神明與籤系統搜尋，展開後可看來源版本與適用題型。</Text>
               )}
-            </TouchableOpacity>
-          );
-        })}
+              {(query || selectedGodId !== 'all' || selectedCategory !== 'all' || selectedLevel !== 'all') ? (
+                <TouchableOpacity style={styles.resetBtn} onPress={resetFilters}>
+                  <Text style={styles.resetBtnText}>清除篩選</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          </ScrollView>
+          <ScrollView style={styles.poemArea} contentContainerStyle={styles.listContent}>
+            {filteredRows.map((row) => {
+              const key = `${row.god.id}-${row.poem.number}`;
+              const isOpen = expandedKey === key;
+              const catalog = getOracleCatalogByGodId(row.god.id);
+              const adviceKey = CATEGORY_TO_JIEYUE[selectedCategory] ?? 'general';
+              const categoryAdvice = row.poem.jieYue?.[adviceKey] ?? row.poem.jieYue?.general;
 
-        {filteredRows.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>沒有符合「{query || '目前篩選'}」的籤詩</Text>
-            <TouchableOpacity style={styles.emptyResetBtn} onPress={resetFilters}>
-              <Text style={styles.emptyResetText}>重設條件</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={styles.poemCard}
+                  onPress={() => setExpandedKey(isOpen ? null : key)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.poemHeader}>
+                    <View style={styles.poemTitleGroup}>
+                      <Text style={styles.poemGod}>{row.god.name}</Text>
+                      <Text style={styles.poemTitle} numberOfLines={1}>第 {row.poem.number} 籤 · {row.poem.title}</Text>
+                    </View>
+                    <Text style={[styles.poemLevel, { color: levelColor(row.poem.level, theme), borderColor: levelColor(row.poem.level, theme) + '55' }]}>
+                      {row.poem.level}
+                    </Text>
+                  </View>
 
-        <View style={{ height: 60 }} />
-      </ScrollView>
+                  {isOpen ? (
+                    <View style={styles.poemDetail}>
+                      <View style={styles.divider} />
+                      <Text style={styles.catalogLabel}>{catalog.label} · {catalog.versionTag}</Text>
+                      {row.poem.content.split('\n').map((line, index) => (
+                        <Text key={index} style={styles.poemLine}>{line}</Text>
+                      ))}
+                      <Text style={styles.poemVernacular}>{row.poem.vernacular}</Text>
+                      {categoryAdvice ? <Text style={styles.poemAdvice}>問事提示：{categoryAdvice}</Text> : null}
+                      {row.poem.story ? <Text style={styles.poemStory}>典故：{row.poem.story}</Text> : null}
+                      <Text style={styles.sourceNote}>來源版本：{catalog.sourceType}。{catalog.editionNote}</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.poemPreview} numberOfLines={1}>
+                      {row.poem.content.split('\n')[0]}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+
+            {filteredRows.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>沒有符合「{query || '目前篩選'}」的籤詩</Text>
+                <TouchableOpacity style={styles.emptyResetBtn} onPress={resetFilters}>
+                  <Text style={styles.emptyResetText}>重設條件</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
+            <View style={{ height: 60 }} />
+          </ScrollView>
+        </View>
+      ) : (
+        <>
+          <ScrollView style={styles.filters} contentContainerStyle={styles.filtersContent}>
+            <TextInput
+              style={styles.searchInput}
+              value={query}
+              onChangeText={setQuery}
+              placeholder="輸入籤號、神明、關鍵字或一句籤文"
+              placeholderTextColor={theme.textMuted}
+            />
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipScrollContent}>
+              <TouchableOpacity
+                style={[styles.godChip, selectedGodId === 'all' && styles.godChipActive]}
+                onPress={() => { setSelectedGodId('all'); setExpandedKey(null); }}
+              >
+                <Text style={[styles.godChipText, selectedGodId === 'all' && styles.godChipTextActive]}>全部神明</Text>
+              </TouchableOpacity>
+              {gods.map((god) => (
+                <TouchableOpacity
+                  key={god.id}
+                  style={[styles.godChip, selectedGodId === god.id && styles.godChipActive]}
+                  onPress={() => { setSelectedGodId(god.id); setExpandedKey(null); }}
+                >
+                  <Text style={[styles.godChipText, selectedGodId === god.id && styles.godChipTextActive]}>
+                    {god.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipScrollContent}>
+              {categoryFilters.map((category) => {
+                const active = selectedCategory === category.id;
+                return (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={[styles.filterChip, active && styles.filterChipActive]}
+                    onPress={() => { setSelectedCategory(category.id); setExpandedKey(null); }}
+                  >
+                    <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{category.icon} {category.name}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.levelRow}>
+              {levelFilters.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.levelChip, selectedLevel === item.id && styles.levelChipActive]}
+                  onPress={() => { setSelectedLevel(item.id); setExpandedKey(null); }}
+                >
+                  <Text style={[styles.levelChipText, selectedLevel === item.id && styles.levelChipTextActive]}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.systemLabel}>
+                {selectedGod ? `${selectedGod.name} · ${selectedGod.poemSystem}` : '全部神明籤詩庫'}
+              </Text>
+              <Text style={styles.systemMeta}>共 {allRows.length} 首，符合 {filteredRows.length} 首</Text>
+              {selectedCatalog ? (
+                <Text style={styles.systemHint}>{selectedCatalog.label} · {selectedCatalog.sourceType} · {selectedCatalog.versionTag}</Text>
+              ) : (
+                <Text style={styles.systemHint}>可跨神明與籤系統搜尋，展開後可看來源版本與適用題型。</Text>
+              )}
+              {(query || selectedGodId !== 'all' || selectedCategory !== 'all' || selectedLevel !== 'all') ? (
+                <TouchableOpacity style={styles.resetBtn} onPress={resetFilters}>
+                  <Text style={styles.resetBtnText}>清除篩選</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          </ScrollView>
+
+          <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+            {filteredRows.map((row) => {
+              const key = `${row.god.id}-${row.poem.number}`;
+              const isOpen = expandedKey === key;
+              const catalog = getOracleCatalogByGodId(row.god.id);
+              const adviceKey = CATEGORY_TO_JIEYUE[selectedCategory] ?? 'general';
+              const categoryAdvice = row.poem.jieYue?.[adviceKey] ?? row.poem.jieYue?.general;
+
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={styles.poemCard}
+                  onPress={() => setExpandedKey(isOpen ? null : key)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.poemHeader}>
+                    <View style={styles.poemTitleGroup}>
+                      <Text style={styles.poemGod}>{row.god.name}</Text>
+                      <Text style={styles.poemTitle} numberOfLines={1}>第 {row.poem.number} 籤 · {row.poem.title}</Text>
+                    </View>
+                    <Text style={[styles.poemLevel, { color: levelColor(row.poem.level, theme), borderColor: levelColor(row.poem.level, theme) + '55' }]}>
+                      {row.poem.level}
+                    </Text>
+                  </View>
+
+                  {isOpen ? (
+                    <View style={styles.poemDetail}>
+                      <View style={styles.divider} />
+                      <Text style={styles.catalogLabel}>{catalog.label} · {catalog.versionTag}</Text>
+                      {row.poem.content.split('\n').map((line, index) => (
+                        <Text key={index} style={styles.poemLine}>{line}</Text>
+                      ))}
+                      <Text style={styles.poemVernacular}>{row.poem.vernacular}</Text>
+                      {categoryAdvice ? <Text style={styles.poemAdvice}>問事提示：{categoryAdvice}</Text> : null}
+                      {row.poem.story ? <Text style={styles.poemStory}>典故：{row.poem.story}</Text> : null}
+                      <Text style={styles.sourceNote}>來源版本：{catalog.sourceType}。{catalog.editionNote}</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.poemPreview} numberOfLines={1}>
+                      {row.poem.content.split('\n')[0]}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+
+            {filteredRows.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>沒有符合「{query || '目前篩選'}」的籤詩</Text>
+                <TouchableOpacity style={styles.emptyResetBtn} onPress={resetFilters}>
+                  <Text style={styles.emptyResetText}>重設條件</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
+            <View style={{ height: 60 }} />
+          </ScrollView>
+        </>
+      )}
     </SafeAreaView>
   );
 }
 
-function createStyles(theme: ThemeColors) {
+function createStyles(theme: ThemeColors, layout: ReturnType<typeof useResponsiveLayout>) {
+  const poemColumns = layout.isDesktop ? 3 : layout.isTablet ? 2 : 1;
+  const poemCardWidth = poemColumns > 1
+    ? `${Math.floor(100 / poemColumns)}%` as any
+    : '100%' as any;
+
   return StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: theme.bgDark },
     header: {
-      paddingHorizontal: TempleSpacing.lg,
+      paddingHorizontal: layout.gutter,
       paddingTop: TempleSpacing.md,
       paddingBottom: TempleSpacing.sm,
       borderBottomWidth: 1,
       borderBottomColor: theme.goldDark + '28',
+      maxWidth: layout.contentMaxWidth,
+      alignSelf: 'center',
+      width: '100%',
     },
+    desktopBody: {
+      flex: 1,
+      flexDirection: 'row',
+      maxWidth: layout.contentMaxWidth,
+      alignSelf: 'center',
+      width: '100%',
+    },
+    filterSidebar: {
+      width: 220,
+      borderRightWidth: 1,
+      borderRightColor: theme.goldDark + '28',
+      flexGrow: 0,
+    },
+    filterSidebarContent: {
+      padding: TempleSpacing.md,
+      gap: 10,
+    },
+    poemArea: { flex: 1 },
     backBtn: { marginBottom: TempleSpacing.sm, alignSelf: 'flex-start' },
     backBtnText: { color: theme.gold, fontSize: TempleFonts.small, fontWeight: '600' },
     title: { color: theme.goldLight, fontSize: TempleFonts.heading, fontWeight: '900' },
     subtitle: { color: theme.textMuted, fontSize: TempleFonts.small, marginTop: 4 },
-    filters: { flexGrow: 0, maxHeight: 260, borderBottomWidth: 1, borderBottomColor: theme.goldDark + '22' },
+    filters: { flexGrow: 0, maxHeight: layout.isDesktop ? undefined : 260, borderBottomWidth: layout.isDesktop ? 0 : 1, borderBottomColor: theme.goldDark + '22' },
     filtersContent: { padding: TempleSpacing.lg, gap: 10 },
     searchInput: {
       backgroundColor: theme.bgCard,
@@ -359,7 +523,13 @@ function createStyles(theme: ThemeColors) {
     resetBtn: { alignSelf: 'flex-start', marginTop: 8, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 8, backgroundColor: theme.goldDark + '35' },
     resetBtnText: { color: theme.goldLight, fontSize: 12, fontWeight: '800' },
     list: { flex: 1 },
-    listContent: { padding: TempleSpacing.lg, paddingTop: TempleSpacing.sm },
+    listContent: {
+      padding: TempleSpacing.lg,
+      paddingTop: TempleSpacing.sm,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: poemColumns > 1 ? TempleSpacing.sm : 0,
+    },
     poemCard: {
       backgroundColor: theme.bgCard,
       borderRadius: 12,
@@ -367,6 +537,7 @@ function createStyles(theme: ThemeColors) {
       borderColor: theme.goldDark + '24',
       padding: TempleSpacing.md,
       marginBottom: TempleSpacing.sm,
+      width: poemCardWidth,
     },
     poemHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     poemTitleGroup: { flex: 1 },

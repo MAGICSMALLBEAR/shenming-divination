@@ -6,7 +6,7 @@ The app guides users through a ritual-style flow: choose a deity, write a questi
 
 ## Current Feature Set
 
-- 25 deity profiles with generated card, soft, and close-up portrait assets.
+- 38 deity profiles with generated card, soft, and close-up portrait assets.
 - Multiple oracle systems, including Leiyu Shi, Jiazi 60, Guanyin Lingqian, Zhuge Shenshu, Ershibaxiu, Tianhou, Luzu, Baosheng, Zhusheng, Jinqian, and other app-curated systems.
 - Ritual flow with incense, jiaobei, drawing animation, sound, and result presentation.
 - AI interpretation and follow-up chat context.

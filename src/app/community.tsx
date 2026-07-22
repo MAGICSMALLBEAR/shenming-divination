@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import type { ThemeColors } from '@/constants/themes';
 import { isFirebaseConfigured } from '@/services/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -50,7 +51,8 @@ function levelColor(level: string) {
 
 export default function CommunityScreen() {
   const { theme } = useAppTheme();
-  const styles = useMemo(() => ({ ...createViewStyles(theme), ...createTextStyles(theme) }), [theme]);
+  const layout = useResponsiveLayout();
+  const styles = useMemo(() => ({ ...createViewStyles(theme, layout), ...createTextStyles(theme) }), [theme, layout]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
@@ -158,87 +160,144 @@ export default function CommunityScreen() {
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-          {/* 新增貼文區 */}
-          <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(v => !v)} activeOpacity={0.8}>
-            <Text style={styles.addBtnText}>{showForm ? '▲ 收起' : '✏️ 分享求籤心得'}</Text>
-          </TouchableOpacity>
-
-          {showForm && (
-            <View style={styles.form}>
-              <View style={styles.formRow}>
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  placeholder="神明名稱（如：媽祖）"
-                  placeholderTextColor={theme.textMuted}
-                  value={godName}
-                  onChangeText={setGodName}
-                />
-                <TextInput
-                  style={[styles.input, { width: 80 }]}
-                  placeholder="籤號"
-                  placeholderTextColor={theme.textMuted}
-                  value={poemNum}
-                  onChangeText={setPoemNum}
-                  keyboardType="number-pad"
-                  maxLength={3}
-                />
-              </View>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="分享你的心得、靈驗故事或請示結果…（最少5字）"
-                placeholderTextColor={theme.textMuted}
-                value={comment}
-                onChangeText={setComment}
-                multiline
-                maxLength={200}
-              />
-              <View style={styles.formFooter}>
-                <Text style={styles.charCount}>{comment.length}/200</Text>
-                <TouchableOpacity
-                  style={[styles.submitBtn, (!comment.trim() || comment.length < 5) && styles.submitBtnDisabled]}
-                  onPress={handleSubmit}
-                  disabled={submitting || !comment.trim() || comment.length < 5}
-                >
-                  {submitting
-                    ? <ActivityIndicator size="small" color={theme.bgDark} />
-                    : <Text style={styles.submitBtnText}>發布</Text>}
+          <View style={styles.mainColumn}>
+            {/* 新增貼文區 */}
+            {!layout.isDesktop && (
+              <>
+                <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(v => !v)} activeOpacity={0.8}>
+                  <Text style={styles.addBtnText}>{showForm ? '▲ 收起' : '✏️ 分享求籤心得'}</Text>
                 </TouchableOpacity>
-              </View>
+                {showForm && (
+                  <View style={styles.form}>
+                    <View style={styles.formRow}>
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
+                        placeholder="神明名稱（如：媽祖）"
+                        placeholderTextColor={theme.textMuted}
+                        value={godName}
+                        onChangeText={setGodName}
+                      />
+                      <TextInput
+                        style={[styles.input, { width: 80 }]}
+                        placeholder="籤號"
+                        placeholderTextColor={theme.textMuted}
+                        value={poemNum}
+                        onChangeText={setPoemNum}
+                        keyboardType="number-pad"
+                        maxLength={3}
+                      />
+                    </View>
+                    <TextInput
+                      style={[styles.input, styles.textArea]}
+                      placeholder="分享你的心得、靈驗故事或請示結果…（最少5字）"
+                      placeholderTextColor={theme.textMuted}
+                      value={comment}
+                      onChangeText={setComment}
+                      multiline
+                      maxLength={200}
+                    />
+                    <View style={styles.formFooter}>
+                      <Text style={styles.charCount}>{comment.length}/200</Text>
+                      <TouchableOpacity
+                        style={[styles.submitBtn, (!comment.trim() || comment.length < 5) && styles.submitBtnDisabled]}
+                        onPress={handleSubmit}
+                        disabled={submitting || !comment.trim() || comment.length < 5}
+                      >
+                        {submitting
+                          ? <ActivityIndicator size="small" color={theme.bgDark} />
+                          : <Text style={styles.submitBtnText}>發布</Text>}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              </>
+            )}
+
+            {/* 貼文列表 */}
+            {loading ? (
+              <ActivityIndicator color={theme.gold} style={{ marginTop: 40 }} />
+            ) : (
+              posts.map(post => (
+                <View key={post.id} style={styles.post}>
+                  <View style={styles.postHeader}>
+                    <View style={styles.postGodBadge}>
+                      <Text style={styles.postGodName}>{post.godName}</Text>
+                      {post.poemNumber > 0 && (
+                        <Text style={styles.postPoemNum}>第{post.poemNumber}籤</Text>
+                      )}
+                      {post.poemLevel ? (
+                        <Text style={[styles.postLevel, { color: levelColor(post.poemLevel) }]}>
+                          {post.poemLevel}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <Text style={styles.postTime}>{timeAgo(post.timestamp)}</Text>
+                  </View>
+                  <Text style={styles.postComment}>{post.comment}</Text>
+                  <View style={styles.postFooter}>
+                    <TouchableOpacity style={styles.likeBtn} onPress={() => handleLike(post.id)}>
+                      <Text style={styles.likeBtnText}>
+                        {post.likedByMe ? '❤️' : '🤍'} {post.likes}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )}
+            <View style={{ height: 40 }} />
+          </View>
+
+          {/* 桌面端：表單放在右側 */}
+          {layout.isDesktop && (
+            <View style={styles.sideColumn}>
+              <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(v => !v)} activeOpacity={0.8}>
+                <Text style={styles.addBtnText}>{showForm ? '▲ 收起' : '✏️ 分享求籤心得'}</Text>
+              </TouchableOpacity>
+              {showForm && (
+                <View style={styles.form}>
+                  <View style={styles.formRow}>
+                    <TextInput
+                      style={[styles.input, { flex: 1 }]}
+                      placeholder="神明名稱（如：媽祖）"
+                      placeholderTextColor={theme.textMuted}
+                      value={godName}
+                      onChangeText={setGodName}
+                    />
+                    <TextInput
+                      style={[styles.input, { width: 80 }]}
+                      placeholder="籤號"
+                      placeholderTextColor={theme.textMuted}
+                      value={poemNum}
+                      onChangeText={setPoemNum}
+                      keyboardType="number-pad"
+                      maxLength={3}
+                    />
+                  </View>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    placeholder="分享你的心得、靈驗故事或請示結果…（最少5字）"
+                    placeholderTextColor={theme.textMuted}
+                    value={comment}
+                    onChangeText={setComment}
+                    multiline
+                    maxLength={200}
+                  />
+                  <View style={styles.formFooter}>
+                    <Text style={styles.charCount}>{comment.length}/200</Text>
+                    <TouchableOpacity
+                      style={[styles.submitBtn, (!comment.trim() || comment.length < 5) && styles.submitBtnDisabled]}
+                      onPress={handleSubmit}
+                      disabled={submitting || !comment.trim() || comment.length < 5}
+                    >
+                      {submitting
+                        ? <ActivityIndicator size="small" color={theme.bgDark} />
+                        : <Text style={styles.submitBtnText}>發布</Text>}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
             </View>
           )}
-
-          {/* 貼文列表 */}
-          {loading ? (
-            <ActivityIndicator color={theme.gold} style={{ marginTop: 40 }} />
-          ) : (
-            posts.map(post => (
-              <View key={post.id} style={styles.post}>
-                <View style={styles.postHeader}>
-                  <View style={styles.postGodBadge}>
-                    <Text style={styles.postGodName}>{post.godName}</Text>
-                    {post.poemNumber > 0 && (
-                      <Text style={styles.postPoemNum}>第{post.poemNumber}籤</Text>
-                    )}
-                    {post.poemLevel ? (
-                      <Text style={[styles.postLevel, { color: levelColor(post.poemLevel) }]}>
-                        {post.poemLevel}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <Text style={styles.postTime}>{timeAgo(post.timestamp)}</Text>
-                </View>
-                <Text style={styles.postComment}>{post.comment}</Text>
-                <View style={styles.postFooter}>
-                  <TouchableOpacity style={styles.likeBtn} onPress={() => handleLike(post.id)}>
-                    <Text style={styles.likeBtnText}>
-                      {post.likedByMe ? '❤️' : '🤍'} {post.likes}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))
-          )}
-          <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -246,7 +305,7 @@ export default function CommunityScreen() {
 }
 
 
-function createViewStyles(theme: ThemeColors) {
+function createViewStyles(theme: ThemeColors, layout: ReturnType<typeof useResponsiveLayout>) {
   return StyleSheet.create<Record<string, any>>({
   safe: { flex: 1, backgroundColor: theme.bgDark },
   header: {
@@ -255,13 +314,30 @@ function createViewStyles(theme: ThemeColors) {
     paddingBottom: TempleSpacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: '#2A2020',
+    maxWidth: layout.contentMaxWidth,
+    alignSelf: 'center',
+    width: '100%',
   },
   localBadge: {
     marginTop: 6, backgroundColor: '#2A2010', borderRadius: 6,
     paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start',
   },
   scroll: { flex: 1 },
-  scrollContent: { padding: TempleSpacing.md },
+  scrollContent: {
+    padding: TempleSpacing.md,
+    maxWidth: layout.contentMaxWidth,
+    alignSelf: 'center',
+    width: '100%',
+    flexDirection: layout.isDesktop ? 'row' : 'column',
+    gap: layout.isDesktop ? TempleSpacing.md : 0,
+  },
+  mainColumn: {
+    flex: layout.isDesktop ? 2 : 1,
+  },
+  sideColumn: {
+    flex: layout.isDesktop ? 1 : undefined,
+    width: layout.isDesktop ? undefined : '100%',
+  },
   addBtn: {
     backgroundColor: theme.bgCard,
     borderRadius: 10, borderWidth: 1,

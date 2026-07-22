@@ -83,7 +83,7 @@ async function saveCheckIn(record: CheckInRecord): Promise<CheckInRecord[]> {
 export default function MapScreen() {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const styles = useMemo(() => createStyles(theme, layout), [theme, layout]);
   const [search, setSearch] = useState('');
   const [selectedCity, setSelectedCity] = useState('全部');
   const [userLat, setUserLat] = useState<number | null>(null);
@@ -206,172 +206,341 @@ export default function MapScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[
-          styles.content,
-          { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
-        ]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.pageTitle}>廟宇地圖</Text>
-        <Text style={styles.subtitle}>台灣 {TEMPLES.length} 座主要廟宇</Text>
+      {layout.isDesktop ? (
+        <View style={[styles.desktopSplit, { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter }]}>
+          {/* 左側：廟宇清單 */}
+          <ScrollView style={styles.leftPanel} contentContainerStyle={styles.leftPanelContent} keyboardShouldPersistTaps="handled">
+            <Text style={styles.pageTitle}>廟宇地圖</Text>
+            <Text style={styles.subtitle}>台灣 {TEMPLES.length} 座主要廟宇</Text>
 
-        {/* 搜尋列 */}
-        <View style={styles.searchRow}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="搜尋廟名、神明、祈求..."
-            placeholderTextColor={theme.textMuted}
-            value={search}
-            onChangeText={setSearch}
-          />
-          <TouchableOpacity style={styles.locateBtn} onPress={handleLocate} disabled={locating}>
-            {locating
-              ? <ActivityIndicator color={theme.gold} size="small" />
-              : <Text style={styles.locateBtnText}>📍 定位</Text>
-            }
-          </TouchableOpacity>
-        </View>
+            <View style={styles.searchRow}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="搜尋廟名、神明、祈求..."
+                placeholderTextColor={theme.textMuted}
+                value={search}
+                onChangeText={setSearch}
+              />
+              <TouchableOpacity style={styles.locateBtn} onPress={handleLocate} disabled={locating}>
+                {locating
+                  ? <ActivityIndicator color={theme.gold} size="small" />
+                  : <Text style={styles.locateBtnText}>📍 定位</Text>
+                }
+              </TouchableOpacity>
+            </View>
 
-        {userLat !== null && (
-          <Text style={styles.locatedText}>✓ 已定位，顯示最近廟宇</Text>
-        )}
+            {userLat !== null && (
+              <Text style={styles.locatedText}>✓ 已定位，顯示最近廟宇</Text>
+            )}
 
-        {/* 城市篩選 */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.cityScroll}
-          contentContainerStyle={styles.cityScrollContent}
-        >
-          {CITY_OPTIONS.map(city => (
-            <TouchableOpacity
-              key={city}
-              style={[styles.cityChip, selectedCity === city && styles.cityChipActive]}
-              onPress={() => setSelectedCity(city)}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.cityScroll}
+              contentContainerStyle={styles.cityScrollContent}
             >
-              <Text style={[styles.cityChipText, selectedCity === city && styles.cityChipTextActive]}>
-                {city}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        <Text style={styles.resultCount}>共 {temples.length} 座廟宇</Text>
-
-        {/* 廟宇列表 */}
-        {temples.map(temple => (
-          <TouchableOpacity
-            key={temple.id}
-            style={[styles.card, selectedTemple?.id === temple.id && styles.cardSelected]}
-            onPress={() => setSelectedTemple(prev => prev?.id === temple.id ? null : temple)}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardTitleRow}>
-                <Text style={styles.templeName}>{temple.name}</Text>
-                <Text style={styles.templeCity}>{temple.city}</Text>
-                {getCheckInCount(temple.id) > 0 && (
-                  <View style={styles.checkInBadge}>
-                    <Text style={styles.checkInBadgeText}>打卡 {getCheckInCount(temple.id)}</Text>
-                  </View>
-                )}
-              </View>
-              {userLat !== null && userLng !== null && (
-                <Text style={[
-                  styles.distanceText,
-                  calcDistanceKm(userLat, userLng, temple.lat, temple.lng) <= CHECKIN_RADIUS_KM && styles.distanceNear,
-                ]}>
-                  {calcDistanceKm(userLat, userLng, temple.lat, temple.lng).toFixed(1)} km
-                  {calcDistanceKm(userLat, userLng, temple.lat, temple.lng) <= CHECKIN_RADIUS_KM ? ' ✓ 可打卡' : ''}
-                </Text>
-              )}
-            </View>
-
-            <Text style={styles.mainGod}>主祀：{temple.mainGod}</Text>
-            <Text style={styles.specialty}>靈驗：{temple.specialty}</Text>
-
-            <View style={styles.tagRow}>
-              {temple.tags.slice(0, 4).map(tag => (
-                <View key={tag} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
+              {CITY_OPTIONS.map(city => (
+                <TouchableOpacity
+                  key={city}
+                  style={[styles.cityChip, selectedCity === city && styles.cityChipActive]}
+                  onPress={() => setSelectedCity(city)}
+                >
+                  <Text style={[styles.cityChipText, selectedCity === city && styles.cityChipTextActive]}>
+                    {city}
+                  </Text>
+                </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
 
-            {/* 展開詳情 */}
-            {selectedTemple?.id === temple.id && (
-              <View style={styles.detailPanel}>
+            <Text style={styles.resultCount}>共 {temples.length} 座廟宇</Text>
+
+            {temples.map(temple => (
+              <TouchableOpacity
+                key={temple.id}
+                style={[styles.card, selectedTemple?.id === temple.id && styles.cardSelected]}
+                onPress={() => setSelectedTemple(prev => prev?.id === temple.id ? null : temple)}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTitleRow}>
+                    <Text style={styles.templeName}>{temple.name}</Text>
+                    <Text style={styles.templeCity}>{temple.city}</Text>
+                    {getCheckInCount(temple.id) > 0 && (
+                      <View style={styles.checkInBadge}>
+                        <Text style={styles.checkInBadgeText}>打卡 {getCheckInCount(temple.id)}</Text>
+                      </View>
+                    )}
+                  </View>
+                  {userLat !== null && userLng !== null && (
+                    <Text style={[
+                      styles.distanceText,
+                      calcDistanceKm(userLat, userLng, temple.lat, temple.lng) <= CHECKIN_RADIUS_KM && styles.distanceNear,
+                    ]}>
+                      {calcDistanceKm(userLat, userLng, temple.lat, temple.lng).toFixed(1)} km
+                      {calcDistanceKm(userLat, userLng, temple.lat, temple.lng) <= CHECKIN_RADIUS_KM ? ' ✓ 可打卡' : ''}
+                    </Text>
+                  )}
+                </View>
+
+                <Text style={styles.mainGod}>主祀：{temple.mainGod}</Text>
+                <Text style={styles.specialty}>靈驗：{temple.specialty}</Text>
+
+                <View style={styles.tagRow}>
+                  {temple.tags.slice(0, 4).map(tag => (
+                    <View key={tag} style={styles.tag}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              </TouchableOpacity>
+            ))}
+
+            {temples.length === 0 && (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>沒有符合條件的廟宇</Text>
+              </View>
+            )}
+          </ScrollView>
+
+          {/* 右側：選中廟宇詳情 or 打卡/評論 */}
+          <ScrollView style={styles.rightPanel} contentContainerStyle={styles.rightPanelContent} keyboardShouldPersistTaps="handled">
+            {selectedTemple ? (
+              <View>
+                <Text style={[styles.pageTitle, { textAlign: 'left' }]}>{selectedTemple.name}</Text>
+                <Text style={styles.templeCity}>{selectedTemple.city}</Text>
                 <View style={styles.divider} />
-                <Text style={styles.detailAddress}>📍 {temple.address}</Text>
-                <Text style={styles.detailTime}>🕐 {temple.openHours}</Text>
-                {temple.founded && (
-                  <Text style={styles.detailFounded}>🏛 建廟：{temple.founded}</Text>
+                <Text style={styles.detailAddress}>📍 {selectedTemple.address}</Text>
+                <Text style={styles.detailTime}>🕐 {selectedTemple.openHours}</Text>
+                {selectedTemple.founded && (
+                  <Text style={styles.detailFounded}>🏛 建廟：{selectedTemple.founded}</Text>
                 )}
-                <Text style={styles.detailDesc}>{temple.description}</Text>
+                <Text style={styles.detailDesc}>{selectedTemple.description}</Text>
                 <View style={styles.detailBtnRow}>
                   <TouchableOpacity
                     style={styles.mapBtn}
-                    onPress={() => handleOpenMap(temple)}
+                    onPress={() => handleOpenMap(selectedTemple)}
                   >
                     <Text style={styles.mapBtnText}>🗺 導航</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.checkInBtn, checkingIn === temple.id && { opacity: 0.6 }]}
-                    onPress={() => handleCheckIn(temple)}
-                    disabled={checkingIn === temple.id}
+                    style={[styles.checkInBtn, checkingIn === selectedTemple.id && { opacity: 0.6 }]}
+                    onPress={() => handleCheckIn(selectedTemple)}
+                    disabled={checkingIn === selectedTemple.id}
                   >
                     <Text style={styles.checkInBtnText}>
-                      {checkingIn === temple.id ? '打卡中…' : '📍 廟宇打卡'}
+                      {checkingIn === selectedTemple.id ? '打卡中…' : '📍 廟宇打卡'}
                     </Text>
-                    {lastCheckInDate(temple.id) ? (
-                      <Text style={styles.checkInLastDate}>上次：{lastCheckInDate(temple.id)}</Text>
+                    {lastCheckInDate(selectedTemple.id) ? (
+                      <Text style={styles.checkInLastDate}>上次：{lastCheckInDate(selectedTemple.id)}</Text>
                     ) : null}
                   </TouchableOpacity>
                 </View>
-              {/* 評論區 */}
-              <View style={styles.reviewSection}>
-                <Text style={styles.reviewTitle}>廟宇評論</Text>
-                {reviews.map(r => (
-                  <View key={r.id} style={styles.reviewItem}>
-                    <View style={styles.reviewHeader}>
-                      <Text style={styles.reviewAuthor}>{r.author}</Text>
-                      <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</Text>
-                      <Text style={styles.reviewDate}>{new Date(r.timestamp).toLocaleDateString('zh-TW')}</Text>
+                {/* 評論區 */}
+                <View style={styles.reviewSection}>
+                  <Text style={styles.reviewTitle}>廟宇評論</Text>
+                  {reviews.map(r => (
+                    <View key={r.id} style={styles.reviewItem}>
+                      <View style={styles.reviewHeader}>
+                        <Text style={styles.reviewAuthor}>{r.author}</Text>
+                        <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</Text>
+                        <Text style={styles.reviewDate}>{new Date(r.timestamp).toLocaleDateString('zh-TW')}</Text>
+                      </View>
+                      <Text style={styles.reviewText}>{r.text}</Text>
                     </View>
-                    <Text style={styles.reviewText}>{r.text}</Text>
+                  ))}
+                  {reviews.length === 0 && <Text style={styles.noReviews}>還沒有評論，來第一個留言吧！</Text>}
+                  <View style={styles.reviewForm}>
+                    <View style={styles.reviewRatingRow}>
+                      <Text style={styles.reviewLabel}>評分：</Text>
+                      {[1,2,3,4,5].map(n => (
+                        <TouchableOpacity key={n} onPress={() => setReviewRating(n)}>
+                          <Text style={[styles.reviewStar, n <= reviewRating && styles.reviewStarActive]}>★</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    <TextInput style={styles.reviewInput} value={reviewAuthor} onChangeText={setReviewAuthor} placeholder="您的名字" placeholderTextColor={theme.textMuted} />
+                    <TextInput style={[styles.reviewInput, { minHeight: 56 }] as any} value={reviewText} onChangeText={setReviewText} placeholder="留下您對這座廟宇的感想…" placeholderTextColor={theme.textMuted} multiline maxLength={200} />
+                    <TouchableOpacity style={styles.reviewSubmitBtn} onPress={handleAddReview} disabled={!reviewText.trim()}>
+                      <Text style={styles.reviewSubmitText}>發佈評論</Text>
+                    </TouchableOpacity>
                   </View>
-                ))}
-                {reviews.length === 0 && <Text style={styles.noReviews}>還沒有評論，來第一個留言吧！</Text>}
-                <View style={styles.reviewForm}>
-                  <View style={styles.reviewRatingRow}>
-                    <Text style={styles.reviewLabel}>評分：</Text>
-                    {[1,2,3,4,5].map(n => (
-                      <TouchableOpacity key={n} onPress={() => setReviewRating(n)}>
-                        <Text style={[styles.reviewStar, n <= reviewRating && styles.reviewStarActive]}>★</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                  <TextInput style={styles.reviewInput} value={reviewAuthor} onChangeText={setReviewAuthor} placeholder="您的名字" placeholderTextColor={theme.textMuted} />
-                  <TextInput style={[styles.reviewInput, { minHeight: 56 }] as any} value={reviewText} onChangeText={setReviewText} placeholder="留下您對這座廟宇的感想…" placeholderTextColor={theme.textMuted} multiline maxLength={200} />
-                  <TouchableOpacity style={styles.reviewSubmitBtn} onPress={handleAddReview} disabled={!reviewText.trim()}>
-                    <Text style={styles.reviewSubmitText}>發佈評論</Text>
-                  </TouchableOpacity>
                 </View>
               </View>
+            ) : (
+              <View style={styles.rightPlaceholder}>
+                <Text style={styles.rightPlaceholderText}>👆 請從左側選擇一座廟宇</Text>
+                <Text style={[styles.rightPlaceholderText, { fontSize: TempleFonts.small, marginTop: 8 }]}>查看詳細資訊與打卡評論</Text>
               </View>
             )}
-          </TouchableOpacity>
-        ))}
+          </ScrollView>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={[
+            styles.content,
+            { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.pageTitle}>廟宇地圖</Text>
+          <Text style={styles.subtitle}>台灣 {TEMPLES.length} 座主要廟宇</Text>
 
-        {temples.length === 0 && (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>沒有符合條件的廟宇</Text>
+          {/* 搜尋列 */}
+          <View style={styles.searchRow}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="搜尋廟名、神明、祈求..."
+              placeholderTextColor={theme.textMuted}
+              value={search}
+              onChangeText={setSearch}
+            />
+            <TouchableOpacity style={styles.locateBtn} onPress={handleLocate} disabled={locating}>
+              {locating
+                ? <ActivityIndicator color={theme.gold} size="small" />
+                : <Text style={styles.locateBtnText}>📍 定位</Text>
+              }
+            </TouchableOpacity>
           </View>
-        )}
 
-        <View style={{ height: 60 }} />
-      </ScrollView>
+          {userLat !== null && (
+            <Text style={styles.locatedText}>✓ 已定位，顯示最近廟宇</Text>
+          )}
+
+          {/* 城市篩選 */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.cityScroll}
+            contentContainerStyle={styles.cityScrollContent}
+          >
+            {CITY_OPTIONS.map(city => (
+              <TouchableOpacity
+                key={city}
+                style={[styles.cityChip, selectedCity === city && styles.cityChipActive]}
+                onPress={() => setSelectedCity(city)}
+              >
+                <Text style={[styles.cityChipText, selectedCity === city && styles.cityChipTextActive]}>
+                  {city}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <Text style={styles.resultCount}>共 {temples.length} 座廟宇</Text>
+
+          {/* 廟宇列表 */}
+          {temples.map(temple => (
+            <TouchableOpacity
+              key={temple.id}
+              style={[styles.card, selectedTemple?.id === temple.id && styles.cardSelected]}
+              onPress={() => setSelectedTemple(prev => prev?.id === temple.id ? null : temple)}
+            >
+              <View style={styles.cardHeader}>
+                <View style={styles.cardTitleRow}>
+                  <Text style={styles.templeName}>{temple.name}</Text>
+                  <Text style={styles.templeCity}>{temple.city}</Text>
+                  {getCheckInCount(temple.id) > 0 && (
+                    <View style={styles.checkInBadge}>
+                      <Text style={styles.checkInBadgeText}>打卡 {getCheckInCount(temple.id)}</Text>
+                    </View>
+                  )}
+                </View>
+                {userLat !== null && userLng !== null && (
+                  <Text style={[
+                    styles.distanceText,
+                    calcDistanceKm(userLat, userLng, temple.lat, temple.lng) <= CHECKIN_RADIUS_KM && styles.distanceNear,
+                  ]}>
+                    {calcDistanceKm(userLat, userLng, temple.lat, temple.lng).toFixed(1)} km
+                    {calcDistanceKm(userLat, userLng, temple.lat, temple.lng) <= CHECKIN_RADIUS_KM ? ' ✓ 可打卡' : ''}
+                  </Text>
+                )}
+              </View>
+
+              <Text style={styles.mainGod}>主祀：{temple.mainGod}</Text>
+              <Text style={styles.specialty}>靈驗：{temple.specialty}</Text>
+
+              <View style={styles.tagRow}>
+                {temple.tags.slice(0, 4).map(tag => (
+                  <View key={tag} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* 展開詳情 */}
+              {selectedTemple?.id === temple.id && (
+                <View style={styles.detailPanel}>
+                  <View style={styles.divider} />
+                  <Text style={styles.detailAddress}>📍 {temple.address}</Text>
+                  <Text style={styles.detailTime}>🕐 {temple.openHours}</Text>
+                  {temple.founded && (
+                    <Text style={styles.detailFounded}>🏛 建廟：{temple.founded}</Text>
+                  )}
+                  <Text style={styles.detailDesc}>{temple.description}</Text>
+                  <View style={styles.detailBtnRow}>
+                    <TouchableOpacity
+                      style={styles.mapBtn}
+                      onPress={() => handleOpenMap(temple)}
+                    >
+                      <Text style={styles.mapBtnText}>🗺 導航</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.checkInBtn, checkingIn === temple.id && { opacity: 0.6 }]}
+                      onPress={() => handleCheckIn(temple)}
+                      disabled={checkingIn === temple.id}
+                    >
+                      <Text style={styles.checkInBtnText}>
+                        {checkingIn === temple.id ? '打卡中…' : '📍 廟宇打卡'}
+                      </Text>
+                      {lastCheckInDate(temple.id) ? (
+                        <Text style={styles.checkInLastDate}>上次：{lastCheckInDate(temple.id)}</Text>
+                      ) : null}
+                    </TouchableOpacity>
+                  </View>
+                {/* 評論區 */}
+                <View style={styles.reviewSection}>
+                  <Text style={styles.reviewTitle}>廟宇評論</Text>
+                  {reviews.map(r => (
+                    <View key={r.id} style={styles.reviewItem}>
+                      <View style={styles.reviewHeader}>
+                        <Text style={styles.reviewAuthor}>{r.author}</Text>
+                        <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</Text>
+                        <Text style={styles.reviewDate}>{new Date(r.timestamp).toLocaleDateString('zh-TW')}</Text>
+                      </View>
+                      <Text style={styles.reviewText}>{r.text}</Text>
+                    </View>
+                  ))}
+                  {reviews.length === 0 && <Text style={styles.noReviews}>還沒有評論，來第一個留言吧！</Text>}
+                  <View style={styles.reviewForm}>
+                    <View style={styles.reviewRatingRow}>
+                      <Text style={styles.reviewLabel}>評分：</Text>
+                      {[1,2,3,4,5].map(n => (
+                        <TouchableOpacity key={n} onPress={() => setReviewRating(n)}>
+                          <Text style={[styles.reviewStar, n <= reviewRating && styles.reviewStarActive]}>★</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    <TextInput style={styles.reviewInput} value={reviewAuthor} onChangeText={setReviewAuthor} placeholder="您的名字" placeholderTextColor={theme.textMuted} />
+                    <TextInput style={[styles.reviewInput, { minHeight: 56 }] as any} value={reviewText} onChangeText={setReviewText} placeholder="留下您對這座廟宇的感想…" placeholderTextColor={theme.textMuted} multiline maxLength={200} />
+                    <TouchableOpacity style={styles.reviewSubmitBtn} onPress={handleAddReview} disabled={!reviewText.trim()}>
+                      <Text style={styles.reviewSubmitText}>發佈評論</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+
+          {temples.length === 0 && (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>沒有符合條件的廟宇</Text>
+            </View>
+          )}
+
+          <View style={{ height: 60 }} />
+        </ScrollView>
+      )}
       {toastMsg ? (
         <View style={styles.toast}>
           <Text style={styles.toastText}>{toastMsg}</Text>
@@ -381,11 +550,46 @@ export default function MapScreen() {
   );
 }
 
-function createStyles(theme: ThemeColors) {
+function createStyles(theme: ThemeColors, layout: ReturnType<typeof useResponsiveLayout>) {
   return StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.bgDark },
   container: { flex: 1 },
   content: { width: '100%', alignSelf: 'center', paddingVertical: TempleSpacing.md },
+  desktopSplit: {
+    flex: 1,
+    flexDirection: 'row',
+    width: '100%',
+    alignSelf: 'center',
+  },
+  leftPanel: {
+    flex: layout.isDesktop ? 2 : undefined,
+    width: layout.isDesktop ? '40%' as any : '100%' as any,
+    borderRightWidth: layout.isDesktop ? 1 : 0,
+    borderRightColor: theme.goldDark + '30',
+  },
+  leftPanelContent: {
+    padding: TempleSpacing.md,
+    paddingBottom: TempleSpacing.xl,
+  },
+  rightPanel: {
+    flex: layout.isDesktop ? 3 : undefined,
+    width: layout.isDesktop ? '60%' as any : '100%' as any,
+  },
+  rightPanelContent: {
+    padding: TempleSpacing.lg,
+    paddingBottom: TempleSpacing.xl,
+  },
+  rightPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: TempleSpacing.xl,
+  },
+  rightPlaceholderText: {
+    color: theme.textMuted,
+    fontSize: TempleFonts.body,
+    textAlign: 'center',
+  },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',

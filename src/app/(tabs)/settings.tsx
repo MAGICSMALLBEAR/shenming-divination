@@ -313,6 +313,9 @@ export default function SettingsScreen() {
           <Text style={styles.dailyHint}>{dailyPoem.poem.content.split('\n')[0]}</Text>
         </View>
 
+        <View style={[styles.desktopSettingsRow, layout.isDesktop && styles.desktopSettingsRowActive]}>
+          <View style={[styles.desktopSettingsCol, layout.isDesktop && styles.desktopSettingsColActive]}>
+
         <View style={[styles.sectionGrid, layout.isDesktop && styles.sectionGridDesktop]}>
           <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
             <Text style={styles.sectionTitle}>{t('settingsLanguageLabel')}</Text>
@@ -404,6 +407,9 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+
+          </View>
+          <View style={[styles.desktopSettingsCol, layout.isDesktop && styles.desktopSettingsColActive]}>
 
         <View style={[styles.section, layout.isDesktop && styles.fullWidthSection]}>
           <Text style={styles.sectionTitle}>{t('settingsDivinationFlow')}</Text>
@@ -576,6 +582,9 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </View>
           ) : null}
+        </View>
+
+          </View>
         </View>
 
         <View style={[styles.section, layout.isDesktop && styles.fullWidthSection]}>
@@ -904,6 +913,17 @@ function createStyles(theme: ThemeColors) {
     borderColor: theme.goldDark + '22',
     padding: TempleSpacing.md,
   },
+  desktopSettingsRow: {},
+  desktopSettingsRowActive: {
+    flexDirection: 'row',
+    gap: TempleSpacing.md,
+    alignItems: 'flex-start',
+  },
+  desktopSettingsCol: {},
+  desktopSettingsColActive: {
+    flex: 1,
+    minWidth: 320,
+  },
   fullWidthSection: {
     backgroundColor: theme.bgCard,
     borderRadius: 14,
@@ -932,6 +952,7 @@ function createStyles(theme: ThemeColors) {
     fontSize: TempleFonts.body,
     color: theme.textLight,
     marginBottom: TempleSpacing.sm,
+    maxWidth: 600,
   },
   baziCard: {
     backgroundColor: theme.bgCard,
@@ -1148,6 +1169,8 @@ function createStyles(theme: ThemeColors) {
   backupActions: {
     gap: TempleSpacing.xs,
     marginBottom: TempleSpacing.sm,
+    maxWidth: 600,
+    alignSelf: 'center',
   },
   backupActionsDesktop: {
     flexDirection: 'row',
@@ -1196,6 +1219,7 @@ function createStyles(theme: ThemeColors) {
     backgroundColor: theme.bgCard, borderWidth: 1, borderColor: theme.goldDark + '40',
     borderRadius: 10, padding: TempleSpacing.sm, color: theme.textLight,
     fontSize: TempleFonts.small, marginBottom: TempleSpacing.sm,
+    maxWidth: 600,
   } as any,
   backupInput: {
     minHeight: 160,
@@ -1206,6 +1230,7 @@ function createStyles(theme: ThemeColors) {
     padding: TempleSpacing.sm,
     color: theme.textLight,
     textAlignVertical: 'top',
+    maxWidth: 600,
   },
   // Premium styles
   premiumActiveCard: {
@@ -1253,6 +1278,8 @@ function createStyles(theme: ThemeColors) {
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: TempleSpacing.lg,
+    maxWidth: 500,
+    alignSelf: 'center',
   },
   saveBtnText: {
     color: theme.goldLight,
