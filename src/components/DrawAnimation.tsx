@@ -104,11 +104,27 @@ export function DrawAnimation({
   const flightFlipAnim = useRef(new Animated.Value(0)).current;
   const flightExitAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
+  const particleProgress = useRef(new Animated.Value(0)).current;
+  const beamOpacity = useRef(new Animated.Value(0)).current;
+  const ringExpandScale = useRef(new Animated.Value(0)).current;
+  const ringExpandOpacity = useRef(new Animated.Value(0)).current;
+  const phaseTextOpacity = useRef(new Animated.Value(1)).current;
   const [phaseIndex, setPhaseIndex] = useState(0);
+  const prevPhaseRef = useRef(0);
+  const [displayPhase, setDisplayPhase] = useState(PHASES[interactive ? 0 : 0]);
   const [trackWidth, setTrackWidth] = useState(220);
   const [effortHint, setEffortHint] = useState('捧穩籤筒，緩緩來回搖動');
   const { theme } = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // ── 金色粒子配置（僅在搖籤階段顯示）──────────────────────────────
+  const particles = useMemo(() => Array.from({ length: 18 }, (_, i) => ({
+    x: (Math.random() - 0.5) * 110,
+    size: 2 + Math.random() * 4,
+    baseDelay: i / 18,
+    speed: 0.55 + Math.random() * 1.3,
+    color: Math.random() > 0.3 ? '#FFD700' : (Math.random() > 0.5 ? '#FFC200' : '#FFEAA0'),
+  })), []);
 
   // ── 互動搖籤前置階段（interactive）用的狀態 ──────────────────────
   // popped：使用者是否已經把籤枝搖出來了。非互動模式一律視為已跳出，
@@ -135,7 +151,6 @@ export function DrawAnimation({
   const ms = Math.max(durationMs, 2600);
   const softImage = getGodSoftImage(god?.id);
 
-  const activePhase = PHASES[phaseIndex] || PHASES[PHASES.length - 1];
   const chosenStickTranslateY = useMemo(() => (
     Animated.add(
       chosenLiftAnim.interpolate({
@@ -170,6 +185,30 @@ export function DrawAnimation({
       floatLoop.stop();
     };
   }, [auraAnim, floatAnim, reducedMotion]);
+
+  // ── 金色粒子循環 ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (reducedMotion) return;
+    const particleLoop = Animated.loop(
+      Animated.timing(particleProgress, { toValue: 1, duration: 1100, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER })
+    );
+    particleLoop.start();
+    return () => particleLoop.stop();
+  }, [particleProgress, reducedMotion]);
+
+  // ── 階段文字淡入淡出 ────────────────────────────────────────────
+  useEffect(() => {
+    if (phaseIndex === prevPhaseRef.current) return;
+    prevPhaseRef.current = phaseIndex;
+    phaseTextOpacity.setValue(0);
+    setDisplayPhase(PHASES[phaseIndex] || PHASES[PHASES.length - 1]);
+    Animated.timing(phaseTextOpacity, {
+      toValue: 1,
+      duration: reducedMotion ? 0 : 280,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: USE_NATIVE_DRIVER,
+    }).start();
+  }, [phaseIndex, reducedMotion, phaseTextOpacity]);
 
   // 互動搖籤前置階段：等使用者親自搖出籤枝（拖曳或長按皆會累積「晃動能量」），
   // 達到隨機門檻才把操作遙測雜湊成種子，交給下面的開籤演出。
@@ -291,6 +330,9 @@ export function DrawAnimation({
       numberOpacity.setValue(1);
       numberScale.setValue(1);
       flashAnim.setValue(0);
+      beamOpacity.setValue(0);
+      ringExpandScale.setValue(0);
+      ringExpandOpacity.setValue(1);
       paperAnim.setValue(1);
       flipAnim.setValue(1);
       flightAnim.setValue(1);
@@ -334,6 +376,9 @@ export function DrawAnimation({
     numberOpacity.setValue(0);
     numberScale.setValue(0.84);
     flashAnim.setValue(0);
+    beamOpacity.setValue(0);
+    ringExpandScale.setValue(0);
+    ringExpandOpacity.setValue(1);
     paperAnim.setValue(0);
     flipAnim.setValue(0);
     flightAnim.setValue(0);
@@ -371,6 +416,8 @@ export function DrawAnimation({
         Animated.timing(shakeEnvelope, { toValue: 0, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
         Animated.timing(shakeAnim, { toValue: 0, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
       ]).start();
+      // 神光從上方照射
+      Animated.timing(beamOpacity, { toValue: 1, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }).start();
       Animated.sequence([
         Animated.timing(chosenLiftAnim, { toValue: 1, duration: ms * 0.1, easing: Easing.out(Easing.cubic), useNativeDriver: USE_NATIVE_DRIVER }),
         Animated.timing(flightAnim, { toValue: 1, duration: ms * 0.25, easing: Easing.inOut(Easing.cubic), useNativeDriver: USE_NATIVE_DRIVER }),
@@ -393,6 +440,12 @@ export function DrawAnimation({
       Animated.sequence([
         Animated.timing(flashAnim, { toValue: 1, duration: ms * 0.04, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
         Animated.timing(flashAnim, { toValue: 0, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+      ]).start();
+      // 神光淡出 + 擴散光圈
+      Animated.parallel([
+        Animated.timing(beamOpacity, { toValue: 0, duration: ms * 0.14, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(ringExpandScale, { toValue: 1, duration: ms * 0.2, easing: Easing.out(Easing.cubic), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(ringExpandOpacity, { toValue: 0, duration: ms * 0.2, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
       ]).start();
     }, ms * DRAW_TIMELINE.flash));
 
@@ -494,6 +547,23 @@ export function DrawAnimation({
     inputRange: [0, 0.35, 1],
     outputRange: [0, 0.95, 0],
   }), [flashAnim]);
+
+  const ringScale = useMemo(() => ringExpandScale.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.2, 2.8],
+  }), [ringExpandScale]);
+
+  const ringOpacity = useMemo(() => ringExpandOpacity.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.8, 0],
+  }), [ringExpandOpacity]);
+
+  // 粒子容器只在搖動時顯示
+  const particleContainerOpacity = useMemo(() => shakeEnvelope.interpolate({
+    inputRange: [0, 0.08, 1],
+    outputRange: [0, 0, 1],
+    extrapolate: 'clamp',
+  }), [shakeEnvelope]);
 
   const paperTranslateY = useMemo(() => paperAnim.interpolate({
     inputRange: [0, 1],
@@ -632,7 +702,9 @@ export function DrawAnimation({
       scrollEnabled={!isShaking}
     >
       <Text style={styles.title}>抽籤中</Text>
-      <Text style={styles.subtitle}>{activePhase}</Text>
+      <Animated.Text style={[styles.subtitle, { opacity: phaseTextOpacity }]}>
+        ◈ {displayPhase} ◈
+      </Animated.Text>
       {isShaking ? (
         <Text style={[styles.shakeInstruction, { color: highlightColor }]}>
           {shakeMode === 'drag' ? effortHint : '按住籤筒不放，讓它越搖越用力'}
@@ -661,6 +733,16 @@ export function DrawAnimation({
       </View>
 
       <View style={styles.animationStage}>
+        {/* 暈影覆蓋層 */}
+        <View style={styles.vignette} pointerEvents="none" />
+        {/* 神光從天而降 */}
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.lightBeam, { opacity: beamOpacity }]}
+        >
+          <View style={[styles.lightBeamGlow, { backgroundColor: highlightColor + '12' }]} />
+          <View style={[styles.lightBeamCore, { backgroundColor: highlightColor + '28' }]} />
+        </Animated.View>
         <Animated.View
           style={[
             styles.halo,
@@ -692,6 +774,53 @@ export function DrawAnimation({
             },
           ]}
         />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.expandRing,
+            {
+              borderColor: highlightColor + '88',
+              opacity: ringOpacity,
+              transform: [{ scale: ringScale }],
+            },
+          ]}
+        />
+
+        {/* 金色粒子 */}
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.particleContainer, { opacity: particleContainerOpacity }]}
+        >
+          {particles.map((p, i) => {
+            const particleY = particleProgress.interpolate({
+              inputRange: [p.baseDelay, Math.min(1, p.baseDelay + 0.28 * p.speed)],
+              outputRange: [0, -90],
+              extrapolate: 'clamp',
+            });
+            const particleOpacity = particleProgress.interpolate({
+              inputRange: [p.baseDelay, p.baseDelay + 0.04, Math.min(1, p.baseDelay + 0.24 * p.speed), Math.min(1, p.baseDelay + 0.28 * p.speed)],
+              outputRange: [0, 1, 1, 0],
+              extrapolate: 'clamp',
+            });
+            return (
+              <Animated.View
+                key={i}
+                style={[
+                  styles.particle,
+                  {
+                    width: p.size,
+                    height: p.size,
+                    borderRadius: p.size / 2,
+                    backgroundColor: p.color,
+                    left: p.x + 75,
+                    opacity: particleOpacity,
+                    transform: [{ translateY: particleY }],
+                  },
+                ]}
+              />
+            );
+          })}
+        </Animated.View>
 
         <Animated.View style={[styles.altarGlow, { transform: [{ translateY: altarFloat }] }]}>
 
@@ -1262,6 +1391,66 @@ function createStyles(theme: ThemeColors) {
     lineHeight: 22,
     color: theme.textMuted,
     textAlign: 'center',
+  },
+  // ── 暈影（聚焦效果）──────────────────────────────────────────
+  vignette: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 900,
+    // 模擬徑向漸層：外圍深色，中央透明
+    borderWidth: 80,
+    borderColor: theme.bgDark + 'AA',
+    borderRadius: 999,
+  },
+  // ── 神光從天而降 ──────────────────────────────────────────────
+  lightBeam: {
+    position: 'absolute',
+    top: -20,
+    left: '50%',
+    zIndex: 50,
+    width: 50,
+    height: 210,
+    marginLeft: -25,
+    alignItems: 'center',
+  },
+  lightBeamGlow: {
+    position: 'absolute',
+    top: 0,
+    width: 80,
+    height: '100%',
+    borderRadius: 40,
+  },
+  lightBeamCore: {
+    position: 'absolute',
+    top: 0,
+    width: 34,
+    height: '100%',
+    borderRadius: 17,
+  },
+  // ── 擴散光圈（靈籤顯現時）────────────────────────────────────
+  expandRing: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2.5,
+    zIndex: 60,
+  },
+  // ── 金色粒子 ──────────────────────────────────────────────────
+  particleContainer: {
+    position: 'absolute',
+    top: 30,
+    left: 0,
+    right: 0,
+    height: 180,
+    zIndex: 45,
+  },
+  particle: {
+    position: 'absolute',
+    top: 130,
   },
   });
 }
