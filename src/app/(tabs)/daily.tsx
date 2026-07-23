@@ -17,6 +17,7 @@ import type { ThemeColors } from '@/constants/themes';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
 import { getDailyPoem, getWeeklyPoems } from '@/services/dailyPoem';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
+import { calculateTaiSui, getCurrentYearInfo, type TaiSuiResult } from '@/services/taiSui';
 import { getSettings } from '@/services/storage';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { getTodayFullLunarInfo, getCurrentShiChen } from '@/data/lunarFullCalendar';
@@ -31,6 +32,7 @@ export default function DailyScreen() {
   const [fortune, setFortune] = useState<DailyFortune>(() => getDailyFortune());
   const [bazi, setBazi] = useState<BaziInfo | null>(null);
   const [yearFortune, setYearFortune] = useState<YearFortune | null>(null);
+  const [taiSui, setTaiSui] = useState<TaiSuiResult | null>(null);
   const [showShiChen, setShowShiChen] = useState(false);
   const [showYearDetail, setShowYearDetail] = useState(false);
   const [activeMonthTab, setActiveMonthTab] = useState(new Date().getMonth() + 1);
@@ -75,6 +77,8 @@ export default function DailyScreen() {
       setBazi(baziInfo);
       setFortune(getDailyFortune(baziInfo));
       setYearFortune(getYearFortune(baziInfo));
+      const ts = calculateTaiSui(year);
+      setTaiSui(ts);
     });
   }, []);
 
@@ -200,6 +204,78 @@ export default function DailyScreen() {
             )}
             </>
           )}
+          </View>
+        )}
+
+        {/* 犯太歲提醒 */}
+        <View style={[styles.card, taiSui && !taiSui.isSafe ? { borderColor: '#e5393560', borderWidth: 1.5 } : {}]}>
+          <Text style={styles.cardTitle}>🏮 犯太歲提醒</Text>
+          {!taiSui ? (
+            <Text style={styles.taiSuiHint}>設定出生年份以查看犯太歲提醒</Text>
+          ) : taiSui.isSafe ? (
+            <View style={styles.taiSuiSafeRow}>
+              <Text style={styles.taiSuiSafeEmoji}>🛡️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.taiSuiSafeTitle}>今年平安，無犯太歲</Text>
+                <Text style={styles.taiSuiSafeSub}>
+                  生肖屬{taiSui.birthZodiac}者逢{taiSui.yearZodiac}年，無沖無煞，平安吉祥。
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.taiSuiYearTitle}>
+                {getCurrentYearInfo().emoji} {getCurrentYearInfo().year}年犯太歲提醒
+              </Text>
+              <Text style={styles.taiSuiZodiac}>
+                本命生肖 {taiSui.birthZodiac} · 值年生肖 {taiSui.yearZodiac}{getCurrentYearInfo().emoji}
+              </Text>
+              {taiSui.offenses.map((off) => (
+                <View
+                  key={off.type}
+                  style={[styles.offenseRow, { borderLeftColor: severityColor(off.severity) }]}
+                >
+                  <View style={[styles.offenseBadge, { backgroundColor: severityColor(off.severity) }]}>
+                    <Text style={styles.offenseBadgeText}>{off.label}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.offenseDesc}>{off.description}</Text>
+                    <Text style={styles.offenseAdvice}>💡 {off.advice}</Text>
+                  </View>
+                </View>
+              ))}
+              <View style={styles.taiSuiOverall}>
+                <Text style={styles.taiSuiOverallTitle}>綜合建議</Text>
+                <Text style={styles.taiSuiOverallText}>
+                  犯太歲之年宜安奉太歲星君，多行善事積德，保持低調謹慎。可至廟宇點太歲燈，祈求平安順遂。
+                </Text>
+              </View>
+            </>
+          )}
+        </View>
+
+        {/* 每日禁忌提醒 */}
+        {lunarInfo && (
+          <View style={[styles.card, { borderColor: '#e5737340' }]}>
+            <Text style={styles.cardTitle}>⚠️ 每日宜忌沖煞</Text>
+            <View style={styles.tabooRow}>
+              <View style={styles.tabooBlockYi}>
+                <Text style={styles.tabooBlockLabel}>宜</Text>
+                <Text style={styles.tabooBlockText}>{lunarInfo.yi.join('　')}</Text>
+              </View>
+              <View style={styles.tabooBlockJi}>
+                <Text style={[styles.tabooBlockLabel, { color: '#ef5350' }]}>忌</Text>
+                <Text style={styles.tabooBlockText}>{lunarInfo.ji.join('　')}</Text>
+              </View>
+            </View>
+            <View style={styles.tabooChongSha}>
+              <Text style={styles.tabooChongShaLabel}>🐉 沖煞</Text>
+              <Text style={styles.tabooChongShaValue}>{lunarInfo.chongSha}</Text>
+            </View>
+            <View style={styles.tabooGods}>
+              <Text style={styles.tabooGodsYi}>吉神：{lunarInfo.auspiciousGods.join('　')}</Text>
+              <Text style={styles.tabooGodsJi}>凶神：{lunarInfo.inauspiciousGods.join('　')}</Text>
+            </View>
           </View>
         )}
 
@@ -458,6 +534,13 @@ export default function DailyScreen() {
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+function severityColor(severity: number): string {
+  if (severity >= 5) return '#d32f2f';
+  if (severity >= 4) return '#e53935';
+  if (severity >= 3) return '#fb8c00';
+  return '#fbc02d';
 }
 
 function createStyles(theme: ThemeColors) {
@@ -738,5 +821,78 @@ function createStyles(theme: ThemeColors) {
   moodSaveBtn: { backgroundColor: theme.bgMedium, borderRadius: 8, borderWidth: 1, borderColor: theme.gold, paddingVertical: 8, alignItems: 'center' },
   moodSaveBtnDone: { borderColor: theme.success, backgroundColor: theme.success + '22' },
   moodSaveBtnText: { color: theme.textGold, fontSize: TempleFonts.small, fontWeight: 'bold' },
+
+  // 犯太歲
+  taiSuiHint: { color: theme.textMuted, fontSize: TempleFonts.small, lineHeight: 22, textAlign: 'center' as any, paddingVertical: 6 },
+  taiSuiSafeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  taiSuiSafeEmoji: { fontSize: 36 },
+  taiSuiSafeTitle: { color: '#81c784', fontWeight: '800', fontSize: TempleFonts.body, marginBottom: 4 },
+  taiSuiSafeSub: { color: theme.textMuted, fontSize: TempleFonts.small, lineHeight: 20 },
+  taiSuiYearTitle: { color: '#ef5350', fontWeight: '900', fontSize: TempleFonts.heading, marginBottom: 6 },
+  taiSuiZodiac: { color: theme.textMuted, fontSize: TempleFonts.small, marginBottom: 12 },
+  offenseRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+    backgroundColor: theme.bgDark + '88',
+    borderRadius: 10,
+    padding: 10,
+    borderLeftWidth: 4,
+  },
+  offenseBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
+  },
+  offenseBadgeText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+  offenseDesc: { color: theme.textLight, fontSize: 12, lineHeight: 18, marginBottom: 4 },
+  offenseAdvice: { color: theme.gold, fontSize: 11, lineHeight: 16 },
+  taiSuiOverall: {
+    marginTop: 10,
+    backgroundColor: theme.goldDark + '22',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '44',
+  },
+  taiSuiOverallTitle: { color: theme.gold, fontWeight: '800', fontSize: 13, marginBottom: 6 },
+  taiSuiOverallText: { color: theme.textMuted, fontSize: 12, lineHeight: 18 },
+
+  // 每日禁忌
+  tabooRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  tabooBlockYi: {
+    flex: 1,
+    backgroundColor: '#2d5a2d44',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#4caf5060',
+  },
+  tabooBlockJi: {
+    flex: 1,
+    backgroundColor: '#5a2d2d44',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#e5737360',
+  },
+  tabooBlockLabel: { color: '#81c784', fontWeight: '900', fontSize: 14, marginBottom: 6 },
+  tabooBlockText: { color: '#c8e6c9', fontSize: 12, lineHeight: 20 },
+  tabooChongSha: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    padding: 8,
+    backgroundColor: '#e5737318',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5737340',
+  },
+  tabooChongShaLabel: { color: '#ef5350', fontWeight: '800', fontSize: 13, marginRight: 8 },
+  tabooChongShaValue: { color: '#ef9a9a', fontSize: 13, fontWeight: '700', flex: 1 },
+  tabooGods: { flexDirection: 'row', gap: 12 },
+  tabooGodsYi: { color: theme.gold, fontSize: 11, fontWeight: '600', flex: 1 },
+  tabooGodsJi: { color: '#e57373aa', fontSize: 11, fontWeight: '600', flex: 1 },
   });
 }

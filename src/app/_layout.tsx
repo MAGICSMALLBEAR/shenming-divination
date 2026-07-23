@@ -27,6 +27,9 @@ export default function RootLayout() {
       <Stack.Screen name="disclaimer" />
       <Stack.Screen name="source-audit" />
       <Stack.Screen name="library" />
+      <Stack.Screen name="nameAnalysis" />
+      <Stack.Screen name="character" />
+      <Stack.Screen name="boneWeight" />
     </Stack>
   );
 }

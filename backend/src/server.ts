@@ -537,6 +537,155 @@ app.post('/api/择日', async (req, res) => {
   }
 });
 
+// 測字占卜：單一中文字分析
+function isCJKCharacter(ch: string): boolean {
+  if (!ch || ch.length !== 1) return false;
+  const code = ch.codePointAt(0)!;
+  return (
+    (code >= 0x4E00 && code <= 0x9FFF) ||   // CJK Unified Ideographs
+    (code >= 0x3400 && code <= 0x4DBF) ||   // CJK Extension A
+    (code >= 0x20000 && code <= 0x2A6DF) || // CJK Extension B
+    (code >= 0xF900 && code <= 0xFAFF)      // CJK Compatibility
+  );
+}
+
+function buildCharacterFallback(character: string, question?: string): string {
+  const questionLine = question ? `信眾提問：${question}` : '信眾未提供具體問題。';
+  return [
+    '【字義解析】',
+    `測字「${character}」以傳統測字法觀之，此字進入命局，需從字形、字音、字義三方面合參。`,
+    '因目前 AI 服務未連線，以下為基礎字形分析：',
+    '',
+    '【字形結構】',
+    `「${character}」字筆畫結構值得細究。測字之要在拆解部首部件，觀其五行屬性與相生相剋。`,
+    '',
+    '【吉凶判斷】',
+    '中',
+    '',
+    '【建議】',
+    questionLine,
+    '建議靜心觀察局勢變化，不急於一時決定。測字之道，三分在字、七分在己，心誠則靈。',
+  ].join('\n');
+}
+
+app.post('/api/character', async (req, res) => {
+  try {
+    const { character, question } = req.body as { character?: string; question?: string };
+
+    if (!character || !isCJKCharacter(character)) {
+      res.status(400).json({ error: '請提供恰好一個中文字（測字）', code: 'INVALID_CHARACTER' });
+      return;
+    }
+
+    const config = getAIConfig();
+    const clientApiKey = req.headers['x-api-key'] as string | undefined;
+
+    if (!hasUsableApiKey(config) && !clientApiKey) {
+      const fallbackText = buildCharacterFallback(character, question);
+      res.json({
+        character,
+        interpretation: fallbackText,
+        meaning: `測字「${character}」的基礎分析`,
+        structure: '基礎字形分析（AI 未連線）',
+        fortune: '中',
+        fortuneLabel: '中',
+        advice: '建議靜心觀察局勢變化。',
+        provider: 'fallback',
+      });
+      return;
+    }
+
+    const questionLine = question ? `信眾的問題是：「${question}」` : '信眾沒有提供具體問題，請就字本身的吉凶進行分析。';
+
+    const systemPrompt = [
+      '你是一位精通測字（拆字占卜）的命理師，傳承古代測字傳統。',
+      '測字之道：觀字形以明結構，析部首以定五行，通字義以知吉凶。',
+      '請對使用者提供的中文字進行完整分析，包含：',
+      '1. 字義解析：這個字的本義、引申義，以及在求問情境下的含義',
+      '2. 字形結構：拆解部首與部件，分析其五行屬性（金木水火土），以及結構寓含的象徵',
+      '3. 吉凶判斷：根據字形字義，給出吉、中、凶三種判斷之一',
+      '4. 具體建議：針對信眾的問題給出可行的建議',
+      '',
+      questionLine,
+      `測字為：「${character}」`,
+      '',
+      '請以以下格式輸出（嚴格格遵守式）：',
+      '【字義解析】',
+      '（內容）',
+      '【字形結構】',
+      '（內容）',
+      '【吉凶判斷】',
+      '吉（或 中 或 凶）',
+      '【建議】',
+      '（內容）',
+      '',
+      '最後請以 JSON 格式輸出摘要（僅此一行，不含其他文字）：',
+      '{"meaning":"字義摘要","structure":"結構摘要","fortune":"吉或中或凶","advice":"建議摘要"}',
+    ].join('\n');
+
+    const rawResult = await callLLM(config, [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `請為我測字：「${character}」。${questionLine}` },
+    ], clientApiKey);
+
+    // 嘗試從回覆中提取 JSON
+    const jsonMatch = rawResult.match(/\{[^}]*"meaning"[^}]*"fortune"[^}]*\}/s)
+      || rawResult.match(/\{[^}]*"fortune"[^}]*"meaning"[^}]*\}/s)
+      || rawResult.match(/\{[^}]*\}/);
+
+    let structured: { meaning: string; structure: string; fortune: string; advice: string } = {
+      meaning: `測字「${character}」的 AI 分析`,
+      structure: '請見上方詳細分析',
+      fortune: '中',
+      advice: '請見上方詳細建議。',
+    };
+
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        structured = {
+          meaning: parsed.meaning || structured.meaning,
+          structure: parsed.structure || structured.structure,
+          fortune: ['吉', '中', '凶'].includes(parsed.fortune) ? parsed.fortune : '中',
+          advice: parsed.advice || structured.advice,
+        };
+      } catch { /* keep defaults */ }
+    } else {
+      // 從文字中提取吉凶判斷
+      if (rawResult.includes('【吉凶判斷】')) {
+        const fortuneSection = rawResult.split('【吉凶判斷】')[1]?.split('【')[0] || '';
+        if (fortuneSection.includes('吉') && !fortuneSection.includes('凶')) structured.fortune = '吉';
+        else if (fortuneSection.includes('凶')) structured.fortune = '凶';
+        else structured.fortune = '中';
+      }
+    }
+
+    res.json({
+      character,
+      interpretation: rawResult,
+      meaning: structured.meaning,
+      structure: structured.structure,
+      fortune: structured.fortune,
+      fortuneLabel: structured.fortune,
+      advice: structured.advice,
+      provider: config.provider,
+    });
+  } catch (error) {
+    console.error('Character API error:', error);
+    const { character, question } = req.body as Record<string, string>;
+    res.json({
+      character: character || '',
+      interpretation: buildCharacterFallback(character || '字', question),
+      meaning: `測字「${character || '字'}」的基礎分析`,
+      structure: '基礎字形分析（服務暫時不可用）',
+      fortune: '中',
+      fortuneLabel: '中',
+      advice: '建議靜心觀察局勢變化，稍後再試。',
+      provider: 'error',
+    });
+  }
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -548,6 +697,7 @@ app.listen(PORT, () => {
   console.log(`Chat:      POST http://localhost:${PORT}/api/chat`);
   console.log(`Vision:    POST http://localhost:${PORT}/api/vision`);
   console.log(`BaziMatch: POST http://localhost:${PORT}/api/bazi/match`);
+  console.log(`Character: POST http://localhost:${PORT}/api/character`);
   console.log('DatePick:  endpoint enabled');
   console.log(`Health:    GET  http://localhost:${PORT}/api/health`);
   console.log(
