@@ -495,26 +495,26 @@ export function DrawAnimation({
     [shakeAnim, shakeEnvelope]
   );
 
-  // 主要晃動改為上下（垂直彈跳），左右搖擺僅保留輕微的自然手晃。
-  const translateY = useMemo(() => shakeEnergy.interpolate({
-    inputRange: [-1, 1],
-    outputRange: [8, -12],
-  }), [shakeEnergy]);
-
+  // 手持搖籤筒：左右搖晃為主、配輕微上下彈跳與傾斜
   const translateX = useMemo(() => shakeEnergy.interpolate({
     inputRange: [-1, 1],
-    outputRange: [-motion.shakeAmplitude * 0.25, motion.shakeAmplitude * 0.25],
+    outputRange: [-motion.shakeAmplitude, motion.shakeAmplitude],
+  }), [shakeEnergy, motion.shakeAmplitude]);
+
+  const translateY = useMemo(() => shakeEnergy.interpolate({
+    inputRange: [-1, 1],
+    outputRange: [-motion.shakeAmplitude * 0.15, motion.shakeAmplitude * 0.15],
   }), [shakeEnergy, motion.shakeAmplitude]);
 
   const rotate = useMemo(() => shakeEnergy.interpolate({
     inputRange: [-1, 1],
-    outputRange: ['-2deg', '3deg'],
+    outputRange: ['-4deg', '4deg'],
   }), [shakeEnergy]);
 
-  // 選中籤枝隨著搖晃力道逐漸浮出籤筒口
+  // 選中籤枝隨著搖晃力道逐漸浮出籤筒口（更明顯的浮出效果）
   const chosenPeekTranslateY = useMemo(() => shakeEnvelope.interpolate({
-    inputRange: [0, 0.35, 0.7, 1],
-    outputRange: [0, -8, -20, -34],
+    inputRange: [0, 0.3, 0.55, 0.8, 1],
+    outputRange: [0, -4, -12, -24, -42],
     extrapolate: 'clamp',
   }), [shakeEnvelope]);
 
@@ -623,11 +623,8 @@ export function DrawAnimation({
 
   // 籤筒垂直位移 = 主彈跳 + 供桌浮動 + 籤枝射出時的反作用力
   const cylinderTranslateY = useMemo(() =>
-    Animated.add(
-      Animated.add(translateY, altarFloat),
-      cylinderRecoilAnim
-    ),
-    [translateY, altarFloat, cylinderRecoilAnim]
+    Animated.add(translateY, cylinderRecoilAnim),
+    [translateY, cylinderRecoilAnim]
   );
 
   const flyingShadowOpacity = useMemo(() => Animated.multiply(
