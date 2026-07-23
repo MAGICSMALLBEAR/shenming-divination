@@ -675,7 +675,7 @@ function createStyles(theme: ThemeColors) {
   },
   emptyGodTitle: { color: theme.goldLight, fontSize: TempleFonts.body, fontWeight: TempleFonts.heavy, marginBottom: 6 },
   emptyGodText: { color: theme.textMuted, fontSize: TempleFonts.small, textAlign: 'center' },
-  scrollArea: { flex: 1 },
+  scrollArea: { flex: 1, overflow: "scroll" as const },
   scrollContent: { width: '100%', alignSelf: 'center', paddingBottom: TempleSpacing.lg },
   grid: {
     width: '100%',
@@ -746,8 +746,8 @@ function createStyles(theme: ThemeColors) {
     backgroundColor: theme.bgDark + '45',
   },
   detailBtnText: { fontSize: 11, fontWeight: TempleFonts.bold },
-  formScroll: { flex: 1 },
-  formContainer: { width: '100%', alignSelf: 'center', paddingHorizontal: TempleSpacing.md },
+  formScroll: { flex: 1, overflow: 'scroll' as const },
+  formContainer: { width: '100%', alignSelf: 'center', paddingHorizontal: TempleSpacing.md, paddingBottom: 120 },
   selectedCard: {
     borderRadius: 14,
     borderWidth: 1.5,
