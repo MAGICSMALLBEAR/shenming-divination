@@ -1,3 +1,55 @@
+## 2026-07-22 命理技術擴充 + 抽籤動畫真實化 + 網頁版滾動修復
+
+### 本輪主題
+補完 5 項命理功能、將抽籤動畫改為擬真搖籤筒物理、修復網頁版多項 UI 問題。
+
+### 一、5 項命理技術功能
+
+| # | 功能 | 檔案 | 說明 |
+|---|------|------|------|
+| 1 | **測字** | character.tsx + 後端 /api/character + characterDivination.ts | 輸入一字 → AI 拆解吉凶，50 字離線備援 |
+| 2 | **姓名學** | nameAnalysis.tsx + nameAnalysis.ts | 三才五格 250+ 字、125 組合判斷、五行色碼 |
+| 3 | **犯太歲** | daily.tsx 內嵌 + taiSui.ts | 值/沖/刑/害/破五類判定，依出生年自動警示 |
+| 4 | **每日禁忌** | daily.tsx 內嵌 | 當日宜忌、沖煞、吉神凶神卡片 |
+| 5 | **稱骨歌** | boneWeight.tsx + boneWeight.ts | 袁天罡稱骨 50 年表、12 段歌訣 |
+
+全部加入更多頁工具網格。Commit `ab609d3`
+
+### 二、抽籤動畫改為擬真搖籤筒
+
+| 階段 | 改動 |
+|------|------|
+| 視覺特效 | 金色粒子（18 顆）、神光光束、光環擴散揭示、暗角氛圍、階段文字淡入淡出 |
+| 搖晃物理 | 左右搖晃為主 + 15% 上下微彈 + 對稱旋轉 + 反作用力 recoil |
+| 籤枝行為 | 19 支各自垂直彈跳（相位錯開）、選中籤枝五段漸進浮出 |
+| 非互動模式 | idle shake 改用 sin inOut 取代 linear，更自然 |
+
+Commit `2f4f832`, `9808d33`, `a163eae`
+
+### 三、網頁版滾動與 UI 修復
+
+| 問題 | 根因 | 修復 |
+|------|------|------|
+| 無法滑動看到神明 | RN Web flex:1 容器需 overflow:hidden 才能約束 ScrollView 高度 | 全站 9 頁面 container/pageShell/content/fullScreen 統一加 overflow:hidden |
+| 導覽遮罩關不掉 | 略過按鈕僅限 !isCompact 顯示 | 移除條件，全部裝置可見；文字「九位」改「數十位」 |
+| 選完神明看不到按鈕 | ScrollView 未啟用滾動 + 底部無預留 | formScroll/scrollArea 加 overflow:scroll；formContainer 加 paddingBottom:120 |
+
+Commit `f219461`, `b18194c`
+
+### Git 記錄
+- `ab609d3` feat: 5 項命理技術
+- `2f4f832` feat: 抽籤動畫視覺強化
+- `9808d33` feat: 擬真搖籤筒物理
+- `f219461` fix: 網頁版滾動失效
+- `b18194c` fix: 問事表單按鈕不可見
+- `a163eae` fix: 籤筒動畫過度彈跳
+
+### 驗證
+- tsc --noEmit ✅ / 57 tests ✅ / lint 0 warnings ✅
+- GitHub ✅ / Vercel ✅
+
+---
+
 ## 2026-07-17 雷雨師百首 + 觀音靈籤雙系統全面稽核修復（共 164 首）
 
 ### 本輪主題
