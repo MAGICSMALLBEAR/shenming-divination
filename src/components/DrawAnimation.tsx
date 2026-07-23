@@ -92,6 +92,7 @@ export function DrawAnimation({
   const chosenLiftAnim = useRef(new Animated.Value(0)).current;
   const chosenDropAnim = useRef(new Animated.Value(0)).current;
   const impactAnim = useRef(new Animated.Value(0)).current;
+  const cylinderRecoilAnim = useRef(new Animated.Value(0)).current;
   const stickJitterAnims = useRef(STICKS.map(() => new Animated.Value(0))).current;
   const revealOpacity = useRef(new Animated.Value(0)).current;
   const revealTranslate = useRef(new Animated.Value(16)).current;
@@ -232,8 +233,8 @@ export function DrawAnimation({
 
     const idleLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER }),
-        Animated.timing(shakeAnim, { toValue: -1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.inOut(Easing.sin), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(shakeAnim, { toValue: -1, duration: motion.shakeDuration, easing: Easing.inOut(Easing.sin), useNativeDriver: USE_NATIVE_DRIVER }),
       ])
     );
     idleLoop.start();
@@ -324,6 +325,7 @@ export function DrawAnimation({
       chosenLiftAnim.setValue(1);
       chosenDropAnim.setValue(1);
       impactAnim.setValue(0);
+      cylinderRecoilAnim.setValue(0);
       stickJitterAnims.forEach((anim) => anim.setValue(0));
       revealOpacity.setValue(1);
       revealTranslate.setValue(0);
@@ -348,8 +350,8 @@ export function DrawAnimation({
     const timers: ReturnType<typeof setTimeout>[] = [];
     const shakeLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER }),
-        Animated.timing(shakeAnim, { toValue: -1, duration: motion.shakeDuration, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(shakeAnim, { toValue: 1, duration: motion.shakeDuration, easing: Easing.inOut(Easing.sin), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(shakeAnim, { toValue: -1, duration: motion.shakeDuration, easing: Easing.inOut(Easing.sin), useNativeDriver: USE_NATIVE_DRIVER }),
       ]),
       { iterations: motion.shakeIterations }
     );
@@ -371,6 +373,7 @@ export function DrawAnimation({
     chosenLiftAnim.setValue(interactive ? 0.08 : 0);
     chosenDropAnim.setValue(0);
     impactAnim.setValue(0);
+    cylinderRecoilAnim.setValue(0);
     revealOpacity.setValue(0);
     revealTranslate.setValue(16);
     numberOpacity.setValue(0);
@@ -418,6 +421,11 @@ export function DrawAnimation({
       ]).start();
       // 神光從上方照射
       Animated.timing(beamOpacity, { toValue: 1, duration: ms * 0.12, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }).start();
+      // 籤筒反作用力：籤枝射出時筒身微微下沉（牛頓第三定律）
+      Animated.sequence([
+        Animated.timing(cylinderRecoilAnim, { toValue: -6, duration: 80, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.spring(cylinderRecoilAnim, { toValue: 0, friction: 6, tension: 140, useNativeDriver: USE_NATIVE_DRIVER }),
+      ]).start();
       Animated.sequence([
         Animated.timing(chosenLiftAnim, { toValue: 1, duration: ms * 0.1, easing: Easing.out(Easing.cubic), useNativeDriver: USE_NATIVE_DRIVER }),
         Animated.timing(flightAnim, { toValue: 1, duration: ms * 0.25, easing: Easing.inOut(Easing.cubic), useNativeDriver: USE_NATIVE_DRIVER }),
@@ -479,7 +487,7 @@ export function DrawAnimation({
       shakeLoop.stop();
       jitterLoops.forEach((loop) => loop?.stop());
     };
-  }, [interactive, popped, onComplete, auraAnim, chosenDropAnim, chosenLiftAnim, flashAnim, flightAnim, flightExitAnim, flightFlipAnim, flipAnim, floatAnim, impactAnim, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, shakeEnvelope, soundEnabled, stickJitterAnims]);
+  }, [interactive, popped, onComplete, auraAnim, chosenDropAnim, chosenLiftAnim, cylinderRecoilAnim, flashAnim, flightAnim, flightExitAnim, flightFlipAnim, flipAnim, floatAnim, impactAnim, motion.shakeDuration, motion.shakeIterations, ms, numberOpacity, numberScale, paperAnim, progressAnim, reducedMotion, revealOpacity, revealTranslate, shakeAnim, shakeEnvelope, soundEnabled, stickJitterAnims]);
   // shakeEnergy = shakeAnim(-1..1) 乘上 shakeEnvelope(0..1)，讓晃動力道從無到有
   // 漸強，而不是一開始就等幅擺動。
   const shakeEnergy = useMemo(
@@ -487,15 +495,28 @@ export function DrawAnimation({
     [shakeAnim, shakeEnvelope]
   );
 
+  // 主要晃動改為上下（垂直彈跳），左右搖擺僅保留輕微的自然手晃。
+  const translateY = useMemo(() => shakeEnergy.interpolate({
+    inputRange: [-1, 1],
+    outputRange: [8, -12],
+  }), [shakeEnergy]);
+
   const translateX = useMemo(() => shakeEnergy.interpolate({
     inputRange: [-1, 1],
-    outputRange: [-motion.shakeAmplitude, motion.shakeAmplitude],
+    outputRange: [-motion.shakeAmplitude * 0.25, motion.shakeAmplitude * 0.25],
   }), [shakeEnergy, motion.shakeAmplitude]);
 
   const rotate = useMemo(() => shakeEnergy.interpolate({
     inputRange: [-1, 1],
-    outputRange: ['-6deg', '6deg'],
+    outputRange: ['-2deg', '3deg'],
   }), [shakeEnergy]);
+
+  // 選中籤枝隨著搖晃力道逐漸浮出籤筒口
+  const chosenPeekTranslateY = useMemo(() => shakeEnvelope.interpolate({
+    inputRange: [0, 0.35, 0.7, 1],
+    outputRange: [0, -8, -20, -34],
+    extrapolate: 'clamp',
+  }), [shakeEnvelope]);
 
 
   // auraAnim runs 0→1 in a single loop; bell-curve outputRange recreates the
@@ -599,6 +620,16 @@ export function DrawAnimation({
     inputRange: [0, 1],
     outputRange: [0, -7],
   }), [impactAnim]);
+
+  // 籤筒垂直位移 = 主彈跳 + 供桌浮動 + 籤枝射出時的反作用力
+  const cylinderTranslateY = useMemo(() =>
+    Animated.add(
+      Animated.add(translateY, altarFloat),
+      cylinderRecoilAnim
+    ),
+    [translateY, altarFloat, cylinderRecoilAnim]
+  );
+
   const flyingShadowOpacity = useMemo(() => Animated.multiply(
     flightAnim.interpolate({ inputRange: [0, 0.45, 0.82, 1], outputRange: [0, 0.08, 0.28, 0.5] }),
     flightExitOpacity
@@ -643,13 +674,19 @@ export function DrawAnimation({
     inputRange: [0, 0.06, 1],
     outputRange: [1, 0, 0],
   }), [flightAnim]);
+
+  const chosenTotalTranslateY = useMemo(() =>
+    Animated.add(chosenStickTranslateY, chosenPeekTranslateY),
+    [chosenStickTranslateY, chosenPeekTranslateY]
+  );
+
   const stickAnimatedStyles = useMemo(() => STICKS.map((stick, index) => {
     if (stick.selected) {
       return {
         opacity: selectedIn筒Opacity,
         transform: [
           { rotate: stick.rotate },
-          { translateY: chosenStickTranslateY },
+          { translateY: chosenTotalTranslateY },
           { translateX: chosenStickTranslateX },
           { rotate: chosenStickRotate },
         ],
@@ -659,11 +696,10 @@ export function DrawAnimation({
     return {
       transform: [
         { rotate: stick.rotate },
-        { rotate: jitterEnergy.interpolate({ inputRange: [-1, 1], outputRange: ['-3deg', '3deg'] }) },
-        { translateY: jitterEnergy.interpolate({ inputRange: [-1, 1], outputRange: [-3, 3] }) },
+        { translateY: jitterEnergy.interpolate({ inputRange: [-1, 1], outputRange: [6, -4] }) },
       ],
     };
-  }), [chosenStickRotate, chosenStickTranslateX, chosenStickTranslateY, selectedIn筒Opacity, shakeEnvelope, stickJitterAnims]);
+  }), [chosenStickRotate, chosenStickTranslateX, chosenTotalTranslateY, selectedIn筒Opacity, shakeEnvelope, stickJitterAnims]);
   const isShaking = interactive && !popped;
 
   // 拖曳模式跟長按模式共用同一個 PanResponder：
@@ -848,7 +884,7 @@ export function DrawAnimation({
               {
                 backgroundColor: 'transparent',
                 borderColor: 'transparent',
-                transform: [{ translateX }, { rotate }, { translateY: altarFloat }],
+                transform: [{ translateX }, { rotate }, { translateY: cylinderTranslateY }],
               },
             ]}
           >
