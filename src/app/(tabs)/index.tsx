@@ -965,8 +965,8 @@ function createStyles(theme: ThemeColors) {
     paddingVertical: 10, alignItems: 'center',
   },
   crossCompareToggleText: { color: theme.gold, fontSize: 14, fontWeight: TempleFonts.bold },
-  container: { flex: 1 },
-  pageShell: { flex: 1, width: '100%', alignSelf: 'center' },
+  container: { flex: 1, overflow: 'hidden' },
+  pageShell: { flex: 1, width: '100%', alignSelf: 'center', overflow: 'hidden' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1004,8 +1004,8 @@ function createStyles(theme: ThemeColors) {
   stepLine: { width: 12, height: 1, backgroundColor: theme.goldDark + '30', marginHorizontal: 2 },
   stepLineCompact: { width: 8 },
   stepLineActive: { backgroundColor: theme.goldDark },
-  content: { flex: 1 },
-  fullScreen: { flex: 1 },
+  content: { flex: 1, overflow: "hidden" },
+  fullScreen: { flex: 1, overflow: "hidden" },
   recommendCard: {
     marginHorizontal: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,

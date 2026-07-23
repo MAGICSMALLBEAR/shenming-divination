@@ -756,8 +756,8 @@ export default function CollectionScreen() {
 
 function createStyles(theme: ThemeColors) {
   return StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: theme.bgDark },
-  container: { flex: 1, paddingTop: TempleSpacing.sm, width: '100%', alignSelf: 'center' },
+  safeArea: { flex: 1, overflow: "hidden" as const, backgroundColor: theme.bgDark },
+  container: { flex: 1, overflow: "hidden" as const, paddingTop: TempleSpacing.sm, width: '100%', alignSelf: 'center' },
   pageTitle: {
     fontSize: TempleFonts.subtitle,
     fontWeight: '900',

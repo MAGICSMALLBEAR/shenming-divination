@@ -552,8 +552,8 @@ export default function MapScreen() {
 
 function createStyles(theme: ThemeColors, layout: ReturnType<typeof useResponsiveLayout>) {
   return StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: theme.bgDark },
-  container: { flex: 1 },
+  safeArea: { flex: 1, overflow: "hidden" as const, backgroundColor: theme.bgDark },
+  container: { flex: 1, overflow: "hidden" as const },
   content: { width: '100%', alignSelf: 'center', paddingVertical: TempleSpacing.md },
   desktopSplit: {
     flex: 1,

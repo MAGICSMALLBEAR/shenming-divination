@@ -607,7 +607,7 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
 
 function createStyles(theme: ThemeColors) {
   return StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: TempleSpacing.md },
+  container: { flex: 1, overflow: "hidden" as const, paddingHorizontal: TempleSpacing.md },
   title: {
     fontSize: TempleFonts.hero,
     fontWeight: TempleFonts.heavy,

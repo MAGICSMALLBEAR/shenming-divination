@@ -35,7 +35,7 @@ const STEPS = [
   {
     icon: '🙏',
     title: '選一位神明，帶著問題來',
-    body: '從九位台灣常見神明中選擇你最常參拜或最契合你問題的神明。越聚焦的問題，籤意越容易讀懂。',
+    body: '從數十位台灣常見神明中選擇你最常參拜或最契合你問題的神明。越聚焦的問題，籤意越容易讀懂。',
   },
   {
     icon: '🧘',
@@ -110,8 +110,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         </TouchableOpacity>
       </View>
 
-      {/* 略過（僅非最後一步顯示 desktop） */}
-      {!isLast && !isCompact && (
+      {/* 略過 */}
+      {!isLast && (
         <TouchableOpacity style={styles.skipBtn} onPress={async () => { await markOnboarded(); onComplete(); }}>
           <Text style={styles.skipBtnText}>略過導覽，直接開始</Text>
         </TouchableOpacity>
@@ -218,10 +218,7 @@ function createStyles(theme: ThemeColors) {
     color: '#FFF',
     letterSpacing: 1,
   },
-  skipBtn: {
-    marginTop: TempleSpacing.lg,
-    paddingVertical: 8,
-  },
+  skipBtn: { marginTop: TempleSpacing.lg, paddingVertical: 8 },
   skipBtnText: {
     fontSize: 13,
     color: theme.textMuted,

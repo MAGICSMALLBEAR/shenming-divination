@@ -430,7 +430,7 @@ function createStyles(theme: ThemeColors, layout: ReturnType<typeof useResponsiv
     : '100%' as any;
 
   return StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: theme.bgDark },
+    safeArea: { flex: 1, overflow: "hidden" as const, backgroundColor: theme.bgDark },
     header: {
       paddingHorizontal: layout.gutter,
       paddingTop: TempleSpacing.md,
