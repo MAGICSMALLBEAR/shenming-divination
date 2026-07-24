@@ -19,6 +19,7 @@ import { getDailyPoem, getWeeklyPoems } from '@/services/dailyPoem';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { calculateTaiSui, getCurrentYearInfo, type TaiSuiResult } from '@/services/taiSui';
 import { getSettings } from '@/services/storage';
+import { useI18n } from '@/hooks/useI18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { getTodayFullLunarInfo, getCurrentShiChen } from '@/data/lunarFullCalendar';
 import { getTodayFestival, getUpcomingFestivals } from '@/data/festivals';
@@ -28,6 +29,7 @@ import type { BaziInfo } from '@/services/bazi';
 export default function DailyScreen() {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [fortune, setFortune] = useState<DailyFortune>(() => getDailyFortune());
   const [bazi, setBazi] = useState<BaziInfo | null>(null);
@@ -104,7 +106,7 @@ export default function DailyScreen() {
           { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
         ]}
       >
-        <Text style={styles.pageTitle}>今日專區</Text>
+        <Text style={styles.pageTitle}>{t('todayPageTitle')}</Text>
 
         <View style={[styles.desktopColumns, layout.isDesktop && styles.desktopColumnsRow]}>
           <View style={[styles.desktopLeftCol, layout.isDesktop && styles.desktopLeftColDesktop]}>
@@ -117,7 +119,7 @@ export default function DailyScreen() {
               onPress={() => setFoldedSections(s => ({ ...s, lunar: !s.lunar }))}
               activeOpacity={0.6}
             >
-              <Text style={styles.cardTitle}>📅 今日農民曆</Text>
+              <Text style={styles.cardTitle}>{t('todayLunarCalendar')}</Text>
               <Text style={styles.foldIcon}>{foldedSections.lunar ? '▼' : '▲'}</Text>
             </TouchableOpacity>
             {!foldedSections.lunar && (<>
@@ -142,11 +144,11 @@ export default function DailyScreen() {
 
             <View style={styles.yiJiRow}>
               <View style={styles.yiBlock}>
-                <Text style={styles.yiLabel}>宜</Text>
+                <Text style={styles.yiLabel}>{t('todayYi')}</Text>
                 <Text style={styles.yiText}>{lunarInfo.yi.join('　')}</Text>
               </View>
               <View style={styles.jiBlock}>
-                <Text style={styles.jiLabel}>忌</Text>
+                <Text style={styles.jiLabel}>{t('todayJi')}</Text>
                 <Text style={styles.jiText}>{lunarInfo.ji.join('　')}</Text>
               </View>
             </View>
@@ -164,8 +166,8 @@ export default function DailyScreen() {
             {currentShiChen && (
               <View style={styles.shiChenCurrent}>
                 <Text style={styles.shiChenCurrentLabel}>
-                  當前時辰：{currentShiChen.name}時（{currentShiChen.timeRange}）
-                  {currentShiChen.auspicious ? ' 🟡 吉時' : ' ⚫ 平時'}
+                  {t('todayShiChenCurrent', { name: currentShiChen.name, range: currentShiChen.timeRange })}
+                  {currentShiChen.auspicious ? ` 🟡 ${t('todayAuspicious')}` : ` ⚫ ${t('todayNeutralTime')}`}
                 </Text>
                 <Text style={styles.shiChenCurrentSub}>
                   宜：{currentShiChen.yi.join('、')}
@@ -178,7 +180,7 @@ export default function DailyScreen() {
               onPress={() => setShowShiChen(v => !v)}
             >
               <Text style={styles.toggleBtnText}>
-                {showShiChen ? '▲ 收起十二時辰' : '▼ 展開十二時辰'}
+                {showShiChen ? t('todayHideShiChen') : t('todayShowShiChen')}
               </Text>
             </TouchableOpacity>
 
@@ -196,7 +198,7 @@ export default function DailyScreen() {
                     <Text style={styles.shiChenTime}>{sc.timeRange}</Text>
                     <Text style={styles.shiChenWx}>{sc.wuxing}</Text>
                     <Text style={[styles.shiChenStatus, sc.auspicious && { color: theme.gold }]}>
-                      {sc.auspicious ? '吉' : '平'}
+                      {sc.auspicious ? t('todayAuspiciousLabel') : t('todayNeutralLabel')}
                     </Text>
                   </View>
                 ))}
@@ -260,11 +262,11 @@ export default function DailyScreen() {
             <Text style={styles.cardTitle}>⚠️ 每日宜忌沖煞</Text>
             <View style={styles.tabooRow}>
               <View style={styles.tabooBlockYi}>
-                <Text style={styles.tabooBlockLabel}>宜</Text>
+                <Text style={styles.tabooBlockLabel}>{t('todayYi')}</Text>
                 <Text style={styles.tabooBlockText}>{lunarInfo.yi.join('　')}</Text>
               </View>
               <View style={styles.tabooBlockJi}>
-                <Text style={[styles.tabooBlockLabel, { color: '#ef5350' }]}>忌</Text>
+                <Text style={[styles.tabooBlockLabel, { color: '#ef5350' }]}>{t('todayJi')}</Text>
                 <Text style={styles.tabooBlockText}>{lunarInfo.ji.join('　')}</Text>
               </View>
             </View>
@@ -299,7 +301,7 @@ export default function DailyScreen() {
         {/* 近期節慶預覽（若今日無特定節慶） */}
         {!todayFestival && upcomingFestivals.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>📆 近期節慶</Text>
+            <Text style={styles.cardTitle}>{t('todayRecentFestivals')}</Text>
             {upcomingFestivals.slice(0, 3).map(f => (
               <View key={f.id} style={styles.upcomingFestRow}>
                 <View style={[styles.festDot, { backgroundColor: f.color }]} />
@@ -308,7 +310,7 @@ export default function DailyScreen() {
                   <Text style={styles.upcomingFestDate}>{f.solarDate}{f.lunarDate ? `（${f.lunarDate}）` : ''}</Text>
                 </View>
                 <Text style={styles.upcomingFestDays}>
-                  {Math.ceil((new Date(f.solarDate).getTime() - new Date().getTime()) / 86400000)} 天後
+                  {t('todayDaysLater', { days: Math.ceil((new Date(f.solarDate).getTime() - new Date().getTime()) / 86400000) })}
                 </Text>
               </View>
             ))}
@@ -321,7 +323,7 @@ export default function DailyScreen() {
         <View style={[styles.heroGrid, layout.isDesktop && styles.heroGridDesktop]}>
           {/* 今日運勢 */}
           <View style={[styles.card, layout.isDesktop && styles.heroCard]}>
-            <Text style={styles.cardTitle}>今日運勢</Text>
+            <Text style={styles.cardTitle}>{t('todayFortune')}</Text>
             <Text style={styles.bigValue}>{SCORE_STARS(fortune.overall)}</Text>
             <Text style={styles.subtitle}>
               幸運色：{fortune.luckyColor.name} · 幸運數：{fortune.luckyNumber}
@@ -334,7 +336,7 @@ export default function DailyScreen() {
 
           {/* 今日籤詩 */}
           <View style={[styles.card, layout.isDesktop && styles.heroCard]}>
-            <Text style={styles.cardTitle}>今日籤詩</Text>
+            <Text style={styles.cardTitle}>{t('todayPoem')}</Text>
             <Text style={styles.poemMeta}>
               {todayPoem.date} · {todayPoem.dayOfWeek}
             </Text>
@@ -363,7 +365,7 @@ export default function DailyScreen() {
 
             <TouchableOpacity onPress={() => setShowYearDetail(v => !v)}>
               <Text style={styles.toggleBtnText}>
-                {showYearDetail ? '▲ 收起年運詳情' : '▼ 展開年運詳情'}
+                {showYearDetail ? t('todayHideYearDetail') : t('todayShowYearDetail')}
               </Text>
             </TouchableOpacity>
 
@@ -371,11 +373,11 @@ export default function DailyScreen() {
               <>
                 <View style={styles.dimensionGrid}>
                   {[
-                    { label: '事業', data: yearFortune.career },
-                    { label: '財運', data: yearFortune.wealth },
-                    { label: '感情', data: yearFortune.love },
-                    { label: '健康', data: yearFortune.health },
-                    { label: '家庭', data: yearFortune.family },
+                    { label: t('todayDimensionCareer'), data: yearFortune.career },
+                    { label: t('todayDimensionWealth'), data: yearFortune.wealth },
+                    { label: t('todayDimensionLove'), data: yearFortune.love },
+                    { label: t('todayDimensionHealth'), data: yearFortune.health },
+                    { label: t('todayDimensionFamily'), data: yearFortune.family },
                   ].map(item => (
                     <View key={item.label} style={styles.dimensionCell}>
                       <Text style={styles.dimLabel}>{item.label}</Text>
@@ -399,7 +401,7 @@ export default function DailyScreen() {
             )}
 
             {/* 流月選擇器 */}
-            <Text style={[styles.cardTitle, { marginTop: 16, marginBottom: 8 }]}>流月運勢</Text>
+            <Text style={[styles.cardTitle, { marginTop: 16, marginBottom: 8 }]}>{t('todayMonthlyFortune')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -427,10 +429,10 @@ export default function DailyScreen() {
                 <Text style={styles.monthOverview}>{selectedMonthFortune.overview}</Text>
                 <View style={styles.monthDimRow}>
                   {[
-                    { label: '事業', data: selectedMonthFortune.career },
-                    { label: '財運', data: selectedMonthFortune.wealth },
-                    { label: '感情', data: selectedMonthFortune.love },
-                    { label: '健康', data: selectedMonthFortune.health },
+                    { label: t('todayDimensionCareer'), data: selectedMonthFortune.career },
+                    { label: t('todayDimensionWealth'), data: selectedMonthFortune.wealth },
+                    { label: t('todayDimensionLove'), data: selectedMonthFortune.love },
+                    { label: t('todayDimensionHealth'), data: selectedMonthFortune.health },
                   ].map(item => (
                     <View key={item.label} style={styles.monthDimCell}>
                       <Text style={styles.monthDimLabel}>{item.label}</Text>
@@ -446,7 +448,7 @@ export default function DailyScreen() {
         ) : (
           <View style={[styles.card, styles.noBaziCard]}>
             <Text style={styles.noBaziText}>
-              💡 前往「設定」填入生辰年份，即可查看個人流年/流月運勢！
+              {t('todaySetBaziHint')}
             </Text>
           </View>
         )}
@@ -458,7 +460,7 @@ export default function DailyScreen() {
             onPress={() => setFoldedSections(s => ({ ...s, weekly: !s.weekly }))}
             activeOpacity={0.6}
           >
-            <Text style={styles.cardTitle}>本週籤詩節奏</Text>
+            <Text style={styles.cardTitle}>{t('todayWeeklyPoems')}</Text>
             <Text style={styles.foldIcon}>{foldedSections.weekly ? '▼' : '▲'}</Text>
           </TouchableOpacity>
           {!foldedSections.weekly && (<>
@@ -490,11 +492,11 @@ export default function DailyScreen() {
             onPress={() => setFoldedSections(s => ({ ...s, mood: !s.mood }))}
             activeOpacity={0.6}
           >
-            <Text style={styles.sectionTitle}>今日心情日記</Text>
+            <Text style={styles.sectionTitle}>{t('todayMoodDiary')}</Text>
             <Text style={styles.foldIcon}>{foldedSections.mood ? '▼' : '▲'}</Text>
           </TouchableOpacity>
           {!foldedSections.mood && (<>
-          <Text style={styles.sectionSubtitle}>記錄今天的感受，與天地神明共振。</Text>
+          <Text style={styles.sectionSubtitle}>{t('todayMoodSubtitle')}</Text>
           <View style={styles.moodRow}>
             {['😊', '😌', '😐', '😟', '😩'].map(emoji => (
               <TouchableOpacity
@@ -512,7 +514,7 @@ export default function DailyScreen() {
                 style={styles.moodInput}
                 value={moodNote}
                 onChangeText={t => { setMoodNote(t); setMoodSaved(false); }}
-                placeholder="今天有什麼想說的…（可選）"
+                placeholder={t('todayMoodPlaceholder')}
                 placeholderTextColor={theme.textMuted}
                 multiline
                 maxLength={120}
@@ -522,7 +524,7 @@ export default function DailyScreen() {
                 onPress={handleSaveMood}
                 disabled={moodSaved}
               >
-                <Text style={styles.moodSaveBtnText}>{moodSaved ? '✓ 已記錄' : '記錄心情'}</Text>
+                <Text style={styles.moodSaveBtnText}>{moodSaved ? t('todayMoodSaved') : t('todayMoodSave')}</Text>
               </TouchableOpacity>
             </>
           ) : null}

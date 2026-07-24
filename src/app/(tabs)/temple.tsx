@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Animated,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -16,10 +17,14 @@ import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
+import { GodCardSkeleton } from '@/components/Skeleton';
 import type { ThemeColors } from '@/constants/themes';
 import { gods, type God } from '@/data/gods';
 import { getGodCardImage, getGodSoftImage } from '@/data/godImages';
 import { getTemplePrayerFlow } from '@/data/templeFlows';
+import { useI18n } from '@/hooks/useI18n';
+import { t as tRaw } from '@/services/i18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import {
   addTempleRecord,
@@ -46,14 +51,26 @@ function formatDate(timestamp: number): string {
 }
 
 function recordTypeLabel(type: TempleRecord['type']): string {
-  if (type === 'light') return '點燈';
-  if (type === 'flower') return '獻花';
-  return '祈願';
+  if (type === 'light') return tRaw('templeRecordLight');
+  if (type === 'flower') return tRaw('templeRecordFlower');
+  return tRaw('templeRecordPrayer');
+}
+
+function AnimatedTempleGodCard({ god, delay, width, selected, stats, onPress }: {
+  god: any; delay: number; width: any; selected: boolean; stats: any; onPress: () => void;
+}) {
+  const { opacity, translateY } = useFadeIn({ delay });
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }], width }} accessibilityLabel={`${god.name} ${god.title}`}>
+      <TempleGodCard god={god} width={width} selected={selected} stats={stats} onPress={onPress} />
+    </Animated.View>
+  );
 }
 
 export default function TempleScreen() {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [records, setRecords] = useState<TempleRecord[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,9 +82,10 @@ export default function TempleScreen() {
   const [shownBlessing, setShownBlessing] = useState<string | null>(null);
   const [showBirthdayPanel, setShowBirthdayPanel] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
-  const [paywallFeature, setPaywallFeature] = useState('線上長明燈');
+  const [paywallFeature, setPaywallFeature] = useState(tRaw('templeLongLight'));
   const [longLightActive, setLongLightActive] = useState<Record<number, boolean>>({});
   const [premiumActive, setPremiumActive] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     isPremiumActive().then(setPremiumActive);
@@ -90,9 +108,11 @@ export default function TempleScreen() {
   const cardGap = TempleSpacing.sm;
   const gridWidth = Math.min(layout.width - layout.gutter * 2, layout.contentMaxWidth);
   const cardWidth = (gridWidth - cardGap * (columns - 1)) / columns;
+  const godDelays = useStaggeredList({ itemCount: gods.length, staggerDelay: 60 });
 
   const loadRecords = useCallback(async () => {
     setRecords(await getTempleRecords());
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -136,7 +156,7 @@ export default function TempleScreen() {
       expiresAt: Date.now() + 7 * DAY_MS,
     });
     await loadRecords();
-    flashAction(`${selectedFlow.lightName}已點亮，願光明照路。`);
+    flashAction(t('templeLightLit', { name: selectedFlow.lightName }));
   };
 
   const handleLongLight = async () => {
@@ -169,13 +189,13 @@ export default function TempleScreen() {
       expiresAt: Date.now() + DAY_MS,
     });
     await loadRecords();
-    flashAction(`${selectedFlow.flowerName}已供上，願心意被安放。`);
+    flashAction(t('templeFlowerOffered', { name: selectedFlow.flowerName }));
   };
 
   const handlePrayer = async () => {
     const content = prayerText.trim();
     if (!content) {
-      Alert.alert('先寫下願心', '請用一兩句話寫下你想向神明稟明的事情。');
+      Alert.alert(t('templePrayerEmptyAlert'), t('templePrayerEmptyMsg'));
       return;
     }
 
@@ -188,7 +208,7 @@ export default function TempleScreen() {
     });
     setPrayerText('');
     await loadRecords();
-    flashAction('祈願已安放在神明殿前。');
+    flashAction(t('templePrayerSent'));
   };
 
   return (
@@ -206,12 +226,12 @@ export default function TempleScreen() {
       >
         <View style={styles.hero}>
           <Text style={styles.pageEyebrow}>Virtual Temple</Text>
-          <Text style={styles.pageTitle}>神明殿</Text>
+          <Text style={styles.pageTitle}>{t('templePageTitle')}</Text>
           <Text style={styles.pageSubtitle}>
-            選一位神明，點燈、獻花，或把願心安放在祂的殿前。
+            {t('templeSubtitle')}
           </Text>
           <TouchableOpacity style={styles.photoBtn} onPress={() => setShowPhotoDiv(true)}>
-            <Text style={styles.photoBtnText}>拍照解籤</Text>
+            <Text style={styles.photoBtnText}>{t('templePhotoDivination')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -227,7 +247,7 @@ export default function TempleScreen() {
           >
             <View style={styles.todayRecHeader}>
               <Text style={styles.todayRecEyebrow}>
-                {todayRec.isSpecialDay ? '今日聖誕吉日' : '今日推薦禮拜'}
+                {todayRec.isSpecialDay ? t('templeTodayBirthday') : t('templeTodayRecommend')}
               </Text>
               <Text style={styles.todayRecName}>{todayRec.name}</Text>
             </View>
@@ -239,7 +259,7 @@ export default function TempleScreen() {
                 </View>
               ))}
             </View>
-            <Text style={styles.todayRecHint}>點此切換到{todayRec.name}</Text>
+            <Text style={styles.todayRecHint}>{t('templeSwitchTo', { name: todayRec.name })}</Text>
           </TouchableOpacity>
         ) : null}
 
@@ -250,14 +270,14 @@ export default function TempleScreen() {
           activeOpacity={0.8}
         >
           <Text style={styles.birthdayToggleText}>
-            近期神明聖誕 ({upcomingBirthdays.length} 個){showBirthdayPanel ? ' ▲' : ' ▼'}
+            {t('templeBirthdayToggle', { count: upcomingBirthdays.length })}{showBirthdayPanel ? ' ▲' : ' ▼'}
           </Text>
         </TouchableOpacity>
 
         {showBirthdayPanel && (
           <View style={styles.birthdayPanel}>
             {upcomingBirthdays.length === 0 ? (
-              <Text style={styles.birthdayEmpty}>未來 60 天內無神明聖誕紀錄</Text>
+              <Text style={styles.birthdayEmpty}>{t('templeBirthdayEmpty')}</Text>
             ) : (
               upcomingBirthdays.map(b => (
                 <TouchableOpacity
@@ -274,7 +294,7 @@ export default function TempleScreen() {
                   </View>
                   <View style={styles.birthdayDaysBadge}>
                     <Text style={styles.birthdayDaysNum}>{b.daysUntil}</Text>
-                    <Text style={styles.birthdayDaysLabel}>天後</Text>
+                    <Text style={styles.birthdayDaysLabel}>{t('templeBirthdayDays')}</Text>
                   </View>
                 </TouchableOpacity>
               ))
@@ -283,16 +303,19 @@ export default function TempleScreen() {
         )}
 
         <View style={styles.templeGrid}>
-          {gods.map((god) => (
-            <TempleGodCard
-              key={god.id}
-              god={god}
-              width={cardWidth}
-              selected={selectedGod.id === god.id}
-              stats={getGodTempleStats(records, god.id)}
-              onPress={() => setSelectedGodId(god.id)}
-            />
-          ))}
+          {loading
+            ? Array.from({ length: 6 }).map((_, i) => <GodCardSkeleton key={i} />)
+            : gods.map((god, i) => (
+                <AnimatedTempleGodCard
+                  key={god.id}
+                  god={god}
+                  delay={godDelays[i]?.delay ?? 0}
+                  width={cardWidth}
+                  selected={selectedGod.id === god.id}
+                  stats={getGodTempleStats(records, god.id)}
+                  onPress={() => setSelectedGodId(god.id)}
+                />
+              ))}
         </View>
 
         <View style={[styles.ritualPanel, layout.isDesktop && styles.ritualPanelDesktop]}>
@@ -313,9 +336,9 @@ export default function TempleScreen() {
                 {selectedGod.tagline}
               </Text>
               <View style={styles.statRow}>
-                <TempleStat label="燈" value={selectedStats.lights} />
-                <TempleStat label="花" value={selectedStats.flowers} />
-                <TempleStat label="願" value={selectedStats.prayers} />
+                <TempleStat label={t('templeStatLight')} value={selectedStats.lights} />
+                <TempleStat label={t('templeStatFlower')} value={selectedStats.flowers} />
+                <TempleStat label={t('templeStatPrayer')} value={selectedStats.prayers} />
               </View>
             </View>
           </View>
@@ -327,11 +350,11 @@ export default function TempleScreen() {
             <View style={styles.ritualActions}>
               <TouchableOpacity style={styles.lightBtn} onPress={handleLight}>
                 <Text style={styles.ritualBtnIcon}>燈</Text>
-                <Text style={styles.ritualBtnText}>點亮{selectedFlow.lightName}</Text>
+                <Text style={styles.ritualBtnText}>{t('templeLightAction', { name: selectedFlow.lightName })}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.flowerBtn} onPress={handleFlower}>
                 <Text style={styles.ritualBtnIcon}>花</Text>
-                <Text style={styles.ritualBtnText}>供上{selectedFlow.flowerName}</Text>
+                <Text style={styles.ritualBtnText}>{t('templeFlowerAction', { name: selectedFlow.flowerName })}</Text>
               </TouchableOpacity>
             </View>
 
@@ -341,14 +364,14 @@ export default function TempleScreen() {
               onPress={handleSpeak}
             >
               <Text style={styles.blessingBtnText}>
-                {isSpeakingBlessing ? '停止朗讀' : `聽${selectedGod.name}祝福語`}
+                {isSpeakingBlessing ? t('templeStopSpeaking') : t('templeSpeakBlessing', { name: selectedGod.name })}
               </Text>
             </TouchableOpacity>
             {shownBlessing ? (
               <Text style={styles.blessingText}>{shownBlessing}</Text>
             ) : null}
 
-            <Text style={styles.promptLabel}>專屬祈願引導</Text>
+            <Text style={styles.promptLabel}>{t('templePrayerGuide')}</Text>
             <View style={styles.promptGrid}>
               {selectedFlow.prompts.map((prompt) => (
                 <TouchableOpacity
@@ -365,12 +388,12 @@ export default function TempleScreen() {
               style={styles.prayerInput}
               value={prayerText}
               onChangeText={setPrayerText}
-              placeholder={`向${selectedGod.name}稟明你的願心...`}
+              placeholder={t('templePrayerPlaceholder', { name: selectedGod.name })}
               placeholderTextColor={theme.textMuted}
               multiline
             />
             <TouchableOpacity style={styles.prayerSubmitBtn} onPress={handlePrayer}>
-              <Text style={styles.prayerSubmitText}>安放祈願</Text>
+              <Text style={styles.prayerSubmitText}>{t('templePrayerSubmit')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -384,7 +407,7 @@ export default function TempleScreen() {
         {/* 線上長明燈（Premium 功能） */}
         <View style={styles.longLightCard}>
           <View style={styles.longLightHeader}>
-            <Text style={styles.longLightTitle}>🕯 線上長明燈</Text>
+            <Text style={styles.longLightTitle}>{t('templeLongLight')}</Text>
             {!premiumActive && (
               <View style={styles.premiumBadge}>
                 <Text style={styles.premiumBadgeText}>👑 Premium</Text>
@@ -392,8 +415,7 @@ export default function TempleScreen() {
             )}
           </View>
           <Text style={styles.longLightDesc}>
-            點亮長明燈，讓{selectedGod.name}的福光守護你 30 天。
-            長明燈會記錄在你的供奉紀錄中，隨時可以查看。
+            {t('templeLongLightDesc', { name: selectedGod.name })}
           </Text>
           <TouchableOpacity
             style={[
@@ -404,18 +426,18 @@ export default function TempleScreen() {
           >
             <Text style={styles.longLightBtnText}>
               {longLightActive[selectedGod.id]
-                ? '✓ 長明燈已點亮'
+                ? t('templeLongLightLit')
                 : premiumActive
-                  ? '點亮長明燈（30天）'
-                  : '升級解鎖長明燈'}
+                  ? t('templeLongLightBtn')
+                  : t('templeLongLightUpgrade')}
             </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.historyCard}>
-          <Text style={styles.sectionTitle}>最近供奉紀錄</Text>
+          <Text style={styles.sectionTitle}>{t('templeRecentRecords')}</Text>
           {!recentRecords.length ? (
-            <Text style={styles.emptyText}>還沒有點燈、獻花或祈願。先選一位神明開始吧。</Text>
+            <Text style={styles.emptyText}>{t('templeEmptyHistory')}</Text>
           ) : null}
           {recentRecords.map((record) => (
             <View key={record.id} style={styles.recordRow}>
@@ -476,6 +498,7 @@ interface RitualBooking {
 
 function RitualBookingSection() {
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const rb = useMemo(() => createRbStyles(theme), [theme]);
   const [selectedService, setSelectedService] = useState<typeof RITUAL_SERVICES[0] | null>(null);
   const [name, setName] = useState('');
@@ -492,7 +515,7 @@ function RitualBookingSection() {
 
   const handleBook = async () => {
     if (!selectedService || !name.trim() || !date.trim()) {
-      Alert.alert('請填寫完整', '請選擇法事項目並填寫姓名與日期。');
+      Alert.alert(t('templeBookingFillAll'), t('templeBookingFillMsg'));
       return;
     }
     const booking: RitualBooking = {
@@ -514,8 +537,8 @@ function RitualBookingSection() {
 
   return (
     <View style={rb.container}>
-      <Text style={rb.title}>線上法事委辦</Text>
-      <Text style={rb.subtitle}>選擇所需法事，填寫資料後提交，廟方將聯繫確認。</Text>
+      <Text style={rb.title}>{t('templeRitualBooking')}</Text>
+      <Text style={rb.subtitle}>{t('templeRitualBookingDesc')}</Text>
       <View style={rb.serviceList}>
         {RITUAL_SERVICES.map(svc => (
           <TouchableOpacity
@@ -534,22 +557,22 @@ function RitualBookingSection() {
       {showForm && selectedService && (
         <View style={rb.form}>
           <Text style={rb.formTitle}>預約 {selectedService.name}</Text>
-          <TextInput style={rb.input} value={name} onChangeText={setName} placeholder="姓名（必填）" placeholderTextColor={theme.textMuted} />
-          <TextInput style={rb.input} value={phone} onChangeText={setPhone} placeholder="聯絡電話（選填）" placeholderTextColor={theme.textMuted} keyboardType="phone-pad" />
-          <TextInput style={rb.input} value={date} onChangeText={setDate} placeholder="希望日期（如：2026-07-15）" placeholderTextColor={theme.textMuted} />
+          <TextInput style={rb.input} value={name} onChangeText={setName} placeholder={t('templeBookingNamePlaceholder')} placeholderTextColor={theme.textMuted} />
+          <TextInput style={rb.input} value={phone} onChangeText={setPhone} placeholder={t('templeBookingPhonePlaceholder')} placeholderTextColor={theme.textMuted} keyboardType="phone-pad" />
+          <TextInput style={rb.input} value={date} onChangeText={setDate} placeholder={t('templeBookingDatePlaceholder')} placeholderTextColor={theme.textMuted} />
           <View style={rb.formBtns}>
             <TouchableOpacity style={rb.cancelBtn} onPress={() => { setShowForm(false); setSelectedService(null); }}>
-              <Text style={rb.cancelBtnText}>取消</Text>
+              <Text style={rb.cancelBtnText}>{t('commonCancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={rb.submitBtn} onPress={handleBook}>
-              <Text style={rb.submitBtnText}>確認預約</Text>
+              <Text style={rb.submitBtnText}>{t('templeBookingConfirmBtn')}</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
       {bookings.length > 0 && (
         <View style={rb.bookingList}>
-          <Text style={rb.bookingListTitle}>我的預約記錄</Text>
+          <Text style={rb.bookingListTitle}>{t('templeBookingMyRecords')}</Text>
           {bookings.slice(0, 3).map(b => (
             <View key={b.id} style={rb.bookingItem}>
               <Text style={rb.bookingName}>{b.serviceName} · {b.name}</Text>
@@ -604,6 +627,7 @@ function TempleGodCard({
   onPress: () => void;
 }) {
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <TouchableOpacity
@@ -627,9 +651,9 @@ function TempleGodCard({
         <Text style={styles.godCardName}>{god.name}</Text>
         <Text style={styles.godCardText}>{god.tagline}</Text>
         <View style={styles.miniStatRow}>
-          <Text style={styles.miniStat}>燈 {stats.lights}</Text>
-          <Text style={styles.miniStat}>花 {stats.flowers}</Text>
-          <Text style={styles.miniStat}>願 {stats.prayers}</Text>
+          <Text style={styles.miniStat}>{t('templeStatLight')} {stats.lights}</Text>
+          <Text style={styles.miniStat}>{t('templeStatFlower')} {stats.flowers}</Text>
+          <Text style={styles.miniStat}>{t('templeStatPrayer')} {stats.prayers}</Text>
         </View>
       </View>
     </TouchableOpacity>

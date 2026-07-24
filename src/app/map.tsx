@@ -25,6 +25,7 @@ import {
   sortByDistance,
   type Temple,
 } from '@/data/temples';
+import { useI18n } from '@/hooks/useI18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
 const CHECKIN_KEY = '@temple_checkins';
@@ -83,6 +84,7 @@ async function saveCheckIn(record: CheckInRecord): Promise<CheckInRecord[]> {
 export default function MapScreen() {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const styles = useMemo(() => createStyles(theme, layout), [theme, layout]);
   const [search, setSearch] = useState('');
   const [selectedCity, setSelectedCity] = useState('全部');
@@ -210,7 +212,7 @@ export default function MapScreen() {
         <View style={[styles.desktopSplit, { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter }]}>
           {/* 左側：廟宇清單 */}
           <ScrollView style={styles.leftPanel} contentContainerStyle={styles.leftPanelContent} keyboardShouldPersistTaps="handled">
-            <Text style={styles.pageTitle}>廟宇地圖</Text>
+            <Text style={styles.pageTitle}>{t('mapPageTitle')}</Text>
             <Text style={styles.subtitle}>台灣 {TEMPLES.length} 座主要廟宇</Text>
 
             <View style={styles.searchRow}>
@@ -382,7 +384,7 @@ export default function MapScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.pageTitle}>廟宇地圖</Text>
+          <Text style={styles.pageTitle}>{t('mapPageTitle')}</Text>
           <Text style={styles.subtitle}>台灣 {TEMPLES.length} 座主要廟宇</Text>
 
           {/* 搜尋列 */}

@@ -1,6 +1,7 @@
 // 籤詩查詢圖書館 — 瀏覽/搜尋所有神明的完整籤詩庫，不需抽籤
 import React, { useMemo, useState } from 'react';
 import {
+  Animated,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -12,7 +13,9 @@ import {
 import { useRouter } from 'expo-router';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
 import type { ThemeColors } from '@/constants/themes';
 import { gods, getPoemsByGod, questionCategories, type God } from '@/data/gods';
 import type { Poem } from '@/data/poems/leiyushi';
@@ -94,9 +97,19 @@ function searchableText(row: LibraryRow): string {
   ].join(' ').toLowerCase();
 }
 
+function AnimatedCard({ children, delay }: { children: React.ReactNode; delay: number }) {
+  const { opacity, translateY } = useFadeIn({ delay });
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function LibraryScreen() {
   const router = useRouter();
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const layout = useResponsiveLayout();
   const styles = useMemo(() => createStyles(theme, layout), [theme, layout]);
   const [selectedGodId, setSelectedGodId] = useState<GodFilter>('all');
@@ -120,6 +133,8 @@ export default function LibraryScreen() {
       return searchableText(row).includes(q);
     });
   }, [allRows, query, selectedCategory, selectedGodId, selectedLevel]);
+
+  const poemDelays = useStaggeredList({ itemCount: filteredRows.length, staggerDelay: 60 });
 
   const selectedGod = selectedGodId === 'all' ? null : gods.find((god) => god.id === selectedGodId) ?? null;
   const selectedCatalog = selectedGod ? getOracleCatalogByGodId(selectedGod.id) : null;
@@ -146,7 +161,7 @@ export default function LibraryScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>← 返回</Text>
+          <Text style={styles.backBtnText}>{t('backButton')}</Text>
         </TouchableOpacity>
         <Text style={styles.title}>籤詩查詢圖書館</Text>
         <Text style={styles.subtitle}>搜尋神明、籤號、籤文、典故或白話解讀</Text>
@@ -168,7 +183,7 @@ export default function LibraryScreen() {
                 style={[styles.godChip, selectedGodId === 'all' && styles.godChipActive]}
                 onPress={() => { setSelectedGodId('all'); setExpandedKey(null); }}
               >
-                <Text style={[styles.godChipText, selectedGodId === 'all' && styles.godChipTextActive]}>全部</Text>
+                <Text style={[styles.godChipText, selectedGodId === 'all' && styles.godChipTextActive]}>{t('commonAll')}</Text>
               </TouchableOpacity>
               {gods.map((god) => (
                 <TouchableOpacity
@@ -221,13 +236,13 @@ export default function LibraryScreen() {
               )}
               {(query || selectedGodId !== 'all' || selectedCategory !== 'all' || selectedLevel !== 'all') ? (
                 <TouchableOpacity style={styles.resetBtn} onPress={resetFilters}>
-                  <Text style={styles.resetBtnText}>清除篩選</Text>
+                  <Text style={styles.resetBtnText}>{t('collectionClearFilters')}</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
           </ScrollView>
           <ScrollView style={styles.poemArea} contentContainerStyle={styles.listContent}>
-            {filteredRows.map((row) => {
+            {filteredRows.map((row, i) => {
               const key = `${row.god.id}-${row.poem.number}`;
               const isOpen = expandedKey === key;
               const catalog = getOracleCatalogByGodId(row.god.id);
@@ -235,8 +250,8 @@ export default function LibraryScreen() {
               const categoryAdvice = row.poem.jieYue?.[adviceKey] ?? row.poem.jieYue?.general;
 
               return (
+                <AnimatedCard key={key} delay={poemDelays[i]?.delay ?? 0}>
                 <TouchableOpacity
-                  key={key}
                   style={styles.poemCard}
                   onPress={() => setExpandedKey(isOpen ? null : key)}
                   activeOpacity={0.85}
@@ -269,6 +284,7 @@ export default function LibraryScreen() {
                     </Text>
                   )}
                 </TouchableOpacity>
+                </AnimatedCard>
               );
             })}
 
@@ -300,7 +316,7 @@ export default function LibraryScreen() {
                 style={[styles.godChip, selectedGodId === 'all' && styles.godChipActive]}
                 onPress={() => { setSelectedGodId('all'); setExpandedKey(null); }}
               >
-                <Text style={[styles.godChipText, selectedGodId === 'all' && styles.godChipTextActive]}>全部神明</Text>
+                <Text style={[styles.godChipText, selectedGodId === 'all' && styles.godChipTextActive]}>{t('allGods')}</Text>
               </TouchableOpacity>
               {gods.map((god) => (
                 <TouchableOpacity
@@ -354,14 +370,14 @@ export default function LibraryScreen() {
               )}
               {(query || selectedGodId !== 'all' || selectedCategory !== 'all' || selectedLevel !== 'all') ? (
                 <TouchableOpacity style={styles.resetBtn} onPress={resetFilters}>
-                  <Text style={styles.resetBtnText}>清除篩選</Text>
+                  <Text style={styles.resetBtnText}>{t('collectionClearFilters')}</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
           </ScrollView>
 
           <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-            {filteredRows.map((row) => {
+            {filteredRows.map((row, i) => {
               const key = `${row.god.id}-${row.poem.number}`;
               const isOpen = expandedKey === key;
               const catalog = getOracleCatalogByGodId(row.god.id);
@@ -369,8 +385,8 @@ export default function LibraryScreen() {
               const categoryAdvice = row.poem.jieYue?.[adviceKey] ?? row.poem.jieYue?.general;
 
               return (
+                <AnimatedCard key={key} delay={poemDelays[i]?.delay ?? 0}>
                 <TouchableOpacity
-                  key={key}
                   style={styles.poemCard}
                   onPress={() => setExpandedKey(isOpen ? null : key)}
                   activeOpacity={0.85}
@@ -403,6 +419,7 @@ export default function LibraryScreen() {
                     </Text>
                   )}
                 </TouchableOpacity>
+                </AnimatedCard>
               );
             })}
 

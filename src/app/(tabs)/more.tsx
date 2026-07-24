@@ -1,6 +1,7 @@
 // 更多工具 — 次要功能入口網格
 import React, { useMemo } from 'react';
 import {
+  Animated,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -9,8 +10,10 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
 import { DecorativeBg } from '@/components/DecorativeBg';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useI18n } from '@/hooks/useI18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
@@ -21,6 +24,17 @@ interface ToolEntry {
   icon: string;
   desc: string;
 }
+
+const TOOL_LABEL_I18N: Record<string, string> = {
+  '/library': 'libraryPageTitle',
+  '/bazi': 'baziPageTitle',
+  '/fate': 'fatePageTitle',
+  '/consult': 'consultPageTitle',
+  '/community': 'communityPageTitle',
+  '/stats': 'statsPageTitle',
+  '/wishes': 'wishesPageTitle',
+  '/map': 'mapPageTitle',
+};
 
 const TOOLS: ToolEntry[] = [
   { route: '/library', label: '籤詩圖書館', icon: '📖', desc: '瀏覽・搜尋全部籤詩' },
@@ -40,12 +54,30 @@ const TOOLS: ToolEntry[] = [
   { route: '/disclaimer', label: '免責聲明', icon: '⚖️', desc: 'AI・醫療・法律界線' },
 ];
 
-export default function MoreScreen() {
+function AnimatedToolCard({ tool, delay, width }: { tool: typeof TOOLS[number]; delay: number; width: string }) {
   const router = useRouter();
-  const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
   const s = useMemo(() => createStyles(theme), [theme]);
+  const { opacity, translateY } = useFadeIn({ delay });
+  const { t } = useI18n();
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }], width: width as any }}>
+      <TouchableOpacity style={[s.card]} onPress={() => router.push(tool.route as any)} activeOpacity={0.7}>
+        <Text style={s.cardIcon}>{tool.icon}</Text>
+        <Text style={s.cardLabel}>{TOOL_LABEL_I18N[tool.route] ? t(TOOL_LABEL_I18N[tool.route]) : tool.label}</Text>
+        <Text style={s.cardDesc}>{tool.desc}</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+export default function MoreScreen() {
+  const layout = useResponsiveLayout();
+  const { theme } = useAppTheme();
+  const { t } = useI18n();
+  const s = useMemo(() => createStyles(theme), [theme]);
   const columns = layout.isDesktop ? 4 : layout.isTablet ? 3 : 3;
+  const toolDelays = useStaggeredList({ itemCount: TOOLS.length, staggerDelay: 60 });
 
   return (
     <SafeAreaView style={s.safe}>
@@ -57,20 +89,11 @@ export default function MoreScreen() {
           { maxWidth: layout.contentMaxWidth, alignSelf: 'center' as any, width: '100%' as any },
         ]}
       >
-        <Text style={s.title}>更多工具</Text>
-        <Text style={s.subtitle}>探索所有占卜與命理功能</Text>
+        <Text style={s.title}>{t('morePageTitle')}</Text>
+        <Text style={s.subtitle}>{t('moreSubtitle')}</Text>
         <View style={[s.grid, { maxWidth: layout.isDesktop ? 900 : 600 }]}>
-          {TOOLS.map((tool) => (
-            <TouchableOpacity
-              key={tool.route}
-              style={[s.card, { width: `${100 / columns}%` as any }]}
-              onPress={() => router.push(tool.route as any)}
-              activeOpacity={0.7}
-            >
-              <Text style={s.cardIcon}>{tool.icon}</Text>
-              <Text style={s.cardLabel}>{tool.label}</Text>
-              <Text style={s.cardDesc}>{tool.desc}</Text>
-            </TouchableOpacity>
+          {TOOLS.map((tool, i) => (
+            <AnimatedToolCard key={tool.route} tool={tool} delay={toolDelays[i]?.delay ?? 0} width={`${100 / columns}%`} />
           ))}
         </View>
       </ScrollView>

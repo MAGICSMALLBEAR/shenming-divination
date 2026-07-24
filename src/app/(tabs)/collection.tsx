@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Animated,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -16,8 +17,12 @@ import { useLocalSearchParams } from 'expo-router';
 
 import { gods, questionCategories } from '@/data/gods';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { useI18n } from '@/hooks/useI18n';
+import { t as tRaw } from '@/services/i18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
+import { ListItemSkeleton } from '@/components/Skeleton';
 import type { ThemeColors } from '@/constants/themes';
 import {
   clearHistory,
@@ -36,14 +41,14 @@ type SortMode = 'newest' | 'oldest';
 type VerificationFilter = 'all' | VerificationStatus | 'due';
 type LevelFilter = 'all' | 'good' | 'neutral' | 'caution';
 
-function getVerificationLabels(theme: ThemeColors): Record<
+function getVerificationLabels(theme: ThemeColors, tFn: (key: string) => string): Record<
   VerificationStatus,
   { text: string; color: string }
 > {
   return {
-    pending: { text: '待驗證', color: theme.warning },
-    matched: { text: '已應驗', color: theme.success },
-    unmatched: { text: '不太符合', color: theme.danger },
+    pending: { text: tFn('poemVerifyPending'), color: theme.warning },
+    matched: { text: tFn('poemVerified'), color: theme.success },
+    unmatched: { text: tFn('poemUnmatched'), color: theme.danger },
   };
 }
 
@@ -75,17 +80,27 @@ function isVerificationDue(record: DivinationRecord): boolean {
 }
 
 function formatShortDate(timestamp?: number): string {
-  if (!timestamp) return '未設定';
+  if (!timestamp) return tRaw('commonNotSet');
   const date = new Date(timestamp);
   return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function AnimatedRecordItem({ children, delay }: { children: React.ReactNode; delay: number }) {
+  const { opacity, translateY } = useFadeIn({ delay });
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+      {children}
+    </Animated.View>
+  );
 }
 
 export default function CollectionScreen() {
   const params = useLocalSearchParams<{ tab?: string }>();
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const VERIFICATION_LABELS = useMemo(() => getVerificationLabels(theme), [theme]);
+  const VERIFICATION_LABELS = useMemo(() => getVerificationLabels(theme, t), [theme, t]);
   const [activeTab, setActiveTab] = useState<Tab>('favorites');
   const [favorites, setFavorites] = useState<DivinationRecord[]>([]);
   const [history, setHistory] = useState<DivinationRecord[]>([]);
@@ -102,11 +117,13 @@ export default function CollectionScreen() {
   const [selectedLevel, setSelectedLevel] = useState<LevelFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [notesOnly, setNotesOnly] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     const [favoriteRecords, historyRecords] = await Promise.all([getFavorites(), getHistory()]);
     setFavorites(favoriteRecords);
     setHistory(historyRecords);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -161,6 +178,8 @@ export default function CollectionScreen() {
     return filtered;
   }, [currentRecords, notesOnly, searchText, selectedCategory, selectedGod, selectedLevel, selectedVerification, sortMode]);
 
+  const recordDelays = useStaggeredList({ itemCount: filteredRecords.length, staggerDelay: 60 });
+
   const filteredStats = useMemo(() => {
     const withNotes = filteredRecords.filter((record) => record.notes?.trim()).length;
     const matched = filteredRecords.filter((record) => record.verificationStatus === 'matched').length;
@@ -203,10 +222,10 @@ export default function CollectionScreen() {
   };
 
   const handleClearHistory = () => {
-    Alert.alert('清空歷史', '這會刪除所有求籤歷史紀錄，確定要繼續嗎？', [
-      { text: '取消', style: 'cancel' },
+    Alert.alert(t('collectionClearConfirmTitle'), t('collectionClearConfirmMsg'), [
+      { text: t('collectionCancel'), style: 'cancel' },
       {
-        text: '清空',
+        text: t('collectionClearConfirmYes'),
         style: 'destructive',
         onPress: async () => {
           await clearHistory();
@@ -218,14 +237,14 @@ export default function CollectionScreen() {
 
   const handleExport = async () => {
     if (!filteredRecords.length) {
-      Alert.alert('沒有紀錄', '目前沒有可匯出的籤詩紀錄。');
+      Alert.alert(t('collectionNoExport'), t('collectionNoExportMsg'));
       return;
     }
 
     const lines: string[] = [
-      '神明占卜 — 籤詩紀錄匯出',
-      `匯出時間：${new Date().toLocaleString('zh-TW')}`,
-      `共 ${filteredRecords.length} 筆`,
+      t('collectonExportTitle'),
+      t('collectionExportTime', { time: new Date().toLocaleString('zh-TW') }),
+      t('collectionExportCount', { count: filteredRecords.length }),
       '═'.repeat(40),
     ];
 
@@ -234,10 +253,10 @@ export default function CollectionScreen() {
       lines.push(`【第 ${i + 1} 筆】${formatDate(record.timestamp)}`);
       lines.push(`神明：${record.godName}`);
       lines.push(`籤號：第 ${record.poem.number} 籤・${record.poem.title}・${record.poem.level}`);
-      if (record.question) lines.push(`問題：${record.question}`);
+      if (record.question) lines.push(t('collectionQuestionLabel', { q: record.question }));
       lines.push(`籤文：${record.poem.content}`);
       if (record.poem.vernacular) lines.push(`白話：${record.poem.vernacular}`);
-      if (record.aiInterpretation) lines.push(`AI 解讀：${record.aiInterpretation.slice(0, 200)}...`);
+      if (record.aiInterpretation) lines.push(t('collectionAiSummary', { summary: record.aiInterpretation.slice(0, 200) + '...' }));
       if (record.notes?.trim()) lines.push(`筆記：${record.notes}`);
       if (record.verificationStatus && record.verificationStatus !== 'pending') {
         lines.push(`應驗：${VERIFICATION_LABELS[record.verificationStatus].text}`);
@@ -307,7 +326,7 @@ export default function CollectionScreen() {
     return (
       <View style={styles.verificationCard}>
         <View style={styles.verificationHeader}>
-          <Text style={styles.sectionTitle}>應驗追蹤</Text>
+          <Text style={styles.sectionTitle}>{t('collectionVerificationTitle')}</Text>
           <View style={[styles.statusBadge, { borderColor: statusMeta.color + '60' }]}>
             <Text style={[styles.statusBadgeText, { color: statusMeta.color }]}>
               {statusMeta.text}
@@ -335,10 +354,10 @@ export default function CollectionScreen() {
 
 
         <Text style={styles.verificationSchedule}>
-          回訪：7天 {formatShortDate(record.verificationDueAt)} ・ 30天 {formatShortDate(record.verificationFinalDueAt)}
+          {t('collectionVerifySchedule', { short: formatShortDate(record.verificationDueAt), long: formatShortDate(record.verificationFinalDueAt) })}
         </Text>
         {record.verificationNotes ? (
-          <Text style={styles.verificationNote}>追蹤筆記：{record.verificationNotes}</Text>
+          <Text style={styles.verificationNote}>{t('collectionVerificationNote', { note: record.verificationNotes })}</Text>
         ) : null}
 
         {editingVerificationId === record.id ? (
@@ -347,7 +366,7 @@ export default function CollectionScreen() {
               style={styles.noteInput}
               value={verificationNoteText}
               onChangeText={setVerificationNoteText}
-              placeholder="記一下後來發生了什麼，之後回看會很有價值。"
+              placeholder={t('collectionVerifyPlaceholder')}
               placeholderTextColor={theme.textMuted}
               multiline
             />
@@ -356,7 +375,7 @@ export default function CollectionScreen() {
                 onPress={() => handleSaveVerification(record.id)}
                 style={styles.noteSaveBtn}
               >
-                <Text style={styles.noteSaveText}>儲存追蹤</Text>
+                <Text style={styles.noteSaveText}>{t('collectionSaveTrack')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
@@ -365,7 +384,7 @@ export default function CollectionScreen() {
                 }}
                 style={styles.noteCancelBtn}
               >
-                <Text style={styles.noteCancelText}>取消</Text>
+                <Text style={styles.noteCancelText}>{t('collectionCancel')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -399,7 +418,7 @@ export default function CollectionScreen() {
 
       {record.poemConfirmResult ? (
         <View style={[styles.confirmBadge, record.poemConfirmed && styles.confirmBadgeOk]}>
-          <Text style={styles.confirmBadgeText}>籤後確認：{record.poemConfirmResult}</Text>
+          <Text style={styles.confirmBadgeText}>{t('collectionConfirmBadgeText', { result: record.poemConfirmResult })}</Text>
         </View>
       ) : null}
       <View style={styles.recordPoem}>
@@ -411,11 +430,10 @@ export default function CollectionScreen() {
       </View>
 
       <View style={styles.recordFooter}>
-        <Text style={styles.recordQuestion}>問題：{record.question}</Text>
+        <Text style={styles.recordQuestion}>{t('collectionQuestionLabel', { q: record.question })}</Text>
         {record.aiInterpretation ? (
           <Text style={styles.recordAi}>
-            AI 摘要：{record.aiInterpretation.replace(/\n+/g, ' ').slice(0, 90)}
-            {record.aiInterpretation.length > 90 ? '...' : ''}
+            {t('collectionAiSummary', { summary: record.aiInterpretation.replace(/\n+/g, ' ').slice(0, 90) + (record.aiInterpretation.length > 90 ? '...' : '') })}
           </Text>
         ) : null}
         {record.actionPlan?.length ? (
@@ -447,13 +465,13 @@ export default function CollectionScreen() {
             style={styles.noteInput}
             value={noteText}
             onChangeText={setNoteText}
-            placeholder="寫下你當時的心情、後續觀察，或這支籤對你的提醒。"
+            placeholder={t('collectionNotePlaceholder')}
             placeholderTextColor={theme.textMuted}
             multiline
           />
           <View style={styles.noteEditActions}>
             <TouchableOpacity onPress={() => handleSaveNote(record.id)} style={styles.noteSaveBtn}>
-              <Text style={styles.noteSaveText}>儲存筆記</Text>
+              <Text style={styles.noteSaveText}>{t('collectionSaveNote')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
@@ -462,24 +480,24 @@ export default function CollectionScreen() {
               }}
               style={styles.noteCancelBtn}
             >
-              <Text style={styles.noteCancelText}>取消</Text>
+              <Text style={styles.noteCancelText}>{t('collectionCancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
       ) : record.notes ? (
         <TouchableOpacity style={styles.noteView} onPress={() => handleStartEditNote(record)}>
-          <Text style={styles.noteViewLabel}>個人筆記</Text>
+          <Text style={styles.noteViewLabel}>{t('collectionPersonalNote')}</Text>
           <Text style={styles.noteViewText}>{record.notes}</Text>
         </TouchableOpacity>
       ) : (
         <TouchableOpacity style={styles.addNoteBtn} onPress={() => handleStartEditNote(record)}>
-          <Text style={styles.addNoteText}>+ 補一段自己的心得</Text>
+          <Text style={styles.addNoteText}>{t('collectionAddNote')}</Text>
         </TouchableOpacity>
       )}
 
       {isFavorite ? (
         <TouchableOpacity style={styles.removeBtn} onPress={() => handleRemoveFavorite(record.id)}>
-          <Text style={styles.removeBtnText}>移出收藏</Text>
+          <Text style={styles.removeBtnText}>{t('collectionRemoveFavorite')}</Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -494,7 +512,7 @@ export default function CollectionScreen() {
           { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
         ]}
       >
-        <Text style={styles.pageTitle}>求籤收藏與回顧</Text>
+        <Text style={styles.pageTitle}>{t('collectionPageTitle')}</Text>
 
         <View style={styles.tabBar}>
           <TouchableOpacity
@@ -502,7 +520,7 @@ export default function CollectionScreen() {
             onPress={() => setActiveTab('favorites')}
           >
             <Text style={[styles.tabText, activeTab === 'favorites' && styles.tabTextActive]}>
-              收藏 {favorites.length}
+              {t('collectionTabFavorites', { count: favorites.length })}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -510,7 +528,7 @@ export default function CollectionScreen() {
             onPress={() => setActiveTab('history')}
           >
             <Text style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}>
-              歷史 {history.length}
+              {t('collectionTabHistory', { count: history.length })}
             </Text>
           </TouchableOpacity>
         </View>
@@ -518,15 +536,15 @@ export default function CollectionScreen() {
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>{filteredStats.count}</Text>
-            <Text style={styles.summaryLabel}>目前筆數</Text>
+            <Text style={styles.summaryLabel}>{t('collectionCountLabel')}</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>{filteredStats.tracked}</Text>
-            <Text style={styles.summaryLabel}>已追蹤</Text>
+            <Text style={styles.summaryLabel}>{t('collectionTrackedLabel')}</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>{filteredStats.due}</Text>
-            <Text style={styles.summaryLabel}>待回訪</Text>
+            <Text style={styles.summaryLabel}>{t('collectionDueLabel')}</Text>
           </View>
         </View>
 
@@ -539,7 +557,7 @@ export default function CollectionScreen() {
               setSortMode('oldest');
             }}
           >
-            <Text style={styles.reviewCenterText}>查看 {filteredStats.due} 筆待回訪籤詩</Text>
+            <Text style={styles.reviewCenterText}>{t('collectionViewDue', { count: filteredStats.due })}</Text>
           </TouchableOpacity>
         ) : null}
         <View style={styles.searchBar}>
@@ -548,12 +566,12 @@ export default function CollectionScreen() {
             style={styles.searchInput}
             value={searchText}
             onChangeText={setSearchText}
-            placeholder="搜尋籤詩、問題、筆記或 AI 解讀"
+            placeholder={t('collectionSearchPlaceholder')}
             placeholderTextColor={theme.textMuted}
           />
           {searchText ? (
             <TouchableOpacity onPress={() => setSearchText('')}>
-              <Text style={styles.searchClear}>清除</Text>
+              <Text style={styles.searchClear}>{t('collectionSearchClear')}</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -567,7 +585,7 @@ export default function CollectionScreen() {
               <Text
                 style={[styles.filterChipText, sortMode === 'newest' && styles.filterChipTextActive]}
               >
-                {sortMode === 'newest' ? '最新在前' : '最舊在前'}
+                {sortMode === 'newest' ? t('collectionSortNewest') : t('collectionSortOldest')}
               </Text>
             </TouchableOpacity>
 
@@ -576,7 +594,7 @@ export default function CollectionScreen() {
               onPress={() => setNotesOnly((value) => !value)}
             >
               <Text style={[styles.filterChipText, notesOnly && styles.filterChipTextActive]}>
-                只看有筆記
+                {t('collectionNotesOnly')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -589,7 +607,7 @@ export default function CollectionScreen() {
               onPress={() => setSelectedGod('all')}
             >
               <Text style={[styles.filterChipText, selectedGod === 'all' && styles.filterChipTextActive]}>
-                全部神明
+                {t('allGods')}
               </Text>
             </TouchableOpacity>
             {availableGods.map((god) => (
@@ -652,11 +670,11 @@ export default function CollectionScreen() {
         <View style={styles.filterStrip}>
           <View style={styles.filterContent}>
             {[
-              { key: 'all', label: '全部應驗' },
-              { key: 'due', label: '待回訪' },
-              { key: 'pending', label: '待驗證' },
-              { key: 'matched', label: '已應驗' },
-              { key: 'unmatched', label: '不符合' },
+              { key: 'all', label: t('collectionAllVerifications') },
+              { key: 'due', label: t('collectionDueFilter') },
+              { key: 'pending', label: t('collectionPendingFilter') },
+              { key: 'matched', label: t('collectionMatchedFilter') },
+              { key: 'unmatched', label: t('collectionUnmatchedFilter') },
             ].map((item) => (
               <TouchableOpacity
                 key={item.key}
@@ -682,10 +700,10 @@ export default function CollectionScreen() {
         <View style={styles.filterStrip}>
           <View style={styles.filterContent}>
             {[
-              { key: 'all', label: '全部籤等' },
-              { key: 'good', label: '吉籤' },
-              { key: 'neutral', label: '平籤' },
-              { key: 'caution', label: '提醒籤' },
+              { key: 'all', label: t('collectionAllLevels') },
+              { key: 'good', label: t('collectionGoodFilter') },
+              { key: 'neutral', label: t('collectionNeutralFilter') },
+              { key: 'caution', label: t('collectionCautionFilter') },
             ].map((item) => (
               <TouchableOpacity
                 key={item.key}
@@ -712,40 +730,55 @@ export default function CollectionScreen() {
             layout.isTablet && styles.listContentDesktop,
           ]}
         >
-          {!filteredRecords.length ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>📜</Text>
-              <Text style={styles.emptyText}>
-                {currentRecords.length
-                  ? '目前沒有符合篩選條件的紀錄'
-                  : '目前還沒有任何求籤紀錄'}
-              </Text>
-              <Text style={styles.emptyHint}>
-                {currentRecords.length
-                  ? '可以清掉篩選條件，或換個關鍵字再找找看。'
-                  : '可以先去求一支籤，之後再回來追蹤應驗與心得。'}
-              </Text>
-              {hasActiveFilters ? (
-                <TouchableOpacity style={styles.emptyActionBtn} onPress={resetFilters}>
-                  <Text style={styles.emptyActionText}>清除篩選</Text>
+          {loading ? (
+            <View style={{ paddingTop: TempleSpacing.md }}>
+              <ListItemSkeleton lines={3} />
+              <ListItemSkeleton lines={3} />
+              <ListItemSkeleton lines={2} />
+              <ListItemSkeleton lines={3} />
+            </View>
+          ) : (
+            <Animated.View key={`tab-${activeTab}`}>
+              {!filteredRecords.length ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyIcon}>📜</Text>
+                  <Text style={styles.emptyText}>
+                    {currentRecords.length
+                      ? t('collectionNoMatch')
+                      : t('collectionNoRecords')}
+                  </Text>
+                  <Text style={styles.emptyHint}>
+                    {currentRecords.length
+                      ? t('collectionNoMatchHint')
+                      : t('collectionNoRecordsHint')}
+                  </Text>
+                  {hasActiveFilters ? (
+                    <TouchableOpacity style={styles.emptyActionBtn} onPress={resetFilters}>
+                      <Text style={styles.emptyActionText}>{t('collectionClearFilters')}</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              ) : null}
+
+              {filteredRecords.map((record, i) => (
+                <AnimatedRecordItem key={record.id} delay={recordDelays[i]?.delay ?? 0}>
+                  {renderRecord(record, activeTab === 'favorites')}
+                </AnimatedRecordItem>
+              ))}
+
+              {filteredRecords.length > 0 ? (
+                <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
+                  <Text style={styles.exportBtnText}>{t('collectionExportBtn', { count: filteredRecords.length })}</Text>
                 </TouchableOpacity>
               ) : null}
-            </View>
-          ) : null}
 
-          {filteredRecords.map((record) => renderRecord(record, activeTab === 'favorites'))}
-
-          {filteredRecords.length > 0 ? (
-            <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
-              <Text style={styles.exportBtnText}>匯出目前 {filteredRecords.length} 筆紀錄</Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {activeTab === 'history' && history.length > 0 ? (
-            <TouchableOpacity style={styles.clearBtn} onPress={handleClearHistory}>
-              <Text style={styles.clearBtnText}>清空歷史紀錄</Text>
-            </TouchableOpacity>
-          ) : null}
+              {activeTab === 'history' && history.length > 0 ? (
+                <TouchableOpacity style={styles.clearBtn} onPress={handleClearHistory}>
+                  <Text style={styles.clearBtnText}>{t('collectionClearHistory')}</Text>
+                </TouchableOpacity>
+              ) : null}
+            </Animated.View>
+          )}
 
           <View style={{ height: 60 }} />
         </ScrollView>
