@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { initThemeFromSettings } from '@/services/themeStore';
 import { initSentry } from '@/services/sentry';
+import { OpeningCeremony } from '@/components/OpeningCeremony';
 
 export default function RootLayout() {
   useEffect(() => {
@@ -10,7 +11,8 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="oracle" />
       <Stack.Screen name="bazi" />
@@ -30,6 +32,8 @@ export default function RootLayout() {
       <Stack.Screen name="nameAnalysis" />
       <Stack.Screen name="character" />
       <Stack.Screen name="boneWeight" />
-    </Stack>
+      </Stack>
+      <OpeningCeremony />
+    </>
   );
 }
