@@ -9,11 +9,14 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useFadeIn } from '@/hooks/useEntranceAnimation';
+import { useI18n } from '@/hooks/useI18n';
 import { analyzeName, ELEMENT_COLORS, getStrokes, type NameAnalysisResult, type GeResult } from '@/services/nameAnalysis';
 import type { ThemeColors } from '@/constants/themes';
 
@@ -32,6 +35,7 @@ const GE_ORDER: (keyof Pick<NameAnalysisResult, 'tianGe' | 'renGe' | 'diGe' | 'w
 export default function NameAnalysisScreen() {
   const router = useRouter();
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const layout = useResponsiveLayout();
   const s = useMemo(() => createStyles(theme), [theme]);
 
@@ -47,11 +51,11 @@ export default function NameAnalysisScreen() {
   const handleAnalyze = () => {
     setError('');
     if (!surname.trim()) {
-      setError('請輸入姓氏');
+      setError(t('nameAnalysisErrorEmptySurname'));
       return;
     }
     if (!givenName.trim()) {
-      setError('請輸入名字');
+      setError(t('nameAnalysisErrorEmptyGiven'));
       return;
     }
 
@@ -59,7 +63,7 @@ export default function NameAnalysisScreen() {
     const hasUnknownInGiven = [...givenName].some((ch) => getStrokes(ch) === 0);
 
     if (hasUnknownInSurname || hasUnknownInGiven) {
-      setError('姓名中含有無法辨識筆畫的字，請確認輸入內容');
+      setError(t('nameAnalysisErrorUnknown'));
       return;
     }
 
@@ -68,7 +72,7 @@ export default function NameAnalysisScreen() {
     setTimeout(() => {
       const r = analyzeName(surname.trim(), givenName.trim());
       if (!r) {
-        setError('分析失敗，請檢查輸入');
+        setError(t('nameAnalysisErrorFailed'));
       } else {
         setResult(r);
       }
@@ -88,14 +92,16 @@ export default function NameAnalysisScreen() {
     }
   }, [result, theme]);
 
+  const fadeIn = useFadeIn({ delay: 0 });
+
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
           <Text style={s.backBtnText}>← 返回</Text>
         </TouchableOpacity>
-        <Text style={s.title}>姓名學</Text>
-        <Text style={s.subtitle}>三才五格 · 五行分析</Text>
+        <Text style={s.title}>{t('nameAnalysisPageTitle')}</Text>
+        <Text style={s.subtitle}>{t('nameAnalysisSubtitle')}</Text>
       </View>
 
       <ScrollView
@@ -104,12 +110,12 @@ export default function NameAnalysisScreen() {
       >
         {/* ── 輸入區 ── */}
         <View style={s.inputCard}>
-          <Text style={s.inputLabel}>姓氏（姓）</Text>
+          <Text style={s.inputLabel}>{t('nameAnalysisLabelSurname')}</Text>
           <TextInput
             style={s.input}
             value={surname}
             onChangeText={setSurname}
-            placeholder="例如：陳"
+            placeholder={t('nameAnalysisPlaceholderSurname')}
             placeholderTextColor={theme.textMuted}
             maxLength={4}
           />
@@ -123,12 +129,12 @@ export default function NameAnalysisScreen() {
             </View>
           )}
 
-          <Text style={[s.inputLabel, { marginTop: TempleSpacing.md }]}>名字（名）</Text>
+          <Text style={[s.inputLabel, { marginTop: TempleSpacing.md }]}>{t('nameAnalysisLabelGiven')}</Text>
           <TextInput
             style={s.input}
             value={givenName}
             onChangeText={setGivenName}
-            placeholder="例如：小明"
+            placeholder={t('nameAnalysisPlaceholderGiven')}
             placeholderTextColor={theme.textMuted}
             maxLength={4}
           />
@@ -153,17 +159,17 @@ export default function NameAnalysisScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={s.submitText}>開始分析</Text>
+              <Text style={s.submitText}>{t('nameAnalysisButtonSubmit')}</Text>
             )}
           </TouchableOpacity>
         </View>
 
         {/* ── 結果區 ── */}
         {result && (
-          <View style={s.resultArea}>
+          <Animated.View style={[s.resultArea, { opacity: fadeIn.opacity, transform: [{ translateY: fadeIn.translateY }] }]}>
             {/* 三才組合 */}
             <View style={s.sancaiCard}>
-              <Text style={s.sancaiTitle}>三才配置</Text>
+              <Text style={s.sancaiTitle}>{t('nameAnalysisSancaiTitle')}</Text>
               <View style={s.sancaiCombo}>
                 {[result.tianGe, result.renGe, result.diGe].map((ge, i) => (
                   <View key={i} style={[s.elementTag, { backgroundColor: ELEMENT_COLORS[ge.element] + '30', borderColor: ELEMENT_COLORS[ge.element] }]}>
@@ -180,7 +186,7 @@ export default function NameAnalysisScreen() {
 
             {/* 五格表格 */}
             <View style={s.geTable}>
-              <Text style={s.sectionTitle}>五格分析</Text>
+              <Text style={s.sectionTitle}>{t('nameAnalysisGeTitle')}</Text>
               {GE_ORDER.map((key) => {
                 const ge: GeResult = result[key];
                 const label = GE_LABELS[key] || key;
@@ -205,13 +211,13 @@ export default function NameAnalysisScreen() {
 
             {/* 整體評判 */}
             <View style={s.overallCard}>
-              <Text style={s.sectionTitle}>綜合評判</Text>
+              <Text style={s.sectionTitle}>{t('nameAnalysisOverallTitle')}</Text>
               <Text style={s.overallText}>{result.overallJudgment}</Text>
             </View>
 
             {/* 吉數清單 */}
             <View style={s.luckyCard}>
-              <Text style={s.sectionTitle}>吉數參考（81數理）</Text>
+              <Text style={s.sectionTitle}>{t('nameAnalysisLuckyTitle')}</Text>
               <View style={s.luckyRow}>
                 {result.luckyStrokes.map((n) => (
                   <View key={n} style={s.luckyBadge}>
@@ -220,10 +226,10 @@ export default function NameAnalysisScreen() {
                 ))}
               </View>
               <Text style={s.luckyHint}>
-                以上為傳統81數理中公認的吉數。五格數值若落在這些數字範圍內，寓意較佳。
+                {t('nameAnalysisLuckyHint')}
               </Text>
             </View>
-          </View>
+          </Animated.View>
         )}
 
         <View style={{ height: 60 }} />

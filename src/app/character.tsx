@@ -2,13 +2,15 @@
 import React, { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform,
+  TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useFadeIn } from '@/hooks/useEntranceAnimation';
+import { useI18n } from '@/hooks/useI18n';
 import type { ThemeColors } from '@/constants/themes';
 import { analyzeCharacter } from '@/services/characterDivination';
 
@@ -43,6 +45,7 @@ function FortuneBadge({ fortune, theme }: { fortune: string; theme: ThemeColors 
 
 export default function CharacterScreen() {
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const layout = useResponsiveLayout();
   const s = useMemo(() => createStyles(theme), [theme]);
 
@@ -65,7 +68,7 @@ export default function CharacterScreen() {
 
   const handleSubmit = async () => {
     if (!character.trim() || !isCJKCharacter(character.trim())) {
-      setError('請輸入一個中文字（例如：福、安、龍）');
+      setError(t('characterErrorInvalid'));
       return;
     }
     setError('');
@@ -124,6 +127,7 @@ export default function CharacterScreen() {
   };
 
   const maxWidth = layout.isDesktop ? 700 : 600;
+  const fadeIn = useFadeIn({ delay: 0 });
 
   return (
     <SafeAreaView style={s.safe}>
@@ -137,12 +141,12 @@ export default function CharacterScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* 頁面標題 */}
-          <Text style={s.title}>測字占卜</Text>
-          <Text style={s.subtitle}>以字形斷吉凶，以字義解疑惑</Text>
+          <Text style={s.title}>{t('characterPageTitle')}</Text>
+          <Text style={s.subtitle}>{t('characterSubtitle')}</Text>
 
           {/* 輸入區 */}
           <View style={s.inputCard}>
-            <Text style={s.inputLabel}>請輸入一個中文字</Text>
+            <Text style={s.inputLabel}>{t('characterLabelInput')}</Text>
             <TextInput
               style={s.charInput}
               value={character}
@@ -156,14 +160,14 @@ export default function CharacterScreen() {
               maxLength={1}
               autoFocus
             />
-            <Text style={s.inputHint}>輸入一個你想問的中文字，例如：福、安、龍、變</Text>
+            <Text style={s.inputHint}>{t('characterInputHint')}</Text>
 
-            <Text style={[s.inputLabel, { marginTop: TempleSpacing.md }]}>想問的事情（選填）</Text>
+            <Text style={[s.inputLabel, { marginTop: TempleSpacing.md }]}>{t('characterLabelQuestion')}</Text>
             <TextInput
               style={s.questionInput}
               value={question}
               onChangeText={setQuestion}
-              placeholder="例如：最近的工作運勢如何？"
+              placeholder={t('characterPlaceholderQuestion')}
               placeholderTextColor={theme.textMuted}
               maxLength={200}
               multiline
@@ -180,14 +184,14 @@ export default function CharacterScreen() {
               {loading ? (
                 <ActivityIndicator color={theme.bgDark} size="small" />
               ) : (
-                <Text style={s.submitText}>開始測字</Text>
+                <Text style={s.submitText}>{t('characterButtonSubmit')}</Text>
               )}
             </TouchableOpacity>
           </View>
 
           {/* 結果區 */}
           {result && (
-            <View style={s.resultCard}>
+            <Animated.View style={[s.resultCard, { opacity: fadeIn.opacity, transform: [{ translateY: fadeIn.translateY }] }]}>
               {/* 大字顯示 */}
               <View style={s.charDisplay}>
                 <Text style={s.charLarge}>{result.character}</Text>
@@ -232,7 +236,7 @@ export default function CharacterScreen() {
                   <Text style={s.interpretationText}>{result.interpretation}</Text>
                 </View>
               ) : null}
-            </View>
+            </Animated.View>
           )}
         </ScrollView>
       </KeyboardAvoidingView>

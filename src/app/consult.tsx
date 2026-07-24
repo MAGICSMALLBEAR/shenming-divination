@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Animated,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -12,6 +13,8 @@ import {
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
+import { useI18n } from '@/hooks/useI18n';
 import type { ThemeColors } from '@/constants/themes';
 import { PremiumPaywall } from '@/components/PremiumPaywall';
 import { canUseFeature, isPremiumActive } from '@/services/premiumService';
@@ -88,13 +91,24 @@ const CONSULTANTS: Consultant[] = [
   },
 ];
 
+function AnimatedConsultantCard({ delay, children }: { delay: number; children: React.ReactNode }) {
+  const { opacity, translateY } = useFadeIn({ delay });
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function ConsultScreen() {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [showPaywall, setShowPaywall] = useState(false);
   const [premiumActive, setPremiumActive] = useState(false);
   const [selectedConsultant, setSelectedConsultant] = useState<Consultant | null>(null);
+  const cardDelays = useStaggeredList({ itemCount: CONSULTANTS.length, staggerDelay: 60 });
 
   useEffect(() => {
     isPremiumActive().then(setPremiumActive);
@@ -128,44 +142,44 @@ export default function ConsultScreen() {
           { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
         ]}
       >
-        <Text style={styles.pageTitle}>真人解籤諮詢</Text>
+        <Text style={styles.pageTitle}>{t('consultPageTitle')}</Text>
         <Text style={styles.pageSubtitle}>
-          由資深命理師為你深度解析籤詩，一對一視訊諮詢
+          {t('consultSubtitle')}
         </Text>
 
         {/* 說明卡 */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>📋 諮詢流程</Text>
+          <Text style={styles.infoTitle}>📋 {t('consultFlowTitle')}</Text>
           <View style={styles.stepRow}>
             <View style={styles.stepDot}><Text style={styles.stepNum}>1</Text></View>
-            <Text style={styles.stepText}>選擇命理師，查看專長與評價</Text>
+            <Text style={styles.stepText}>{t('consultFlowStep1')}</Text>
           </View>
           <View style={styles.stepRow}>
             <View style={styles.stepDot}><Text style={styles.stepNum}>2</Text></View>
-            <Text style={styles.stepText}>預約時段，最快當日可約</Text>
+            <Text style={styles.stepText}>{t('consultFlowStep2')}</Text>
           </View>
           <View style={styles.stepRow}>
             <View style={styles.stepDot}><Text style={styles.stepNum}>3</Text></View>
-            <Text style={styles.stepText}>透過視訊進行 30-45 分鐘深度解析</Text>
+            <Text style={styles.stepText}>{t('consultFlowStep3')}</Text>
           </View>
           <View style={[styles.stepRow, { borderBottomWidth: 0 }]}>
             <View style={styles.stepDot}><Text style={styles.stepNum}>4</Text></View>
-            <Text style={styles.stepText}>收到文字版解析報告，可隨時回顧</Text>
+            <Text style={styles.stepText}>{t('consultFlowStep4')}</Text>
           </View>
 
           {!premiumActive && (
             <TouchableOpacity style={styles.upgradeBtn} onPress={() => setShowPaywall(true)}>
-              <Text style={styles.upgradeBtnText}>👑 升級年訂閱享首次諮詢免費</Text>
+              <Text style={styles.upgradeBtnText}>{t('consultUpgradeBtn')}</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {/* 命理師列表 */}
-        <Text style={styles.sectionTitle}>精選命理師</Text>
+        <Text style={styles.sectionTitle}>{t('consultSectionExperts')}</Text>
 
-        {CONSULTANTS.map(c => (
-          <TouchableOpacity
-            key={c.id}
+        {CONSULTANTS.map((c, i) => (
+          <AnimatedConsultantCard key={c.id} delay={cardDelays[i]?.delay ?? 0}>
+            <TouchableOpacity
             style={[
               styles.consultCard,
               selectedConsultant?.id === c.id && styles.consultCardSelected,
@@ -190,7 +204,7 @@ export default function ConsultScreen() {
                   )}
                   {!c.available && (
                     <View style={[styles.badge, styles.badgeUnavail]}>
-                      <Text style={[styles.badgeText, { color: theme.textMuted }]}>休假中</Text>
+                      <Text style={[styles.badgeText, { color: theme.textMuted }]}>{t('consultStatusUnavailable')}</Text>
                     </View>
                   )}
                 </View>
@@ -198,7 +212,7 @@ export default function ConsultScreen() {
                 <View style={styles.ratingRow}>
                   <Text style={styles.stars}>{STARS(c.rating)}</Text>
                   <Text style={styles.rating}>{c.rating}</Text>
-                  <Text style={styles.reviewCount}>({c.reviewCount} 則評價)</Text>
+                  <Text style={styles.reviewCount}>({t('consultLabelReview', { count: c.reviewCount })})</Text>
                 </View>
               </View>
 
@@ -214,7 +228,7 @@ export default function ConsultScreen() {
                   <Text style={styles.specialtyText}>{s}</Text>
                 </View>
               ))}
-              <Text style={styles.experienceText}>資歷 {c.experience}</Text>
+              <Text style={styles.experienceText}>{t('consultLabelExperience')} {c.experience}</Text>
             </View>
 
             {/* 展開詳情 */}
@@ -227,17 +241,18 @@ export default function ConsultScreen() {
                   onPress={() => handleBook(c)}
                 >
                   <Text style={styles.bookBtnText}>
-                    {c.available ? '立即預約諮詢' : '目前休假中'}
+                    {c.available ? t('consultButtonBook') : t('consultStatusUnavailable')}
                   </Text>
                 </TouchableOpacity>
               </View>
             )}
           </TouchableOpacity>
+          </AnimatedConsultantCard>
         ))}
 
         {/* Q&A */}
         <View style={styles.faqCard}>
-          <Text style={styles.faqTitle}>常見問題</Text>
+          <Text style={styles.faqTitle}>{t('consultFaqTitle')}</Text>
           {[
             { q: '可以帶著抽好的籤詩諮詢嗎？', a: '可以！這是最推薦的方式，命理師會結合你的問題與籤詩做完整解析。' },
             { q: '諮詢語言有限制嗎？', a: '目前命理師均以中文為主，部分師父可以台語溝通，可在預約時說明。' },

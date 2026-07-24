@@ -2,13 +2,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform,
+  TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
+import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
+import { ListItemSkeleton } from '@/components/Skeleton';
 import type { ThemeColors } from '@/constants/themes';
 import { isFirebaseConfigured } from '@/services/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -35,13 +38,6 @@ const SEED_POSTS: Post[] = [
   { id: 's4', godName: '觀世音菩薩', poemNumber: 51, poemLevel: '上吉籤', comment: '家人生病求菩薩保佑，求到上吉，後來手術很順利，南無觀世音菩薩', timestamp: Date.now() - 86400000 * 12, likes: 35 },
 ];
 
-function timeAgo(ts: number): string {
-  const diff = Date.now() - ts;
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} 分鐘前`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小時前`;
-  return `${Math.floor(diff / 86400000)} 天前`;
-}
-
 function levelColor(level: string) {
   if (level.includes('上上') || level.includes('大吉')) return '#FFD700';
   if (level.includes('吉')) return '#7EC850';
@@ -49,8 +45,18 @@ function levelColor(level: string) {
   return '#C9A96E';
 }
 
+function AnimatedPostItem({ delay, children }: { delay: number; children: React.ReactNode }) {
+  const { opacity, translateY } = useFadeIn({ delay });
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function CommunityScreen() {
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const layout = useResponsiveLayout();
   const styles = useMemo(() => ({ ...createViewStyles(theme, layout), ...createTextStyles(theme) }), [theme, layout]);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -61,6 +67,7 @@ export default function CommunityScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const usingFirebase = isFirebaseConfigured();
+  const postDelays = useStaggeredList({ itemCount: 30, staggerDelay: 60 });
 
   const loadPosts = useCallback(async () => {
     if (usingFirebase) {
@@ -100,7 +107,7 @@ export default function CommunityScreen() {
 
     const newPost: Post = {
       id: `local_${Date.now()}`,
-      godName: godName.trim() || '神明',
+      godName: godName.trim() || t('communityDefaultGodName'),
       poemNumber: parseInt(poemNum) || 0,
       poemLevel: '',
       comment: text,
@@ -150,11 +157,11 @@ export default function CommunityScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>信眾交流</Text>
-          <Text style={styles.headerSub}>分享你的求籤心得與靈驗故事</Text>
+          <Text style={styles.headerTitle}>{t('communityPageTitle')}</Text>
+          <Text style={styles.headerSub}>{t('communityHeaderSub')}</Text>
           {!usingFirebase && (
             <View style={styles.localBadge}>
-              <Text style={styles.localBadgeText}>本機模式（未連接雲端）</Text>
+              <Text style={styles.localBadgeText}>{t('communityLocalBadge')}</Text>
             </View>
           )}
         </View>
@@ -165,21 +172,21 @@ export default function CommunityScreen() {
             {!layout.isDesktop && (
               <>
                 <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(v => !v)} activeOpacity={0.8}>
-                  <Text style={styles.addBtnText}>{showForm ? '▲ 收起' : '✏️ 分享求籤心得'}</Text>
+                  <Text style={styles.addBtnText}>{showForm ? t('communityAddBtnCollapse') : t('communityAddBtn')}</Text>
                 </TouchableOpacity>
                 {showForm && (
                   <View style={styles.form}>
                     <View style={styles.formRow}>
                       <TextInput
                         style={[styles.input, { flex: 1 }]}
-                        placeholder="神明名稱（如：媽祖）"
+                        placeholder={t('communityPlaceholderGod')}
                         placeholderTextColor={theme.textMuted}
                         value={godName}
                         onChangeText={setGodName}
                       />
                       <TextInput
                         style={[styles.input, { width: 80 }]}
-                        placeholder="籤號"
+                        placeholder={t('communityPlaceholderPoem')}
                         placeholderTextColor={theme.textMuted}
                         value={poemNum}
                         onChangeText={setPoemNum}
@@ -189,7 +196,7 @@ export default function CommunityScreen() {
                     </View>
                     <TextInput
                       style={[styles.input, styles.textArea]}
-                      placeholder="分享你的心得、靈驗故事或請示結果…（最少5字）"
+                      placeholder={t('communityPlaceholderComment')}
                       placeholderTextColor={theme.textMuted}
                       value={comment}
                       onChangeText={setComment}
@@ -205,7 +212,7 @@ export default function CommunityScreen() {
                       >
                         {submitting
                           ? <ActivityIndicator size="small" color={theme.bgDark} />
-                          : <Text style={styles.submitBtnText}>發布</Text>}
+                          : <Text style={styles.submitBtnText}>{t('communityButtonPublish')}</Text>}
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -215,10 +222,15 @@ export default function CommunityScreen() {
 
             {/* 貼文列表 */}
             {loading ? (
-              <ActivityIndicator color={theme.gold} style={{ marginTop: 40 }} />
+              <View style={{ marginTop: 16 }}>
+                <ListItemSkeleton lines={3} />
+                <ListItemSkeleton lines={2} />
+                <ListItemSkeleton lines={3} />
+              </View>
             ) : (
-              posts.map(post => (
-                <View key={post.id} style={styles.post}>
+              posts.map((post, i) => (
+                <AnimatedPostItem key={post.id} delay={postDelays[i]?.delay ?? 0}>
+                  <View style={styles.post}>
                   <View style={styles.postHeader}>
                     <View style={styles.postGodBadge}>
                       <Text style={styles.postGodName}>{post.godName}</Text>
@@ -231,7 +243,7 @@ export default function CommunityScreen() {
                         </Text>
                       ) : null}
                     </View>
-                    <Text style={styles.postTime}>{timeAgo(post.timestamp)}</Text>
+                    <Text style={styles.postTime}>{(() => { const diff = Date.now() - post.timestamp; if (diff < 3600000) return t('communityTimeMinAgo', { n: Math.floor(diff / 60000) }); if (diff < 86400000) return t('communityTimeHourAgo', { n: Math.floor(diff / 3600000) }); return t('communityTimeDayAgo', { n: Math.floor(diff / 86400000) }); })()}</Text>
                   </View>
                   <Text style={styles.postComment}>{post.comment}</Text>
                   <View style={styles.postFooter}>
@@ -242,6 +254,7 @@ export default function CommunityScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
+                </AnimatedPostItem>
               ))
             )}
             <View style={{ height: 40 }} />
@@ -251,7 +264,7 @@ export default function CommunityScreen() {
           {layout.isDesktop && (
             <View style={styles.sideColumn}>
               <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(v => !v)} activeOpacity={0.8}>
-                <Text style={styles.addBtnText}>{showForm ? '▲ 收起' : '✏️ 分享求籤心得'}</Text>
+                <Text style={styles.addBtnText}>{showForm ? t('communityAddBtnCollapse') : t('communityAddBtn')}</Text>
               </TouchableOpacity>
               {showForm && (
                 <View style={styles.form}>

@@ -2,12 +2,14 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  TouchableOpacity, KeyboardAvoidingView, Platform,
+  TouchableOpacity, KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
+import { useFadeIn } from '@/hooks/useEntranceAnimation';
 import type { ThemeColors } from '@/constants/themes';
 import {
   calculateFullBazi, getCurrentDaYun, getMissingWuxing,
@@ -36,6 +38,7 @@ function WuxingBar({ element, count, total }: { element: string; count: number; 
 
 export default function BaziScreen() {
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const s = useMemo(() => createStyles(theme), [theme]);
   const [birthYear, setBirthYear] = useState('');
   const [birthMonth, setBirthMonth] = useState('');
@@ -63,7 +66,7 @@ export default function BaziScreen() {
   const handleCalculate = () => {
     const y = parseInt(birthYear), m = parseInt(birthMonth), d = parseInt(birthDay);
     if (!y || !m || !d || m < 1 || m > 12 || d < 1 || d > 31) {
-      setError('請輸入正確的出生年月日');
+      setError(t('baziErrorInvalidDate'));
       return;
     }
     setError('');
@@ -76,42 +79,43 @@ export default function BaziScreen() {
       });
       setBazi(result);
     } catch {
-      setError('計算失敗，請確認輸入資料');
+      setError(t('baziErrorCalcFailed'));
     }
   };
 
   const pillarData = bazi ? [bazi.year, bazi.month, bazi.day, bazi.hour] : [];
+  const fadeIn = useFadeIn({ delay: 0 });
 
   return (
     <SafeAreaView style={s.safe}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={s.header}>
-          <Text style={s.title}>八字命盤</Text>
-          <Text style={s.sub}>四柱八字・五行・十神・大運</Text>
+          <Text style={s.title}>{t('baziPageTitle')}</Text>
+          <Text style={s.sub}>{t('baziSubtitle')}</Text>
         </View>
         <ScrollView style={s.scroll} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
 
           {/* 輸入區 */}
           <View style={s.card}>
-            <Text style={s.cardTitle}>輸入生辰</Text>
+            <Text style={s.cardTitle}>{t('baziInputTitle')}</Text>
             <View style={s.inputRow}>
               <View style={s.inputGroup}>
-                <Text style={s.inputLabel}>出生年</Text>
+                <Text style={s.inputLabel}>{t('baziLabelYear')}</Text>
                 <TextInput style={s.input} placeholder="1990" placeholderTextColor={theme.textMuted}
                   value={birthYear} onChangeText={setBirthYear} keyboardType="number-pad" maxLength={4} />
               </View>
               <View style={s.inputGroup}>
-                <Text style={s.inputLabel}>月</Text>
+                <Text style={s.inputLabel}>{t('commonMonth')}</Text>
                 <TextInput style={s.input} placeholder="8" placeholderTextColor={theme.textMuted}
                   value={birthMonth} onChangeText={setBirthMonth} keyboardType="number-pad" maxLength={2} />
               </View>
               <View style={s.inputGroup}>
-                <Text style={s.inputLabel}>日</Text>
+                <Text style={s.inputLabel}>{t('commonDay')}</Text>
                 <TextInput style={s.input} placeholder="15" placeholderTextColor={theme.textMuted}
                   value={birthDay} onChangeText={setBirthDay} keyboardType="number-pad" maxLength={2} />
               </View>
               <View style={s.inputGroup}>
-                <Text style={s.inputLabel}>時（可選）</Text>
+                <Text style={s.inputLabel}>{t('baziLabelHour')}</Text>
                 <TextInput style={s.input} placeholder="14" placeholderTextColor={theme.textMuted}
                   value={birthHour} onChangeText={setBirthHour} keyboardType="number-pad" maxLength={2} />
               </View>
@@ -119,21 +123,21 @@ export default function BaziScreen() {
             <View style={s.genderRow}>
               {(['male', 'female'] as const).map(g => (
                 <TouchableOpacity key={g} style={[s.genderBtn, gender === g && s.genderActive]} onPress={() => setGender(g)}>
-                  <Text style={[s.genderText, gender === g && s.genderTextActive]}>{g === 'male' ? '♂ 男' : '♀ 女'}</Text>
+                  <Text style={[s.genderText, gender === g && s.genderTextActive]}>{g === 'male' ? t('baziGenderMale') : t('baziGenderFemale')}</Text>
                 </TouchableOpacity>
               ))}
             </View>
             {error !== '' && <Text style={s.error}>{error}</Text>}
             <TouchableOpacity style={s.calcBtn} onPress={handleCalculate}>
-              <Text style={s.calcBtnText}>排八字命盤</Text>
+              <Text style={s.calcBtnText}>{t('baziButtonCalculate')}</Text>
             </TouchableOpacity>
           </View>
 
           {bazi && (
-            <>
+            <Animated.View style={{ opacity: fadeIn.opacity, transform: [{ translateY: fadeIn.translateY }] }}>
               {/* 四柱表 */}
               <View style={s.card}>
-                <Text style={s.cardTitle}>四柱命盤</Text>
+                <Text style={s.cardTitle}>{t('baziTitleFourPillars')}</Text>
                 <View style={s.pillarsTable}>
                   {PILLARS.map((name, i) => {
                     const p = pillarData[i];
@@ -158,7 +162,7 @@ export default function BaziScreen() {
                   })}
                 </View>
                 <View style={s.dayMasterRow}>
-                  <Text style={s.dayMasterLabel}>日主：</Text>
+                  <Text style={s.dayMasterLabel}>{t('baziLabelDayMaster')}：</Text>
                   <Text style={s.dayMasterValue}>{bazi.dayMaster} ({bazi.dayMasterWuxing})</Text>
                 </View>
                 <Text style={s.personalityText}>{bazi.personality}</Text>
@@ -166,15 +170,15 @@ export default function BaziScreen() {
 
               {/* 五行分布 */}
               <View style={s.card}>
-                <Text style={s.cardTitle}>五行分布</Text>
+                <Text style={s.cardTitle}>{t('baziTitleWuxingDistribution')}</Text>
                 {Object.entries(bazi.wuxingBalance).map(([el, cnt]) => (
                   <WuxingBar key={el} element={el} count={cnt} total={totalWuxing} />
                 ))}
                 {missingWuxing.length > 0 && (
                   <View style={s.missingBox}>
-                    <Text style={s.missingTitle}>缺失五行：{missingWuxing.join('、')}</Text>
+                    <Text style={s.missingTitle}>{t('baziTitleMissing')}：{missingWuxing.join('、')}</Text>
                     <Text style={s.missingDesc}>
-                      命局缺{missingWuxing.join('、')}，可透過穿著對應色系衣物或佩戴相關吉祥物補足。
+                      {t('baziTextMissingHint', { missing: missingWuxing.join('、') })}
                     </Text>
                   </View>
                 )}
@@ -182,7 +186,7 @@ export default function BaziScreen() {
 
               {/* 人生主題 */}
               <View style={s.card}>
-                <Text style={s.cardTitle}>生命主題</Text>
+                <Text style={s.cardTitle}>{t('baziTitleLifeTheme')}</Text>
                 <Text style={s.lifeTheme}>{bazi.lifeTheme}</Text>
                 <Text style={[s.cardTitle, { marginTop: 12, color: theme.goldLight }]}>2026丙午年運勢</Text>
                 <Text style={s.lifeTheme}>{bazi.yearFortune2026}</Text>
@@ -190,7 +194,7 @@ export default function BaziScreen() {
 
               {/* 大運 */}
               <View style={s.card}>
-                <Text style={s.cardTitle}>大運流年</Text>
+                <Text style={s.cardTitle}>{t('baziTitleDaYun')}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View style={s.daYunRow}>
                     {bazi.daYun.map((dy, i) => (
@@ -200,7 +204,7 @@ export default function BaziScreen() {
                         </Text>
                         <Text style={[s.daYunGan, currentDaYun === dy && s.daYunGanActive]}>{dy.pillar.gan}</Text>
                         <Text style={[s.daYunZhi, currentDaYun === dy && s.daYunZhiActive]}>{dy.pillar.zhi}</Text>
-                        {currentDaYun === dy && <Text style={s.currentBadge}>現在</Text>}
+                        {currentDaYun === dy && <Text style={s.currentBadge}>{t('baziBadgeCurrent')}</Text>}
                       </View>
                     ))}
                   </View>
@@ -208,17 +212,17 @@ export default function BaziScreen() {
                 {currentDaYun && (
                   <View style={s.currentDaYunDetail}>
                     <Text style={s.currentDaYunTitle}>
-                      當前大運：{currentDaYun.pillar.gan}{currentDaYun.pillar.zhi}（{currentDaYun.startAge}–{currentDaYun.endAge}歲）
+                      {t('baziLabelCurrentDaYun')}：{currentDaYun.pillar.gan}{currentDaYun.pillar.zhi}（{currentDaYun.startAge}–{currentDaYun.endAge}歲）
                     </Text>
                     <Text style={s.currentDaYunText}>{currentDaYun.overview}</Text>
                   </View>
                 )}
               </View>
-            </>
+            </Animated.View>
           )}
 
           <View style={s.disclaimer}>
-            <Text style={s.disclaimerText}>八字命盤僅供參考，重要決策請諮詢專業命理師。</Text>
+            <Text style={s.disclaimerText}>{t('baziDisclaimer')}</Text>
           </View>
           <View style={{ height: 40 }} />
         </ScrollView>

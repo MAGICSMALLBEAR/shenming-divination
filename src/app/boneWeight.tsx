@@ -2,11 +2,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  TouchableOpacity, KeyboardAvoidingView, Platform,
+  TouchableOpacity, KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useFadeIn } from '@/hooks/useEntranceAnimation';
+import { useI18n } from '@/hooks/useI18n';
 import type { ThemeColors } from '@/constants/themes';
 import { calculateBoneWeight, type BoneWeightResult } from '@/services/boneWeight';
 import { getSettings } from '@/services/storage';
@@ -45,6 +47,7 @@ function weightFormat(weight: number): string {
 
 export default function BoneWeightScreen() {
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const s = useMemo(() => createStyles(theme), [theme]);
   const [birthYear, setBirthYear] = useState('');
   const [birthMonth, setBirthMonth] = useState('');
@@ -69,6 +72,8 @@ export default function BoneWeightScreen() {
     return { ...SHICHEN_INFO[idx], index: idx };
   }, [birthHour]);
 
+  const fadeIn = useFadeIn({ delay: 0 });
+
   const handleCalculate = () => {
     setError('');
     setResult(null);
@@ -78,13 +83,13 @@ export default function BoneWeightScreen() {
     const day = parseInt(birthDay, 10);
     const hour = parseInt(birthHour, 10);
 
-    if (isNaN(year) || year < 1900 || year > 2100) { setError('請輸入有效的出生年份 (1900-2100)'); return; }
-    if (isNaN(month) || month < 1 || month > 12) { setError('請輸入有效的農曆月份 (1-12)'); return; }
-    if (isNaN(day) || day < 1 || day > 30) { setError('請輸入有效的農曆日期 (1-30)'); return; }
-    if (isNaN(hour) || hour < 0 || hour > 23) { setError('請輸入有效的出生時辰 (0-23)'); return; }
+    if (isNaN(year) || year < 1900 || year > 2100) { setError(t('boneWeightErrorInvalidYear')); return; }
+    if (isNaN(month) || month < 1 || month > 12) { setError(t('boneWeightErrorInvalidMonth')); return; }
+    if (isNaN(day) || day < 1 || day > 30) { setError(t('boneWeightErrorInvalidDay')); return; }
+    if (isNaN(hour) || hour < 0 || hour > 23) { setError(t('boneWeightErrorInvalidHour')); return; }
 
     const res = calculateBoneWeight(year, month, day, hour);
-    if (!res) { setError('查無該年份骨重資料，請確認出生年份是否在可用範圍內'); return; }
+    if (!res) { setError(t('boneWeightErrorNoData')); return; }
 
     setResult(res);
   };
@@ -100,14 +105,14 @@ export default function BoneWeightScreen() {
           contentContainerStyle={s.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={s.pageTitle}>⚖️ 袁天罡稱骨算命</Text>
-          <Text style={s.subtitle}>輸入農曆出生年月日時，推算八字骨重與命運歌訣</Text>
+          <Text style={s.pageTitle}>⚖️ {t('boneWeightPageTitle')}</Text>
+          <Text style={s.subtitle}>{t('boneWeightSubtitle')}</Text>
 
           {/* 輸入區 */}
           <View style={s.card}>
-            <Text style={s.cardTitle}>出生資料</Text>
+            <Text style={s.cardTitle}>{t('boneWeightCardTitle')}</Text>
 
-            <Text style={s.label}>出生年份（西元年）</Text>
+            <Text style={s.label}>{t('boneWeightLabelYear')}</Text>
             <TextInput
               style={s.input}
               value={birthYear}
@@ -118,7 +123,7 @@ export default function BoneWeightScreen() {
               maxLength={4}
             />
 
-            <Text style={s.label}>農曆出生月份</Text>
+            <Text style={s.label}>{t('boneWeightLabelMonth')}</Text>
             <View style={s.pickerRow}>
               {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
                 <TouchableOpacity
@@ -142,7 +147,7 @@ export default function BoneWeightScreen() {
               maxLength={2}
             />
 
-            <Text style={s.label}>農曆出生日</Text>
+            <Text style={s.label}>{t('boneWeightLabelDay')}</Text>
             <TextInput
               style={s.input}
               value={birthDay}
@@ -153,7 +158,7 @@ export default function BoneWeightScreen() {
               maxLength={2}
             />
 
-            <Text style={s.label}>出生時辰（西元小時 0-23）</Text>
+            <Text style={s.label}>{t('boneWeightLabelHour')}</Text>
             <TextInput
               style={s.input}
               value={birthHour}
@@ -165,7 +170,7 @@ export default function BoneWeightScreen() {
             />
 
             {/* 時辰對照表 */}
-            <Text style={s.label}>十二時辰對照表</Text>
+            <Text style={s.label}>{t('boneWeightLabelShichen')}</Text>
             <View style={s.shichenGrid}>
               {SHICHEN_INFO.map(sc => (
                 <View
@@ -182,25 +187,25 @@ export default function BoneWeightScreen() {
             </View>
             {selectedShichen && (
               <Text style={s.shichenHint}>
-                您輸入的 {birthHour} 時對應「{selectedShichen.name}時」（{selectedShichen.range}）
+                {t('boneWeightShichenHint', { hour: birthHour, name: selectedShichen.name, range: selectedShichen.range })}
               </Text>
             )}
 
             {error ? <Text style={s.errorText}>{error}</Text> : null}
 
             <TouchableOpacity style={s.submitBtn} onPress={handleCalculate} activeOpacity={0.7}>
-              <Text style={s.submitBtnText}>推算骨重</Text>
+              <Text style={s.submitBtnText}>{t('boneWeightButtonCalc')}</Text>
             </TouchableOpacity>
           </View>
 
           {/* 結果區 */}
           {result && (
-            <View style={s.card}>
-              <Text style={s.cardTitle}>📜 稱骨結果</Text>
+            <Animated.View style={[s.card, { opacity: fadeIn.opacity, transform: [{ translateY: fadeIn.translateY }] }]}>
+              <Text style={s.cardTitle}>📜 {t('boneWeightResultTitle')}</Text>
 
               {/* 總骨重 */}
               <View style={s.totalSection}>
-                <Text style={s.totalLabel}>命重</Text>
+                <Text style={s.totalLabel}>{t('boneWeightLabelWeight')}</Text>
                 <Text style={s.totalValue}>{result.totalLabel}</Text>
                 <View style={[s.fortuneBadge, { backgroundColor: FORTUNE_COLORS[result.fortune] || theme.gold }]}>
                   <Text style={s.fortuneBadgeText}>{result.fortune}</Text>
@@ -210,39 +215,39 @@ export default function BoneWeightScreen() {
               {/* 骨重明細表 */}
               <View style={s.detailTable}>
                 <View style={s.detailHeader}>
-                  <Text style={s.detailHeaderText}>項目</Text>
-                  <Text style={s.detailHeaderText}>骨重</Text>
+                  <Text style={s.detailHeaderText}>{t('boneWeightDetailHeaderItem')}</Text>
+                  <Text style={s.detailHeaderText}>{t('boneWeightDetailHeaderWeight')}</Text>
                 </View>
                 <View style={s.detailRow}>
-                  <Text style={s.detailLabel}>年柱</Text>
+                  <Text style={s.detailLabel}>{t('boneWeightDetailYear')}</Text>
                   <Text style={s.detailValue}>{weightFormat(result.yearWeight)}</Text>
                 </View>
                 <View style={s.detailRow}>
-                  <Text style={s.detailLabel}>月柱</Text>
+                  <Text style={s.detailLabel}>{t('boneWeightDetailMonth')}</Text>
                   <Text style={s.detailValue}>{weightFormat(result.monthWeight)}</Text>
                 </View>
                 <View style={s.detailRow}>
-                  <Text style={s.detailLabel}>日柱</Text>
+                  <Text style={s.detailLabel}>{t('boneWeightDetailDay')}</Text>
                   <Text style={s.detailValue}>{weightFormat(result.dayWeight)}</Text>
                 </View>
                 <View style={s.detailRow}>
-                  <Text style={s.detailLabel}>時柱</Text>
+                  <Text style={s.detailLabel}>{t('boneWeightDetailHour')}</Text>
                   <Text style={s.detailValue}>{weightFormat(result.hourWeight)}</Text>
                 </View>
               </View>
 
               {/* 歌訣 */}
               <View style={s.poemSection}>
-                <Text style={s.poemSectionTitle}>稱骨歌訣</Text>
+                <Text style={s.poemSectionTitle}>{t('boneWeightPoemTitle')}</Text>
                 <Text style={s.poemText}>{result.poem}</Text>
               </View>
 
               {/* 白話解釋 */}
               <View style={s.interpretSection}>
-                <Text style={s.interpretTitle}>白話解釋</Text>
+                <Text style={s.interpretTitle}>{t('boneWeightInterpretTitle')}</Text>
                 <Text style={s.interpretText}>{result.interpretation}</Text>
               </View>
-            </View>
+            </Animated.View>
           )}
 
           <View style={{ height: 40 }} />

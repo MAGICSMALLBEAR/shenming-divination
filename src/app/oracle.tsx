@@ -7,10 +7,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
+import { useFadeIn } from '@/hooks/useEntranceAnimation';
 import { drawHexagram, getLuckColor, getLuckLabel, type Hexagram } from '@/data/iching';
 import { drawTarot, type TarotCard } from '@/data/tarot';
 import { DecorativeBg } from '@/components/DecorativeBg';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import type { ThemeColors } from '@/constants/themes';
 
 type Tab = 'iching' | 'tarot' | 'pendulum';
@@ -19,6 +21,7 @@ type Tab = 'iching' | 'tarot' | 'pendulum';
 function IChingSection() {
   const { theme } = useAppTheme();
   const s = useMemo(() => createStyles(theme), [theme]);
+  const fade = useFadeIn({ delay: 0 });
   const [result, setResult] = useState<Hexagram | null>(null);
   const [question, setQuestion] = useState('');
   const [shaking, setShaking] = useState(false);
@@ -44,8 +47,9 @@ function IChingSection() {
   const rotate = shakeAnim.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: ['0deg', '-15deg', '15deg', '-10deg', '0deg'] });
 
   return (
-    <ScrollView contentContainerStyle={s.section}>
-      <Text style={s.sectionTitle}>易卦占卜</Text>
+    <Animated.View style={{ flex: 1, opacity: fade.opacity, transform: [{ translateY: fade.translateY }] }}>
+      <ScrollView contentContainerStyle={s.section}>
+        <Text style={s.sectionTitle}>易卦占卜</Text>
       <Text style={s.hint}>心存問題，搖動銅錢，天地自有答案。</Text>
 
       <TextInput
@@ -89,6 +93,7 @@ function IChingSection() {
         </View>
       )}
     </ScrollView>
+    </Animated.View>
   );
 }
 
@@ -96,6 +101,7 @@ function IChingSection() {
 function TarotSection() {
   const { theme } = useAppTheme();
   const s = useMemo(() => createStyles(theme), [theme]);
+  const fade = useFadeIn({ delay: 0 });
   const [result, setResult] = useState<TarotCard | null>(null);
   const [question, setQuestion] = useState('');
   const [flipped, setFlipped] = useState(false);
@@ -121,8 +127,9 @@ function TarotSection() {
   const scaleX = flipAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 1] });
 
   return (
-    <ScrollView contentContainerStyle={s.section}>
-      <Text style={s.sectionTitle}>塔羅占卜</Text>
+    <Animated.View style={{ flex: 1, opacity: fade.opacity, transform: [{ translateY: fade.translateY }] }}>
+      <ScrollView contentContainerStyle={s.section}>
+        <Text style={s.sectionTitle}>塔羅占卜</Text>
       <Text style={s.hint}>專注你的問題，翻開命運之牌。</Text>
 
       <TextInput
@@ -168,6 +175,7 @@ function TarotSection() {
         </View>
       )}
     </ScrollView>
+    </Animated.View>
   );
 }
 
@@ -175,6 +183,7 @@ function TarotSection() {
 function PendulumSection() {
   const { theme } = useAppTheme();
   const s = useMemo(() => createStyles(theme), [theme]);
+  const fade = useFadeIn({ delay: 0 });
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<'yes' | 'no' | null>(null);
   const [swinging, setSwinging] = useState(false);
@@ -208,8 +217,9 @@ function PendulumSection() {
   const NO_COLOR = theme.danger;
 
   return (
-    <ScrollView contentContainerStyle={s.section}>
-      <Text style={s.sectionTitle}>靈擺問卜</Text>
+    <Animated.View style={{ flex: 1, opacity: fade.opacity, transform: [{ translateY: fade.translateY }] }}>
+      <ScrollView contentContainerStyle={s.section}>
+        <Text style={s.sectionTitle}>靈擺問卜</Text>
       <Text style={s.hint}>以是非之問求得神明指引，心誠則靈。</Text>
 
       <TextInput
@@ -250,6 +260,7 @@ function PendulumSection() {
         </View>
       )}
     </ScrollView>
+    </Animated.View>
   );
 }
 
@@ -262,14 +273,21 @@ const TABS: { key: Tab; label: string }[] = [
 
 export default function OracleScreen() {
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const s = useMemo(() => createStyles(theme), [theme]);
   const [tab, setTab] = useState<Tab>('iching');
+
+  const TAB_LABELS: Record<Tab, string> = {
+    iching: t('oracleTabIching'),
+    tarot: t('oracleTabTarot'),
+    pendulum: t('oracleTabPendulum'),
+  };
 
   return (
     <SafeAreaView style={s.safe}>
       <DecorativeBg pattern="diamond" />
       <View style={s.header}>
-        <Text style={s.title}>多元占卜</Text>
+        <Text style={s.title}>{t('oraclePageTitle')}</Text>
         <View style={s.tabRow}>
           {TABS.map(({ key, label }) => (
             <TouchableOpacity
@@ -278,7 +296,7 @@ export default function OracleScreen() {
               onPress={() => setTab(key)}
               activeOpacity={0.8}
             >
-              <Text style={[s.tabLabel, tab === key && s.tabLabelActive]}>{label}</Text>
+              <Text style={[s.tabLabel, tab === key && s.tabLabelActive]}>{TAB_LABELS[key]}</Text>
             </TouchableOpacity>
           ))}
         </View>

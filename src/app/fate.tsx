@@ -2,12 +2,14 @@
 import React, { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform,
+  TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
+import { useFadeIn } from '@/hooks/useEntranceAnimation';
 import type { ThemeColors } from '@/constants/themes';
 
 const API_BASE = 'http://localhost:3001';
@@ -18,8 +20,18 @@ const EVENT_TYPES = ['結婚', '開業', '搬家', '動土', '簽約', '出行',
 const ZODIAC_LIST = ['鼠', '牛', '虎', '兔', '龍', '蛇', '馬', '羊', '猴', '雞', '狗', '豬'];
 const WUXING_LIST = ['木', '火', '土', '金', '水'];
 
+function TabContent({ children }: { children: React.ReactNode }) {
+  const fade = useFadeIn({ delay: 0 });
+  return (
+    <Animated.View style={{ opacity: fade.opacity, transform: [{ translateY: fade.translateY }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function FateScreen() {
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const s = useMemo(() => createStyles(theme), [theme]);
   const [tab, setTab] = useState<Tab>('match');
 
@@ -64,9 +76,9 @@ export default function FateScreen() {
         }),
       });
       const data = await res.json();
-      setMatchResult(data.analysis || data.compatibility || '分析完成，請查看上方結果。');
+      setMatchResult(data.analysis || data.compatibility || t('fateResultMatch'));
     } catch {
-      setMatchResult('無法連接 AI 服務，請確認後端已啟動（npm run dev）。');
+      setMatchResult(t('fateErrorConnect'));
     }
     setMatchLoading(false);
   };
@@ -87,9 +99,9 @@ export default function FateScreen() {
         }),
       });
       const data = await res.json();
-      setDateResult(data.recommendation || '擇日分析完成，請查看上方結果。');
+      setDateResult(data.recommendation || t('fateResultDate'));
     } catch {
-      setDateResult('無法連接 AI 服務，請確認後端已啟動（npm run dev）。');
+      setDateResult(t('fateErrorConnect'));
     }
     setDateLoading(false);
   };
@@ -98,16 +110,16 @@ export default function FateScreen() {
     <SafeAreaView style={s.safe}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={s.header}>
-          <Text style={s.title}>命理諮詢</Text>
-          <Text style={s.sub}>合婚配對・擇日選吉</Text>
+          <Text style={s.title}>{t('fatePageTitle')}</Text>
+          <Text style={s.sub}>{t('fateSubtitle')}</Text>
         </View>
 
         {/* Tab 切換 */}
         <View style={s.tabs}>
-          {(['match', 'date'] as Tab[]).map(t => (
-            <TouchableOpacity key={t} style={[s.tab, tab === t && s.tabActive]} onPress={() => setTab(t)}>
-              <Text style={[s.tabText, tab === t && s.tabTextActive]}>
-                {t === 'match' ? '💑 合婚配對' : '📅 擇日選吉'}
+          {(['match', 'date'] as Tab[]).map(tabKey => (
+            <TouchableOpacity key={tabKey} style={[s.tab, tab === tabKey && s.tabActive]} onPress={() => setTab(tabKey)}>
+              <Text style={[s.tabText, tab === tabKey && s.tabTextActive]}>
+                {tabKey === 'match' ? t('fateTabMatch') : t('fateTabDate')}
               </Text>
             </TouchableOpacity>
           ))}
@@ -115,26 +127,27 @@ export default function FateScreen() {
 
         <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} keyboardShouldPersistTaps="handled">
           {tab === 'match' ? (
-            <View>
-              <Text style={s.sectionTitle}>合婚八字配對</Text>
-              <Text style={s.desc}>輸入雙方生年，AI 依八字五行分析合婚相容度</Text>
+            <TabContent key="match">
+              <View>
+              <Text style={s.sectionTitle}>{t('fateMatchTitle')}</Text>
+              <Text style={s.desc}>{t('fateMatchDesc')}</Text>
 
               {/* 甲方 */}
               <View style={s.card}>
-                <Text style={s.cardTitle}>甲方（本人）</Text>
+                <Text style={s.cardTitle}>{t('fateLabelPartyA')}</Text>
                 <View style={s.row}>
                   <View style={s.field}>
-                    <Text style={s.label}>出生年</Text>
+                    <Text style={s.label}>{t('fateLabelBirthYear')}</Text>
                     <TextInput style={s.input} placeholder="1990" placeholderTextColor={theme.textMuted}
                       value={p1Year} onChangeText={v => { setP1Year(v); setP1Zodiac(zodiacFromYear(v)); }}
                       keyboardType="number-pad" maxLength={4} />
                   </View>
                   <View style={s.field}>
-                    <Text style={s.label}>生肖（自動）</Text>
+                    <Text style={s.label}>{t('fateLabelZodiacAuto')}</Text>
                     <View style={s.readOnly}><Text style={s.readOnlyText}>{p1Zodiac || '—'}</Text></View>
                   </View>
                 </View>
-                <Text style={s.label}>日主五行</Text>
+                <Text style={s.label}>{t('fateLabelDayWuxing')}</Text>
                 <View style={s.chipRow}>
                   {WUXING_LIST.map(w => (
                     <TouchableOpacity key={w} style={[s.chip, p1Wuxing === w && s.chipActive]} onPress={() => setP1Wuxing(w)}>
@@ -146,20 +159,20 @@ export default function FateScreen() {
 
               {/* 乙方 */}
               <View style={s.card}>
-                <Text style={s.cardTitle}>乙方（對象）</Text>
+                <Text style={s.cardTitle}>{t('fateLabelPartyB')}</Text>
                 <View style={s.row}>
                   <View style={s.field}>
-                    <Text style={s.label}>出生年</Text>
+                    <Text style={s.label}>{t('fateLabelBirthYear')}</Text>
                     <TextInput style={s.input} placeholder="1992" placeholderTextColor={theme.textMuted}
                       value={p2Year} onChangeText={v => { setP2Year(v); setP2Zodiac(zodiacFromYear(v)); }}
                       keyboardType="number-pad" maxLength={4} />
                   </View>
                   <View style={s.field}>
-                    <Text style={s.label}>生肖（自動）</Text>
+                    <Text style={s.label}>{t('fateLabelZodiacAuto')}</Text>
                     <View style={s.readOnly}><Text style={s.readOnlyText}>{p2Zodiac || '—'}</Text></View>
                   </View>
                 </View>
-                <Text style={s.label}>日主五行</Text>
+                <Text style={s.label}>{t('fateLabelDayWuxing')}</Text>
                 <View style={s.chipRow}>
                   {WUXING_LIST.map(w => (
                     <TouchableOpacity key={w} style={[s.chip, p2Wuxing === w && s.chipActive]} onPress={() => setP2Wuxing(w)}>
@@ -176,23 +189,25 @@ export default function FateScreen() {
               >
                 {matchLoading
                   ? <ActivityIndicator color={theme.bgDark} />
-                  : <Text style={s.btnText}>🔮 開始合婚分析</Text>}
+                  : <Text style={s.btnText}>{t('fateButtonMatch')}</Text>}
               </TouchableOpacity>
 
               {matchResult !== '' && (
                 <View style={s.result}>
-                  <Text style={s.resultTitle}>合婚結果</Text>
+                  <Text style={s.resultTitle}>{t('fateResultMatch')}</Text>
                   <Text style={s.resultText}>{matchResult}</Text>
                 </View>
               )}
             </View>
+            </TabContent>
           ) : (
-            <View>
-              <Text style={s.sectionTitle}>擇日選吉</Text>
-              <Text style={s.desc}>輸入事件類型與偏好，AI 推薦最吉利的日期</Text>
+            <TabContent key="date">
+              <View>
+              <Text style={s.sectionTitle}>{t('fateDateTitle')}</Text>
+              <Text style={s.desc}>{t('fateDateDesc')}</Text>
 
               <View style={s.card}>
-                <Text style={s.label}>事件類型</Text>
+                <Text style={s.label}>{t('fateLabelEventType')}</Text>
                 <View style={s.chipRow}>
                   {EVENT_TYPES.map(e => (
                     <TouchableOpacity key={e} style={[s.chip, eventType === e && s.chipActive]} onPress={() => setEventType(e)}>
@@ -203,13 +218,13 @@ export default function FateScreen() {
 
                 <View style={s.row}>
                   <View style={s.field}>
-                    <Text style={s.label}>偏好月份（可留空）</Text>
+                    <Text style={s.label}>{t('fateLabelPreferMonth')}</Text>
                     <TextInput style={s.input} placeholder="如：3（三月）" placeholderTextColor={theme.textMuted}
                       value={preferMonth} onChangeText={setPreferMonth} keyboardType="number-pad" maxLength={2} />
                   </View>
                 </View>
 
-                <Text style={s.label}>當事人生肖</Text>
+                <Text style={s.label}>{t('fateLabelZodiac1')}</Text>
                 <View style={s.chipRow}>
                   {ZODIAC_LIST.map(z => (
                     <TouchableOpacity key={z} style={[s.chip, zodiac1 === z && s.chipActive]} onPress={() => setZodiac1(zodiac1 === z ? '' : z)}>
@@ -218,7 +233,7 @@ export default function FateScreen() {
                   ))}
                 </View>
 
-                <Text style={s.label}>第二當事人生肖（選填）</Text>
+                <Text style={s.label}>{t('fateLabelZodiac2')}</Text>
                 <View style={s.chipRow}>
                   {ZODIAC_LIST.map(z => (
                     <TouchableOpacity key={z} style={[s.chip, zodiac2 === z && s.chipActive]} onPress={() => setZodiac2(zodiac2 === z ? '' : z)}>
@@ -227,29 +242,30 @@ export default function FateScreen() {
                   ))}
                 </View>
 
-                <Text style={s.label}>備注（選填）</Text>
+                <Text style={s.label}>{t('fateLabelNotes')}</Text>
                 <TextInput style={[s.input, { height: 64, textAlignVertical: 'top' }]}
-                  placeholder="如：需避開本命年犯太歲…" placeholderTextColor={theme.textMuted}
+                  placeholder={t('fatePlaceholderNotes')} placeholderTextColor={theme.textMuted}
                   value={notes} onChangeText={setNotes} multiline maxLength={100} />
               </View>
 
               <TouchableOpacity style={s.btn} onPress={handleDateSelect} disabled={dateLoading}>
                 {dateLoading
                   ? <ActivityIndicator color={theme.bgDark} />
-                  : <Text style={s.btnText}>📅 AI 推薦吉日</Text>}
+                  : <Text style={s.btnText}>{t('fateButtonDateSelect')}</Text>}
               </TouchableOpacity>
 
               {dateResult !== '' && (
                 <View style={s.result}>
-                  <Text style={s.resultTitle}>擇日建議</Text>
+                  <Text style={s.resultTitle}>{t('fateResultDate')}</Text>
                   <Text style={s.resultText}>{dateResult}</Text>
                 </View>
               )}
             </View>
+            </TabContent>
           )}
 
           <View style={s.disclaimer}>
-            <Text style={s.disclaimerText}>本功能僅供參考，重要決定請諮詢專業命理師。</Text>
+            <Text style={s.disclaimerText}>{t('fateDisclaimer')}</Text>
           </View>
           <View style={{ height: 40 }} />
         </ScrollView>

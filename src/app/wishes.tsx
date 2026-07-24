@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Animated,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -14,6 +15,9 @@ import {
 
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
+import { ListItemSkeleton } from '@/components/Skeleton';
+import { useI18n } from '@/hooks/useI18n';
 import type { ThemeColors } from '@/constants/themes';
 import {
   addWish,
@@ -44,9 +48,29 @@ function formatReminder(timestamp?: number): string | null {
   ).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+function AnimatedWishItem({ delay, children }: { delay: number; children: React.ReactNode }) {
+  const { opacity, translateY } = useFadeIn({ delay });
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
+function AnimatedForm({ show, children }: { show: boolean; children: React.ReactNode }) {
+  const { opacity, translateY } = useFadeIn({ delay: 0, disabled: !show });
+  if (!show) return null;
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function WishesScreen() {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,6 +81,7 @@ export default function WishesScreen() {
   const [reflectionText, setReflectionText] = useState('');
   const [fulfillingId, setFulfillingId] = useState<string | null>(null);
   const [reminderDays, setReminderDays] = useState<number>(0);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     const data = await getWishes();
@@ -64,7 +89,7 @@ export default function WishesScreen() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    loadData().finally(() => setInitialLoading(false));
   }, [loadData]);
 
   const resetFulfillmentForm = () => {
@@ -173,6 +198,11 @@ export default function WishesScreen() {
     [activeWishes, fulfilledWishes]
   );
 
+  const activeCount = activeWishes.length;
+  const fulfilledCount = fulfilledWishes.length;
+  const activeDelays = useStaggeredList({ itemCount: Math.max(activeCount, 1), staggerDelay: 60 });
+  const fulfilledDelays = useStaggeredList({ itemCount: Math.max(fulfilledCount, 1), staggerDelay: 60 });
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={theme.bgDark} />
@@ -182,39 +212,39 @@ export default function WishesScreen() {
           { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
         ]}
       >
-        <Text style={styles.pageTitle}>願望與還願</Text>
+        <Text style={styles.pageTitle}>{t('wishesPageHeader')}</Text>
 
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>{summary.active}</Text>
-            <Text style={styles.summaryLabel}>進行中</Text>
+            <Text style={styles.summaryLabel}>{t('wishesActive')}</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>{summary.reminded}</Text>
-            <Text style={styles.summaryLabel}>有提醒</Text>
+            <Text style={styles.summaryLabel}>{t('wishesReminded')}</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryValue}>{summary.fulfilled}</Text>
-            <Text style={styles.summaryLabel}>已完成</Text>
+            <Text style={styles.summaryLabel}>{t('wishesFulfilled')}</Text>
           </View>
         </View>
 
         <TouchableOpacity style={styles.addBtn} onPress={() => setShowAdd((value) => !value)}>
-          <Text style={styles.addBtnText}>{showAdd ? '收起新增表單' : '+ 新增願望'}</Text>
+          <Text style={styles.addBtnText}>{showAdd ? t('wishesAddBtnCollapse') : t('wishesAddBtn')}</Text>
         </TouchableOpacity>
 
-        {showAdd ? (
+        <AnimatedForm show={showAdd}>
           <View style={styles.addForm}>
             <TextInput
               style={styles.addInput}
               value={newContent}
               onChangeText={setNewContent}
-              placeholder="寫下你想持續實踐、等待實現或提醒自己的事情。"
+              placeholder={t('wishesAddPlaceholder')}
               placeholderTextColor={theme.textMuted}
               multiline
             />
 
-            <Text style={styles.sectionHint}>提醒時間</Text>
+            <Text style={styles.sectionHint}>{t('wishesLabelReminder')}</Text>
             <View style={styles.optionRow}>
               {REMINDER_OPTIONS.map((option) => (
                 <TouchableOpacity
@@ -238,10 +268,10 @@ export default function WishesScreen() {
             </View>
 
             <TouchableOpacity style={styles.submitBtn} onPress={handleAdd}>
-              <Text style={styles.submitBtnText}>加入願望清單</Text>
+              <Text style={styles.submitBtnText}>{t('wishesSubmitBtn')}</Text>
             </TouchableOpacity>
           </View>
-        ) : null}
+        </AnimatedForm>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -257,19 +287,25 @@ export default function WishesScreen() {
             />
           }
         >
-          {!activeWishes.length && !fulfilledWishes.length ? (
+          {initialLoading ? (
+            <View style={{ paddingHorizontal: TempleSpacing.sm }}>
+              <ListItemSkeleton lines={3} />
+              <ListItemSkeleton lines={2} />
+              <ListItemSkeleton lines={3} />
+            </View>
+          ) : !activeWishes.length && !fulfilledWishes.length ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>🙏</Text>
-              <Text style={styles.emptyText}>目前還沒有願望紀錄</Text>
+              <Text style={styles.emptyText}>{t('wishesEmptyTitle')}</Text>
               <Text style={styles.emptyHint}>可以從求籤結果或自己的生活計畫開始累積。</Text>
             </View>
           ) : null}
 
-          {activeWishes.map((wish) => (
-            <View
-              key={wish.id}
-              style={[styles.wishCard, layout.isDesktop && styles.wishCardDesktop]}
-            >
+          {activeWishes.map((wish, i) => (
+            <AnimatedWishItem key={wish.id} delay={activeDelays[i]?.delay ?? 0}>
+              <View
+                style={[styles.wishCard, layout.isDesktop && styles.wishCardDesktop]}
+              >
               <View style={styles.wishHeader}>
                 <View style={styles.wishStatus} />
                 <Text style={styles.wishDate}>建立於 {formatDate(wish.createdAt)}</Text>
@@ -317,7 +353,7 @@ export default function WishesScreen() {
                       onPress={() => handleFulfill(wish.id)}
                       style={styles.gratitudeSaveBtn}
                     >
-                      <Text style={styles.gratitudeSaveText}>完成還願</Text>
+                      <Text style={styles.gratitudeSaveText}>{t('wishesButtonConfirmFulfill')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={resetFulfillmentForm}>
                       <Text style={styles.gratitudeCancelText}>取消</Text>
@@ -330,28 +366,29 @@ export default function WishesScreen() {
                     onPress={() => handleStartFulfill(wish.id)}
                     style={styles.fulfillBtn}
                   >
-                    <Text style={styles.fulfillBtnText}>開始還願</Text>
+                    <Text style={styles.fulfillBtnText}>{t('wishesButtonFulfill')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => handleDelete(wish.id)}>
-                    <Text style={styles.deleteBtnText}>刪除</Text>
+                    <Text style={styles.deleteBtnText}>{t('wishesButtonDelete')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
             </View>
+            </AnimatedWishItem>
           ))}
 
           {fulfilledWishes.length ? (
             <>
-              <Text style={styles.sectionTitle}>已完成與還願</Text>
-              {fulfilledWishes.map((wish) => (
-                <View
-                  key={wish.id}
-                  style={[
-                    styles.wishCard,
-                    styles.wishCardFulfilled,
-                    layout.isDesktop && styles.wishCardDesktop,
-                  ]}
-                >
+              <Text style={styles.sectionTitle}>{t('wishesSectionTitleFulfilled')}</Text>
+              {fulfilledWishes.map((wish, i) => (
+                <AnimatedWishItem key={wish.id} delay={fulfilledDelays[i]?.delay ?? 0}>
+                  <View
+                    style={[
+                      styles.wishCard,
+                      styles.wishCardFulfilled,
+                      layout.isDesktop && styles.wishCardDesktop,
+                    ]}
+                  >
                   <View style={styles.wishHeader}>
                     <View style={styles.wishStatusFulfilled} />
                     <Text style={styles.wishDate}>
@@ -369,6 +406,7 @@ export default function WishesScreen() {
                     <Text style={styles.reflectionText}>回顧：{wish.fulfillmentReflection}</Text>
                   ) : null}
                 </View>
+                </AnimatedWishItem>
               ))}
             </>
           ) : null}

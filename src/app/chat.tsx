@@ -16,6 +16,7 @@ import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { getLastPoemContext, type LastPoemContext } from '@/services/storage';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import type { ThemeColors } from '@/constants/themes';
 
 interface Message {
@@ -46,6 +47,7 @@ function buildInitialAssistantMessage(lastPoem: LastPoemContext | null): string 
 export default function ChatScreen() {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [lastPoem, setLastPoem] = useState<LastPoemContext | null>(null);
   const [messages, setMessages] = useState<Message[]>([
@@ -173,11 +175,11 @@ export default function ChatScreen() {
           { maxWidth: layout.narrowMaxWidth, paddingHorizontal: layout.gutter },
         ]}
       >
-        <Text style={styles.pageTitle}>AI 追問解籤</Text>
+        <Text style={styles.pageTitle}>{t('chatPageTitle')}</Text>
 
         {lastPoem ? (
           <View style={styles.contextCard}>
-            <Text style={styles.contextTitle}>目前承接的籤詩</Text>
+            <Text style={styles.contextTitle}>{t('chatContextTitle')}</Text>
             <Text style={styles.contextMain}>
               {lastPoem.godName} · {lastPoem.poemTitle}
             </Text>
@@ -205,7 +207,7 @@ export default function ChatScreen() {
               ]}
             >
               <Text style={styles.msgRole}>
-                {message.role === 'user' ? '你' : '解籤助手'}
+                {message.role === 'user' ? t('chatUserLabel') : t('chatAssistantLabel')}
               </Text>
               {message.content.split('\n').map((line, lineIndex) => (
                 <Text
@@ -224,7 +226,7 @@ export default function ChatScreen() {
           {isLoading ? (
             <View style={styles.loading}>
               <ActivityIndicator color={theme.goldLight} size="small" />
-              <Text style={styles.loadingText}>正在整理回應...</Text>
+              <Text style={styles.loadingText}>{t('chatLoading')}</Text>
             </View>
           ) : null}
         </ScrollView>
@@ -249,7 +251,7 @@ export default function ChatScreen() {
             style={styles.chatInput}
             value={input}
             onChangeText={setInput}
-            placeholder="直接輸入你想追問的內容..."
+            placeholder={t('chatInputPlaceholder')}
             placeholderTextColor={theme.textMuted}
             multiline
             maxLength={500}
@@ -259,7 +261,7 @@ export default function ChatScreen() {
             onPress={() => sendMessage(input)}
             disabled={!input.trim() || isLoading}
           >
-            <Text style={styles.sendBtnText}>送出</Text>
+            <Text style={styles.sendBtnText}>{t('chatSend')}</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -1,15 +1,28 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Animated, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
+import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
+import { SkeletonBlock } from '@/components/Skeleton';
 import type { ThemeColors } from '@/constants/themes';
 import { getStats, getYearlySummary, type Stats, type YearlySummary } from '@/services/statsService';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
+function AnimatedCard({ delay, children }: { delay: number; children: React.ReactNode }) {
+  const { opacity, translateY } = useFadeIn({ delay });
+  return (
+    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function StatsScreen() {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [yearly, setYearly] = useState<YearlySummary | null>(null);
@@ -18,13 +31,18 @@ export default function StatsScreen() {
     getStats().then(setStats);
     getYearlySummary().then(setYearly);
   }, []);
+  const sectionDelays = useStaggeredList({ itemCount: 8, staggerDelay: 60 });
 
   if (!stats) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" backgroundColor={theme.bgDark} />
         <View style={styles.loading}>
-          <Text style={styles.loadingText}>整理統計中...</Text>
+          <SkeletonBlock width={200} height={24} borderRadius={12} />
+          <SkeletonBlock width="80%" height={16} style={{ marginTop: 16 }} />
+          <SkeletonBlock width="60%" height={16} style={{ marginTop: 12 }} />
+          <SkeletonBlock width="90%" height={16} style={{ marginTop: 12 }} />
+          <SkeletonBlock width="70%" height={16} style={{ marginTop: 12 }} />
         </View>
       </SafeAreaView>
     );
@@ -40,61 +58,72 @@ export default function StatsScreen() {
           { maxWidth: layout.contentMaxWidth, paddingHorizontal: layout.gutter },
         ]}
       >
-        <Text style={styles.pageTitle}>你的求籤統計</Text>
+        <Text style={styles.pageTitle}>{t('statsPageHeader')}</Text>
 
-        <View style={styles.kpiRow}>
-          <View style={styles.kpiCard}>
-            <Text style={styles.kpiNumber}>{stats.totalDraws}</Text>
-            <Text style={styles.kpiLabel}>總抽籤次數</Text>
+        <AnimatedCard delay={sectionDelays[0].delay}>
+          <View style={styles.kpiRow}>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiNumber}>{stats.totalDraws}</Text>
+              <Text style={styles.kpiLabel}>{t('statsTotalDraws')}</Text>
+            </View>
+            <View style={styles.kpiCard}>
+              <Text style={styles.kpiNumber}>{stats.favorites}</Text>
+              <Text style={styles.kpiLabel}>{t('statsFavorites')}</Text>
+            </View>
           </View>
-          <View style={styles.kpiCard}>
-            <Text style={styles.kpiNumber}>{stats.favorites}</Text>
-            <Text style={styles.kpiLabel}>收藏籤詩</Text>
-          </View>
-        </View>
+        </AnimatedCard>
 
         <View style={[styles.sectionGrid, layout.isDesktop && styles.sectionGridDesktop]}>
-          <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
-            <Text style={styles.sectionTitle}>應驗追蹤</Text>
-            <View style={styles.verificationRow}>
-              <StatPill label="待驗證" value={stats.verification.pending} color={theme.warning} />
-              <StatPill label="已應驗" value={stats.verification.matched} color={theme.success} />
-              <StatPill label="不太符合" value={stats.verification.unmatched} color={theme.danger} />
+          <AnimatedCard delay={sectionDelays[1].delay}>
+            <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
+              <Text style={styles.sectionTitle}>{t('statsVerificationTitle')}</Text>
+              <View style={styles.verificationRow}>
+                <StatPill label={t('poemVerifyPending')} value={stats.verification.pending} color={theme.warning} />
+                <StatPill label={t('poemVerified')} value={stats.verification.matched} color={theme.success} />
+                <StatPill label={t('poemUnmatched')} value={stats.verification.unmatched} color={theme.danger} />
+              </View>
             </View>
-          </View>
+          </AnimatedCard>
 
-          <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
-            <Text style={styles.sectionTitle}>最常請示的神明</Text>
-            <View style={styles.highlightRow}>
-              <Text style={styles.highlightName}>{stats.topGod.name}</Text>
-              <Text style={styles.highlightCount}>{stats.topGod.count} 次</Text>
+          <AnimatedCard delay={sectionDelays[2].delay}>
+            <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
+              <Text style={styles.sectionTitle}>{t('statsTopGod')}</Text>
+              <View style={styles.highlightRow}>
+                <Text style={styles.highlightName}>{stats.topGod.name}</Text>
+                <Text style={styles.highlightCount}>{stats.topGod.count} 次</Text>
+              </View>
             </View>
-          </View>
+          </AnimatedCard>
 
-          <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
-            <Text style={styles.sectionTitle}>最常詢問的題型</Text>
-            <View style={styles.highlightRow}>
-              <Text style={styles.highlightName}>{stats.topCategory.name}</Text>
-              <Text style={styles.highlightCount}>{stats.topCategory.count} 次</Text>
+          <AnimatedCard delay={sectionDelays[3].delay}>
+            <View style={[styles.section, layout.isDesktop && styles.sectionGridItem]}>
+              <Text style={styles.sectionTitle}>{t('statsTopCategory')}</Text>
+              <View style={styles.highlightRow}>
+                <Text style={styles.highlightName}>{stats.topCategory.name}</Text>
+                <Text style={styles.highlightCount}>{stats.topCategory.count} 次</Text>
+              </View>
             </View>
-          </View>
+          </AnimatedCard>
         </View>
 
         {stats.topPoems.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>最常抽到的籤</Text>
-            {stats.topPoems.map((poem, index) => (
-              <View key={poem.number} style={styles.rankRow}>
-                <Text style={styles.rankNum}>#{index + 1}</Text>
-                <Text style={styles.rankName}>第 {poem.number} 籤</Text>
-                <Text style={styles.rankCount}>{poem.count} 次</Text>
-              </View>
-            ))}
-          </View>
+          <AnimatedCard delay={sectionDelays[4].delay}>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('statsTopPoems')}</Text>
+              {stats.topPoems.map((poem, index) => (
+                <View key={poem.number} style={styles.rankRow}>
+                  <Text style={styles.rankNum}>#{index + 1}</Text>
+                  <Text style={styles.rankName}>第 {poem.number} 籤</Text>
+                  <Text style={styles.rankCount}>{poem.count} 次</Text>
+                </View>
+              ))}
+            </View>
+          </AnimatedCard>
         ) : null}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>吉凶分布</Text>
+        <AnimatedCard delay={sectionDelays[5].delay}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('statsLevelDistribution')}</Text>
           <View style={styles.levelBar}>
             {stats.levelDistribution.map((item) => (
               <View key={item.level} style={styles.levelRow}>
@@ -117,15 +146,22 @@ export default function StatsScreen() {
             ))}
           </View>
         </View>
+        </AnimatedCard>
 
         {stats.weeklyDraws.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>最近七天的求籤節奏</Text>
-            <WeeklyChart data={stats.weeklyDraws} />
-          </View>
+          <AnimatedCard delay={sectionDelays[6].delay}>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('statsWeeklyTitle')}</Text>
+              <WeeklyChart data={stats.weeklyDraws} />
+            </View>
+          </AnimatedCard>
         ) : null}
 
-        {yearly ? <YearlySummaryCard summary={yearly} /> : null}
+        {yearly ? (
+          <AnimatedCard delay={sectionDelays[7].delay}>
+            <YearlySummaryCard summary={yearly} />
+          </AnimatedCard>
+        ) : null}
 
         <View style={{ height: 60 }} />
       </ScrollView>
@@ -171,6 +207,7 @@ function WeeklyChart({ data }: { data: Stats['weeklyDraws'] }) {
 
 function YearlySummaryCard({ summary }: { summary: YearlySummary }) {
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const yearlyStyles = useMemo(() => createYearlyStyles(theme), [theme]);
   const luckyColor =
     summary.luckyRate >= 50
@@ -182,38 +219,38 @@ function YearlySummaryCard({ summary }: { summary: YearlySummary }) {
   const statItems = [
     {
       icon: '🏛️',
-      label: '最常請示',
-      value: summary.topGod?.name ?? '尚無資料',
+      label: t('statsYearlyTopGod'),
+      value: summary.topGod?.name ?? t('statsYearlyNoData'),
       sub: summary.topGod ? `${summary.topGod.count} 次` : '',
     },
     {
       icon: '🧭',
-      label: '最常題型',
-      value: summary.topCategory?.name ?? '尚無資料',
+      label: t('statsYearlyTopCategory'),
+      value: summary.topCategory?.name ?? t('statsYearlyNoData'),
       sub: summary.topCategory ? `${summary.topCategory.count} 次` : '',
     },
     {
       icon: '🎋',
-      label: '最常抽到',
-      value: summary.topPoem ? `第 ${summary.topPoem.number} 籤` : '尚無資料',
+      label: t('statsYearlyTopPoem'),
+      value: summary.topPoem ? `第 ${summary.topPoem.number} 籤` : t('statsYearlyNoData'),
       sub: summary.topPoem?.level ?? '',
     },
     {
       icon: '📅',
-      label: '最旺月份',
-      value: summary.peakMonth ?? '尚無資料',
+      label: t('statsYearlyPeakMonth'),
+      value: summary.peakMonth ?? t('statsYearlyNoData'),
       sub: '',
     },
     {
       icon: '🔥',
-      label: '連續紀錄',
+      label: t('statsYearlyStreak'),
       value: `${summary.longestStreak} 天`,
       sub: '',
     },
     {
       icon: '⏰',
-      label: '最常求籤日',
-      value: summary.mostActiveWeekday ?? '尚無資料',
+      label: t('statsYearlyWeekday'),
+      value: summary.mostActiveWeekday ?? t('statsYearlyNoData'),
       sub: '',
     },
   ];
@@ -221,12 +258,12 @@ function YearlySummaryCard({ summary }: { summary: YearlySummary }) {
   return (
     <View style={yearlyStyles.card}>
       <View style={yearlyStyles.titleRow}>
-        <Text style={yearlyStyles.title}>{summary.year} 年回顧</Text>
-        <Text style={yearlyStyles.totalBadge}>{summary.totalDraws} 次求籤</Text>
+        <Text style={yearlyStyles.title}>{t('statsYearlyTitle', { year: summary.year })}</Text>
+        <Text style={yearlyStyles.totalBadge}>{t('statsYearlyTotal', { count: summary.totalDraws })}</Text>
       </View>
 
       <View style={yearlyStyles.luckySection}>
-        <Text style={yearlyStyles.luckySub}>吉籤比例</Text>
+        <Text style={yearlyStyles.luckySub}>{t('statsYearlyLuckyRate')}</Text>
         <Text style={[yearlyStyles.luckyRate, { color: luckyColor }]}>{summary.luckyRate}%</Text>
         <View style={yearlyStyles.luckyBarTrack}>
           <View

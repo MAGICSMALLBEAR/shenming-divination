@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { DecorativeBg } from '@/components/DecorativeBg';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useI18n } from '@/hooks/useI18n';
 import type { ThemeColors } from '@/constants/themes';
 
 // ─── 紫微斗數命宮計算 ─────────────────────────────────────────
@@ -139,6 +140,7 @@ function createPcStyles(theme: ThemeColors) {
 
 export default function ZiweiScreen() {
   const { theme } = useAppTheme();
+  const { t } = useI18n();
   const s = useMemo(() => createStyles(theme), [theme]);
   const PALACE_COLORS = useMemo(() => getPalaceColors(theme), [theme]);
   const [birthYear, setBirthYear] = useState('');
@@ -148,13 +150,13 @@ export default function ZiweiScreen() {
 
   const handleCalc = () => {
     const y = parseInt(birthYear);
-    if (!y || y < 1900 || y > 2100) { setError('請輸入 1900～2100 之間的年份'); return; }
+    if (!y || y < 1900 || y > 2100) { setError(t('ziweiErrorYearRange')); return; }
     setLoading(true);
     setError('');
     // Simulate brief calculation delay for UX
     setTimeout(() => {
       const r = calcZiwei(y);
-      if (!r) { setError('計算失敗，請重試'); setLoading(false); return; }
+      if (!r) { setError(t('ziweiErrorCalcFailed')); setLoading(false); return; }
       setResult(r);
       setLoading(false);
     }, 400);
@@ -165,23 +167,23 @@ export default function ZiweiScreen() {
       <DecorativeBg pattern="diamond" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={s.scroll}>
-          <Text style={s.title}>紫微斗數</Text>
-          <Text style={s.subtitle}>依生年推算命宮、財帛宮、夫妻宮三宮基礎命盤</Text>
+          <Text style={s.title}>{t('ziweiPageTitle')}</Text>
+          <Text style={s.subtitle}>{t('ziweiSubtitle')}</Text>
 
           <View style={s.inputCard}>
-            <Text style={s.inputLabel}>出生年份（西元）</Text>
+            <Text style={s.inputLabel}>{t('ziweiLabelBirthYear')}</Text>
             <View style={s.inputRow}>
               <TextInput
                 style={s.input}
                 value={birthYear}
                 onChangeText={v => { setBirthYear(v); setError(''); }}
-                placeholder="例：1990"
+                placeholder={t('ziweiPlaceholderYear')}
                 placeholderTextColor={theme.textMuted}
                 keyboardType="number-pad"
                 maxLength={4}
               />
               <TouchableOpacity style={s.calcBtn} onPress={handleCalc}>
-                <Text style={s.calcBtnText}>起盤</Text>
+                <Text style={s.calcBtnText}>{t('ziweiButtonCalc')}</Text>
               </TouchableOpacity>
             </View>
             {error ? <Text style={s.error}>{error}</Text> : null}
@@ -190,7 +192,7 @@ export default function ZiweiScreen() {
           {loading ? (
             <View style={s.loadingCard}>
               <Text style={s.loadingIcon}>⭐</Text>
-              <Text style={s.loadingText}>命盤推算中…</Text>
+              <Text style={s.loadingText}>{t('ziweiLoading')}</Text>
             </View>
           ) : null}
 
@@ -204,7 +206,7 @@ export default function ZiweiScreen() {
               </View>
 
               <PalaceCard
-                title="命宮"
+                title={t('ziweiPalaceMing')}
                 star={`主星：${result.mingGong.star}`}
                 summary={result.mingGong.trait + '\n\n' + result.mingGong.talent}
                 advice={'發揮天賦才能，走適合自己個性的道路。'}
@@ -212,14 +214,14 @@ export default function ZiweiScreen() {
               />
 
               <PalaceCard
-                title="財帛宮"
+                title={t('ziweiPalaceCaibo')}
                 summary={result.caibo.summary}
                 advice={result.caibo.advice}
                 color={PALACE_COLORS['財帛宮']}
               />
 
               <PalaceCard
-                title="夫妻宮"
+                title={t('ziweiPalaceFuqi')}
                 summary={result.fuqi.summary}
                 advice={result.fuqi.advice}
                 color={PALACE_COLORS['夫妻宮']}
@@ -227,7 +229,7 @@ export default function ZiweiScreen() {
 
               <View style={s.disclaimer}>
                 <Text style={s.disclaimerText}>
-                  此為入門版紫微斗數，僅供參考，完整命盤需考量月份、日期、時辰及所有星曜互動。
+                  {t('ziweiDisclaimer')}
                 </Text>
               </View>
             </>
