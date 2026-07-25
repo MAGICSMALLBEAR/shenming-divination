@@ -40,6 +40,7 @@ import { getCurrentSolarTerm } from '@/services/solarTerms';
 import * as Haptics from 'expo-haptics';
 import { ForWhomSelector } from '@/components/home/ForWhomSelector';
 import { DailyFortuneCard } from '@/components/home/DailyFortuneCard';
+import { DivinePresenceStage } from '@/components/divine-presence/DivinePresenceStage';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -91,6 +92,13 @@ export default function HomeScreen() {
   const isTablet = layout.isTablet;
   const pageMaxWidth = layout.isWideDesktop ? 1180 : layout.isDesktop ? 1080 : layout.contentMaxWidth;
   const selectedGodCardImage = getGodCardImage(div.selectedGod?.id);
+  const lastJiaobeiResult = div.jiaobeiResults.at(-1) ?? null;
+  const showDivinePresence = div.selectedGod && div.step !== 'select-god';
+  const compactDivinePresence =
+    div.step === 'drawing' ||
+    div.step === 'reveal-poem' ||
+    div.step === 'ai-interpret' ||
+    div.step === 'result';
 
   // 設定只在掛載時讀取一次，其餘效果共用同一份，避免重複讀取 AsyncStorage
   React.useEffect(() => {
@@ -605,6 +613,17 @@ export default function HomeScreen() {
               <View style={[styles.pageShell, { maxWidth: pageMaxWidth }]}>
                 {renderHeader()}
                 {renderStepIndicator()}
+                {showDivinePresence ? (
+                  <DivinePresenceStage
+                    god={div.selectedGod!}
+                    step={div.step}
+                    incenseDone={incenseDone}
+                    lastJiaobei={lastJiaobeiResult}
+                    responseKey={div.jiaobeiResults.length}
+                    lowMotion={reducedMotion || lowMotionMode}
+                    compact={compactDivinePresence}
+                  />
+                ) : null}
                 <View style={styles.content}>{renderContent()}</View>
                 {renderActions()}
               </View>

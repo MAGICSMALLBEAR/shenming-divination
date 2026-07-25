@@ -88,6 +88,15 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
     case 34:
     case 35:
     case 37:
+    case 41:
+    case 42:
+    case 43:
+    case 44:
+    case 45:
+    case 46:
+    case 47:
+    case 48:
+    case 50:
       return jiaziEntry;
     case 5:
     case 21:
@@ -365,6 +374,42 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
         editionNote: '觀音原籤不改，新增東嶽鎮嶽向標題、典故前言與家運解曰，聚焦安穩、因果與大方向。',
         suitabilityNote: '適合問家運方向、長輩福壽、重大決策與消災解厄。',
         versionTag: 'dongyue-guanyin-100-focused-v1',
+      });
+    case 39:
+      return entry({
+        label: '閻羅明鑑籤',
+        totalPoems: 100,
+        sourceNote: '底本為觀音靈籤（傳統籤系，籤文逐字沿用），加入閻羅天子陰律、因果與超拔的白話解讀層。',
+        completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依閻羅信仰改寫。',
+        strengths: ['善惡分明', '超拔先亡', '化解冤業'],
+        sourceType: '傳統籤系（觀音靈籤）+ 閻羅天子專屬白話解讀',
+        editionNote: '觀音原籤不改，新增閻羅明鑑向標題、典故前言與因果解曰，聚焦善惡、業障與化解。',
+        suitabilityNote: '適合問因果業力、先人超度、是非對錯與消災解厄。',
+        versionTag: 'yanluo-guanyin-100-focused-v1',
+      });
+    case 40:
+      return entry({
+        label: '酆都鎮冥籤',
+        totalPoems: 100,
+        sourceNote: '底本為觀音靈籤（傳統籤系，籤文逐字沿用），加入酆都大帝冥府、超度與陰陽調理的白話解讀層。',
+        completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依酆都信仰改寫。',
+        strengths: ['陰陽調理', '超度先亡', '化解陰債'],
+        sourceType: '傳統籤系（觀音靈籤）+ 酆都大帝專屬白話解讀',
+        editionNote: '觀音原籤不改，新增酆都鎮冥向標題、典故前言與陰陽解曰，聚焦超度、冥府事務與平安。',
+        suitabilityNote: '適合問先人超度、陰陽調理、家宅冥事與化解陰債。',
+        versionTag: 'fengdu-guanyin-100-focused-v1',
+      });
+    case 49:
+      return entry({
+        label: '太陰月華籤',
+        totalPoems: 100,
+        sourceNote: '底本為觀音靈籤（傳統籤系，籤文逐字沿用），加入太陰娘娘姻緣、女性與月光守護的白話解讀層。',
+        completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依太陰信仰改寫。',
+        strengths: ['姻緣美滿', '女性守護', '美容安產'],
+        sourceType: '傳統籤系（觀音靈籤）+ 太陰娘娘專屬白話解讀',
+        editionNote: '觀音原籤不改，新增太陰月華向標題、典故前言與姻緣解曰，聚焦感情、女性健康與家庭和諧。',
+        suitabilityNote: '適合問感情姻緣、女性健康、美容安產與家庭圓融。',
+        versionTag: 'taiyin-guanyin-100-focused-v1',
       });
     default:
       return defaultEntry;

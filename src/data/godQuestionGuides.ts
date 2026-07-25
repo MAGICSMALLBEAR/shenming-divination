@@ -371,6 +371,138 @@ const guides: Record<number, GodQuestionGuide> = {
       { category: 'family', text: '家中有無需要化解的隱性牽掛或因果？' },
     ],
   },
+  39: {
+    title: '閻羅天子問事法',
+    intro: '適合問因果業障、先人超度、是非善惡與消災解厄；問題宜正心誠意。',
+    preferredCategories: ['general', 'protection', 'family'],
+    steps: ['先說明所求因果或先人', '問是否有業障需化解', '請示該如何行善積德'],
+    prompts: [
+      { category: 'general', text: '關於我目前的處境，是否有過去累積的因果業障需要化解？' },
+      { category: 'protection', text: '先人是否安好，是否有需要我代為完成的祭祀或功德？' },
+      { category: 'family', text: '家中的陰陽調理是否得當，最近要注意什麼？' },
+    ],
+  },
+  40: {
+    title: '酆都大帝問事法',
+    intro: '適合問超度先亡、化解陰債、冥府事務與家宅平安；先稟明歷代祖先姓名。',
+    preferredCategories: ['general', 'family', 'protection'],
+    steps: ['先說明所要超度的對象', '問陰債或冤愆是否已化解', '請示應如何做功德或祭祀'],
+    prompts: [
+      { category: 'general', text: '歷代祖先是否安好，是否有什麼需要我為他們做的？' },
+      { category: 'family', text: '家中的陰陽兩界是否需要調理，最近該注意什麼？' },
+      { category: 'protection', text: '是否有無形的陰債或冤愆影響著我的家運？' },
+    ],
+  },
+  41: {
+    title: '五顯大帝問事法',
+    intro: '適合問演藝創作、創意靈感、事業突破與驅邪護身；問題宜直接熱情。',
+    preferredCategories: ['career', 'protection', 'general'],
+    steps: ['先說明創作或事業目標', '問是否有阻礙或邪煞', '請示最該出手的方向'],
+    prompts: [
+      { category: 'career', text: '關於我的演藝或創作之路，近期最該往哪個方向發展？' },
+      { category: 'protection', text: '身邊是否有邪煞或小人需要化解？' },
+      { category: 'general', text: '最近的瓶頸該如何突破，靈感從何而來？' },
+    ],
+  },
+  42: {
+    title: '池府千歲問事法',
+    intro: '適合問健康防疫、家宅平安、事業順遂與身體調理；先說明症狀或狀況。',
+    preferredCategories: ['health', 'family', 'general'],
+    steps: ['先說明健康狀況或擔憂', '問是否需驅疫避邪', '請示調理與恢復的方向'],
+    prompts: [
+      { category: 'health', text: '關於我目前的健康狀況，近期是否能夠穩定好轉？' },
+      { category: 'family', text: '家中是否有疫氣或不好的氣息需要化解？' },
+      { category: 'general', text: '事業與家宅的平安，最近最該注意哪一方面？' },
+    ],
+  },
+  43: {
+    title: '五年千歲問事法',
+    intro: '適合問年度平安、驅瘟除疫、家運健康與消災解厄；可涵蓋全家祈求。',
+    preferredCategories: ['general', 'health', 'family'],
+    steps: ['先說明年度祈求', '問是否有災厄需化解', '請示應如何消災補運'],
+    prompts: [
+      { category: 'general', text: '今年我們全家最該注意的災厄或風險是什麼？' },
+      { category: 'health', text: '家人健康是否需要特別留意哪方面？' },
+      { category: 'family', text: '家運要如何保持平安順遂，是否有該做的事？' },
+    ],
+  },
+  44: {
+    title: '關平太子問事法',
+    intro: '適合問學業、事業、忠孝與品德；非常適合青少年與考生請示。',
+    preferredCategories: ['study', 'career', 'general'],
+    steps: ['先說明學業或事業目標', '問該補強的方向', '請示如何兼顧品德與成就'],
+    prompts: [
+      { category: 'study', text: '關於近期學業或考試，我最該加強哪個科目或能力？' },
+      { category: 'career', text: '事業發展上，該如何兼顧正當性與成功？' },
+      { category: 'general', text: '如何在做決定時，同時做到忠孝兩全？' },
+    ],
+  },
+  45: {
+    title: '周倉將軍問事法',
+    intro: '適合問驅邪鎮煞、小人化解、勇氣加持與忠誠原則；問題宜正直不繞彎。',
+    preferredCategories: ['protection', 'general', 'career'],
+    steps: ['先說明遇到的阻礙或小人', '問是否需要鎮煞驅邪', '請示該如何守住原則'],
+    prompts: [
+      { category: 'protection', text: '身邊是否有小人或口舌是非需要化解？' },
+      { category: 'general', text: '面對挑戰時，如何獲得更多勇氣與果斷力？' },
+      { category: 'career', text: '工作上是否該堅守原則，還是需要靈活調整？' },
+    ],
+  },
+  46: {
+    title: '千里眼將軍問事法',
+    intro: '適合問方向判斷、真相調查、遠見洞察與風險預知；先描述已知資訊。',
+    preferredCategories: ['general', 'career', 'travel'],
+    steps: ['先描述你看到的情況', '問是否有隱藏真相', '請示該從哪個角度看全局'],
+    prompts: [
+      { category: 'general', text: '眼前這件事的真相到底是什麼，有沒有我沒看到的部分？' },
+      { category: 'career', text: '關於事業方向，是否有我忽略的風險或機會？' },
+      { category: 'travel', text: '接下來的行程或移動，是否有需要注意的安全問題？' },
+    ],
+  },
+  47: {
+    title: '順風耳將軍問事法',
+    intro: '適合問溝通、消息等待、人際關係與資訊通達；先說明溝通對象或等待的訊息。',
+    preferredCategories: ['general', 'love', 'career'],
+    steps: ['先說明溝通問題或等待的消息', '問時機與方式', '請示如何改善溝通'],
+    prompts: [
+      { category: 'general', text: '我等的那個消息何時會有回音，近期是否該主動追問？' },
+      { category: 'love', text: '該如何與對方溝通才能讓關係更和諧？' },
+      { category: 'career', text: '工作上的溝通問題該如何改善，有什麼我沒聽到的？' },
+    ],
+  },
+  48: {
+    title: '太陽星君問事法',
+    intro: '適合問事業光明、前途發展、正面能量與光明方向；問題宜充滿正向能量。',
+    preferredCategories: ['career', 'wealth', 'general'],
+    steps: ['先描述事業或前途目標', '問光明方向在哪', '請示如何驅散陰暗與阻礙'],
+    prompts: [
+      { category: 'career', text: '我的事業前途是否光明，近期該如何大步前進？' },
+      { category: 'wealth', text: '財運未來的走勢如何，如何讓財庫更光明穩定？' },
+      { category: 'general', text: '如何驅散目前生命中的陰暗，迎向更光明的未來？' },
+    ],
+  },
+  49: {
+    title: '太陰娘娘問事法',
+    intro: '適合問感情姻緣、女性健康、美容養顏與家庭和諧；語氣宜溫柔真誠。',
+    preferredCategories: ['love', 'family', 'health'],
+    steps: ['先說明感情或女性相關的祈求', '問時機與方式', '請示如何讓關係更圓融'],
+    prompts: [
+      { category: 'love', text: '我的姻緣何時會有訊息，這段感情是否值得用心等待？' },
+      { category: 'family', text: '家庭中的關係該如何調和，讓氣氛更溫暖和諧？' },
+      { category: 'health', text: '關於女性健康與身心調理，近期最該注意什麼？' },
+    ],
+  },
+  50: {
+    title: '法主真君問事法',
+    intro: '適合問驅邪除煞、疾病化解、法術護身與災厄防範；問題宜誠心敬意。',
+    preferredCategories: ['protection', 'health', 'general'],
+    steps: ['先說明遇到的邪煞或病況', '問是否需要法術護身', '請示化解的方法與步驟'],
+    prompts: [
+      { category: 'protection', text: '身邊是否有邪煞或不好的能量需要法主真君驅除？' },
+      { category: 'health', text: '目前的疾病該如何配合醫療與法事來化解？' },
+      { category: 'general', text: '如何祈求法主真君護身，讓日常出入更加平安？' },
+    ],
+  },
 };
 
 export function getGodQuestionGuide(godId?: number | null): GodQuestionGuide {
