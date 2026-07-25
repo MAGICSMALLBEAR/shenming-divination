@@ -686,6 +686,84 @@ app.post('/api/character', async (req, res) => {
   }
 });
 
+// 解夢分析：夢境描述 + 情緒上下文 → AI 象徵分析
+app.post('/api/dream', async (req, res) => {
+  try {
+    const { dream, feeling } = req.body as { dream?: string; feeling?: string };
+
+    if (!dream || dream.trim().length === 0) {
+      res.status(400).json({ error: '請提供夢境描述' });
+      return;
+    }
+
+    const config = getAIConfig();
+    const clientApiKey = req.headers['x-api-key'] as string | undefined;
+
+    if (!hasUsableApiKey(config) && !clientApiKey) {
+      // 無 API Key → 回傳 fallback 信號讓前端使用本地分析
+      res.json({ fallback: true, provider: 'fallback' });
+      return;
+    }
+
+    const systemPrompt = [
+      '你是一位精通傳統解夢學與心理象徵分析的解夢師，融合《周公解夢》與現代心理學。',
+      '語氣溫柔、有洞察力，如同一位智慧的長者在解讀夢境中的訊息。',
+      '請對使用者描述的夢境進行象徵性分析，包含：',
+      '1. 提取夢境中的關鍵符號（至少3個，列出中文關鍵詞）',
+      '2. 解釋每個符號的象徵意義及其在夢境中的關聯',
+      '3. 綜合判斷吉凶（吉、中、凶三選一）',
+      '4. 給予具體且溫暖的建議',
+      '',
+      '請以以下 JSON 格式輸出（嚴格遵守，不要輸出其他格式）：',
+      '{"symbols":["符號1","符號2","符號3"],"interpretation":"完整的解夢分析文字（200字以內）","fortune":"吉或中或凶","advice":"具體建議（100字以內）"}',
+    ].join('\n');
+
+    const userPrompt = [
+      `夢境描述：${dream}`,
+      feeling ? `夢中感受：${feeling}` : '',
+      '請分析這個夢境的象徵意義。',
+    ].filter(Boolean).join('\n');
+
+    const rawResult = await callLLM(config, [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ], clientApiKey);
+
+    // 嘗試解析 JSON
+    const jsonMatch = rawResult.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]) as {
+          symbols?: string[];
+          interpretation?: string;
+          fortune?: string;
+          advice?: string;
+        };
+        res.json({
+          symbols: parsed.symbols || [],
+          interpretation: parsed.interpretation || '未能取得完整分析。',
+          fortune: ['吉', '中', '凶'].includes(parsed.fortune || '') ? parsed.fortune : '中',
+          advice: parsed.advice || '建議靜心觀察，記錄夢境細節。',
+          provider: config.provider,
+        });
+        return;
+      } catch { /* fall through to raw text fallback */ }
+    }
+
+    // 無法解析 JSON → 傳回原始文字
+    res.json({
+      symbols: [],
+      interpretation: rawResult,
+      fortune: '中',
+      advice: '建議靜心回顧夢境，注意其中傳達的訊息。',
+      provider: config.provider,
+    });
+  } catch (error) {
+    console.error('Dream API error:', error);
+    res.json({ fallback: true, provider: 'error' });
+  }
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -698,6 +776,7 @@ app.listen(PORT, () => {
   console.log(`Vision:    POST http://localhost:${PORT}/api/vision`);
   console.log(`BaziMatch: POST http://localhost:${PORT}/api/bazi/match`);
   console.log(`Character: POST http://localhost:${PORT}/api/character`);
+  console.log(`Dream:     POST http://localhost:${PORT}/api/dream`);
   console.log('DatePick:  endpoint enabled');
   console.log(`Health:    GET  http://localhost:${PORT}/api/health`);
   console.log(

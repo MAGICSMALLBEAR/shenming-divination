@@ -1,0 +1,139 @@
+diff --git a/src/data/godImages.ts b/src/data/godImages.ts
+--- a/src/data/godImages.ts
++++ b/src/data/godImages.ts
+@@ -200,60 +200,60 @@
+   39: {
+-    card: require('@/assets/images/gods/generated/cards/dongyuedadi-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/dongyuedadi-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/dongyuedadi-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/yanluotianzi-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/yanluotianzi-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/yanluotianzi-closeup.png'),
+   },
+   40: {
+-    card: require('@/assets/images/gods/generated/cards/dongyuedadi-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/dongyuedadi-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/dongyuedadi-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/fengdudadi-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/fengdudadi-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/fengdudadi-closeup.png'),
+   },
+   41: {
+-    card: require('@/assets/images/gods/generated/cards/qitiandasheng-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/qitiandasheng-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/qitiandasheng-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/wuxiandadi-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/wuxiandadi-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/wuxiandadi-closeup.png'),
+   },
+   42: {
+-    card: require('@/assets/images/gods/generated/cards/wangye-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/wangye-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/wangye-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/chifuqiansui-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/chifuqiansui-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/chifuqiansui-closeup.png'),
+   },
+   43: {
+-    card: require('@/assets/images/gods/generated/cards/wangye-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/wangye-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/wangye-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/wunianqiansui-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/wunianqiansui-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/wunianqiansui-closeup.png'),
+   },
+   44: {
+-    card: require('@/assets/images/gods/generated/cards/guanshengdijun-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/guanshengdijun-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/guanshengdijun-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/guanpingtaizi-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/guanpingtaizi-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/guanpingtaizi-closeup.png'),
+   },
+   45: {
+-    card: require('@/assets/images/gods/generated/cards/guanshengdijun-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/guanshengdijun-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/guanshengdijun-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/zhoucangjiangjun-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/zhoucangjiangjun-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/zhoucangjiangjun-closeup.png'),
+   },
+   46: {
+-    card: require('@/assets/images/gods/generated/cards/santaizi-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/santaizi-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/santaizi-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/qianliyan-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/qianliyan-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/qianliyan-closeup.png'),
+   },
+   47: {
+-    card: require('@/assets/images/gods/generated/cards/santaizi-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/santaizi-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/santaizi-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/shunfenger-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/shunfenger-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/shunfenger-closeup.png'),
+   },
+   48: {
+-    card: require('@/assets/images/gods/generated/cards/yuhuangshangdi-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/yuhuangshangdi-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/yuhuangshangdi-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/taiyangxingjun-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/taiyangxingjun-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/taiyangxingjun-closeup.png'),
+   },
+   49: {
+-    card: require('@/assets/images/gods/generated/cards/yuexialaoren-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/yuexialaoren-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/yuexialaoren-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/taiyinniangniang-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/taiyinniangniang-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/taiyinniangniang-closeup.png'),
+   },
+   50: {
+-    card: require('@/assets/images/gods/generated/cards/zhongkui-card.png'),
+-    soft: require('@/assets/images/gods/generated/soft/zhongkui-soft.png'),
+-    closeup: require('@/assets/images/gods/generated/closeups/zhongkui-closeup.png'),
++    card: require('@/assets/images/gods/generated/cards/fazhuzhenjun-card.png'),
++    soft: require('@/assets/images/gods/generated/soft/fazhuzhenjun-soft.png'),
++    closeup: require('@/assets/images/gods/generated/closeups/fazhuzhenjun-closeup.png'),
+   },
+diff --git a/src/data/gods.ts b/src/data/gods.ts
+--- a/src/data/gods.ts
++++ b/src/data/gods.ts
+@@ -637,1 +637,1 @@
+-    image: require('@/assets/images/gods/generated/cards/dongyuedadi-card.png'),
++    image: require('@/assets/images/gods/generated/cards/yanluotianzi-card.png'),
+@@ -654,1 +654,1 @@
+-    image: require('@/assets/images/gods/generated/cards/dongyuedadi-card.png'),
++    image: require('@/assets/images/gods/generated/cards/fengdudadi-card.png'),
+@@ -670,1 +670,1 @@
+-    image: require('@/assets/images/gods/generated/cards/qitiandasheng-card.png'),
++    image: require('@/assets/images/gods/generated/cards/wuxiandadi-card.png'),
+@@ -686,1 +686,1 @@
+-    image: require('@/assets/images/gods/generated/cards/wangye-card.png'),
++    image: require('@/assets/images/gods/generated/cards/chifuqiansui-card.png'),
+@@ -703,1 +703,1 @@
+-    image: require('@/assets/images/gods/generated/cards/wangye-card.png'),
++    image: require('@/assets/images/gods/generated/cards/wunianqiansui-card.png'),
+@@ -719,1 +719,1 @@
+-    image: require('@/assets/images/gods/generated/cards/guanshengdijun-card.png'),
++    image: require('@/assets/images/gods/generated/cards/guanpingtaizi-card.png'),
+@@ -735,1 +735,1 @@
+-    image: require('@/assets/images/gods/generated/cards/guanshengdijun-card.png'),
++    image: require('@/assets/images/gods/generated/cards/zhoucangjiangjun-card.png'),
+@@ -751,1 +751,1 @@
+-    image: require('@/assets/images/gods/generated/cards/santaizi-card.png'),
++    image: require('@/assets/images/gods/generated/cards/qianliyan-card.png'),
+@@ -767,1 +767,1 @@
+-    image: require('@/assets/images/gods/generated/cards/santaizi-card.png'),
++    image: require('@/assets/images/gods/generated/cards/shunfenger-card.png'),
+@@ -783,1 +783,1 @@
+-    image: require('@/assets/images/gods/generated/cards/yuhuangshangdi-card.png'),
++    image: require('@/assets/images/gods/generated/cards/taiyangxingjun-card.png'),
+@@ -800,1 +800,1 @@
+-    image: require('@/assets/images/gods/generated/cards/yuexialaoren-card.png'),
++    image: require('@/assets/images/gods/generated/cards/taiyinniangniang-card.png'),
+@@ -816,1 +816,1 @@
+-    image: require('@/assets/images/gods/generated/cards/zhongkui-card.png'),
++    image: require('@/assets/images/gods/generated/cards/fazhuzhenjun-card.png'),

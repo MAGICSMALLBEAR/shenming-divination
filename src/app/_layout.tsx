@@ -31,6 +31,7 @@ export default function RootLayout() {
       <Stack.Screen name="library" />
       <Stack.Screen name="nameAnalysis" />
       <Stack.Screen name="character" />
+      <Stack.Screen name="dream" />
       <Stack.Screen name="boneWeight" />
       </Stack>
       <OpeningCeremony />

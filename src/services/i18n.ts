@@ -599,6 +599,16 @@ const translations: Record<string, Record<Lang, string>> = {
   characterButtonSubmit: { 'zh-TW': '開始測字', en: 'Start Divination', ja: '測字を始める' },
   characterErrorInvalid: { 'zh-TW': '請輸入一個中文字（例如：福、安、龍）', en: 'Please enter one Chinese character (e.g.: 福, 安, 龍)', ja: '漢字を一文字入力してください（例：福、安、龍）' },
 
+  // ── 解夢 / Dream ──────────────────────────────────────────────
+  dreamPageTitle: { 'zh-TW': '解夢占卜', en: 'Dream Interpretation', ja: '夢占い' },
+  dreamSubtitle: { 'zh-TW': '夢境象徵解析・潛意識訊息解讀', en: 'Symbolic dream analysis · Subconscious message decoding', ja: '夢の象徴解析・潜在意識のメッセージ解読' },
+  dreamLabelDream: { 'zh-TW': '夢境描述', en: 'Dream Description', ja: '夢の内容' },
+  dreamPlaceholderDream: { 'zh-TW': '請描述你的夢境...', en: 'Describe your dream...', ja: 'あなたの夢を説明してください...' },
+  dreamLabelFeeling: { 'zh-TW': '夢中的感受（選填）', en: 'Feeling in the Dream (optional)', ja: '夢の中の感情（任意）' },
+  dreamPlaceholderFeeling: { 'zh-TW': '夢中的感受...', en: 'How did you feel in the dream...', ja: '夢の中の気持ち...' },
+  dreamButtonSubmit: { 'zh-TW': '開始解夢', en: 'Interpret Dream', ja: '夢を解釈する' },
+  dreamErrorEmpty: { 'zh-TW': '請描述你的夢境內容', en: 'Please describe your dream', ja: '夢の内容を入力してください' },
+
   // ── 姓名學 / NameAnalysis ────────────────────────────────────
   nameAnalysisPageTitle: { 'zh-TW': '姓名學', en: 'Name Analysis', ja: '姓名判断' },
   nameAnalysisSubtitle: { 'zh-TW': '三才五格 · 五行分析', en: 'Three Realms · Five Grids · Five Elements', ja: '三才五格・五行分析' },
