@@ -34,6 +34,7 @@ const TOOL_LABEL_I18N: Record<string, string> = {
   '/stats': 'statsPageTitle',
   '/wishes': 'wishesPageTitle',
   '/map': 'mapPageTitle',
+  '/yearlyReview': 'yearlyReviewPageTitle',
 };
 
 const TOOLS: ToolEntry[] = [
@@ -52,6 +53,9 @@ const TOOLS: ToolEntry[] = [
   { route: '/dream', label: '解夢', icon: '🌙', desc: '夢境解析・象徵分析' },
   { route: '/character', label: '測字', icon: '🔤', desc: '以字形斷吉凶・字義解疑惑' },
   { route: '/boneWeight', label: '八字稱骨', icon: '🦴', desc: '袁天罡稱骨歌訣・命重解析' },
+  { route: '/yearlyReview', label: '年度回顧', icon: '📊', desc: '年度求籤回顧・統計分析' },
+  { route: '/fengshui', label: '風水羅盤', icon: '🧭', desc: '八卦方位・五行吉凶・每日吉方' },
+  { route: '/worshipGuide', label: '拜拜指南', icon: '🪔', desc: '參拜禮儀・供品・禁忌' },
   { route: '/disclaimer', label: '免責聲明', icon: '⚖️', desc: 'AI・醫療・法律界線' },
 ];
 

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Animated,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -25,18 +26,25 @@ import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
 import { ListItemSkeleton } from '@/components/Skeleton';
 import type { ThemeColors } from '@/constants/themes';
 import {
+  addToFolder,
   clearHistory,
+  createFolder,
+  deleteFolder,
+  getFolderRecords,
+  getFolders,
   getFavorites,
   getHistory,
   removeFavorite,
+  removeFromFolder,
   updateActionProgress,
   updateNote,
   updateVerification,
   type DivinationRecord,
+  type Folder,
   type VerificationStatus,
 } from '@/services/storage';
 
-type Tab = 'favorites' | 'history';
+type Tab = 'favorites' | 'history' | 'folders';
 type SortMode = 'newest' | 'oldest';
 type VerificationFilter = 'all' | VerificationStatus | 'due';
 type LevelFilter = 'all' | 'good' | 'neutral' | 'caution';
@@ -118,11 +126,30 @@ export default function CollectionScreen() {
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [notesOnly, setNotesOnly] = useState(false);
   const [loading, setLoading] = useState(true);
+  // Folder state
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [folderRecords, setFolderRecords] = useState<DivinationRecord[]>([]);
+  const [folderPickerVisible, setFolderPickerVisible] = useState(false);
+  const [folderTargetRecordId, setFolderTargetRecordId] = useState<string | null>(null);
+  const [newFolderModalVisible, setNewFolderModalVisible] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderColor, setNewFolderColor] = useState('#C9A96E');
+  const [newFolderIcon, setNewFolderIcon] = useState('📁');
+  const [folderToast, setFolderToast] = useState<string | null>(null);
+
+  const FOLDER_COLORS = ['#C9A96E', '#E74C3C', '#3498DB', '#2ECC71', '#9B59B6', '#F39C12', '#1ABC9C', '#E91E63'];
+  const FOLDER_ICONS = ['📁', '💼', '❤️', '💰', '🏥', '📚', '🏠', '✈️', '⭐', '🔥', '💡', '🎯'];
 
   const loadData = useCallback(async () => {
-    const [favoriteRecords, historyRecords] = await Promise.all([getFavorites(), getHistory()]);
+    const [favoriteRecords, historyRecords, folderData] = await Promise.all([
+      getFavorites(),
+      getHistory(),
+      getFolders(),
+    ]);
     setFavorites(favoriteRecords);
     setHistory(historyRecords);
+    setFolders(folderData);
     setLoading(false);
   }, []);
 
@@ -218,6 +245,76 @@ export default function CollectionScreen() {
 
   const handleRemoveFavorite = async (id: string) => {
     await removeFavorite(id);
+    await loadData();
+  };
+
+  // ── Folder handlers ──
+
+  const handleOpenFolder = async (folderId: string) => {
+    setSelectedFolderId(folderId);
+    const records = await getFolderRecords(folderId);
+    setFolderRecords(records);
+  };
+
+  const handleBackFromFolder = () => {
+    setSelectedFolderId(null);
+    setFolderRecords([]);
+  };
+
+  const handleDeleteFolder = (folderId: string, folderName: string) => {
+    Alert.alert('刪除分類', `確定要刪除「${folderName}」嗎？（籤詩記錄不會被刪除）`, [
+      { text: '取消', style: 'cancel' },
+      {
+        text: '刪除',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteFolder(folderId);
+          await loadData();
+        },
+      },
+    ]);
+  };
+
+  const handleAddToFolder = (recordId: string) => {
+    setFolderTargetRecordId(recordId);
+    setFolderPickerVisible(true);
+  };
+
+  const handleSelectFolderForRecord = async (folderId: string) => {
+    if (folderTargetRecordId) {
+      await addToFolder(folderId, folderTargetRecordId);
+      const folder = folders.find((f) => f.id === folderId);
+      setFolderPickerVisible(false);
+      setFolderTargetRecordId(null);
+      setFolderToast(`已加入「${folder?.name ?? ''}」`);
+      setTimeout(() => setFolderToast(null), 2000);
+      await loadData();
+    }
+  };
+
+  const handleCreateAndAddFolder = async () => {
+    if (!newFolderName.trim()) return;
+    const folder = await createFolder(newFolderName.trim(), newFolderColor, newFolderIcon);
+    setNewFolderModalVisible(false);
+    setNewFolderName('');
+    setNewFolderColor('#C9A96E');
+    setNewFolderIcon('📁');
+    if (folderTargetRecordId) {
+      await addToFolder(folder.id, folderTargetRecordId);
+      setFolderPickerVisible(false);
+      setFolderTargetRecordId(null);
+      setFolderToast(`已加入「${folder.name}」`);
+      setTimeout(() => setFolderToast(null), 2000);
+    }
+    await loadData();
+  };
+
+  const handleRemoveFromFolder = async (folderId: string, recordId: string) => {
+    await removeFromFolder(folderId, recordId);
+    if (selectedFolderId === folderId) {
+      const records = await getFolderRecords(folderId);
+      setFolderRecords(records);
+    }
     await loadData();
   };
 
@@ -500,6 +597,13 @@ export default function CollectionScreen() {
           <Text style={styles.removeBtnText}>{t('collectionRemoveFavorite')}</Text>
         </TouchableOpacity>
       ) : null}
+
+      <TouchableOpacity
+        style={styles.folderAddBtn}
+        onPress={() => handleAddToFolder(record.id)}
+      >
+        <Text style={styles.folderAddBtnText}>📁 加入分類</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -531,6 +635,14 @@ export default function CollectionScreen() {
               {t('collectionTabHistory', { count: history.length })}
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'folders' && styles.tabActive]}
+            onPress={() => setActiveTab('folders')}
+          >
+            <Text style={[styles.tabText, activeTab === 'folders' && styles.tabTextActive]}>
+              📁 分類 ({folders.length})
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.summaryRow}>
@@ -548,7 +660,7 @@ export default function CollectionScreen() {
           </View>
         </View>
 
-        {filteredStats.due > 0 ? (
+        {filteredStats.due > 0 && activeTab !== 'folders' ? (
           <TouchableOpacity
             style={styles.reviewCenterBtn}
             onPress={() => {
@@ -560,6 +672,109 @@ export default function CollectionScreen() {
             <Text style={styles.reviewCenterText}>{t('collectionViewDue', { count: filteredStats.due })}</Text>
           </TouchableOpacity>
         ) : null}
+
+        {/* ── Folders Tab / Detail View ── */}
+        {activeTab === 'folders' && !selectedFolderId ? (
+          <View>
+            <TouchableOpacity
+              style={styles.newFolderMainBtn}
+              onPress={() => {
+                setFolderTargetRecordId(null);
+                setNewFolderModalVisible(true);
+              }}
+            >
+              <Text style={styles.newFolderMainBtnText}>＋ 新增分類</Text>
+            </TouchableOpacity>
+
+            {folders.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>📁</Text>
+                <Text style={styles.emptyText}>尚無收藏分類</Text>
+                <Text style={styles.emptyHint}>建立分類來整理你的籤詩收藏</Text>
+              </View>
+            ) : (
+              <View style={styles.folderGrid}>
+                {folders.map((folder) => (
+                  <TouchableOpacity
+                    key={folder.id}
+                    style={[styles.folderCard, { borderColor: folder.color + '60' }]}
+                    onPress={() => handleOpenFolder(folder.id)}
+                    onLongPress={() => handleDeleteFolder(folder.id, folder.name)}
+                  >
+                    <View style={[styles.folderIconWrap, { backgroundColor: folder.color + '20' }]}>
+                      <Text style={styles.folderIconText}>{folder.icon}</Text>
+                    </View>
+                    <Text style={styles.folderCardName} numberOfLines={1}>{folder.name}</Text>
+                    <Text style={styles.folderCardCount}>{folder.recordIds.length} 筆記錄</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.folderBackToMain}
+              onPress={() => setActiveTab('favorites')}
+            >
+              <Text style={styles.folderBackToMainText}>← 返回籤詩收藏</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {/* ── Folder Detail ── */}
+        {activeTab === 'folders' && selectedFolderId ? (
+          <View>
+            {(() => {
+              const currentFolder = folders.find((f) => f.id === selectedFolderId);
+              return (
+                <>
+                  <View style={styles.folderDetailHeader}>
+                    <TouchableOpacity style={styles.folderDetailBack} onPress={handleBackFromFolder}>
+                      <Text style={styles.folderDetailBackText}>← 返回分類</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.folderDetailTitle}>
+                      {currentFolder?.icon ?? '📁'} {currentFolder?.name ?? ''}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.folderDetailDelete}
+                      onPress={() => {
+                        if (currentFolder) {
+                          handleDeleteFolder(currentFolder.id, currentFolder.name);
+                          handleBackFromFolder();
+                        }
+                      }}
+                    >
+                      <Text style={styles.folderDetailDeleteText}>刪除</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {folderRecords.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <Text style={styles.emptyIcon}>📭</Text>
+                      <Text style={styles.emptyText}>此分類尚無記錄</Text>
+                      <Text style={styles.emptyHint}>將籤詩加入此分類即可在這裡查看</Text>
+                    </View>
+                  ) : (
+                    folderRecords.map((record, i) => (
+                      <AnimatedRecordItem key={record.id} delay={recordDelays[i]?.delay ?? 0}>
+                        {renderRecord(record, false)}
+                        <TouchableOpacity
+                          style={[styles.folderRemoveBtn, { marginBottom: TempleSpacing.sm }]}
+                          onPress={() => handleRemoveFromFolder(selectedFolderId!, record.id)}
+                        >
+                          <Text style={styles.folderRemoveBtnText}>從此分類移除</Text>
+                        </TouchableOpacity>
+                      </AnimatedRecordItem>
+                    ))
+                  )}
+                </>
+              );
+            })()}
+          </View>
+        ) : null}
+
+        {/* ── Original tabs content (non-folder) ── */}
+        {activeTab !== 'folders' ? (
+        <>
         <View style={styles.searchBar}>
           <Text style={styles.searchIcon}>🔎</Text>
           <TextInput
@@ -782,7 +997,134 @@ export default function CollectionScreen() {
 
           <View style={{ height: 60 }} />
         </ScrollView>
+        </>
+        ) : null}
       </View>
+
+      {/* ── Folder Picker Modal ── */}
+      <Modal
+        visible={folderPickerVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFolderPickerVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>加入收藏分類</Text>
+              <TouchableOpacity onPress={() => setFolderPickerVisible(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 300 }}>
+              {folders.length === 0 ? (
+                <View style={{ padding: 20, alignItems: 'center' }}>
+                  <Text style={{ color: theme.textMuted, marginBottom: 12 }}>尚無分類，請先新增</Text>
+                </View>
+              ) : (
+                folders.map((folder) => (
+                  <TouchableOpacity
+                    key={folder.id}
+                    style={styles.folderPickerRow}
+                    onPress={() => handleSelectFolderForRecord(folder.id)}
+                  >
+                    <View style={[styles.folderPickerIcon, { backgroundColor: folder.color + '20' }]}>
+                      <Text>{folder.icon}</Text>
+                    </View>
+                    <Text style={styles.folderPickerName}>{folder.name}</Text>
+                    <Text style={styles.folderPickerCount}>{folder.recordIds.length} 筆</Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.newFolderInPickerBtn}
+              onPress={() => {
+                setFolderPickerVisible(false);
+                setTimeout(() => setNewFolderModalVisible(true), 300);
+              }}
+            >
+              <Text style={styles.newFolderInPickerText}>＋ 新增分類</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── New Folder Modal ── */}
+      <Modal
+        visible={newFolderModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setNewFolderModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>新增收藏分類</Text>
+              <TouchableOpacity onPress={() => setNewFolderModalVisible(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.formLabel}>分類名稱</Text>
+            <TextInput
+              style={styles.formInput}
+              value={newFolderName}
+              onChangeText={setNewFolderName}
+              placeholder="例如：重要籤詩、感情類"
+              placeholderTextColor={theme.textMuted}
+            />
+
+            <Text style={styles.formLabel}>選擇顏色</Text>
+            <View style={styles.colorRow}>
+              {FOLDER_COLORS.map((color) => (
+                <TouchableOpacity
+                  key={color}
+                  style={[
+                    styles.colorDot,
+                    { backgroundColor: color },
+                    newFolderColor === color && styles.colorDotSelected,
+                  ]}
+                  onPress={() => setNewFolderColor(color)}
+                />
+              ))}
+            </View>
+
+            <Text style={styles.formLabel}>選擇圖示</Text>
+            <View style={styles.iconRow}>
+              {FOLDER_ICONS.map((icon) => (
+                <TouchableOpacity
+                  key={icon}
+                  style={[
+                    styles.iconChip,
+                    newFolderIcon === icon && { backgroundColor: newFolderColor + '30', borderColor: newFolderColor },
+                  ]}
+                  onPress={() => setNewFolderIcon(icon)}
+                >
+                  <Text style={styles.iconChipText}>{icon}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.createFolderConfirmBtn, { backgroundColor: newFolderName.trim() ? newFolderColor : theme.goldDark + '40' }]}
+              onPress={handleCreateAndAddFolder}
+              disabled={!newFolderName.trim()}
+            >
+              <Text style={styles.createFolderConfirmText}>建立分類</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Toast ── */}
+      {folderToast ? (
+        <View style={styles.toast}>
+          <Text style={styles.toastText}>{folderToast}</Text>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -1286,6 +1628,274 @@ function createStyles(theme: ThemeColors) {
   clearBtnText: {
     fontSize: TempleFonts.small,
     color: theme.danger,
+  },
+  // ── Folder styles ──
+  folderAddBtn: {
+    marginTop: TempleSpacing.sm,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '30',
+    backgroundColor: theme.bgDark + '20',
+  },
+  folderAddBtnText: {
+    fontSize: 12,
+    color: theme.textMuted,
+  },
+  folderRemoveBtn: {
+    marginTop: TempleSpacing.sm,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.warning + '30',
+  },
+  folderRemoveBtnText: {
+    fontSize: 12,
+    color: theme.warning,
+  },
+  newFolderMainBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: theme.goldDark + '24',
+    borderWidth: 1,
+    borderColor: theme.gold + '40',
+    alignItems: 'center',
+    marginBottom: TempleSpacing.md,
+  },
+  newFolderMainBtnText: {
+    fontSize: TempleFonts.body,
+    color: theme.goldLight,
+    fontWeight: '700',
+  },
+  folderGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  folderCard: {
+    width: '48%',
+    backgroundColor: theme.bgCard,
+    borderRadius: 14,
+    padding: TempleSpacing.md,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  folderIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  folderIconText: {
+    fontSize: 22,
+  },
+  folderCardName: {
+    fontSize: TempleFonts.body,
+    fontWeight: '700',
+    color: theme.goldLight,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  folderCardCount: {
+    fontSize: 11,
+    color: theme.textMuted,
+  },
+  folderBackToMain: {
+    marginTop: TempleSpacing.lg,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  folderBackToMainText: {
+    fontSize: TempleFonts.small,
+    color: theme.textMuted,
+  },
+  folderDetailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: TempleSpacing.md,
+  },
+  folderDetailBack: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: theme.bgCard,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '30',
+  },
+  folderDetailBackText: {
+    fontSize: TempleFonts.small,
+    color: theme.goldLight,
+  },
+  folderDetailTitle: {
+    fontSize: TempleFonts.heading,
+    fontWeight: '800',
+    color: theme.goldLight,
+  },
+  folderDetailDelete: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: theme.danger + '20',
+    borderWidth: 1,
+    borderColor: theme.danger + '40',
+  },
+  folderDetailDeleteText: {
+    fontSize: TempleFonts.small,
+    color: theme.danger,
+    fontWeight: '600',
+  },
+  // ── Modal styles ──
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: theme.bgDark,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: TempleSpacing.lg,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: TempleSpacing.md,
+  },
+  modalTitle: {
+    fontSize: TempleFonts.heading,
+    fontWeight: '800',
+    color: theme.goldLight,
+  },
+  modalClose: {
+    fontSize: 20,
+    color: theme.textMuted,
+    padding: 4,
+  },
+  folderPickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: theme.bgCard,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '15',
+  },
+  folderPickerIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  folderPickerName: {
+    flex: 1,
+    fontSize: TempleFonts.body,
+    color: theme.textLight,
+    fontWeight: '600',
+  },
+  folderPickerCount: {
+    fontSize: TempleFonts.caption,
+    color: theme.textMuted,
+  },
+  newFolderInPickerBtn: {
+    marginTop: TempleSpacing.sm,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.gold + '40',
+    borderStyle: 'dashed',
+  },
+  newFolderInPickerText: {
+    fontSize: TempleFonts.body,
+    color: theme.goldLight,
+    fontWeight: '600',
+  },
+  formLabel: {
+    fontSize: TempleFonts.small,
+    color: theme.textMuted,
+    marginBottom: 8,
+    marginTop: 12,
+    fontWeight: '600',
+  },
+  formInput: {
+    backgroundColor: theme.bgCard,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: TempleFonts.body,
+    color: theme.textLight,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '30',
+  },
+  colorRow: {
+    flexDirection: 'row',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  colorDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  colorDotSelected: {
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  iconRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  iconChip: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.goldDark + '20',
+    backgroundColor: theme.bgCard,
+  },
+  iconChipText: {
+    fontSize: 20,
+  },
+  createFolderConfirmBtn: {
+    marginTop: TempleSpacing.lg,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  createFolderConfirmText: {
+    fontSize: TempleFonts.body,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  toast: {
+    position: 'absolute',
+    bottom: 40,
+    left: 20,
+    right: 20,
+    backgroundColor: theme.goldDark,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    alignItems: 'center',
+  },
+  toastText: {
+    color: '#FFFFFF',
+    fontSize: TempleFonts.small,
+    fontWeight: '600',
   },
   });
 }

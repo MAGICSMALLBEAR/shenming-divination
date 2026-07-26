@@ -19,6 +19,7 @@ export const STORAGE_KEYS = {
   SETTINGS: '@divination_settings',
   LAST_POEM: '@divination_last_poem',
   FAMILY_MEMBERS: '@divination_family_members',
+  FOLDERS: '@divination_folders',
 } as const;
 
 export interface FamilyMember {
@@ -87,6 +88,15 @@ export interface VerificationFollowUpSummary {
   matchedCount: number;
   reviewedCount: number;
   totalCount: number;
+}
+
+export interface Folder {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+  recordIds: string[];
+  createdAt: number;
 }
 
 let memoryStore: Record<string, string> = {};
@@ -207,6 +217,75 @@ export async function getVerificationFollowUps(): Promise<VerificationFollowUpSu
     totalCount: history.length,
   };
 }
+
+// ── Folder / 收藏分類 ──
+
+export async function getFolders(): Promise<Folder[]> {
+  const data = await getItem(STORAGE_KEYS.FOLDERS);
+  return data ? JSON.parse(data) : [];
+}
+
+async function setFolders(folders: Folder[]): Promise<void> {
+  await setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(folders));
+}
+
+export async function createFolder(
+  name: string,
+  color: string,
+  icon: string
+): Promise<Folder> {
+  const folders = await getFolders();
+  const folder: Folder = {
+    id: `folder_${Date.now()}`,
+    name: name.trim(),
+    color,
+    icon,
+    recordIds: [],
+    createdAt: Date.now(),
+  };
+  await setFolders([...folders, folder]);
+  return folder;
+}
+
+export async function addToFolder(folderId: string, recordId: string): Promise<void> {
+  const folders = await getFolders();
+  const updated = folders.map((folder) => {
+    if (folder.id === folderId && !folder.recordIds.includes(recordId)) {
+      return { ...folder, recordIds: [...folder.recordIds, recordId] };
+    }
+    return folder;
+  });
+  await setFolders(updated);
+}
+
+export async function removeFromFolder(folderId: string, recordId: string): Promise<void> {
+  const folders = await getFolders();
+  const updated = folders.map((folder) => {
+    if (folder.id === folderId) {
+      return { ...folder, recordIds: folder.recordIds.filter((id) => id !== recordId) };
+    }
+    return folder;
+  });
+  await setFolders(updated);
+}
+
+export async function deleteFolder(folderId: string): Promise<void> {
+  const folders = await getFolders();
+  await setFolders(folders.filter((folder) => folder.id !== folderId));
+}
+
+export async function getFolderRecords(folderId: string): Promise<DivinationRecord[]> {
+  const folders = await getFolders();
+  const folder = folders.find((f) => f.id === folderId);
+  if (!folder || folder.recordIds.length === 0) return [];
+
+  const [history, favorites] = await Promise.all([getHistory(), getFavorites()]);
+  const allRecords = [...history, ...favorites];
+  const idSet = new Set(folder.recordIds);
+  return allRecords.filter((record) => idSet.has(record.id));
+}
+
+// ── end Folder ──
 
 export async function setHistory(records: DivinationRecord[]): Promise<void> {
   await setItem(STORAGE_KEYS.HISTORY, JSON.stringify(normalizeRecords(records)));
