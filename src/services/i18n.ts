@@ -246,7 +246,7 @@ const translations: Record<string, Record<Lang, string>> = {
   settingsDailyNotif: { 'zh-TW': '每日籤詩提醒', en: 'Daily Poem Reminder', ja: '毎日のおみくじリマインダー' },
   settingsDailyNotifDesc: { 'zh-TW': '每天 7:30 推送今日籤詩與提醒。', en: 'Push daily poem at 7:30 AM.', ja: '毎朝7:30に今日のおみくじとお知らせを通知します。' },
   settingsBirthdayNotif: { 'zh-TW': '神明聖誕提醒', en: 'Deity Birthday Reminder', ja: '神様の誕生日リマインダー' },
-  settingsBirthdayNotifDesc: { 'zh-TW': '在神明聖誕前一天晚間提醒你。', en: 'Remind you the evening before a deity\'s birthday.', ja: '神様の誕生日の前夜にお知らせします。' },
+  settingsBirthdayNotifDesc: { 'zh-TW': '可選神明、提前天數與時段的跨年份提醒。', en: 'Choose deities, lead time, and time of day for yearly reminders.', ja: '神様・通知日数・時間帯を選べる年間リマインダーです。' },
   settingsFortuneWidget: { 'zh-TW': '每日運勢看板（Widget 替代）', en: 'Daily Fortune Panel (Widget Alt.)', ja: '今日の運勢パネル（ウィジェット代替）' },
   settingsFortuneWidgetDesc: { 'zh-TW': '每天 08:00 推送節氣、神諭與宜忌，在通知中心提供類 Widget 體驗。', en: 'Push solar term, oracle, and dos/don\'ts at 8 AM — a widget-like notification.', ja: '毎朝8時に節気・神託・宜忌を通知し、ウィジェット風の体験を提供します。' },
   settingsAmbientSound: { 'zh-TW': '廟宇環境音效', en: 'Temple Ambient Sound', ja: '寺院の環境音' },

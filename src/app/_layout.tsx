@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { router, Stack } from 'expo-router';
 import { initThemeFromSettings } from '@/services/themeStore';
 import { initSentry } from '@/services/sentry';
 import { OpeningCeremony } from '@/components/OpeningCeremony';
@@ -8,6 +10,27 @@ export default function RootLayout() {
   useEffect(() => {
     initThemeFromSettings();
     initSentry();
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return undefined;
+
+    const openNotificationTarget = (notification: Notifications.Notification) => {
+      const url = notification.request.content.data?.url;
+      if (typeof url === 'string' && url.startsWith('/')) {
+        router.push(url as never);
+      }
+    };
+
+    const initialResponse = Notifications.getLastNotificationResponse();
+    if (initialResponse?.notification) {
+      openNotificationTarget(initialResponse.notification);
+    }
+
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      openNotificationTarget(response.notification);
+    });
+    return () => subscription.remove();
   }, []);
 
   return (
@@ -36,6 +59,7 @@ export default function RootLayout() {
       <Stack.Screen name="yearlyReview" />
       <Stack.Screen name="fengshui" />
       <Stack.Screen name="worshipGuide" />
+      <Stack.Screen name={'deity-calendar/[id]'} />
       </Stack>
       <OpeningCeremony />
     </>

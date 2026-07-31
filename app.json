@@ -41,7 +41,15 @@
       ],
       "expo-audio",
       "expo-asset",
-      "@sentry/react-native"
+      "@sentry/react-native",
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "允許神明占卜讀取行事曆，以選擇可寫入的行事曆。",
+          "writeOnlyCalendarPermission": "允許神明占卜將神明紀念日加入你的行事曆。"
+        }
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

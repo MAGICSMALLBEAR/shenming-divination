@@ -59,12 +59,43 @@ import {
 import { THEME_LABELS, type ThemeMode, type ThemeColors } from '@/constants/themes';
 import { onAuthChange, signInAnon, signOutUser, type AuthState } from '@/services/authService';
 import { getCloudBackupMeta, restoreCloudBackupToLocal, uploadLocalBackupToCloud, type CloudBackupMeta } from '@/services/syncService';
+import { DEITY_OBSERVANCES } from '@/services/lunarDeityCalendar';
+import {
+  normalizeDeityReminderPreferences,
+  type DeityReminderDaysBefore,
+  type DeityReminderHour,
+  type DeityReminderPreferences,
+} from '@/services/deityReminderPreferences';
 
 const LANGUAGES: { key: Lang; label: string }[] = [
   { key: 'zh-TW', label: '繁體中文' },
   { key: 'en', label: 'English' },
   { key: 'ja', label: '日本語' },
 ];
+
+const REMINDER_GODS = [...new Set(DEITY_OBSERVANCES.map((item) => item.godId))]
+  .map((godId) => gods.find((god) => god.id === godId))
+  .filter((god): god is NonNullable<typeof god> => Boolean(god));
+const REMINDER_DAY_OPTIONS: { value: DeityReminderDaysBefore; label: string }[] = [
+  { value: 0, label: '當天' },
+  { value: 1, label: '提前 1 天' },
+  { value: 3, label: '提前 3 天' },
+  { value: 7, label: '提前 7 天' },
+];
+const REMINDER_HOUR_OPTIONS: { value: DeityReminderHour; label: string }[] = [
+  { value: 8, label: '上午 8 點' },
+  { value: 12, label: '中午 12 點' },
+  { value: 20, label: '晚上 8 點' },
+];
+
+function getReminderPreferences(settings: AppSettings): DeityReminderPreferences {
+  return normalizeDeityReminderPreferences({
+    mode: settings.birthdayReminderMode,
+    godIds: settings.birthdayReminderGodIds,
+    daysBefore: settings.birthdayReminderDaysBefore,
+    hour: settings.birthdayReminderHour,
+  });
+}
 
 export default function SettingsScreen() {
   const { lang, t } = useI18n();
@@ -81,6 +112,10 @@ export default function SettingsScreen() {
     drawAnimationStyleKey: 'bronze',
     lowMotionMode: false,
     language: lang,
+    birthdayReminderMode: 'all',
+    birthdayReminderGodIds: [],
+    birthdayReminderDaysBefore: 1,
+    birthdayReminderHour: 20,
   });
   const [saved, setSaved] = useState(false);
   const [backupText, setBackupText] = useState('');
@@ -254,7 +289,9 @@ export default function SettingsScreen() {
     const nextValue = !settings.birthdayNotification;
 
     if (!nextValue) {
-      setSettings((prev) => ({ ...prev, birthdayNotification: false }));
+      const nextSettings = { ...settings, birthdayNotification: false };
+      setSettings(nextSettings);
+      await saveSettings(nextSettings);
       await cancelGodBirthdayNotifications();
       return;
     }
@@ -266,9 +303,32 @@ export default function SettingsScreen() {
       return;
     }
 
-    await scheduleGodBirthdayNotifications();
-    setSettings((prev) => ({ ...prev, birthdayNotification: true }));
-    Alert.alert('提醒已開啟', '會在未來 60 天內的聖誕日前一天提醒你。');
+    const nextSettings = { ...settings, birthdayNotification: true };
+    setSettings(nextSettings);
+    await saveSettings(nextSettings);
+    await scheduleGodBirthdayNotifications(getReminderPreferences(nextSettings));
+    Alert.alert('提醒已開啟', '已依你的神明範圍、提前天數與時段完成跨年份排程。');
+  };
+
+  const updateBirthdayReminderPreferences = async (
+    patch: Partial<Pick<
+      AppSettings,
+      'birthdayReminderMode' | 'birthdayReminderGodIds' | 'birthdayReminderDaysBefore' | 'birthdayReminderHour'
+    >>,
+  ) => {
+    const nextSettings = { ...settings, ...patch };
+    setSettings(nextSettings);
+    await saveSettings(nextSettings);
+    if (nextSettings.birthdayNotification) {
+      await scheduleGodBirthdayNotifications(getReminderPreferences(nextSettings));
+    }
+  };
+
+  const toggleBirthdayReminderGod = async (godId: number) => {
+    const selected = new Set(getReminderPreferences(settings).godIds);
+    if (selected.has(godId)) selected.delete(godId);
+    else selected.add(godId);
+    await updateBirthdayReminderPreferences({ birthdayReminderGodIds: [...selected] });
   };
 
   const handleToggleFortuneWidget = async () => {
@@ -290,6 +350,8 @@ export default function SettingsScreen() {
     setSettings((prev) => ({ ...prev, fortuneWidget: true } as any));
     Alert.alert('每日運勢通知已開啟', '每天 08:00 會推送今日節氣、神諭與宜忌，讓通知中心成為你的運勢看板。');
   };
+
+  const birthdayReminderPreferences = getReminderPreferences(settings);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -603,6 +665,94 @@ export default function SettingsScreen() {
             value={Boolean(settings.birthdayNotification)}
             onToggle={handleToggleBirthdayNotification}
           />
+
+          {settings.birthdayNotification ? (
+            <View style={styles.reminderPanel} accessibilityLabel={'神明紀念日提醒偏好'}>
+              <Text style={styles.reminderLabel}>提醒範圍</Text>
+              <View style={styles.reminderOptionRow}>
+                {([
+                  { value: 'all' as const, label: '全部神明' },
+                  { value: 'selected' as const, label: '只提醒關注神明' },
+                ]).map((option) => {
+                  const active = birthdayReminderPreferences.mode === option.value;
+                  return (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[styles.reminderChoice, active && styles.reminderChoiceActive]}
+                      onPress={() => updateBirthdayReminderPreferences({ birthdayReminderMode: option.value })}
+                      accessibilityRole={'button'}
+                      accessibilityState={{ selected: active }}
+                    >
+                      <Text style={[styles.reminderChoiceText, active && styles.reminderChoiceTextActive]}>{option.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {birthdayReminderPreferences.mode === 'selected' ? (
+                <>
+                  <Text style={styles.reminderHint}>
+                    已關注 {birthdayReminderPreferences.godIds.length} 位神明
+                    {birthdayReminderPreferences.godIds.length === 0 ? '；尚未選擇，因此不會排程提醒。' : ''}
+                  </Text>
+                  <View style={styles.reminderGodGrid}>
+                    {REMINDER_GODS.map((god) => {
+                      const selected = birthdayReminderPreferences.godIds.includes(god.id);
+                      return (
+                        <TouchableOpacity
+                          key={god.id}
+                          style={[styles.reminderGodChip, selected && styles.reminderGodChipActive]}
+                          onPress={() => toggleBirthdayReminderGod(god.id)}
+                          accessibilityRole={'button'}
+                          accessibilityLabel={`${selected ? '取消關注' : '關注'}${god.name}`}
+                          accessibilityState={{ selected }}
+                        >
+                          <Text style={[styles.reminderGodText, selected && styles.reminderGodTextActive]}>{god.name}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </>
+              ) : null}
+
+              <Text style={styles.reminderLabel}>提前多久</Text>
+              <View style={styles.reminderOptionRow}>
+                {REMINDER_DAY_OPTIONS.map((option) => {
+                  const active = birthdayReminderPreferences.daysBefore === option.value;
+                  return (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[styles.reminderChoice, active && styles.reminderChoiceActive]}
+                      onPress={() => updateBirthdayReminderPreferences({ birthdayReminderDaysBefore: option.value })}
+                      accessibilityRole={'button'}
+                      accessibilityState={{ selected: active }}
+                    >
+                      <Text style={[styles.reminderChoiceText, active && styles.reminderChoiceTextActive]}>{option.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.reminderLabel}>提醒時段</Text>
+              <View style={styles.reminderOptionRow}>
+                {REMINDER_HOUR_OPTIONS.map((option) => {
+                  const active = birthdayReminderPreferences.hour === option.value;
+                  return (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[styles.reminderChoice, active && styles.reminderChoiceActive]}
+                      onPress={() => updateBirthdayReminderPreferences({ birthdayReminderHour: option.value })}
+                      accessibilityRole={'button'}
+                      accessibilityState={{ selected: active }}
+                    >
+                      <Text style={[styles.reminderChoiceText, active && styles.reminderChoiceTextActive]}>{option.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <Text style={styles.reminderHint}>變更後會立即取消舊排程並依新設定重新建立。</Text>
+            </View>
+          ) : null}
 
           <ToggleRow
             label={t('settingsFortuneWidget')}
@@ -1141,6 +1291,38 @@ function createStyles(theme: ThemeColors) {
     backgroundColor: theme.textMuted,
   },
   toggleKnobOn: { backgroundColor: theme.goldLight, alignSelf: 'flex-end' },
+  reminderPanel: {
+    backgroundColor: theme.bgCard,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '35',
+    padding: TempleSpacing.sm,
+    marginBottom: TempleSpacing.sm,
+  },
+  reminderLabel: { color: theme.gold, fontSize: 12, fontWeight: '800', marginTop: 8, marginBottom: 6 },
+  reminderOptionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  reminderChoice: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '35',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  reminderChoiceActive: { borderColor: theme.gold, backgroundColor: theme.goldDark + '25' },
+  reminderChoiceText: { color: theme.textMuted, fontSize: 11, fontWeight: '700' },
+  reminderChoiceTextActive: { color: theme.goldLight },
+  reminderHint: { color: theme.textMuted, fontSize: 10, lineHeight: 16, marginTop: 7 },
+  reminderGodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 7 },
+  reminderGodChip: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '28',
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  reminderGodChipActive: { borderColor: theme.gold, backgroundColor: theme.goldDark + '22' },
+  reminderGodText: { color: theme.textMuted, fontSize: 10 },
+  reminderGodTextActive: { color: theme.goldLight, fontWeight: '800' },
   lunarCard: {
     backgroundColor: theme.bgCard,
     borderRadius: 12,
@@ -1304,6 +1486,3 @@ function createStyles(theme: ThemeColors) {
   privacyLink: { fontSize: 12, color: theme.gold, fontWeight: '600', marginTop: 10 },
   });
 }
-
-
-

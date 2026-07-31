@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react-native';
 
-import { IncenseRitual } from '@/components/IncenseRitual';
+import { IncenseRitual, isIncenseOverCenser } from '@/components/IncenseRitual';
 import { Jiaobei } from '@/components/Jiaobei';
 import { MeditationScreen } from '@/components/MeditationScreen';
 import { RitualStylePicker } from '@/components/RitualStylePicker';
@@ -51,13 +51,29 @@ describe('ritual interactions', () => {
       />
     );
 
+    await act(async () => {
+      fireEvent(view.getByTestId('incense-scene'), 'layout', {
+        nativeEvent: { layout: { width: 360, height: 430 } },
+      });
+    });
+
     await fireEvent.press(view.getByText('\u9ede\u71c3\u9999\u706b'));
     expect(view.getByText('\u9999\u706b\u9ede\u71c3\u4e2d\u2026')).toBeTruthy();
 
     await act(async () => {
       jest.advanceTimersByTime(400);
     });
-    expect(view.getByText('\u5c07\u9999\u5949\u5165\u9999\u7210')).toBeTruthy();
+    const offerButton = view.getByText('\u5c07\u9999\u5949\u5165\u9999\u7210');
+    expect(offerButton).toBeTruthy();
+    await fireEvent.press(offerButton);
+    expect(view.queryByText('\u5c07\u9999\u5949\u5165\u9999\u7210')).toBeNull();
+  });
+
+  it('detects the incense over the censer in scene coordinates', () => {
+    const scene = { width: 360, height: 430 };
+
+    expect(isIncenseOverCenser(scene, { x: 0, y: 0 }, -10)).toBe(false);
+    expect(isIncenseOverCenser(scene, { x: -145, y: -109 }, -10)).toBe(true);
   });
 
   it('starts a jiaobei toss from the primary action', async () => {

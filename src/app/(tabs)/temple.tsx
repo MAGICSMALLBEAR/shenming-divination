@@ -33,9 +33,9 @@ import {
   type TempleRecord,
 } from '@/services/templeService';
 import {
-  getTodayRecommendedGod,
-  getUpcomingGodBirthdays,
-} from '@/data/lunarCalendar';
+  getTodayRecommendedDeity,
+  getUpcomingDeityObservances,
+} from '@/services/lunarDeityCalendar';
 import { speakGodBlessing, stopSpeaking, getBlessingText } from '@/services/speech';
 import { PhotoDivination } from '@/components/PhotoDivination';
 import { PremiumPaywall } from '@/components/PremiumPaywall';
@@ -90,8 +90,8 @@ export default function TempleScreen() {
   useEffect(() => {
     isPremiumActive().then(setPremiumActive);
   }, []);
-  const todayRec = useMemo(() => getTodayRecommendedGod(), []);
-  const upcomingBirthdays = useMemo(() => getUpcomingGodBirthdays(60), []);
+  const todayRec = useMemo(() => getTodayRecommendedDeity(), []);
+  const upcomingBirthdays = useMemo(() => getUpcomingDeityObservances(60), []);
 
   const selectedGod = useMemo(
     () => gods.find((god) => god.id === selectedGodId) ?? gods[0],

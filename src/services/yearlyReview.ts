@@ -1,5 +1,5 @@
 import { getHistory, type DivinationRecord } from '@/services/storage';
-import { getWishes, type Wish } from '@/services/wishTracker';
+import { getWishes } from '@/services/wishTracker';
 
 export interface YearlyReview {
   year: number;

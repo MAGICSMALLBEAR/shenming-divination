@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -10,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -25,8 +27,18 @@ import { getTodayFullLunarInfo, getCurrentShiChen } from '@/data/lunarFullCalend
 import { getTodayFestival, getUpcomingFestivals } from '@/data/festivals';
 import { getYearFortune, getMonthFortune, type YearFortune } from '@/services/yearFortune';
 import type { BaziInfo } from '@/services/bazi';
+import { DailyDeityCard } from '@/components/home/DailyDeityCard';
+import { DeityCalendarExplorer } from '@/components/home/DeityCalendarExplorer';
+import { getDailyDeityOracle } from '@/services/dailyDeityOracle';
+import { exportDeityCalendarYear } from '@/services/deityCalendarExport';
+import {
+  saveFollowedDeityIds,
+  toggleFollowedDeityId,
+} from '@/services/deityCalendarFollowing';
+import { scheduleGodBirthdayNotifications } from '@/services/notifications';
 
 export default function DailyScreen() {
+  const router = useRouter();
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
   const { t } = useI18n();
@@ -47,6 +59,7 @@ export default function DailyScreen() {
   const [moodEmoji, setMoodEmoji] = useState('');
   const [moodNote, setMoodNote] = useState('');
   const [moodSaved, setMoodSaved] = useState(false);
+  const [followedGodIds, setFollowedGodIds] = useState<number[]>([]);
 
   const todayKey = useMemo(() => `@mood_${new Date().toISOString().slice(0, 10)}`, []);
 
@@ -72,6 +85,7 @@ export default function DailyScreen() {
 
   useEffect(() => {
     getSettings().then((settings) => {
+      setFollowedGodIds(settings?.birthdayReminderGodIds ?? []);
       if (!settings?.birthDate) return;
       const year = parseBirthYear(settings.birthDate);
       if (!year) return;
@@ -84,8 +98,29 @@ export default function DailyScreen() {
     });
   }, []);
 
+  const handleToggleFollowedGod = async (godId: number) => {
+    const next = toggleFollowedDeityId(followedGodIds, godId);
+    setFollowedGodIds(next);
+    try {
+      await saveFollowedDeityIds(next);
+    } catch {
+      setFollowedGodIds(followedGodIds);
+      Alert.alert('無法儲存關注', '請稍後再試一次。');
+      return;
+    }
+    const stored = await getSettings();
+    if (stored?.birthdayNotification) {
+      try {
+        await scheduleGodBirthdayNotifications();
+      } catch {
+        Alert.alert('關注已儲存', '提醒排程暫時無法更新，可到設定頁重新開啟神明紀念日提醒。');
+      }
+    }
+  };
+
   const todayPoem = useMemo(() => getDailyPoem(), []);
   const weeklyPoems = useMemo(() => getWeeklyPoems(), []);
+  const dailyDeityOracle = useMemo(() => getDailyDeityOracle(), []);
 
   const currentShiChen = lunarInfo ? getCurrentShiChen(lunarInfo.shiChen) : null;
 
@@ -107,6 +142,44 @@ export default function DailyScreen() {
         ]}
       >
         <Text style={styles.pageTitle}>{t('todayPageTitle')}</Text>
+
+        <DailyDeityCard
+          oracle={dailyDeityOracle}
+          onConsult={() => {
+            router.push({
+              pathname: '/',
+              params: { godId: String(dailyDeityOracle.god.id), source: 'daily-deity' },
+            });
+          }}
+        />
+
+        <DeityCalendarExplorer
+          followedGodIds={followedGodIds}
+          onToggleFollow={handleToggleFollowedGod}
+          onExportYear={async (year) => {
+            try {
+              const result = await exportDeityCalendarYear(year);
+              if (result.status === 'unavailable') {
+                Alert.alert('無法匯出', '這台裝置目前不支援分享行事曆檔案。');
+                return;
+              }
+              Alert.alert(
+                '神明日曆已準備完成',
+                '已整理 ' + result.count + ' 筆紀念日'
+                  + (result.status === 'downloaded' ? '並下載 ICS 檔案。' : '，請選擇要分享或儲存的位置。'),
+              );
+            } catch {
+              Alert.alert('匯出失敗', '目前無法建立神明日曆檔案，請稍後再試。');
+            }
+          }}
+          onOpenDetails={(observanceId) => router.push(`/deity-calendar/${observanceId}` as never)}
+          onConsult={(godId) => {
+            router.push({
+              pathname: '/',
+              params: { godId: String(godId), source: 'deity-calendar' },
+            });
+          }}
+        />
 
         <View style={[styles.desktopColumns, layout.isDesktop && styles.desktopColumnsRow]}>
           <View style={[styles.desktopLeftCol, layout.isDesktop && styles.desktopLeftColDesktop]}>
@@ -310,7 +383,7 @@ export default function DailyScreen() {
                   <Text style={styles.upcomingFestDate}>{f.solarDate}{f.lunarDate ? `（${f.lunarDate}）` : ''}</Text>
                 </View>
                 <Text style={styles.upcomingFestDays}>
-                  {t('todayDaysLater', { days: Math.ceil((new Date(f.solarDate).getTime() - new Date().getTime()) / 86400000) })}
+                  {t('todayDaysLater', { days: f.daysUntil })}
                 </Text>
               </View>
             ))}

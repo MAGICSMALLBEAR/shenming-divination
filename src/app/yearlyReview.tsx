@@ -15,8 +15,7 @@ import { useRouter } from 'expo-router';
 
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { useStaggeredList } from '@/hooks/useEntranceAnimation';
-import { useFadeIn } from '@/hooks/useEntranceAnimation';
+import { useStaggeredList, useFadeIn } from '@/hooks/useEntranceAnimation';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { generateYearlyReview, getAvailableYears, type YearlyReview } from '@/services/yearlyReview';
 import { gods } from '@/data/gods';

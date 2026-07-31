@@ -1,6 +1,6 @@
 // 風水羅盤 — 互動式羅盤，查看各方位卦象、五行、吉凶
 // Web：拖曳旋轉羅盤；Native：可透過 DeviceMotion（若可用）或手動拖曳
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { DecorativeBg } from '@/components/DecorativeBg';
-import { TempleFonts, TempleSpacing, TempleDuration } from '@/constants/temple-theme';
+import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
 import { useI18n } from '@/hooks/useI18n';
@@ -40,13 +40,6 @@ function angleFromPoints(
   let angle = Math.atan2(dx, -dy) * (180 / Math.PI);
   if (angle < 0) angle += 360;
   return angle;
-}
-
-/** 方位角轉文字（北為 0） */
-function headingToLabel(heading: number): string {
-  const labels = ['北', '東北', '東', '東南', '南', '西南', '西', '西北'];
-  const idx = Math.round(((heading % 360) + 360) % 360 / 45) % 8;
-  return labels[idx];
 }
 
 /** 計算圈上點位 */
@@ -110,7 +103,6 @@ function CompassMarkers({
       {Array.from({ length: 24 }).map((_, i) => {
         const angle = (360 / 24) * i;
         const inner = polarToCartesian(r, r, r * 0.7, angle);
-        const outer = polarToCartesian(r, r, r * 0.66, angle);
         const isMajor = i % 3 === 0;
         return (
           <View

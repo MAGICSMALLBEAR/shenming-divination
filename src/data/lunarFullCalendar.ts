@@ -1,6 +1,8 @@
 // 完整農民曆資料：12時辰、沖煞、五行納音、神煞
 // 以「日干支」推算時辰吉凶，遵循傳統命理規則
 
+import { getDeityObservancesForDate, getLunarDate } from '@/services/lunarDeityCalendar';
+
 export interface ShiChen {
   name: string;        // 子、丑…
   timeRange: string;   // 23:00-01:00
@@ -195,23 +197,21 @@ export function buildFullDayInfo(params: {
 }
 
 // 取得今日完整農民曆資訊
-export function getTodayFullLunarInfo(): LunarFullDayInfo | null {
-  const today = new Date();
-  const base = new Date(2026, 0, 1); // 2026-01-01
-  const dayOffset = Math.round((today.getTime() - base.getTime()) / (1000 * 60 * 60 * 24));
-
-
-  // 暫時先產生基本資料（實際應從 lunarCalendar 匯入）
+export function getTodayFullLunarInfo(today = new Date()): LunarFullDayInfo | null {
+  const dayOffset = Math.floor(
+    (Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) - Date.UTC(2026, 0, 1)) / 86400000,
+  );
   const solarDate = `${today.getMonth() + 1}/${today.getDate()}`;
-  const lunarMonth = today.getMonth() + 4; // 粗略估算
-  const lunarDay = today.getDate();
+  const lunar = getLunarDate(today);
+  const observance = getDeityObservancesForDate(today)[0];
 
   return buildFullDayInfo({
     solarDate,
-    lunarMonth: Math.min(lunarMonth, 12),
-    lunarDay,
+    lunarMonth: lunar.month,
+    lunarDay: lunar.day,
     yi: ['祭祀', '祈福', '出行'],
     ji: ['動土', '破土'],
+    godBirthday: observance?.observance.title,
     dayOffset,
   });
 }

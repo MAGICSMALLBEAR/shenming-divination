@@ -12,6 +12,12 @@ import {
   type DrawAnimationStyleKey,
   type ShakeMode,
 } from '@/constants/draw-animation-styles';
+import {
+  normalizeDeityReminderPreferences,
+  type DeityReminderDaysBefore,
+  type DeityReminderHour,
+  type DeityReminderMode,
+} from '@/services/deityReminderPreferences';
 
 export const STORAGE_KEYS = {
   FAVORITES: '@divination_favorites',
@@ -59,6 +65,10 @@ export interface AppSettings {
   strictMode?: boolean;
   dailyNotification?: boolean;
   birthdayNotification?: boolean;
+  birthdayReminderMode?: DeityReminderMode;
+  birthdayReminderGodIds?: number[];
+  birthdayReminderDaysBefore?: DeityReminderDaysBefore;
+  birthdayReminderHour?: DeityReminderHour;
   drawAnimationDurationMs?: number;
   drawAnimationMode?: DrawAnimationMode;
   drawAnimationStyleKey?: DrawAnimationStyleKey;
@@ -118,8 +128,18 @@ function normalizeRecords(records: DivinationRecord[]): DivinationRecord[] {
 }
 
 function normalizeSettings(settings: AppSettings): AppSettings {
+  const reminderPreferences = normalizeDeityReminderPreferences({
+    mode: settings.birthdayReminderMode,
+    godIds: settings.birthdayReminderGodIds,
+    daysBefore: settings.birthdayReminderDaysBefore,
+    hour: settings.birthdayReminderHour,
+  });
   return {
     ...settings,
+    birthdayReminderMode: reminderPreferences.mode,
+    birthdayReminderGodIds: reminderPreferences.godIds,
+    birthdayReminderDaysBefore: reminderPreferences.daysBefore,
+    birthdayReminderHour: reminderPreferences.hour,
     drawAnimationDurationMs: normalizeDrawAnimationDuration(
       settings.drawAnimationDurationMs ?? DRAW_ANIMATION_DEFAULT_MS
     ),
@@ -394,4 +414,3 @@ export async function removeFamilyMember(id: string): Promise<void> {
   const members = await getFamilyMembers();
   await saveFamilyMembers(members.filter(m => m.id !== id));
 }
-

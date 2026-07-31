@@ -1,4 +1,6 @@
-// 台灣傳統節慶行事曆 2026
+// 台灣傳統節慶內容資料；農曆節日的公曆日期由統一曆法服務動態換算。
+
+import { getLunarDate } from '@/services/lunarDeityCalendar';
 
 export interface Festival {
   id: string;
@@ -256,36 +258,64 @@ export const FESTIVALS_2026: Festival[] = [
   },
 ];
 
-// 取得今日節慶
-export function getTodayFestival(): Festival | null {
-  const today = new Date();
-  const key = `${today.getMonth() + 1}/${today.getDate()}`;
-  return FESTIVALS_2026.find(f => f.solarDate === key) ?? null;
+function getSolarKey(date: Date): string {
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function getLocalDayNumber(date: Date): number {
+  return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
+}
+
+export function getFestivalForDate(date: Date): Festival | null {
+  const lunar = getLunarDate(date);
+  const lunarKey = `${lunar.month}/${lunar.day}`;
+  const solarKey = getSolarKey(date);
+  const festival = FESTIVALS_2026.find((item) => {
+    if (item.type === 'lunar') {
+      return !lunar.isLeapMonth && item.lunarDate === lunarKey;
+    }
+    return item.solarDate === solarKey;
+  });
+
+  return festival ? { ...festival, solarDate: solarKey } : null;
+}
+
+// 取得指定日期（預設今日）的節慶
+export function getTodayFestival(date = new Date()): Festival | null {
+  return getFestivalForDate(date);
 }
 
 // 取得未來 N 天內的節慶
-export function getUpcomingFestivals(daysAhead = 30): (Festival & { daysUntil: number })[] {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const year = today.getFullYear();
+export function getUpcomingFestivals(
+  daysAhead = 30,
+  fromDate = new Date(),
+): (Festival & { daysUntil: number; date: Date })[] {
+  const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate(), 12);
+  const startDay = getLocalDayNumber(start);
+  const results: (Festival & { daysUntil: number; date: Date })[] = [];
 
-  return FESTIVALS_2026
-    .map(f => {
-      const [m, d] = f.solarDate.split('/').map(Number);
-      const festDate = new Date(year, m - 1, d);
-      festDate.setHours(0, 0, 0, 0);
-      const diff = Math.round((festDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      return { ...f, daysUntil: diff };
-    })
-    .filter(f => f.daysUntil >= 0 && f.daysUntil <= daysAhead)
-    .sort((a, b) => a.daysUntil - b.daysUntil);
+  for (let offset = 0; offset <= daysAhead; offset += 1) {
+    const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + offset, 12);
+    const festival = getFestivalForDate(date);
+    if (festival) {
+      results.push({
+        ...festival,
+        date,
+        daysUntil: getLocalDayNumber(date) - startDay,
+      });
+    }
+  }
+
+  return results;
 }
 
 // 取得本月節慶
-export function getMonthFestivals(): Festival[] {
-  const month = new Date().getMonth() + 1;
-  return FESTIVALS_2026.filter(f => {
-    const [m] = f.solarDate.split('/').map(Number);
-    return m === month;
-  });
+export function getMonthFestivals(date = new Date()): Festival[] {
+  const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const results: Festival[] = [];
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const festival = getFestivalForDate(new Date(date.getFullYear(), date.getMonth(), day, 12));
+    if (festival) results.push(festival);
+  }
+  return results;
 }

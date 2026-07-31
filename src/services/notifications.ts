@@ -1,7 +1,12 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-import { getAllGodBirthdays } from '@/data/lunarCalendar';
+import { getDeityObservanceReminders } from '@/services/lunarDeityCalendar';
+import { getSettings } from '@/services/storage';
+import {
+  normalizeDeityReminderPreferences,
+  type DeityReminderPreferences,
+} from '@/services/deityReminderPreferences';
 import { getDailyPoem } from './dailyPoem';
 import { getCurrentSolarTerm, getNextSolarTerm } from './solarTerms';
 
@@ -87,32 +92,44 @@ export async function scheduleDailyNotification(): Promise<void> {
 
 }
 
-export async function scheduleGodBirthdayNotifications(): Promise<void> {
+export async function scheduleGodBirthdayNotifications(
+  preferenceInput?: Partial<DeityReminderPreferences>,
+): Promise<void> {
   if (Platform.OS === 'web') return;
 
   await cancelGodBirthdayNotifications();
 
   const now = new Date();
-  const limit = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
-  const birthdays = getAllGodBirthdays(now.getFullYear());
+  const storedSettings = preferenceInput ? null : await getSettings();
+  const preferences = normalizeDeityReminderPreferences(preferenceInput ?? {
+    mode: storedSettings?.birthdayReminderMode,
+    godIds: storedSettings?.birthdayReminderGodIds,
+    daysBefore: storedSettings?.birthdayReminderDaysBefore,
+    hour: storedSettings?.birthdayReminderHour,
+  });
+  const reminders = getDeityObservanceReminders(now, 370, preferences);
+  const leadLabel = preferences.daysBefore === 0
+    ? '今日'
+    : preferences.daysBefore === 1
+      ? '明日'
+      : `${preferences.daysBefore} 天後`;
 
-  for (const birthday of birthdays) {
-    const reminderDate = new Date(birthday.date);
-    reminderDate.setDate(reminderDate.getDate() - 1);
-    reminderDate.setHours(20, 0, 0, 0);
-
-    if (reminderDate <= now || reminderDate > limit) continue;
-
+  for (const reminder of reminders) {
     try {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: `明日神誕 ${birthday.solarDateStr} | ${birthday.name}`,
-          body: '記得安排參拜或向神明表達心意。',
-          data: { type: 'god-birthday', name: birthday.name },
+          title: `${leadLabel}神明紀念日 ${reminder.solarDateStr} | ${reminder.name}`,
+          body: `${reminder.title}。記得確認所屬宮廟公告，再安排參拜或表達心意。`,
+          data: {
+            type: 'god-birthday',
+            name: reminder.name,
+            godId: reminder.godId,
+            url: '/daily',
+          },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: reminderDate,
+          date: reminder.reminderDate,
         },
       });
     } catch {

@@ -26,18 +26,51 @@ interface IncenseRitualProps {
   onComplete: () => void;
   ritualStyleKey: RitualStyleKey;
   onStyleChange: (next: RitualStyleKey) => void;
+  reducedMotion?: boolean;
 }
 
-type RitualStep = 'idle' | 'lighting' | 'lit' | 'placed';
-
-interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+type RitualStep = 'idle' | 'lighting' | 'lit' | 'inserting' | 'placed';
 
 const HAND_INCENSE_START = { x: 0, y: 0 };
+const CENSER_WRAP_WIDTH = 230;
+const CENSER_WRAP_HEIGHT = 196;
+const CENSER_BOTTOM_MARGIN = 34;
+const DROP_ZONE_WIDTH = 110;
+const DROP_ZONE_HEIGHT = 82;
+const DROP_ZONE_TOP = 22;
+const HAND_INCENSE_WIDTH = 26;
+const HAND_INCENSE_HEIGHT = 112;
+const HAND_INCENSE_RIGHT = 22;
+const HAND_INCENSE_BOTTOM = 6;
+const DROP_TOLERANCE = 40;
+
+export function isIncenseOverCenser(
+  scene: { width: number; height: number },
+  translation: { x: number; y: number },
+  lift = 0
+): boolean {
+  const censerX = (scene.width - CENSER_WRAP_WIDTH) / 2;
+  const censerY = scene.height - CENSER_WRAP_HEIGHT - CENSER_BOTTOM_MARGIN;
+  const dropZone = {
+    left: censerX + (CENSER_WRAP_WIDTH - DROP_ZONE_WIDTH) / 2 - DROP_TOLERANCE,
+    top: censerY + DROP_ZONE_TOP - DROP_TOLERANCE,
+    right: censerX + (CENSER_WRAP_WIDTH + DROP_ZONE_WIDTH) / 2 + DROP_TOLERANCE,
+    bottom: censerY + DROP_ZONE_TOP + DROP_ZONE_HEIGHT + DROP_TOLERANCE,
+  };
+  const incense = {
+    left: scene.width - HAND_INCENSE_RIGHT - HAND_INCENSE_WIDTH + translation.x,
+    top: scene.height - HAND_INCENSE_BOTTOM - HAND_INCENSE_HEIGHT + translation.y + lift,
+    right: scene.width - HAND_INCENSE_RIGHT + translation.x,
+    bottom: scene.height - HAND_INCENSE_BOTTOM + translation.y + lift,
+  };
+
+  return (
+    incense.right >= dropZone.left &&
+    incense.left <= dropZone.right &&
+    incense.bottom >= dropZone.top &&
+    incense.top <= dropZone.bottom
+  );
+}
 
 export function IncenseRitual({
   godId,
@@ -45,20 +78,21 @@ export function IncenseRitual({
   onComplete,
   ritualStyleKey,
   onStyleChange,
+  reducedMotion = false,
 }: IncenseRitualProps) {
   const { theme } = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [step, setStep] = useState<RitualStep>('idle');
-  const [dropZoneRect, setDropZoneRect] = useState<Rect | null>(null);
   const [sceneLayout, setSceneLayout] = useState<{ width: number; height: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const ritualStyle = ritualStyles[ritualStyleKey];
   const godImage = getGodCloseupImage(godId);
 
-  const dropZoneRef = useRef<View>(null);
-  const sceneRef = useRef<View>(null);
   const incensePosition = useRef(new Animated.ValueXY(HAND_INCENSE_START)).current;
   const incenseLift = useRef(new Animated.Value(0)).current;
+  const incenseTranslationRef = useRef(HAND_INCENSE_START);
+  const placedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 三個不同週期的燃燒抖動來源疊加，組合起來才會像真實火苗不規則跳動，
   // 而不是單一等速明滅。
   const flameFlickerFast = useRef(new Animated.Value(0)).current;
@@ -69,83 +103,57 @@ export function IncenseRitual({
   const ashPressAnim = useRef(new Animated.Value(0)).current;
   const ashBurstAnim = useRef(new Animated.Value(0)).current;
 
-  // Calculate drop zone rect from scene layout + known style offsets
-  const calcDropZoneFromLayout = (): Rect | null => {
-    if (!sceneLayout) return null;
-    // censerWrap: width=230, centered in scene, bottom-aligned
-    const cwW = 230;
-    const cwH = 196;
-    const cwX = (sceneLayout.width - cwW) / 2;
-    const cwY = sceneLayout.height - cwH - 34; // marginBottom: 34
-    // dropZone: absolute within censerWrap, top=22, width=110, height=82, centered
-    const dzW = 110;
-    const dzH = 82;
-    const dzX = cwX + (cwW - dzW) / 2;
-    const dzY = cwY + 22;
-    return { x: dzX, y: dzY, width: dzW, height: dzH };
-  };
-
-  const measureDropZoneInWindow = () => {
-    requestAnimationFrame(() => {
-      dropZoneRef.current?.measureInWindow((x, y, width, height) => {
-        if (width && height) {
-          setDropZoneRect({ x, y, width, height });
-          return;
-        }
-
-        const relativeRect = calcDropZoneFromLayout();
-        if (!relativeRect) return;
-        sceneRef.current?.measureInWindow((sceneX, sceneY) => {
-          setDropZoneRect({
-            ...relativeRect,
-            x: sceneX + relativeRect.x,
-            y: sceneY + relativeRect.y,
-          });
-        });
-      });
+  useEffect(() => {
+    const xListener = incensePosition.x.addListener(({ value }) => {
+      incenseTranslationRef.current = { ...incenseTranslationRef.current, x: value };
     });
-  };
+    const yListener = incensePosition.y.addListener(({ value }) => {
+      incenseTranslationRef.current = { ...incenseTranslationRef.current, y: value };
+    });
+
+    return () => {
+      incensePosition.x.removeListener(xListener);
+      incensePosition.y.removeListener(yListener);
+      if (placedTimerRef.current) clearTimeout(placedTimerRef.current);
+      if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
+    };
+  }, [incensePosition]);
 
   useEffect(() => {
-    if (step !== 'lit' && step !== 'placed') {
+    if ((step !== 'lit' && step !== 'inserting' && step !== 'placed') || reducedMotion) {
       return;
     }
 
     const flicker = (anim: Animated.Value, duration: number) =>
       Animated.loop(
         Animated.sequence([
-          Animated.timing(anim, { toValue: 1, duration, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
-          Animated.timing(anim, { toValue: 0, duration, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+          Animated.timing(anim, { toValue: 1, duration, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0, duration, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
         ])
       );
 
-    const flameLoopFast = flicker(flameFlickerFast, 90);
-    const flameLoopMid = flicker(flameFlickerMid, 165);
-    const flameLoopSlow = flicker(flameFlickerSlow, 240);
+    const flameLoopFast = flicker(flameFlickerFast, 170);
+    const flameLoopMid = flicker(flameFlickerMid, 260);
+    const flameLoopSlow = flicker(flameFlickerSlow, 380);
 
     // 香頭的細煙絲：由 0 直接跳回 0 重新升起，模擬持續冒出一縷縷輕煙。
     const emberWispLoop = Animated.loop(
       Animated.timing(emberWispAnim, {
         toValue: 1,
-        duration: 900,
+        duration: 1200,
         easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
+        useNativeDriver: true,
       })
     );
 
     const smokeLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(smokeAnim, {
-          toValue: 1,
-          duration: 1800,
-          useNativeDriver: false,
-        }),
-        Animated.timing(smokeAnim, {
-          toValue: 0,
-          duration: 1800,
-          useNativeDriver: false,
-        }),
-      ])
+      Animated.timing(smokeAnim, {
+        toValue: 1,
+        duration: 2600,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      { resetBeforeIteration: true }
     );
 
     flameLoopFast.start();
@@ -161,7 +169,7 @@ export function IncenseRitual({
       emberWispLoop.stop();
       smokeLoop.stop();
     };
-  }, [emberWispAnim, flameFlickerFast, flameFlickerMid, flameFlickerSlow, smokeAnim, step]);
+  }, [emberWispAnim, flameFlickerFast, flameFlickerMid, flameFlickerSlow, reducedMotion, smokeAnim, step]);
 
   const resetIncensePosition = () => {
     Animated.parallel([
@@ -212,7 +220,7 @@ export function IncenseRitual({
     //   position: absolute, bottom: 6, right: 22, bundleWrap: 26x112
     //   handCx = sceneW - 22 - 13 = sceneW - 35
     //   handCy = sceneH - 6 - 56 = sceneH - 62
-    if (!sceneLayout) return;
+    if (!sceneLayout || step !== 'lit') return;
 
     const { width: sw, height: sh } = sceneLayout;
     const dzCx = sw / 2;
@@ -224,64 +232,67 @@ export function IncenseRitual({
     const targetX = dzCx - handCx;
     const targetY = dzCy - handCy - 4; // slight upward nudge
 
-    setStep('placed');
+    setStep('inserting');
     setIsDragging(false);
 
-    Animated.parallel([
-      Animated.spring(incensePosition, {
+    const approachDuration = reducedMotion ? 1 : 260;
+    const insertDuration = reducedMotion ? 1 : 160;
+
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(incensePosition, {
+          toValue: { x: targetX, y: targetY - 18 },
+          duration: approachDuration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+        }),
+        Animated.timing(incenseLift, {
+          toValue: 0,
+          duration: approachDuration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+        }),
+      ]),
+      Animated.timing(incensePosition, {
         toValue: { x: targetX, y: targetY },
-        friction: 8,
-        tension: 80,
+        duration: insertDuration,
+        easing: Easing.inOut(Easing.cubic),
         useNativeDriver: false,
       }),
-      Animated.spring(incenseLift, {
-        toValue: 0,
-        friction: 8,
-        tension: 80,
-        useNativeDriver: false,
-      }),
-    ]).start(async () => {
+    ]).start(() => {
       Animated.sequence([
         Animated.parallel([
           Animated.timing(ashPressAnim, {
             toValue: 1,
             duration: 120,
-            useNativeDriver: false,
+            useNativeDriver: true,
           }),
           Animated.timing(ashBurstAnim, {
             toValue: 1,
             duration: 180,
-            useNativeDriver: false,
+            useNativeDriver: true,
           }),
         ]),
         Animated.timing(ashPressAnim, {
           toValue: 0,
           duration: 220,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
         Animated.timing(ashBurstAnim, {
           toValue: 0,
           duration: 420,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
       ]).start();
 
-      await playIncenseSound().catch(() => {});
-      setTimeout(onComplete, 950);
+      void playIncenseSound().catch(() => {});
+      placedTimerRef.current = setTimeout(() => setStep('placed'), reducedMotion ? 1 : 180);
+      completeTimerRef.current = setTimeout(onComplete, reducedMotion ? 300 : 950);
     });
   };
 
-  const isInsideDropZone = (screenX: number, screenY: number) => {
-    if (!dropZoneRect) return false;
-
-    const margin = 36;
-    return (
-      screenX >= dropZoneRect.x - margin &&
-      screenX <= dropZoneRect.x + dropZoneRect.width + margin &&
-      screenY >= dropZoneRect.y - margin &&
-      screenY <= dropZoneRect.y + dropZoneRect.height + margin
-    );
-  };
+  const isInsideDropZone = () =>
+    sceneLayout !== null && isIncenseOverCenser(sceneLayout, incenseTranslationRef.current, -10);
 
   const panResponder = useMemo(
     () =>
@@ -300,10 +311,10 @@ export function IncenseRitual({
           [null, { dx: incensePosition.x, dy: incensePosition.y }],
           { useNativeDriver: false }
         ),
-        onPanResponderRelease: (_, gestureState) => {
+        onPanResponderRelease: () => {
           incensePosition.flattenOffset();
           setIsDragging(false);
-          if (isInsideDropZone(gestureState.moveX, gestureState.moveY)) {
+          if (isInsideDropZone()) {
             placeIncenseInCenser();
           } else {
             resetIncensePosition();
@@ -315,7 +326,7 @@ export function IncenseRitual({
           resetIncensePosition();
         },
       }),
-    [incenseLift, incensePosition, step, dropZoneRect]
+    [incenseLift, incensePosition, sceneLayout, step]
   );
 
   // 三層疊加：外層柔光呼吸、中層火苗左右搖擺、內層焰心快速跳動，
@@ -358,12 +369,20 @@ export function IncenseRitual({
   });
   const combinedHandTranslateY = Animated.add(incensePosition.y, incenseLift);
   const smokeOpacity = smokeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.12, 0.38],
+    inputRange: [0, 0.15, 0.75, 1],
+    outputRange: [0, 0.34, 0.16, 0],
   });
-  const smokeScale = smokeAnim.interpolate({
+  const smokeRise = smokeAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.9, 1.8],
+    outputRange: [8, -62],
+  });
+  const smokeDrift = smokeAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [-5, 7, -2],
+  });
+  const smokeScaleX = smokeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.72, 1.2],
   });
   const ashPressScaleY = ashPressAnim.interpolate({
     inputRange: [0, 1],
@@ -391,10 +410,12 @@ export function IncenseRitual({
       ? '\u5148\u9ede\u71c3\u9999\uff0c\u518d\u5411\u9999\u7210\u4e2d\u592e\u4f9b\u9999\u3002'
       : step === 'lighting'
         ? '\u9999\u706b\u5df2\u8d77\uff0c\u8acb\u7a69\u4f4f\u5fc3\u5ff5\u3002'
-        : step === 'lit'
+      : step === 'lit'
           ? isDragging
             ? '\u628a\u9999\u79fb\u5230\u9999\u7210\u4e2d\u592e\uff0c\u653e\u624b\u5373\u53ef\u63d2\u5165\u3002'
             : '\u5df2\u9ede\u9999\uff0c\u62d6\u66f3\u5230\u9999\u7210\u4e2d\u592e\u6216\u76f4\u63a5\u9ede\u9999\u7210\u3002'
+          : step === 'inserting'
+            ? '\u6b63\u5c07\u9999\u7a69\u7a69\u5949\u5165\u9999\u7210\u2026'
           : '\u4e09\u70b7\u9999\u5df2\u5165\u7210\uff0c\u7a0d\u5f8c\u5c31\u80fd\u9032\u5165\u4e0b\u4e00\u6bb5\u5100\u5f0f\u3002';
 
   const detailText =
@@ -402,8 +423,10 @@ export function IncenseRitual({
       ? '\u5148\u8f15\u9ede\u9999\u675f\uff0c\u5b8c\u6210\u9ede\u9999\u5f8c\u518d\u5c07\u9999\u5949\u5165\u9999\u7210\u3002'
       : step === 'lighting'
         ? '\u8b93\u5fc3\u7dd2\u6162\u4e0b\u4f86\uff0c\u7b49\u9999\u706b\u7a69\u5b9a\u3002'
-        : step === 'lit'
+      : step === 'lit'
           ? '\u628a\u9999\u79fb\u5230\u7210\u53e3\u4e0a\u65b9\uff0c\u63d2\u5165\u6642\u6703\u6709\u9999\u7070\u4e0b\u58d3\u8207\u63da\u7070\u53cd\u61c9\u3002'
+          : step === 'inserting'
+            ? '\u9999\u675f\u5df2\u5c0d\u6e96\u7210\u5fc3\uff0c\u6b63\u7de9\u7de9\u5165\u7210\u3002'
           : '\u9999\u5df2\u5b89\u5ea7\uff0c\u8acb\u7a0d\u5019\u795e\u524d\u56de\u61c9\u3002';
 
   const showHandIncense = step !== 'placed';
@@ -419,12 +442,11 @@ export function IncenseRitual({
       <RitualStylePicker value={ritualStyleKey} onChange={onStyleChange} />
 
       <View
-        ref={sceneRef}
+        testID={'incense-scene'}
         style={styles.scene}
         onLayout={(e) => {
           const { width, height } = e.nativeEvent.layout;
           setSceneLayout({ width, height });
-          measureDropZoneInWindow();
         }}
       >
         <View style={styles.backWall}>
@@ -505,14 +527,18 @@ export function IncenseRitual({
 
         <View style={styles.censerWrap}>
 
-          {(step === 'lit' || step === 'placed') && (
+          {!reducedMotion && (step === 'lit' || step === 'inserting' || step === 'placed') && (
             <Animated.View
               pointerEvents="none"
               style={[
                 styles.smokeGroup,
                 {
                   opacity: smokeOpacity,
-                  transform: [{ scale: smokeScale }, { translateY: -18 }],
+                  transform: [
+                    { translateX: smokeDrift },
+                    { translateY: smokeRise },
+                    { scaleX: smokeScaleX },
+                  ],
                 },
               ]}
             >
@@ -575,9 +601,7 @@ export function IncenseRitual({
           )}
 
           <Pressable
-            ref={dropZoneRef}
             style={styles.dropZone}
-            onLayout={measureDropZoneInWindow}
             onPress={() => {
               if (step === 'lit') {
                 placeIncenseInCenser();
@@ -630,7 +654,7 @@ export function IncenseRitual({
                     ]}
                   >
                     <View style={[styles.handStickBody, { backgroundColor: ritualStyle.censer.accent }]} />
-                    {step === 'lit' ? (
+                    {step === 'lit' || step === 'inserting' ? (
                       <View style={styles.flameStack} pointerEvents="none">
                         <Animated.View
                           style={[

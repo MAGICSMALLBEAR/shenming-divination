@@ -1,7 +1,7 @@
 // 首頁 - 神明占卜主流程
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share, Animated, Easing, Modal, TextInput, ScrollView, type ImageSourcePropType } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useDivination } from '@/hooks/useDivination';
 import { GodSelector, QuestionForm } from '@/components/GodSelector';
@@ -47,6 +47,7 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 export default function HomeScreen() {
   const div = useDivination();
   const router = useRouter();
+  const routeParams = useLocalSearchParams<{ godId?: string; source?: string }>();
   const layout = useResponsiveLayout();
   const { t } = useI18n();
   const { theme } = useAppTheme();
@@ -104,6 +105,15 @@ export default function HomeScreen() {
   React.useEffect(() => {
     getSettings().then(setSettings);
   }, []);
+
+  React.useEffect(() => {
+    if (routeParams.source !== 'daily-deity' || !routeParams.godId) return;
+    const requestedGodId = Number(routeParams.godId);
+    if (!Number.isInteger(requestedGodId) || !gods.some((god) => god.id === requestedGodId)) return;
+
+    div.selectGod(requestedGodId);
+    router.setParams({ godId: '', source: '' });
+  }, [div.selectGod, routeParams.godId, routeParams.source, router]);
 
   // 載入設定後產生個人化運勢
   React.useEffect(() => {
@@ -354,6 +364,7 @@ export default function HomeScreen() {
               onComplete={() => setIncenseDone(true)}
               ritualStyleKey={ritualStyle}
               onStyleChange={setRitualStyle}
+              reducedMotion={reducedMotion || lowMotionMode}
             />
           );
         }
