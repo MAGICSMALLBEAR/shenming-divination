@@ -26,6 +26,7 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { getTodayFullLunarInfo, getCurrentShiChen } from '@/data/lunarFullCalendar';
 import { getTodayFestival, getUpcomingFestivals } from '@/data/festivals';
 import { getYearFortune, getMonthFortune, type YearFortune } from '@/services/yearFortune';
+import { getZodiacDailyFortune, getMyZodiacFortune } from '@/services/zodiacFortune';
 import type { BaziInfo } from '@/services/bazi';
 import { DailyDeityCard } from '@/components/home/DailyDeityCard';
 import { DeityCalendarExplorer } from '@/components/home/DeityCalendarExplorer';
@@ -36,6 +37,74 @@ import {
   toggleFollowedDeityId,
 } from '@/services/deityCalendarFollowing';
 import { scheduleGodBirthdayNotifications } from '@/services/notifications';
+
+function ZodiacFortuneStrip({ bazi }: { bazi: BaziInfo | null }) {
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const [expanded, setExpanded] = useState(false);
+  const fortunes = useMemo(() => getZodiacDailyFortune(), []);
+  const myFortune = bazi ? getMyZodiacFortune(bazi.birthYear) : null;
+  const levelColor = (lvl: string) =>
+    lvl.includes('大吉') || lvl.includes('上吉') ? theme.success :
+    lvl.includes('下') ? theme.danger :
+    lvl.includes('中平') || lvl.includes('中下') ? theme.textMuted :
+    theme.warning;
+  const levelBg = (lvl: string) => levelColor(lvl) + '20';
+
+  return (
+    <View style={[styles.card, { borderColor: '#d4a84360' }]}>
+      <TouchableOpacity
+        onPress={() => setExpanded(!expanded)}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={expanded ? '收起生肖運勢' : '展開生肖運勢'}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.cardTitle}>🐉 十二生肖每日運勢</Text>
+          <Text style={{ color: theme.textMuted, fontSize: 12 }}>{expanded ? '收起 ▲' : '展開 ▼'}</Text>
+        </View>
+      </TouchableOpacity>
+
+      {myFortune && (
+        <View style={{ marginTop: 10, marginBottom: 6, padding: 10, borderRadius: 10, backgroundColor: levelBg(myFortune.level), borderLeftWidth: 3, borderLeftColor: levelColor(myFortune.level) }}>
+          <Text style={{ color: theme.textLight, fontSize: 13, fontWeight: '700', marginBottom: 4 }}>
+            {myFortune.emoji} 我的生肖 · {myFortune.zodiac}
+            <Text style={{ color: levelColor(myFortune.level), marginLeft: 8 }}>{myFortune.level}</Text>
+          </Text>
+          <Text style={{ color: theme.textMuted, fontSize: 12, lineHeight: 18 }}>{myFortune.details.overall}</Text>
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 6 }}>
+            <Text style={{ color: theme.textMuted, fontSize: 11 }}>🎨 {myFortune.luckyColor}</Text>
+            <Text style={{ color: theme.textMuted, fontSize: 11 }}>🔢 {myFortune.luckyNumber}</Text>
+            <Text style={{ color: theme.textMuted, fontSize: 11 }}>🧭 {myFortune.luckyDirection}</Text>
+          </View>
+        </View>
+      )}
+
+      {expanded && (
+        <View style={{ marginTop: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {fortunes.map((f) => (
+            <View
+              key={f.zodiac}
+              style={{
+                width: '48%', padding: 8, borderRadius: 8,
+                backgroundColor: theme.bgDark + '80',
+                borderLeftWidth: 3, borderLeftColor: levelColor(f.level),
+              }}
+            >
+              <Text style={{ color: theme.textLight, fontSize: 12, fontWeight: '700' }}>
+                {f.emoji} {f.zodiac}
+                <Text style={{ color: levelColor(f.level), fontSize: 11, marginLeft: 4 }}>{f.level}</Text>
+              </Text>
+              <Text style={{ color: theme.textMuted, fontSize: 10, lineHeight: 15, marginTop: 3 }} numberOfLines={2}>
+                {f.details.overall}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
 
 export default function DailyScreen() {
   const router = useRouter();
@@ -353,6 +422,9 @@ export default function DailyScreen() {
             </View>
           </View>
         )}
+
+        {/* 十二生肖每日運勢 */}
+        <ZodiacFortuneStrip bazi={bazi} />
 
         {/* 今日節慶 */}
         {todayFestival && (
