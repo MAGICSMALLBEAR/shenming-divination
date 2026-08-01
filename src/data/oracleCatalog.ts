@@ -97,6 +97,13 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
     case 47:
     case 48:
     case 50:
+    case 51:
+    case 52:
+    case 53:
+    case 54:
+    case 55:
+    case 56:
+    case 57:
       return jiaziEntry;
     case 5:
     case 21:
@@ -410,6 +417,18 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
         editionNote: '觀音原籤不改，新增太陰月華向標題、典故前言與姻緣解曰，聚焦感情、女性健康與家庭和諧。',
         suitabilityNote: '適合問感情姻緣、女性健康、美容安產與家庭圓融。',
         versionTag: 'taiyin-guanyin-100-focused-v1',
+      });
+    case 58:
+      return entry({
+        label: '佛陀般若籤',
+        totalPoems: 100,
+        sourceNote: '底本為觀音靈籤（傳統籤系，籤文逐字沿用），加入釋迦牟尼佛慈悲智慧、煩惱解脫與心靈指引的白話解讀層。',
+        completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依佛陀信仰改寫，重在心靈啟發而非神通感應。',
+        strengths: ['智慧開悟', '煩惱解脫', '慈悲增長'],
+        sourceType: '傳統籤系（觀音靈籤）+ 釋迦牟尼佛專屬白話解讀',
+        editionNote: '觀音原籤不改，新增佛陀般若向標題、典故前言與智慧解曰，聚焦轉念、覺察與身心安定。',
+        suitabilityNote: '適合問心靈成長、人生方向、煩惱轉化與智慧啟發。',
+        versionTag: 'shijiamouni-guanyin-100-focused-v1',
       });
     default:
       return defaultEntry;

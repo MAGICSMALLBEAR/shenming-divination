@@ -257,6 +257,46 @@ const godImagesById: Record<number, GodImageSet> = {
     soft: require('@/assets/images/gods/generated/soft/fazhuzhenjun-soft.png'),
     closeup: require('@/assets/images/gods/generated/closeups/fazhuzhenjun-closeup.png'),
   },
+  51: {
+    card: require('@/assets/images/gods/generated/cards/fudezhengshen-card.png'),
+    soft: require('@/assets/images/gods/generated/soft/fudezhengshen-soft.png'),
+    closeup: require('@/assets/images/gods/generated/closeups/fudezhengshen-closeup.png'),
+  },
+  52: {
+    card: require('@/assets/images/gods/generated/cards/jigonghuofo-card.png'),
+    soft: require('@/assets/images/gods/generated/soft/jigonghuofo-soft.png'),
+    closeup: require('@/assets/images/gods/generated/closeups/jigonghuofo-closeup.png'),
+  },
+  53: {
+    card: require('@/assets/images/gods/generated/cards/santaizi-card.png'),
+    soft: require('@/assets/images/gods/generated/soft/santaizi-soft.png'),
+    closeup: require('@/assets/images/gods/generated/closeups/santaizi-closeup.png'),
+  },
+  54: {
+    card: require('@/assets/images/gods/generated/cards/zhongkui-card.png'),
+    soft: require('@/assets/images/gods/generated/soft/zhongkui-soft.png'),
+    closeup: require('@/assets/images/gods/generated/closeups/zhongkui-closeup.png'),
+  },
+  55: {
+    card: require('@/assets/images/gods/generated/cards/baoshengdadi-card.png'),
+    soft: require('@/assets/images/gods/generated/soft/baoshengdadi-soft.png'),
+    closeup: require('@/assets/images/gods/generated/closeups/baoshengdadi-closeup.png'),
+  },
+  56: {
+    card: require('@/assets/images/gods/generated/cards/yiminye-card.png'),
+    soft: require('@/assets/images/gods/generated/soft/yiminye-soft.png'),
+    closeup: require('@/assets/images/gods/generated/closeups/yiminye-closeup.png'),
+  },
+  57: {
+    card: require('@/assets/images/gods/generated/cards/yuhuangshangdi-card.png'),
+    soft: require('@/assets/images/gods/generated/soft/yuhuangshangdi-soft.png'),
+    closeup: require('@/assets/images/gods/generated/closeups/yuhuangshangdi-closeup.png'),
+  },
+  58: {
+    card: require('@/assets/images/gods/generated/cards/guanyin-card.png'),
+    soft: require('@/assets/images/gods/generated/soft/guanyin-soft.png'),
+    closeup: require('@/assets/images/gods/generated/closeups/guanyin-closeup.png'),
+  },
 };
 
 export function getGodCardImage(godId?: number | null): ImageSourcePropType | null {

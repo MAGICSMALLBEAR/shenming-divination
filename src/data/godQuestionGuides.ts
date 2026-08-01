@@ -503,6 +503,94 @@ const guides: Record<number, GodQuestionGuide> = {
       { category: 'general', text: '如何祈求法主真君護身，讓日常出入更加平安？' },
     ],
   },
+  51: {
+    title: '地基主問事法',
+    intro: '適合問家宅平安、搬家安居、居住環境與地基穩固；問題宜聚焦居家事務。',
+    preferredCategories: ['family', 'protection', 'settlement'],
+    steps: ['先說明家宅或搬家情況', '問是否有需要處理的氣場', '請示如何安頓與守護家園'],
+    prompts: [
+      { category: 'family', text: '目前家中的氣場與平安狀況如何，有什麼需要注意的？' },
+      { category: 'settlement', text: '這次搬家或裝修是否順利，新居氣場如何安頓？' },
+      { category: 'protection', text: '家宅是否需要特別的淨化或守護？' },
+    ],
+  },
+  52: {
+    title: '黃大仙問事法',
+    intro: '適合問人生方向、困境化解、事業選擇與家宅平安；心誠則靈，問題宜清楚直接。',
+    preferredCategories: ['general', 'career', 'family'],
+    steps: ['先說明目前的困境或選擇', '問轉機在何處', '請示最適合的下一步'],
+    prompts: [
+      { category: 'general', text: '關於我目前最困擾的這件事，轉機何時會出現？' },
+      { category: 'career', text: '事業上的這個選擇是否正確，近期該如何調整方向？' },
+      { category: 'family', text: '家庭中的這個問題該如何化解，需要我做什麼改變？' },
+    ],
+  },
+  53: {
+    title: '二郎神問事法',
+    intro: '適合問真相調查、斬妖除魔、小人化解與正義伸張；問題宜直接明快。',
+    preferredCategories: ['protection', 'general', 'career'],
+    steps: ['先說明想查明的真相', '問是否有隱藏阻礙', '請示如何斬除障礙'],
+    prompts: [
+      { category: 'protection', text: '身邊是否有小人或隱性阻礙需要二郎真君協助斬除？' },
+      { category: 'general', text: '眼前這件事的真相是什麼，有沒有我沒看到的面向？' },
+      { category: 'career', text: '事業發展中是否有需要警惕的陷阱或小人？' },
+    ],
+  },
+  54: {
+    title: '張天師問事法',
+    intro: '適合問符籙護身、驅邪鎮煞、道法化解與健康平安；問題宜誠心敬意。',
+    preferredCategories: ['protection', 'health', 'general'],
+    steps: ['先說明遇到的問題', '問是否需要符籙護佑', '請示以正道化解的方法'],
+    prompts: [
+      { category: 'protection', text: '目前是否有邪煞或不好氣息需要張天師符籙化解？' },
+      { category: 'health', text: '身體不適除了就醫外，是否有需要注意的無形因素？' },
+      { category: 'general', text: '如何以正道正念獲得天師護佑，讓日常更加平安？' },
+    ],
+  },
+  55: {
+    title: '華陀先師問事法',
+    intro: '適合問醫療選擇、手術調養、養生方向與康復節奏；醫療問題仍以專業意見為先。',
+    preferredCategories: ['health', 'general', 'family'],
+    steps: ['先說明健康狀況或治療選項', '問治療與調養的方向', '請示康復期間的重點'],
+    prompts: [
+      { category: 'health', text: '關於目前的治療方案，哪個方向最適合我的身體狀況？' },
+      { category: 'health', text: '手術前後應該如何調養身心，加速康復？' },
+      { category: 'general', text: '養生方面我該先從哪個習慣開始調整？' },
+    ],
+  },
+  56: {
+    title: '十八王公問事法',
+    intro: '適合問偏財運勢、特殊心願、貴人助力與忠義護佑；心誠則靈，不分晝夜。',
+    preferredCategories: ['wealth', 'general', 'protection'],
+    steps: ['先說清楚所求的願望', '問是否有助力可借', '請示如何把握機會'],
+    prompts: [
+      { category: 'wealth', text: '眼前的偏財機會是否可靠，近期財運走勢如何？' },
+      { category: 'general', text: '我心中的這個願望何時能夠實現，需要我做什麼努力？' },
+      { category: 'protection', text: '是否有忠義護佑之力可以依靠，如何獲得王公加持？' },
+    ],
+  },
+  57: {
+    title: '雷公問事法',
+    intro: '適合問正義伸張、驅邪除惡、天威護佑與公理公道；心正則天助。',
+    preferredCategories: ['protection', 'general', 'career'],
+    steps: ['先說明不公不義的狀況', '問正義如何伸張', '請示浩然正氣護身之法'],
+    prompts: [
+      { category: 'protection', text: '我所遭受的不公待遇，天理是否會還我一個公道？' },
+      { category: 'general', text: '身邊是否有邪惡勢力需要天威震懾驅除？' },
+      { category: 'career', text: '事業上的是非對錯，該如何以正道面對與化解？' },
+    ],
+  },
+  58: {
+    title: '釋迦牟尼佛問事法',
+    intro: '適合問心靈成長、煩惱解脫、智慧開悟與人生方向；先靜心片刻再請示。',
+    preferredCategories: ['general', 'health', 'family'],
+    steps: ['先靜心片刻沉澱思緒', '問煩惱的根源與轉念', '請示智慧的啟發'],
+    prompts: [
+      { category: 'general', text: '關於我目前的人生方向，佛陀有何智慧啟發可以指引我？' },
+      { category: 'health', text: '心中的煩惱與焦慮，該如何放下才能得到真正的自在？' },
+      { category: 'family', text: '如何以慈悲智慧處理家庭中的矛盾，讓關係更加和諧？' },
+    ],
+  },
 };
 
 export function getGodQuestionGuide(godId?: number | null): GodQuestionGuide {
