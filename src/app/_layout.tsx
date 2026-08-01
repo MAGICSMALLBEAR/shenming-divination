@@ -59,6 +59,7 @@ export default function RootLayout() {
       <Stack.Screen name="yearlyReview" />
       <Stack.Screen name="fengshui" />
       <Stack.Screen name="worshipGuide" />
+      <Stack.Screen name="godDetail" />
       <Stack.Screen name={'deity-calendar/[id]'} />
       </Stack>
       <OpeningCeremony />

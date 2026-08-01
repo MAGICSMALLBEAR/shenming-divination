@@ -67,6 +67,7 @@ export default function HomeScreen() {
   const [dailyRecommendation, setDailyRecommendation] = React.useState<GodRecommendation | null>(null);
   const [pendingReview, setPendingReview] = React.useState<DivinationRecord | null>(null);
   const [reviewSummary, setReviewSummary] = React.useState<VerificationFollowUpSummary | null>(null);
+  const [verificationCardDismissed, setVerificationCardDismissed] = React.useState(false);
   const [showCrossCompare, setShowCrossCompare] = React.useState(false);
   const [poemConfirming, setPoemConfirming] = React.useState(false);
   const [poemConfirmText, setPoemConfirmText] = React.useState<string | null>(null);
@@ -76,6 +77,7 @@ export default function HomeScreen() {
   const [newFamName, setNewFamName] = React.useState('');
   const [newFamRelation, setNewFamRelation] = React.useState('');
   const [settings, setSettings] = React.useState<AppSettings | null>(null);
+  const [quickDrawGod, setQuickDrawGod] = React.useState<God | null>(null);
   const solarTerm = React.useMemo(() => getCurrentSolarTerm(), []);
 
   // 搖手機求籤：在擲筊步驟偵測搖動
@@ -186,6 +188,22 @@ export default function HomeScreen() {
 
   React.useEffect(() => {
     getFamilyMembers().then(setFamilyMembers);
+  }, []);
+
+  // 快速求籤：根據歷史紀錄推薦最近求過的神明
+  React.useEffect(() => {
+    (async () => {
+      const [settingsData, historyData] = await Promise.all([getSettings(), getHistory()]);
+      const preferredId = settingsData?.preferredGodId;
+      const lastHistoryGodId = historyData[0]?.godName
+        ? gods.find((g) => g.name === historyData[0].godName)?.id
+        : undefined;
+      const godId = preferredId ?? lastHistoryGodId;
+      if (godId) {
+        const god = gods.find((g) => g.id === godId);
+        if (god) setQuickDrawGod(god);
+      }
+    })();
   }, []);
 
   const handleAddFamilyMember = async () => {
@@ -316,6 +334,18 @@ export default function HomeScreen() {
               onAddPress={() => setShowAddFamily(true)}
               onRemove={handleRemoveFamilyMember}
             />
+            {quickDrawGod ? (
+              <QuickDrawCard
+                god={quickDrawGod}
+                onDraw={() => handleSelectGod(quickDrawGod.id)}
+                onSwitch={() => {
+                  // 清除 quickDrawGod 讓卡片消失，自然捲到 GodSelector
+                  setQuickDrawGod(null);
+                }}
+                reducedMotion={reducedMotion || lowMotionMode}
+                onDetail={() => router.push({ pathname: '/godDetail', params: { godId: String(quickDrawGod.id) } })}
+              />
+            ) : null}
             <DailyFortuneCard fortune={fortune} expanded={fortuneExpanded} onToggle={() => setFortuneExpanded(v => !v)} />
             {dailyRecommendation ? (
               <DailyGodRecommendationCard
@@ -324,8 +354,22 @@ export default function HomeScreen() {
                 reducedMotion={reducedMotion || lowMotionMode}
               />
             ) : null}
-            {pendingReview ? (
-              <PendingReviewCard record={pendingReview} summary={reviewSummary} onPress={handleReviewRecord} reducedMotion={reducedMotion || lowMotionMode} />
+            {reviewSummary && reviewSummary.pending.length > 0 && !verificationCardDismissed ? (
+              <PendingReviewCard
+                record={pendingReview ?? reviewSummary.pending[0]}
+                summary={reviewSummary}
+                onPress={handleReviewRecord}
+                onDismiss={() => setVerificationCardDismissed(true)}
+                reducedMotion={reducedMotion || lowMotionMode}
+              />
+            ) : null}
+            {reviewSummary && reviewSummary.pending.length > 0 && verificationCardDismissed ? (
+              <TouchableOpacity style={styles.verificationMiniBadge} onPress={handleReviewRecord}>
+                <View style={styles.verificationMiniBadgeCircle}>
+                  <Text style={styles.verificationMiniBadgeCount}>{reviewSummary.pending.length}</Text>
+                </View>
+                <Text style={styles.verificationMiniBadgeLabel}>待驗證</Text>
+              </TouchableOpacity>
             ) : null}
             {hasLastPoemContext ? (
               <TouchableOpacity style={styles.followUpShortcut} onPress={handleAskFollowUp}>
@@ -533,7 +577,7 @@ export default function HomeScreen() {
   };
 
   const handleReviewRecord = () => {
-    router.push('/collection?tab=history');
+    router.push('/collection?tab=history&verification=due');
   };
 
   const renderActions = () => {
@@ -654,6 +698,84 @@ export default function HomeScreen() {
 // ─── 為誰求籤選擇器 ───────────────────────────────────────────
 
 	// ─── 運勢折疊卡 ───────────────────────────────────────────
+function QuickDrawCard({
+  god,
+  onDraw,
+  onSwitch,
+  onDetail,
+  reducedMotion,
+}: {
+  god: God;
+  onDraw: () => void;
+  onSwitch: () => void;
+  onDetail: () => void;
+  reducedMotion: boolean;
+}) {
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
+  const cardImage = getGodCardImage(god.id);
+  const fade = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (reducedMotion) {
+      fade.setValue(1);
+      return;
+    }
+    fade.setValue(0);
+    Animated.timing(fade, {
+      toValue: 1,
+      duration: 500,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [god.id, reducedMotion, fade]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.quickDrawCard,
+        { opacity: fade, borderColor: god.accentColor + '33' },
+      ]}
+    >
+      <View style={styles.quickDrawRow}>
+        <View style={[styles.quickDrawPortrait, { backgroundColor: god.primaryColor + '33' }]}>
+          {cardImage ? (
+            <Image source={cardImage} style={styles.quickDrawPortraitImg} contentFit="cover" contentPosition="top" />
+          ) : null}
+        </View>
+        <View style={styles.quickDrawInfo}>
+          <Text style={[styles.quickDrawEyebrow, { color: god.accentColor }]}>⚡ 快速求籤</Text>
+          <Text style={[styles.quickDrawName, { color: god.accentColor }]}>{god.name}</Text>
+          <Text style={styles.quickDrawTagline}>{god.tagline}</Text>
+        </View>
+      </View>
+      <View style={styles.quickDrawActions}>
+        <TouchableOpacity
+          style={[styles.quickDrawBtn, styles.quickDrawBtnPrimary, { backgroundColor: god.primaryColor }]}
+          onPress={onDraw}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.quickDrawBtnPrimaryText}>再次求籤</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.quickDrawBtn, styles.quickDrawBtnSecondary]}
+          onPress={onSwitch}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.quickDrawBtnSecondaryText}>換一位</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.quickDrawBtn, styles.quickDrawBtnDetail]}
+          onPress={onDetail}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.quickDrawBtnDetailText}>查看詳細</Text>
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
+  );
+}
+
 function SelectedGodEntranceBanner({
   god,
   image,
@@ -833,11 +955,13 @@ function PendingReviewCard({
   record,
   summary,
   onPress,
+  onDismiss,
   reducedMotion,
 }: {
   record: DivinationRecord;
   summary?: VerificationFollowUpSummary | null;
   onPress: () => void;
+  onDismiss?: () => void;
   reducedMotion: boolean;
 }) {
   const { theme } = useAppTheme();
@@ -877,17 +1001,40 @@ function PendingReviewCard({
     inputRange: [0, 1],
     outputRange: [theme.warning + '12', theme.goldDark + '1F'],
   });
+  const glowOpacity = pulseAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.08, 0.18, 0.08],
+  });
   const dueCount = summary?.due.length ?? 0;
   const pendingCount = summary?.pending.length ?? 1;
-  const daysUntilReview = record.verificationDueAt
-    ? Math.max(0, Math.ceil((record.verificationDueAt - Date.now()) / (24 * 60 * 60 * 1000)))
+
+  // Find earliest due date across all pending records
+  let earliestDueAt: number | null = null;
+  if (summary?.pending.length) {
+    for (const r of summary.pending) {
+      const due = r.verificationDueAt ?? r.verificationFinalDueAt ?? null;
+      if (due && (earliestDueAt === null || due < earliestDueAt)) {
+        earliestDueAt = due;
+      }
+    }
+  }
+  const earliestDueLabel = earliestDueAt
+    ? (() => {
+        const d = new Date(earliestDueAt);
+        return `${d.getMonth() + 1}/${d.getDate()}`;
+      })()
     : null;
-  const title = dueCount > 0 ? `${dueCount} 支籤已到回訪時間` : '下一支籤等待回訪';
+
+  const daysUntilEarliest = earliestDueAt
+    ? Math.max(0, Math.ceil((earliestDueAt - Date.now()) / (24 * 60 * 60 * 1000)))
+    : null;
+
+  const title = '📋 待驗證回訪';
   const scheduleText = dueCount > 0
-    ? `共有 ${pendingCount} 支待驗證，先回來標記準不準。`
-    : daysUntilReview === null
-      ? `共有 ${pendingCount} 支待驗證。`
-      : `約 ${daysUntilReview} 天後可做 7 日回訪。`;
+    ? `${dueCount} 支已到期，最早 ${earliestDueLabel || '今日'}`
+    : daysUntilEarliest !== null
+      ? `約 ${daysUntilEarliest} 天後可做回訪（最早 ${earliestDueLabel}）`
+      : `共 ${pendingCount} 支待驗證`;
 
   return (
     <AnimatedTouchable
@@ -895,14 +1042,34 @@ function PendingReviewCard({
       onPress={onPress}
       activeOpacity={0.86}
     >
+      {/* Pulse glow overlay */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.pendingReviewGlow,
+          { opacity: glowOpacity },
+        ]}
+      />
       <View style={styles.pendingReviewMeta}>
-        <Text style={styles.pendingReviewTitle}>{title}</Text>
+        <View style={styles.pendingReviewTitleRow}>
+          <Text style={styles.pendingReviewTitle}>{title}</Text>
+          <View style={styles.pendingReviewCountBadge}>
+            <Text style={styles.pendingReviewCountText}>{pendingCount}</Text>
+          </View>
+        </View>
         <Text style={styles.pendingReviewText} numberOfLines={2}>
           {record.godName} · 第 {record.poem.number} 籤 · {record.question || record.poem.title}
         </Text>
         <Text style={styles.pendingReviewSchedule}>{scheduleText}</Text>
       </View>
-      <Text style={styles.pendingReviewCta}>去驗證</Text>
+      <View style={styles.pendingReviewActions}>
+        <Text style={styles.pendingReviewCta}>查看</Text>
+        {onDismiss ? (
+          <TouchableOpacity style={styles.pendingReviewDismiss} onPress={onDismiss}>
+            <Text style={styles.pendingReviewDismissText}>✕</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </AnimatedTouchable>
   );
 }
@@ -1114,10 +1281,88 @@ function createStyles(theme: ThemeColors) {
     marginTop: 4,
     fontWeight: TempleFonts.bold,
   },
+  pendingReviewGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 14,
+    backgroundColor: theme.goldLight,
+  },
+  pendingReviewTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pendingReviewCountBadge: {
+    backgroundColor: theme.warning,
+    borderRadius: 10,
+    minWidth: 22,
+    height: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  pendingReviewCountText: {
+    color: theme.bgDark,
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  pendingReviewActions: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
   pendingReviewCta: {
     color: theme.goldLight,
     fontSize: 12,
     fontWeight: TempleFonts.heavy,
+  },
+  pendingReviewDismiss: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: theme.textMuted + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pendingReviewDismissText: {
+    color: theme.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  verificationMiniBadge: {
+    marginHorizontal: TempleSpacing.md,
+    marginBottom: TempleSpacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: theme.warning + '14',
+    borderWidth: 1,
+    borderColor: theme.warning + '30',
+    alignSelf: 'flex-start',
+  },
+  verificationMiniBadgeCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: theme.warning,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  verificationMiniBadgeCount: {
+    color: theme.bgDark,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  verificationMiniBadgeLabel: {
+    color: theme.goldLight,
+    fontSize: TempleFonts.small,
+    fontWeight: '600',
   },
   followUpShortcut: {
     marginHorizontal: TempleSpacing.md,
@@ -1281,6 +1526,60 @@ function createStyles(theme: ThemeColors) {
   modalConfirmBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: theme.gold, alignItems: 'center' },
   modalConfirmText: { color: theme.bgDark, fontSize: TempleFonts.body, fontWeight: TempleFonts.bold },
   actionBtnBlessing: { borderColor: '#E879A0', backgroundColor: '#E879A033' },
+  // 快速求籤卡片
+  quickDrawCard: {
+    marginHorizontal: TempleSpacing.md,
+    marginBottom: TempleSpacing.md,
+    padding: TempleSpacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    backgroundColor: theme.bgCard + '88',
+    overflow: 'hidden',
+  },
+  quickDrawRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: TempleSpacing.md,
+  },
+  quickDrawPortrait: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: theme.goldDark + '33',
+  },
+  quickDrawPortraitImg: { width: '100%', height: '100%' },
+  quickDrawInfo: { flex: 1 },
+  quickDrawEyebrow: { fontSize: 11, fontWeight: TempleFonts.bold, letterSpacing: 1, marginBottom: 2 },
+  quickDrawName: { fontSize: TempleFonts.body, fontWeight: TempleFonts.heavy, marginBottom: 1 },
+  quickDrawTagline: { fontSize: 11, color: theme.textMuted },
+  quickDrawActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: TempleSpacing.sm,
+  },
+  quickDrawBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickDrawBtnPrimary: {},
+  quickDrawBtnPrimaryText: { color: '#FFF', fontSize: 12, fontWeight: TempleFonts.heavy },
+  quickDrawBtnSecondary: {
+    backgroundColor: theme.bgCard,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '30',
+  },
+  quickDrawBtnSecondaryText: { color: theme.textMuted, fontSize: 12, fontWeight: TempleFonts.semibold },
+  quickDrawBtnDetail: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: theme.goldDark + '25',
+  },
+  quickDrawBtnDetailText: { color: theme.goldLight, fontSize: 11, fontWeight: TempleFonts.semibold },
   });
 }
 

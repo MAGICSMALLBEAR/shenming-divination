@@ -103,7 +103,7 @@ function AnimatedRecordItem({ children, delay }: { children: React.ReactNode; de
 }
 
 export default function CollectionScreen() {
-  const params = useLocalSearchParams<{ tab?: string }>();
+  const params = useLocalSearchParams<{ tab?: string; verification?: string }>();
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
   const { t } = useI18n();
@@ -126,6 +126,10 @@ export default function CollectionScreen() {
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [notesOnly, setNotesOnly] = useState(false);
   const [loading, setLoading] = useState(true);
+  // ── Compare mode ──
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedForCompare, setSelectedForCompare] = useState<string[]>([]);
+  const [compareVisible, setCompareVisible] = useState(false);
   // Folder state
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -161,7 +165,10 @@ export default function CollectionScreen() {
     if (params.tab === 'history' || params.tab === 'favorites') {
       setActiveTab(params.tab);
     }
-  }, [params.tab]);
+    if (params.verification === 'due') {
+      setSelectedVerification('due');
+    }
+  }, [params.tab, params.verification]);
 
   const currentRecords = activeTab === 'favorites' ? favorites : history;
 
@@ -223,6 +230,83 @@ export default function CollectionScreen() {
       due,
     };
   }, [filteredRecords]);
+
+  const compareRecords = useMemo(() => {
+    if (selectedForCompare.length !== 2) return null;
+    const r1 = filteredRecords.find((r) => r.id === selectedForCompare[0]);
+    const r2 = filteredRecords.find((r) => r.id === selectedForCompare[1]);
+    if (!r1 || !r2) return null;
+    return [r1, r2] as [DivinationRecord, DivinationRecord];
+  }, [selectedForCompare, filteredRecords]);
+
+  const getCompareText = useCallback(() => {
+    if (!compareRecords) return '';
+    const [r1, r2] = compareRecords;
+    const lines = [
+      '【籤詩對照】',
+      '',
+      `── ${r1.godName} 第 ${r1.poem.number} 籤 ──`,
+      `等級：${r1.poem.level}`,
+      `籤題：${r1.poem.title}`,
+      `籤文：${r1.poem.content}`,
+      r1.aiInterpretation ? `AI解讀：${r1.aiInterpretation.replace(/\n+/g, ' ').slice(0, 200)}` : '',
+      '',
+      `── ${r2.godName} 第 ${r2.poem.number} 籤 ──`,
+      `等級：${r2.poem.level}`,
+      `籤題：${r2.poem.title}`,
+      `籤文：${r2.poem.content}`,
+      r2.aiInterpretation ? `AI解讀：${r2.aiInterpretation.replace(/\n+/g, ' ').slice(0, 200)}` : '',
+      '',
+      '【異同比較】',
+      r1.godName === r2.godName
+        ? `✓ 相同神明：${r1.godName}`
+        : `✗ 不同神明：${r1.godName} vs ${r2.godName}`,
+      r1.poem.number === r2.poem.number
+        ? `✓ 相同籤號：第 ${r1.poem.number} 籤`
+        : `✗ 不同籤號：第 ${r1.poem.number} 籤 vs 第 ${r2.poem.number} 籤`,
+      r1.poem.level === r2.poem.level
+        ? `✓ 相同等級：${r1.poem.level}`
+        : `✗ 不同等級：${r1.poem.level} vs ${r2.poem.level}`,
+      '',
+      `— 神明占卜 · 籤詩對照`,
+    ];
+    return lines.join('\n');
+  }, [compareRecords]);
+
+  const handleToggleCompareSelect = (id: string) => {
+    setSelectedForCompare((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((v) => v !== id);
+      }
+      if (prev.length >= 2) {
+        // Replace the first selection
+        return [prev[1], id];
+      }
+      return [...prev, id];
+    });
+  };
+
+  const handleCompareShare = async () => {
+    const text = getCompareText();
+    if (!text) return;
+    if (Platform.OS === 'web') {
+      try {
+        await navigator.clipboard.writeText(text);
+        setFolderToast('已複製對照內容到剪貼簿');
+        setTimeout(() => setFolderToast(null), 2000);
+      } catch {
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `籤詩對照_${new Date().toISOString().slice(0, 10)}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } else {
+      await Share.share({ message: text, title: '神明占卜 · 籤詩對照' }).catch(() => {});
+    }
+  };
 
   const hasActiveFilters =
     searchText.trim().length > 0 ||
@@ -490,11 +574,10 @@ export default function CollectionScreen() {
     );
   };
 
-  const renderRecord = (record: DivinationRecord, isFavorite: boolean) => (
-    <View
-      key={record.id}
-      style={[styles.recordCard, layout.isTablet && styles.recordCardDesktop]}
-    >
+  const isCompareSelected = (id: string) => selectedForCompare.includes(id);
+
+  const renderCardBody = (record: DivinationRecord, isFavorite: boolean) => (
+    <>
       <View style={styles.recordHeader}>
         <View style={styles.recordMeta}>
           <Text style={styles.recordGod}>{record.godName}</Text>
@@ -604,6 +687,34 @@ export default function CollectionScreen() {
       >
         <Text style={styles.folderAddBtnText}>📁 加入分類</Text>
       </TouchableOpacity>
+    </>
+  );
+
+  const renderRecord = (record: DivinationRecord, isFavorite: boolean) => (
+    <View
+      key={record.id}
+      style={[styles.recordCard, layout.isTablet && styles.recordCardDesktop]}
+    >
+      {compareMode ? (
+        <View style={styles.compareCardRow}>
+          <TouchableOpacity
+            style={[
+              styles.compareCheckbox,
+              isCompareSelected(record.id) && styles.compareCheckboxSelected,
+            ]}
+            onPress={() => handleToggleCompareSelect(record.id)}
+          >
+            <Text style={styles.compareCheckboxText}>
+              {isCompareSelected(record.id) ? '✓' : ''}
+            </Text>
+          </TouchableOpacity>
+          <View style={styles.compareCardContent}>
+            {renderCardBody(record, isFavorite)}
+          </View>
+        </View>
+      ) : (
+        renderCardBody(record, isFavorite)
+      )}
     </View>
   );
 
@@ -812,6 +923,19 @@ export default function CollectionScreen() {
                 {t('collectionNotesOnly')}
               </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.filterChip, compareMode && styles.filterChipActive]}
+              onPress={() => {
+                setCompareMode((v) => !v);
+                setSelectedForCompare([]);
+                setCompareVisible(false);
+              }}
+            >
+              <Text style={[styles.filterChipText, compareMode && styles.filterChipTextActive]}>
+                對照模式
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -987,6 +1111,15 @@ export default function CollectionScreen() {
                 </TouchableOpacity>
               ) : null}
 
+              {compareMode && selectedForCompare.length === 2 ? (
+                <TouchableOpacity
+                  style={styles.compareStartBtn}
+                  onPress={() => setCompareVisible(true)}
+                >
+                  <Text style={styles.compareStartBtnText}>開始對照</Text>
+                </TouchableOpacity>
+              ) : null}
+
               {activeTab === 'history' && history.length > 0 ? (
                 <TouchableOpacity style={styles.clearBtn} onPress={handleClearHistory}>
                   <Text style={styles.clearBtnText}>{t('collectionClearHistory')}</Text>
@@ -1115,6 +1248,159 @@ export default function CollectionScreen() {
             >
               <Text style={styles.createFolderConfirmText}>建立分類</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Compare Modal ── */}
+      <Modal
+        visible={compareVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCompareVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>籤詩對照</Text>
+              <TouchableOpacity onPress={() => setCompareVisible(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {compareRecords ? (
+              <ScrollView style={{ maxHeight: layout.isTablet ? 500 : 420 }} showsVerticalScrollIndicator={false}>
+                <View style={layout.isTablet ? styles.compareColumns : undefined}>
+                  {compareRecords.map((rec, idx) => {
+                    const isSameGod = compareRecords[0].godName === compareRecords[1].godName;
+                    const isSameNumber = compareRecords[0].poem.number === compareRecords[1].poem.number;
+                    const isSameLevel = compareRecords[0].poem.level === compareRecords[1].poem.level;
+
+                    return (
+                      <View
+                        key={rec.id}
+                        style={[
+                          styles.comparePanel,
+                          layout.isTablet && styles.comparePanelDesktop,
+                        ]}
+                      >
+                        <View style={styles.comparePanelHeader}>
+                          <Text style={styles.comparePanelGod}>{rec.godName}</Text>
+                          {isSameGod && idx === 1 ? (
+                            <View style={styles.compareSameTag}>
+                              <Text style={styles.compareSameTagText}>同神明</Text>
+                            </View>
+                          ) : null}
+                        </View>
+
+                        <View style={styles.comparePanelMeta}>
+                          <View style={styles.recordNumberBadge}>
+                            <Text style={styles.recordNumber}>第 {rec.poem.number} 籤</Text>
+                          </View>
+                          {isSameNumber && idx === 1 ? (
+                            <View style={styles.compareSameTag}>
+                              <Text style={styles.compareSameTagText}>同籤號</Text>
+                            </View>
+                          ) : null}
+                          <View style={[
+                            styles.compareLevelBadge,
+                            !isSameLevel && { backgroundColor: theme.warning + '30', borderColor: theme.warning },
+                          ]}>
+                            <Text style={[
+                              styles.compareLevelText,
+                              !isSameLevel && { color: theme.warning, fontWeight: '800' },
+                            ]}>
+                              {rec.poem.level}
+                            </Text>
+                          </View>
+                          {!isSameLevel ? (
+                            <Text style={styles.compareDiffHint}>等級不同</Text>
+                          ) : null}
+                        </View>
+
+                        <View style={styles.recordPoem}>
+                          {rec.poem.content.split('\n').map((line, li) => (
+                            <Text key={li} style={styles.poemLine}>{line}</Text>
+                          ))}
+                        </View>
+
+                        <View style={styles.compareSection}>
+                          <Text style={styles.compareSectionTitle}>籤題</Text>
+                          <Text style={styles.compareSectionText}>{rec.poem.title}</Text>
+                        </View>
+
+                        {rec.aiInterpretation ? (
+                          <View style={styles.compareSection}>
+                            <Text style={styles.compareSectionTitle}>AI 解讀摘要</Text>
+                            <Text style={styles.compareSectionText}>
+                              {rec.aiInterpretation.replace(/\n+/g, ' ').slice(0, 180)}
+                              {rec.aiInterpretation.length > 180 ? '...' : ''}
+                            </Text>
+                          </View>
+                        ) : null}
+
+                        <View style={styles.compareSection}>
+                          <Text style={styles.compareSectionTitle}>記錄日期</Text>
+                          <Text style={styles.compareSectionText}>{formatDate(rec.timestamp)}</Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+
+                {/* ── Summary Row ── */}
+                <View style={styles.compareSummary}>
+                  <Text style={styles.compareSummaryTitle}>異同比較</Text>
+                  {(() => {
+                    const [r1, r2] = compareRecords;
+                    return (
+                      <>
+                        <View style={styles.compareSummaryRow}>
+                          <Text style={styles.compareSummaryLabel}>神明</Text>
+                          <Text style={styles.compareSummaryValue}>
+                            {r1.godName === r2.godName ? (
+                              <Text style={{ color: theme.success }}>相同：{r1.godName}</Text>
+                            ) : (
+                              <Text style={{ color: theme.textMuted }}>{r1.godName} vs {r2.godName}</Text>
+                            )}
+                          </Text>
+                        </View>
+                        <View style={styles.compareSummaryRow}>
+                          <Text style={styles.compareSummaryLabel}>籤號</Text>
+                          <Text style={styles.compareSummaryValue}>
+                            {r1.poem.number === r2.poem.number ? (
+                              <Text style={{ color: theme.success }}>相同：第 {r1.poem.number} 籤</Text>
+                            ) : (
+                              <Text style={{ color: theme.textMuted }}>第 {r1.poem.number} 籤 vs 第 {r2.poem.number} 籤</Text>
+                            )}
+                          </Text>
+                        </View>
+                        <View style={styles.compareSummaryRow}>
+                          <Text style={styles.compareSummaryLabel}>等級</Text>
+                          <Text style={styles.compareSummaryValue}>
+                            {r1.poem.level === r2.poem.level ? (
+                              <Text style={{ color: theme.success }}>相同：{r1.poem.level}</Text>
+                            ) : (
+                              <Text style={{ color: theme.warning, fontWeight: '700' }}>
+                                {r1.poem.level} vs {r2.poem.level}
+                              </Text>
+                            )}
+                          </Text>
+                        </View>
+                      </>
+                    );
+                  })()}
+                </View>
+
+                <TouchableOpacity style={styles.compareShareBtn} onPress={handleCompareShare}>
+                  <Text style={styles.compareShareBtnText}>分享對照</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>請選擇兩筆記錄進行對照</Text>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -1896,6 +2182,178 @@ function createStyles(theme: ThemeColors) {
     color: '#FFFFFF',
     fontSize: TempleFonts.small,
     fontWeight: '600',
+  },
+  // ── Compare mode styles ──
+  compareCardRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: TempleSpacing.sm,
+  },
+  compareCheckbox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: theme.goldDark + '50',
+    backgroundColor: theme.bgDark + '40',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  compareCheckboxSelected: {
+    backgroundColor: theme.goldDark,
+    borderColor: theme.gold,
+  },
+  compareCheckboxText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  compareCardContent: {
+    flex: 1,
+  },
+  compareStartBtn: {
+    width: '100%',
+    marginTop: TempleSpacing.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: theme.goldDark + '40',
+    borderWidth: 1,
+    borderColor: theme.gold,
+  },
+  compareStartBtnText: {
+    fontSize: TempleFonts.body,
+    color: theme.goldLight,
+    fontWeight: '800',
+  },
+  compareColumns: {
+    flexDirection: 'row',
+    gap: TempleSpacing.md,
+  },
+  comparePanel: {
+    flex: 1,
+    backgroundColor: theme.bgCard,
+    borderRadius: 12,
+    padding: TempleSpacing.md,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '30',
+    marginBottom: TempleSpacing.md,
+  },
+  comparePanelDesktop: {
+    width: '48.5%',
+    marginBottom: 0,
+  },
+  comparePanelHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: TempleSpacing.sm,
+  },
+  comparePanelGod: {
+    fontSize: TempleFonts.body,
+    fontWeight: '700',
+    color: theme.goldLight,
+  },
+  compareSameTag: {
+    backgroundColor: theme.success + '20',
+    borderWidth: 1,
+    borderColor: theme.success + '50',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  compareSameTagText: {
+    fontSize: 10,
+    color: theme.success,
+    fontWeight: '700',
+  },
+  comparePanelMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: TempleSpacing.sm,
+    flexWrap: 'wrap',
+  },
+  compareLevelBadge: {
+    backgroundColor: theme.goldDark + '26',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '40',
+  },
+  compareLevelText: {
+    fontSize: 11,
+    color: theme.goldLight,
+    fontWeight: '600',
+  },
+  compareDiffHint: {
+    fontSize: 10,
+    color: theme.warning,
+    fontWeight: '700',
+  },
+  compareSection: {
+    marginTop: TempleSpacing.sm,
+    paddingTop: TempleSpacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: theme.goldDark + '15',
+  },
+  compareSectionTitle: {
+    fontSize: 11,
+    color: theme.goldLight,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  compareSectionText: {
+    fontSize: TempleFonts.small,
+    color: theme.textMuted,
+    lineHeight: 20,
+  },
+  compareSummary: {
+    backgroundColor: theme.bgCard,
+    borderRadius: 12,
+    padding: TempleSpacing.md,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '30',
+    marginTop: TempleSpacing.sm,
+  },
+  compareSummaryTitle: {
+    fontSize: TempleFonts.body,
+    color: theme.goldLight,
+    fontWeight: '800',
+    marginBottom: TempleSpacing.sm,
+  },
+  compareSummaryRow: {
+    flexDirection: 'row',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.goldDark + '10',
+  },
+  compareSummaryLabel: {
+    width: 50,
+    fontSize: 12,
+    color: theme.textMuted,
+    fontWeight: '600',
+  },
+  compareSummaryValue: {
+    flex: 1,
+    fontSize: 12,
+  },
+  compareShareBtn: {
+    width: '100%',
+    marginTop: TempleSpacing.md,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: theme.goldDark + '30',
+    borderWidth: 1,
+    borderColor: theme.gold + '50',
+  },
+  compareShareBtnText: {
+    fontSize: TempleFonts.body,
+    color: theme.goldLight,
+    fontWeight: '700',
   },
   });
 }

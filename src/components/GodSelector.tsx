@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 import { gods, questionCategories, type God } from '@/data/gods';
 import { getGodCardImage } from '@/data/godImages';
@@ -242,6 +243,7 @@ function GodDetailModal({ god, onClose, onSelect }: { god: God; onClose: () => v
   const modalStyles = useMemo(() => createModalStyles(theme), [theme]);
   const cardImage = getGodCardImage(god.id);
   const profile = getGodProfile(god.id);
+  const router = useRouter();
 
   return (
     <Modal visible={true} animationType="slide" transparent={false} onRequestClose={onClose}>
@@ -329,6 +331,20 @@ function GodDetailModal({ god, onClose, onSelect }: { god: God; onClose: () => v
               </View>
             </>
           )}
+
+          {/* 查看完整資訊 */}
+          <TouchableOpacity
+            style={[modalStyles.selectBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: god.accentColor + '55' }]}
+            onPress={() => {
+              onClose();
+              router.push({ pathname: '/godDetail', params: { godId: String(god.id) } });
+            }}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={'查看' + god.name + '完整資訊'}
+          >
+            <Text style={[modalStyles.selectBtnText, { color: god.accentColor }]}>查看完整資訊</Text>
+          </TouchableOpacity>
 
           {/* 選神按鈕 */}
           <TouchableOpacity
