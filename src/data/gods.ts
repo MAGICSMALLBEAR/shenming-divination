@@ -964,7 +964,7 @@ export const gods: God[] = [
     description: '南宋名將，相傳護駕宋帝南下，平亂有功受封大元帥，香港沙田車公廟香火極盛。每年年初二車公誕為香港求籤成為城中大事，信眾轉風車祈求轉運、驅邪除疫、出入平安。',
     poemSystem: '車公靈籤',
     totalPoems: 96,
-    image: require('@/assets/images/gods/generated/cards/zhoucangjiangjun-card.png'),
+    image: require('@/assets/images/gods/generated/cards/chegong-card.png'),
     blessing: '願車大元帥威靈護佑，風車一轉運程轉，驅邪除疫保平安，出入順遂萬事亨。',
     tagline: '風車一轉好運來，元帥威靈護四方',
     primaryColor: '#B8322A',
