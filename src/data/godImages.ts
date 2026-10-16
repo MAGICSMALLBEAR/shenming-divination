@@ -297,6 +297,12 @@ const godImagesById: Record<number, GodImageSet> = {
     soft: require('@/assets/images/gods/generated/soft/guanyin-soft.png'),
     closeup: require('@/assets/images/gods/generated/closeups/guanyin-closeup.png'),
   },
+  // 車公專屬美術尚未生成，暫用周倉將軍圖
+  59: {
+    card: require('@/assets/images/gods/generated/cards/zhoucangjiangjun-card.png'),
+    soft: require('@/assets/images/gods/generated/soft/zhoucangjiangjun-soft.png'),
+    closeup: require('@/assets/images/gods/generated/closeups/zhoucangjiangjun-closeup.png'),
+  },
 };
 
 export function getGodCardImage(godId?: number | null): ImageSourcePropType | null {

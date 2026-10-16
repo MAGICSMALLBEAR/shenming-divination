@@ -5,6 +5,8 @@ import { jiazi60Poems } from './poems/jiazi60';
 import { zhugeShenShuPoems } from './poems/zhugeShenShu';
 import { guanyinLingQianPoems } from './poems/guanyinLingQian';
 import { ershibaxiuPoems } from './poems/ershibaxiu';
+import { huangdaxianPoems } from './poems/huangdaxian';
+import { chegongPoems } from './poems/chegong';
 import {
   chenghuangFocusedPoems,
   dizangFocusedPoems,
@@ -845,8 +847,8 @@ export const gods: God[] = [
     name: '黃大仙',
     title: '黃大仙（赤松仙子）',
     description: '香港最盛行的民間信仰之一，赤松仙子黃初平，以靈籤指點迷津聞名。有求必應，善信絡繹不絕，廟宇香火鼎盛。信眾祈求事業發展、家庭和合、化解困境、指點迷津。',
-    poemSystem: '六十甲子籤',
-    totalPoems: 60,
+    poemSystem: '黃大仙靈籤',
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/huangdaxian-card.png'),
     blessing: '願黃大仙靈籤指引，有求必應解迷津，事業家庭兩得意，福慧雙修萬事興。',
     tagline: '有求必應靈驗顯，籤詩指引渡迷津',
@@ -954,6 +956,22 @@ export const gods: God[] = [
     category: 'compassion',
     questionCategories: ['general', 'health', 'family', 'blessing', 'love'],
     isFeatured: true,
+  },
+  {
+    id: 59,
+    name: '車公',
+    title: '車大元帥',
+    description: '南宋名將，相傳護駕宋帝南下，平亂有功受封大元帥，香港沙田車公廟香火極盛。每年年初二車公誕為香港求籤成為城中大事，信眾轉風車祈求轉運、驅邪除疫、出入平安。',
+    poemSystem: '車公靈籤',
+    totalPoems: 96,
+    image: require('@/assets/images/gods/generated/cards/zhoucangjiangjun-card.png'),
+    blessing: '願車大元帥威靈護佑，風車一轉運程轉，驅邪除疫保平安，出入順遂萬事亨。',
+    tagline: '風車一轉好運來，元帥威靈護四方',
+    primaryColor: '#B8322A',
+    accentColor: '#E8B04A',
+    auraColor: '#E07A5F',
+    category: 'war',
+    questionCategories: ['general', 'career', 'protection', 'travel'],
   },];
 
 
@@ -1002,6 +1020,8 @@ export function getPoemsByGod(godId: number) {
   if (god.poemSystem === '諸葛神數') return zhugeShenShuPoems;
   if (god.poemSystem === '觀音靈籤') return guanyinLingQianPoems;
   if (god.poemSystem === '二十八宿靈籤') return ershibaxiuPoems;
+  if (god.poemSystem === '黃大仙靈籤') return huangdaxianPoems;
+  if (god.poemSystem === '車公靈籤') return chegongPoems;
   return leiyushiPoems;
 }
 

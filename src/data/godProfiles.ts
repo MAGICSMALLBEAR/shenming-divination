@@ -354,6 +354,12 @@ export const godProfiles: Record<number, GodProfile> = {
     suitableTopics: ['人生方向如何抉擇', '煩惱如何放下', '如何增長智慧與慈悲'],
     worshipTips: ['適合問心靈與智慧成長', '先靜心片刻再問', '籤意重在啟發而非預測'],
   },
+  59: {
+    aliases: ['車公', '車大元帥', '車公爺'],
+    patronages: ['轉運開局', '驅邪除疫', '出入平安'],
+    suitableTopics: ['今年運勢如何轉好', '眼前困局能否扭轉', '出行或新計畫是否順利'],
+    worshipTips: ['適合問轉運與年度運勢', '年初二車公誕前後特別適合請示', '籤分上中下三等，中籤可升可降'],
+  },
 };
 
 export function getGodProfile(godId?: number | null): GodProfile | null {

@@ -98,7 +98,6 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
     case 48:
     case 50:
     case 51:
-    case 52:
     case 53:
     case 54:
     case 55:
@@ -429,6 +428,30 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
         editionNote: '觀音原籤不改，新增佛陀般若向標題、典故前言與智慧解曰，聚焦轉念、覺察與身心安定。',
         suitabilityNote: '適合問心靈成長、人生方向、煩惱轉化與智慧啟發。',
         versionTag: 'shijiamouni-guanyin-100-focused-v1',
+      });
+    case 52:
+      return entry({
+        label: '黃大仙靈籤',
+        totalPoems: 100,
+        sourceNote: '香港嗇色園黃大仙祠專屬籤系，相傳為黃初平扶乩所作。100 首籤文、吉凶與古人典故籤題經 m.hkir.com、golla.tw、hktemple88.blogspot.com 三個獨立公開來源逐字比對，以多數決定案。',
+        completenessNote: '100 首筆數完整；少數兩個來源共有的簡轉繁誤字（如「出中七日」應為「山中七日」）已改採正確版本。日後可再以嗇色園官方籤書核對。',
+        strengths: ['指點迷津', '事業抉擇', '家宅平安'],
+        sourceType: '傳統籤系（黃大仙靈籤百首）',
+        editionNote: '籤文、吉凶、籤題為 2026-10-16 三方比對版本；白話、典故說明與七類解曰由本 App 依傳統「仙機」改寫，非籤書原文。',
+        suitabilityNote: '適合問人生方向、事業抉擇、困境如何化解與家宅平安。',
+        versionTag: 'huangdaxian-100-verified-v1',
+      });
+    case 59:
+      return entry({
+        label: '車公靈籤',
+        totalPoems: 96,
+        sourceNote: '香港沙田車公廟專屬籤系，共 96 首七言四句。籤文經 qian.time.actor、hktemple88.blogspot.com、sheup.org 三個獨立公開來源逐字比對，差異僅為異體字。',
+        completenessNote: '96 首筆數完整；原籤只分上（35）、中（44）、下（17）三等，App 對應為上吉／中平／下下，原等第標註於典故說明開頭。',
+        strengths: ['年度運勢', '轉運開局', '出入平安'],
+        sourceType: '傳統籤系（車公靈籤九十六首）',
+        editionNote: '籤文與等第為 2026-10-16 三方比對版本；車公籤原無籤題，籤題為 App 依籤意擬定；白話與七類解曰由本 App 依傳統「解曰／斷籤」改寫。',
+        suitabilityNote: '適合問年度運勢、困局能否扭轉、出行與新計畫是否順利。',
+        versionTag: 'chegong-96-verified-v1',
       });
     default:
       return defaultEntry;

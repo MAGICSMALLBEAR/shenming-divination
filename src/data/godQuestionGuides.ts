@@ -591,6 +591,17 @@ const guides: Record<number, GodQuestionGuide> = {
       { category: 'family', text: '如何以慈悲智慧處理家庭中的矛盾，讓關係更加和諧？' },
     ],
   },
+  59: {
+    title: '車公問事法',
+    intro: '適合問年度運勢、轉運開局、出行平安與驅邪除疫；問題宜聚焦一件事，求得中籤時留意可升可降。',
+    preferredCategories: ['general', 'career', 'travel'],
+    steps: ['先說明想扭轉的處境', '問轉機與時機', '請示該把握或避開的事'],
+    prompts: [
+      { category: 'general', text: '今年整體運勢如何，有哪些地方需要特別留意？' },
+      { category: 'career', text: '事業上的困局是否能夠扭轉，近期該如何出手？' },
+      { category: 'travel', text: '這趟出行或搬遷是否順利平安，有什麼需要注意？' },
+    ],
+  },
 };
 
 export function getGodQuestionGuide(godId?: number | null): GodQuestionGuide {
