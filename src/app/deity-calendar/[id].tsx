@@ -18,6 +18,7 @@ import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import type { ThemeColors } from '@/constants/themes';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import {
+  DEITY_OBSERVANCE_TYPE_LABELS,
   getDeityCalendarSources,
   getDeityObservanceById,
   getDeityWorshipDetails,
@@ -98,7 +99,7 @@ export default function DeityObservanceDetailScreen() {
         <View style={styles.hero}>
           <Image source={god.image} style={styles.image} contentFit={'cover'} contentPosition={'top'} />
           <View style={styles.heroText}>
-            <Text style={styles.eyebrow}>神明紀念日</Text>
+            <Text style={styles.eyebrow}>神明紀念日 · {DEITY_OBSERVANCE_TYPE_LABELS[observance.eventType]}</Text>
             <Text style={styles.title}>{observance.title}</Text>
             <Text style={styles.godName}>{god.name} · {god.title}</Text>
             <Text style={styles.lunarDate}>農曆 {observance.lunarMonth} 月 {observance.lunarDay} 日</Text>
@@ -141,6 +142,7 @@ export default function DeityObservanceDetailScreen() {
               <View style={styles.sourceText}>
                 <Text style={styles.sourceTitle}>{source.title}</Text>
                 <Text style={styles.meta}>{source.organization}</Text>
+                {source.note ? <Text style={styles.meta}>{source.note}</Text> : null}
               </View>
               <Text style={styles.sourceArrow}>↗</Text>
             </TouchableOpacity>
