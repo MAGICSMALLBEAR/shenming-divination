@@ -23,6 +23,12 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
+
+      - name: Type check backend
+        run: npx tsc --noEmit -p backend
+
       - name: Lint
         run: npm run lint
 
