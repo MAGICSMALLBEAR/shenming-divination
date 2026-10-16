@@ -22,6 +22,7 @@ import {
   getUpcomingDeityObservances,
 } from '@/services/lunarDeityCalendar';
 import { filterUpcomingForFollowedDeities } from '@/services/deityCalendarFollowing';
+import { CalendarSubscribeRow } from '@/components/home/CalendarSubscribeRow';
 
 interface Props {
   initialDate?: Date;
@@ -141,6 +142,8 @@ export function DeityCalendarExplorer({
           <Text style={styles.exportText}>匯出整年 ICS</Text>
         </TouchableOpacity>
       </View>
+
+      <CalendarSubscribeRow />
 
       <View style={styles.followingPanel} accessibilityLabel={'我的神明日曆'}>
         <View style={styles.followingHeader}>

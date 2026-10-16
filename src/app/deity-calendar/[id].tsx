@@ -25,6 +25,7 @@ import {
   getNextDeityObservanceOccurrence,
 } from '@/services/lunarDeityCalendar';
 import { gods } from '@/data/gods';
+import { CalendarSubscribeRow } from '@/components/home/CalendarSubscribeRow';
 import {
   addDeityOccurrenceToDeviceCalendar,
   exportDeityOccurrences,
@@ -117,6 +118,10 @@ export default function DeityObservanceDetailScreen() {
             校勘狀態：{observance.reviewStatus === 'government-reference' ? '已有政府文史或寺廟調查資料參考' : '常見傳承資料，仍需向所屬宮廟確認'}
           </Text>
           <Text style={styles.meta}>資料檢視日期：{observance.reviewedAt}</Text>
+        </View>
+
+        <View style={styles.card}>
+          <CalendarSubscribeRow godId={god.id} label={`訂閱${god.name}的所有紀念日（自動更新）`} />
         </View>
 
         <View style={styles.card}>

@@ -34,3 +34,26 @@ describe('deity calendar ICS', () => {
     expect(ics).toContain('第一行\\n第二行');
   });
 });
+
+describe('deity calendar ICS folding and subscription', () => {
+  it('folds long lines at 75 UTF-8 octets without splitting characters', () => {
+    const occurrence = getDeityObservancesForDate(new Date(2026, 4, 9, 12))[0];
+    const longNote = '媽祖信仰在臺灣各地都有不同的遶境與祭典傳承，'.repeat(6);
+    const ics = buildDeityCalendarIcs([
+      { ...occurrence, observance: { ...occurrence.observance, traditionNote: longNote } },
+    ]);
+    const lines = ics.split('\r\n').filter(Boolean);
+    for (const line of lines) {
+      expect(Buffer.byteLength(line, 'utf8')).toBeLessThanOrEqual(75);
+    }
+    expect(ics.replace(/\r\n /g, '')).toContain(longNote);
+  });
+
+  it('adds refresh hints only for subscription feeds', () => {
+    const occurrences = getDeityObservancesForDate(new Date(2026, 4, 9, 12));
+    expect(buildDeityCalendarIcs(occurrences)).not.toContain('REFRESH-INTERVAL');
+    const feed = buildDeityCalendarIcs(occurrences, '神明日曆', new Date(), { refreshHours: 24 });
+    expect(feed).toContain('REFRESH-INTERVAL;VALUE=DURATION:PT24H');
+    expect(feed).toContain('X-PUBLISHED-TTL:PT24H');
+  });
+});
