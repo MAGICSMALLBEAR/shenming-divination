@@ -49,7 +49,9 @@
           "writeOnlyCalendarPermission": "允許神明占卜將神明紀念日加入你的行事曆。"
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      "expo-image",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
