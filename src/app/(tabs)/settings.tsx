@@ -48,6 +48,16 @@ import { useI18n } from '@/hooks/useI18n';
 import { setLanguage, type Lang } from '@/services/i18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { PremiumPaywall } from '@/components/PremiumPaywall';
+import { OPENING_VARIANTS, OPENING_VARIANT_LABELS, OpeningCeremony } from '@/components/OpeningCeremony';
+import {
+  DEFAULT_OPENING_PREFERENCES,
+  loadOpeningPreferences,
+  resolveOpeningVariant,
+  saveOpeningPreferences,
+  type OpeningFrequency,
+  type OpeningPreferences,
+  type OpeningStyle,
+} from '@/services/openingPreferences';
 import { DrawAnimation } from '@/components/DrawAnimation';
 import {
   isPremiumActive,
@@ -123,6 +133,8 @@ export default function SettingsScreen() {
   const [premiumActive, setPremiumActive] = useState(false);
   const [premiumPlan, setPremiumPlan] = useState<PremiumPlan>('free');
   const [showDrawPreview, setShowDrawPreview] = useState(false);
+  const [openingPrefs, setOpeningPrefs] = useState<OpeningPreferences>(DEFAULT_OPENING_PREFERENCES);
+  const [openingPreviewKey, setOpeningPreviewKey] = useState(0);
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [cloudMeta, setCloudMeta] = useState<CloudBackupMeta | null>(null);
   const [syncBusy, setSyncBusy] = useState(false);
@@ -168,7 +180,16 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     loadStoredSettings();
+    loadOpeningPreferences().then(setOpeningPrefs);
   }, []);
+
+  const updateOpeningPrefs = (next: Partial<OpeningPreferences>) => {
+    setOpeningPrefs((prev) => {
+      const merged = { ...prev, ...next };
+      saveOpeningPreferences(merged);
+      return merged;
+    });
+  };
 
   const handleSave = async () => {
     await saveSettings(settings);
@@ -909,6 +930,51 @@ export default function SettingsScreen() {
           )}
         </View>
 
+        {/* 開場動畫 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settingsOpening')}</Text>
+          <Text style={styles.themeNote}>{t('settingsOpeningStyle')}</Text>
+          <View style={styles.godSelector}>
+            {(['random', ...OPENING_VARIANTS] as OpeningStyle[]).map((style) => (
+              <TouchableOpacity
+                key={style}
+                style={[styles.godChip, openingPrefs.style === style && styles.godChipActive]}
+                onPress={() => updateOpeningPrefs({ style })}
+                accessibilityRole={'button'}
+                accessibilityState={{ selected: openingPrefs.style === style }}
+              >
+                <Text style={[styles.godChipText, openingPrefs.style === style && styles.godChipTextActive]}>
+                  {style === 'random' ? t('settingsOpeningRandom') : OPENING_VARIANT_LABELS[style]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text style={styles.themeNote}>{t('settingsOpeningFrequency')}</Text>
+          <View style={styles.godSelector}>
+            {([
+              ['every-launch', 'settingsOpeningEveryLaunch'],
+              ['daily-first', 'settingsOpeningDailyFirst'],
+              ['first-use', 'settingsOpeningFirstUse'],
+            ] as [OpeningFrequency, string][]).map(([frequency, labelKey]) => (
+              <TouchableOpacity
+                key={frequency}
+                style={[styles.godChip, openingPrefs.frequency === frequency && styles.godChipActive]}
+                onPress={() => updateOpeningPrefs({ frequency })}
+                accessibilityRole={'button'}
+                accessibilityState={{ selected: openingPrefs.frequency === frequency }}
+              >
+                <Text style={[styles.godChipText, openingPrefs.frequency === frequency && styles.godChipTextActive]}>
+                  {t(labelKey)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity style={styles.godChip} onPress={() => setOpeningPreviewKey((key) => key + 1)} accessibilityRole={'button'}>
+            <Text style={styles.godChipText}>{t('settingsOpeningPreview')}</Text>
+          </TouchableOpacity>
+          <Text style={styles.themeNote}>{t('settingsOpeningNote')}</Text>
+        </View>
+
         {/* 主題設定 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settingsTheme')}</Text>
@@ -969,6 +1035,13 @@ export default function SettingsScreen() {
 
         <View style={{ height: 60 }} />
       </ScrollView>
+      {openingPreviewKey > 0 ? (
+        <OpeningCeremony
+          key={openingPreviewKey}
+          variant={resolveOpeningVariant(openingPrefs)}
+          onFinish={() => setOpeningPreviewKey(0)}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

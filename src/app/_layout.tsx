@@ -4,7 +4,7 @@ import * as Notifications from 'expo-notifications';
 import { router, Stack } from 'expo-router';
 import { initThemeFromSettings } from '@/services/themeStore';
 import { initSentry } from '@/services/sentry';
-import { OpeningCeremony } from '@/components/OpeningCeremony';
+import { OpeningGate } from '@/components/OpeningGate';
 
 export default function RootLayout() {
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function RootLayout() {
       <Stack.Screen name="godDetail" />
       <Stack.Screen name={'deity-calendar/[id]'} />
       </Stack>
-      <OpeningCeremony />
+      <OpeningGate />
     </>
   );
 }

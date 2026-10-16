@@ -5,6 +5,15 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 export const OPENING_VARIANTS = ['temple', 'incense', 'seal', 'lotus', 'radiance'] as const;
 export type OpeningVariant = (typeof OPENING_VARIANTS)[number];
+export const OPENING_BACKGROUND = '#160A06';
+
+export const OPENING_VARIANT_LABELS: Record<OpeningVariant, string> = {
+  temple: '廟門初啟',
+  incense: '一炷心香',
+  seal: '神印開示',
+  lotus: '蓮華清淨',
+  radiance: '金光引路',
+};
 
 const COPY: Record<OpeningVariant, [string, string]> = {
   temple: ['廟門初啟', '入境・靜心・誠問'],
@@ -170,7 +179,7 @@ function StaticSeal() {
 
 const gold = '#E7BE6A';
 const styles = StyleSheet.create({
-  overlay: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 10000, elevation: 10000, backgroundColor: '#160A06', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  overlay: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 10000, elevation: 10000, backgroundColor: OPENING_BACKGROUND, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   glow: { position: 'absolute', width: 430, height: 430, borderRadius: 215, backgroundColor: '#5B2112', opacity: 0.26 },
   stage: { width: '100%', maxWidth: 560, height: 480, alignItems: 'center', justifyContent: 'center' },
   words: { position: 'absolute', top: 286, left: 20, right: 20, alignItems: 'center' },
