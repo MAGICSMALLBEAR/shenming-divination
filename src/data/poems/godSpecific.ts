@@ -143,18 +143,6 @@ const sanguanConfig: GodSpecificConfig = {
   levelAdvice: DEFAULT_LEVEL_ADVICE,
 };
 
-const zhushengConfig: GodSpecificConfig = {
-  idOffset: 5500,
-  label: '註生送子籤',
-  baseSystem: '觀音靈籤',
-  focusKey: 'marriage',
-  focusLabel: '孕育家緣',
-  titlePrefix: '娘娘賜福・',
-  storyPrefix: '註生娘娘籤解以子嗣因緣、孕育照護與家庭祝福為主軸；此籤承接觀音靈籤原意，轉作孕產與親子請示的白話指引。 ',
-  generalPrefix: '註生娘娘提醒',
-  levelAdvice: DEFAULT_LEVEL_ADVICE,
-};
-
 const luzuConfig: GodSpecificConfig = {
   idOffset: 5600,
   label: '純陽指路籤',
@@ -257,7 +245,6 @@ export const santaiziBreakthroughPoems = buildGodSpecificPoems(jiazi60Poems, san
 export const yuelaoMarriagePoems = buildGodSpecificPoems(jiazi60Poems, yuelaoConfig);
 export const fudezhengshenBlessingPoems = buildGodSpecificPoems(jiazi60Poems, fudezhengshenConfig);
 export const sanguanBlessingPoems = buildGodSpecificPoems(jiazi60Poems, sanguanConfig);
-export const zhushengBlessingPoems = buildGodSpecificPoems(guanyinLingQianPoems, zhushengConfig);
 export const luzuGuidancePoems = buildGodSpecificPoems(leiyushiPoems, luzuConfig);
 export const zhaogongmingWealthPoems = buildGodSpecificPoems(leiyushiPoems, zhaogongmingConfig);
 export const huyeGuardPoems = buildGodSpecificPoems(jiazi60Poems, huyeConfig);
@@ -274,7 +261,6 @@ export const godSpecificPoemSystemMeta = {
   yuelao: yuelaoConfig,
   fudezhengshen: fudezhengshenConfig,
   sanguan: sanguanConfig,
-  zhusheng: zhushengConfig,
   luzu: luzuConfig,
   zhaogongming: zhaogongmingConfig,
   huye: huyeConfig,

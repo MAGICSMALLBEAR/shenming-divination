@@ -5,6 +5,7 @@ import { jiazi60Poems } from './poems/jiazi60';
 import { zhugeShenShuPoems } from './poems/zhugeShenShu';
 import { guanyinLingQianPoems } from './poems/guanyinLingQian';
 import { xuantianLingqianPoems } from './poems/xuantianLingqian';
+import { zhushengLingqianPoems } from './poems/zhushengLingqian';
 import { huangdaxianPoems } from './poems/huangdaxian';
 import { chegongPoems } from './poems/chegong';
 import {
@@ -20,7 +21,6 @@ import {
   yuelaoMarriagePoems,
   fudezhengshenBlessingPoems,
   sanguanBlessingPoems,
-  zhushengBlessingPoems,
   luzuGuidancePoems,
   zhaogongmingWealthPoems,
   huyeGuardPoems,
@@ -146,8 +146,8 @@ export const gods: God[] = [
     name: '註生娘娘',
     title: '註生娘娘',
     description: '掌管生育與兒童守護之神。信眾祈求懷孕順產、孩子健康平安長大。',
-    poemSystem: '註生送子籤',
-    totalPoems: 100,
+    poemSystem: '注生堂靈籤',
+    totalPoems: 64,
     image: require('@/assets/images/gods/generated/cards/zhushengniangniang-card.webp'),
     blessing: '願娘娘賜福送子，懷孕順產，孩兒健康，平安長大。',
     tagline: '送子賜福，安產護幼',
@@ -1004,7 +1004,7 @@ export function getPoemsByGod(godId: number) {
   if (god.poemSystem === '保生大帝靈籤') return baoshengHealthPoems;
   if (god.poemSystem === '土地公厚德籤') return fudezhengshenBlessingPoems;
   if (god.poemSystem === '三官賜福籤') return sanguanBlessingPoems;
-  if (god.poemSystem === '註生送子籤') return zhushengBlessingPoems;
+  if (god.poemSystem === '注生堂靈籤') return zhushengLingqianPoems;
   if (god.poemSystem === '純陽指路籤') return luzuGuidancePoems;
   if (god.poemSystem === '五路聚財籤') return zhaogongmingWealthPoems;
   if (god.poemSystem === '虎威護境籤') return huyeGuardPoems;

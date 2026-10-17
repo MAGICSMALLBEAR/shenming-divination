@@ -143,15 +143,15 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
       });
     case 7:
       return entry({
-        label: '註生送子籤',
-        totalPoems: 100,
-        sourceNote: '底本為觀音靈籤（觀音廟宇通用之傳統籤系，籤文逐字沿用），加入註生娘娘孕育、親子與家庭照護的白話解讀層。',
-        completenessNote: '100 首完整可抽；籤詩原文為傳統定本，孕育與健康解讀僅作民俗提醒，仍應以專業醫療意見為準。',
-        strengths: ['子嗣因緣', '孕育照護', '家庭祝福'],
-        sourceType: '傳統籤系（觀音靈籤）+ 註生娘娘專屬白話解讀',
-        editionNote: '觀音原籤不改，新增娘娘賜福向標題、典故前言與孕育解曰。',
-        suitabilityNote: '適合問備孕、孕產照護、親子關係、家庭期待與照顧分工。',
-        versionTag: 'zhusheng-guanyin-100-focused-v2',
+        label: '注生堂靈籤',
+        totalPoems: 64,
+        sourceNote: '出自《正統道藏》《靈濟真君注生堂靈籤》（Kanripo 漢籍リポジトリ數位版 KR5g0111，底本為三家本）。原為靈濟真君（徐仙）信仰中的求嗣籤，64 首全以求子、安胎、生產為主題，與主掌生育的註生娘娘相合。',
+        completenessNote: '64 首筆數完整；第 64 籤原典未標吉凶，以「原典未標」呈現，不另行判定。孕育與健康解讀僅作民俗參考，請以專業醫療意見為準。',
+        strengths: ['求子因緣', '安胎待產', '家庭祝福'],
+        sourceType: '原典籤系（《正統道藏》靈濟真君注生堂靈籤）',
+        editionNote: '籤文與吉凶依原典，古字形轉為通行繁體。原典無籤題與解曰，籤題、白話、典故說明與七類解曰由本 App 撰寫，並說明熊羆、虺蛇、弄璋、弄瓦等傳統求嗣意象。2026-10-17 取代原本借用觀音靈籤的「註生送子籤」。',
+        suitabilityNote: '適合問求子、備孕、孕期與待產的心情與準備；醫療問題請以醫師建議為準。',
+        versionTag: 'zhusheng-daozang-64-v1',
       });
     case 8:
     case 32:

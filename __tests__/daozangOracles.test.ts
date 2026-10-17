@@ -1,6 +1,7 @@
 import { gods, getPoemsByGod } from '@/data/gods';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
 import { xuantianLingqianPoems } from '@/data/poems/xuantianLingqian';
+import { zhushengLingqianPoems } from '@/data/poems/zhushengLingqian';
 
 const QUATRAIN = /^[^，。\n]{7}，[^，。\n]{7}。\n[^，。\n]{7}，[^，。\n]{7}。$/;
 
@@ -25,5 +26,20 @@ describe('Daozang-sourced oracle systems', () => {
       expect(poem.story).not.toContain('萬曆');
     }
     expect(xuantianLingqianPoems[0].content.startsWith('飛龍變化喜逢時')).toBe(true);
+  });
+});
+
+describe('註生娘娘 注生堂靈籤', () => {
+  it('uses the 64-lot 靈濟真君注生堂靈籤 with an honest unmarked level on lot 64', () => {
+    const god = gods.find((item) => item.id === 7);
+    expect(god?.poemSystem).toBe('注生堂靈籤');
+    expect(getPoemsByGod(7)).toHaveLength(64);
+    expect(getOracleCatalogByGodId(7).totalPoems).toBe(64);
+    expect(zhushengLingqianPoems[0].content.startsWith('夜來吉夢叶熊羆')).toBe(true);
+    expect(zhushengLingqianPoems[63].level).toBe('原典未標');
+    expect(new Set(zhushengLingqianPoems.map((poem) => poem.id)).size).toBe(64);
+    for (const poem of zhushengLingqianPoems) {
+      expect(poem.content).toMatch(/^[^，。\n]{7}，[^，。\n]{7}。\n[^，。\n]{7}，[^，。\n]{7}。$/);
+    }
   });
 });
