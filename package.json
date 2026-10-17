@@ -65,7 +65,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "export:web": "npx expo export --platform web && node ./scripts/patch-pwa.js && npm run calendar:feeds",
-    "calendar:feeds": "esbuild scripts/generate-calendar-feeds.ts --bundle --platform=node --format=cjs --loader:.png=empty --log-level=warning --outfile=node_modules/.cache/calendar-feeds.cjs && node node_modules/.cache/calendar-feeds.cjs dist/calendar",
+    "calendar:feeds": "esbuild scripts/generate-calendar-feeds.ts --bundle --platform=node --format=cjs --loader:.png=empty --loader:.webp=empty --log-level=warning --outfile=node_modules/.cache/calendar-feeds.cjs && node node_modules/.cache/calendar-feeds.cjs dist/calendar",
     "lint": "expo lint",
     "test": "jest",
     "test:watch": "jest --watchAll",

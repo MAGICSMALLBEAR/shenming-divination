@@ -28,7 +28,7 @@ type DivinePresenceStageProps = {
   compact?: boolean;
 };
 
-const GUAN_DI_BLINK = require('@/assets/images/gods/generated/animation/guanshengdijun-blink.png');
+const GUAN_DI_BLINK = require('@/assets/images/gods/generated/animation/guanshengdijun-blink.webp');
 
 const COPY: Record<DivinePresenceMode, { eyebrow: string; title: string }> = {
   listening: { eyebrow: '神前稟明', title: '請定心說明所問之事' },
