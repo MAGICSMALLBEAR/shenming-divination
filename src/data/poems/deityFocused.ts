@@ -40,7 +40,7 @@ function buildDeityFocusedPoems(base: Poem[], config: DeityFocusConfig): Poem[] 
 const configs = {
   mazu: {
     idOffset: 7000,
-    systemName: '媽祖天后百籤',
+    systemName: '媽祖天后籤（六十甲子）',
     versionTag: 'mazu-jiazi-60-focused-v2',
     baseSystem: '六十甲子籤',
     focusKey: 'travel',
@@ -73,7 +73,7 @@ const configs = {
   },
   chenghuang: {
     idOffset: 7500,
-    systemName: '城隍明鑑六十籤',
+    systemName: '城隍明鑑籤（雷雨師）',
     versionTag: 'chenghuang-leiyushi-100-focused-v2',
     baseSystem: '雷雨師百首',
     focusKey: 'career',
@@ -84,7 +84,7 @@ const configs = {
   },
   jinmu: {
     idOffset: 7600,
-    systemName: '金母慈光二十八籤',
+    systemName: '金母慈光籤（觀音）',
     versionTag: 'jinmu-guanyin-100-focused-v2',
     baseSystem: '觀音靈籤',
     focusKey: 'general',
@@ -95,7 +95,7 @@ const configs = {
   },
   dizang: {
     idOffset: 7700,
-    systemName: '地藏大願二十四籤',
+    systemName: '地藏大願籤（觀音）',
     versionTag: 'dizang-guanyin-100-focused-v2',
     baseSystem: '觀音靈籤',
     focusKey: 'health',

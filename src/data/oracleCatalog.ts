@@ -69,7 +69,7 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
       });
     case 3:
       return entry({
-        label: '媽祖天后百籤',
+        label: '媽祖天后籤（六十甲子）',
         totalPoems: 60,
         sourceNote: '底本為六十甲子籤（媽祖廟、王爺廟、天公廟等廟宇通用之傳統籤系，籤文逐字沿用），加入媽祖護航、家宅與出行平安的白話解讀層。',
         completenessNote: '60 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依媽祖信仰改寫。',
@@ -227,7 +227,7 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
       });
     case 14:
       return entry({
-        label: '城隍明鑑六十籤',
+        label: '城隍明鑑籤（雷雨師）',
         totalPoems: 100,
         sourceNote: '底本為雷雨師百首（城隍廟等廟宇通用之傳統籤系，籤文逐字沿用），加入城隍明察、司法與公道的白話解讀層。',
         completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依城隍信仰改寫。',
@@ -251,7 +251,7 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
       });
     case 18:
       return entry({
-        label: '金母慈光二十八籤',
+        label: '金母慈光籤（觀音）',
         totalPoems: 100,
         sourceNote: '底本為觀音靈籤（觀音廟宇通用之傳統籤系，籤文逐字沿用），加入瑤池金母慈悲護念、家庭和合的白話解讀層。',
         completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依金母信仰改寫。',
@@ -263,7 +263,7 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
       });
     case 19:
       return entry({
-        label: '地藏大願二十四籤',
+        label: '地藏大願籤（觀音）',
         totalPoems: 100,
         sourceNote: '底本為觀音靈籤（觀音廟宇通用之傳統籤系，籤文逐字沿用），加入地藏王菩薩安魂、解厄與修心的白話解讀層。',
         completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依地藏信仰改寫。',

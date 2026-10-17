@@ -87,7 +87,7 @@ export const gods: God[] = [
     name: '媽祖',
     title: '天上聖母',
     description: '海上守護神，台灣最普遍的信仰。庇佑航海平安、家庭和樂、事業順遂。',
-    poemSystem: '媽祖天后百籤',
+    poemSystem: '媽祖天后籤（六十甲子）',
     totalPoems: 60,
     image: require('@/assets/images/gods/generated/cards/mazu-card.webp'),
     blessing: '願媽祖娘娘庇佑，風調雨順，闔家平安，一帆風順。',
@@ -252,7 +252,7 @@ export const gods: God[] = [
     name: '城隍爺',
     title: '城隍爺',
     description: '陰間司法神，掌理地方陰陽兩界事務，明察秋毫、賞善罰惡。職司保境安民、懲奸除惡。信眾祈求官司順利、是非分明、冤屈昭雪、消災解厄。',
-    poemSystem: '城隍明鑑六十籤',
+    poemSystem: '城隍明鑑籤（雷雨師）',
     totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/chenghuangye-card.webp'),
     blessing: '願城隍爺明鏡高懸，善有善報，冤屈得雪，是非分明，正義伸張。',
@@ -312,7 +312,7 @@ export const gods: God[] = [
     name: '瑤池金母',
     title: '瑤池金母',
     description: '又稱王母娘娘，慈悲護佑、調和陰陽與母性守護。信眾祈求身心安定、家庭和合、靈性指引與貴人助力。',
-    poemSystem: '金母慈光二十八籤',
+    poemSystem: '金母慈光籤（觀音）',
     totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/yaochijinmu-card.webp'),
     blessing: '願金母慈光護佑，心安氣和，家門添福，貴人相扶。',
@@ -327,7 +327,7 @@ export const gods: God[] = [
     name: '地藏王菩薩',
     title: '地藏王菩薩',
     description: '大願地藏，救拔幽冥苦厄，安定亡者與生者之心。信眾祈求超拔、化解業障、身心平安與家族和解。',
-    poemSystem: '地藏大願二十四籤',
+    poemSystem: '地藏大願籤（觀音）',
     totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/dizangwang-card.webp'),
     blessing: '願地藏菩薩大願護持，苦厄漸消，心燈常明，冤親和解。',
@@ -996,12 +996,12 @@ export function getPoemsByGod(godId: number) {
   if (!god) return leiyushiPoems;
 
   if (god.poemSystem === '六十甲子籤') return jiazi60Poems;
-  if (god.poemSystem === '媽祖天后百籤') return mazuFocusedPoems;
+  if (god.poemSystem === '媽祖天后籤（六十甲子）') return mazuFocusedPoems;
   if (god.poemSystem === '文昌功名百籤') return wenchangFocusedPoems;
   if (god.poemSystem === '玄天二十八宿籤') return xuantianFocusedPoems;
-  if (god.poemSystem === '城隍明鑑六十籤') return chenghuangFocusedPoems;
-  if (god.poemSystem === '金母慈光二十八籤') return jinmuFocusedPoems;
-  if (god.poemSystem === '地藏大願二十四籤') return dizangFocusedPoems;
+  if (god.poemSystem === '城隍明鑑籤（雷雨師）') return chenghuangFocusedPoems;
+  if (god.poemSystem === '金母慈光籤（觀音）') return jinmuFocusedPoems;
+  if (god.poemSystem === '地藏大願籤（觀音）') return dizangFocusedPoems;
   if (god.poemSystem === '保生大帝靈籤') return baoshengHealthPoems;
   if (god.poemSystem === '土地公厚德籤') return fudezhengshenBlessingPoems;
   if (god.poemSystem === '三官賜福籤') return sanguanBlessingPoems;
