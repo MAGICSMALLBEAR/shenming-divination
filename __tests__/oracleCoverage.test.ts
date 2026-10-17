@@ -7,7 +7,6 @@ import {
   jinmuFocusedPoems,
   mazuFocusedPoems,
   wenchangFocusedPoems,
-  xuantianFocusedPoems,
 } from '@/data/poems/deityFocused';
 
 describe('oracle coverage and dedicated deity systems', () => {
@@ -37,17 +36,15 @@ describe('oracle coverage and dedicated deity systems', () => {
     }
   });
 
-  it('provides independent focused arrays for the six strengthened systems', () => {
+  it('provides independent focused arrays for the five strengthened systems', () => {
     expect(mazuFocusedPoems).toHaveLength(60);
     expect(wenchangFocusedPoems).toHaveLength(100);
-    expect(xuantianFocusedPoems).toHaveLength(28);
     expect(chenghuangFocusedPoems).toHaveLength(100);
     expect(jinmuFocusedPoems).toHaveLength(100);
     expect(dizangFocusedPoems).toHaveLength(100);
 
     expect(mazuFocusedPoems[0].jieYue.travel).toContain('聖母護航專解');
     expect(wenchangFocusedPoems[0].jieYue.study).toContain('功名學業專解');
-    expect(xuantianFocusedPoems[0].jieYue.general).toContain('鎮煞穩局專解');
     expect(chenghuangFocusedPoems[0].jieYue.career).toContain('公道文書專解');
     expect(jinmuFocusedPoems[0].jieYue.general).toContain('慈光和合專解');
     expect(dizangFocusedPoems[0].jieYue.health).toContain('安心解厄專解');

@@ -2,7 +2,6 @@ import type { JieYue, Poem } from './leiyushi';
 import { leiyushiPoems } from './leiyushi';
 import { jiazi60Poems } from './jiazi60';
 import { guanyinLingQianPoems } from './guanyinLingQian';
-import { ershibaxiuPoems } from './ershibaxiu';
 
 type JieYueKey = keyof JieYue;
 
@@ -60,17 +59,6 @@ const configs = {
     storyPrefix: '本解讀層聚焦讀書、考試、文書與職涯精進；底本承接雷雨師百首 App 修訂版。 ',
     generalPrefix: '文昌帝君提醒',
   },
-  xuantian: {
-    idOffset: 7400,
-    systemName: '玄天二十八宿籤',
-    versionTag: 'xuantian-28-focused-v1',
-    baseSystem: '二十八宿靈籤 App 白話版',
-    focusKey: 'general',
-    focusLabel: '鎮煞穩局',
-    titlePrefix: '玄天鎮局・',
-    storyPrefix: '本解讀層聚焦護境、止煞、是非與局勢穩定；底本為二十八宿 App 白話版。 ',
-    generalPrefix: '玄天上帝提醒',
-  },
   chenghuang: {
     idOffset: 7500,
     systemName: '城隍明鑑籤（雷雨師）',
@@ -108,7 +96,6 @@ const configs = {
 
 export const mazuFocusedPoems = buildDeityFocusedPoems(jiazi60Poems, configs.mazu);
 export const wenchangFocusedPoems = buildDeityFocusedPoems(leiyushiPoems, configs.wenchang);
-export const xuantianFocusedPoems = buildDeityFocusedPoems(ershibaxiuPoems, configs.xuantian);
 export const chenghuangFocusedPoems = buildDeityFocusedPoems(leiyushiPoems, configs.chenghuang);
 export const jinmuFocusedPoems = buildDeityFocusedPoems(guanyinLingQianPoems, configs.jinmu);
 export const dizangFocusedPoems = buildDeityFocusedPoems(guanyinLingQianPoems, configs.dizang);

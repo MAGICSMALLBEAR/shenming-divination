@@ -4,7 +4,7 @@ import { leiyushiPoems } from './poems/leiyushi';
 import { jiazi60Poems } from './poems/jiazi60';
 import { zhugeShenShuPoems } from './poems/zhugeShenShu';
 import { guanyinLingQianPoems } from './poems/guanyinLingQian';
-import { ershibaxiuPoems } from './poems/ershibaxiu';
+import { xuantianLingqianPoems } from './poems/xuantianLingqian';
 import { huangdaxianPoems } from './poems/huangdaxian';
 import { chegongPoems } from './poems/chegong';
 import {
@@ -13,7 +13,6 @@ import {
   jinmuFocusedPoems,
   mazuFocusedPoems,
   wenchangFocusedPoems,
-  xuantianFocusedPoems,
 } from './poems/deityFocused';
 import {
   jigongLingQianPoems,
@@ -192,8 +191,8 @@ export const gods: God[] = [
     name: '玄天上帝',
     title: '北極玄天上帝',
     description: '鎮守北方天門，腳踏龜蛇、手持七星伏魔劍。道號真武大帝，主掌斬妖除魔、消災解厄、鎮宅平安。信眾祈求事業穩固、小人退散、家運昌隆。',
-    poemSystem: '玄天二十八宿籤',
-    totalPoems: 28,
+    poemSystem: '玄天上帝感應靈籤',
+    totalPoems: 49,
     image: require('@/assets/images/gods/generated/cards/xuantianshangdi-card.webp'),
     blessing: '願上帝公七星護佑，龜蛇鎮煞，妖邪退散，家宅平安，事業穩固如山。',
     tagline: '腳踏龜蛇，鎮煞伏魔',
@@ -998,7 +997,7 @@ export function getPoemsByGod(godId: number) {
   if (god.poemSystem === '六十甲子籤') return jiazi60Poems;
   if (god.poemSystem === '媽祖天后籤（六十甲子）') return mazuFocusedPoems;
   if (god.poemSystem === '文昌功名百籤') return wenchangFocusedPoems;
-  if (god.poemSystem === '玄天二十八宿籤') return xuantianFocusedPoems;
+  if (god.poemSystem === '玄天上帝感應靈籤') return xuantianLingqianPoems;
   if (god.poemSystem === '城隍明鑑籤（雷雨師）') return chenghuangFocusedPoems;
   if (god.poemSystem === '金母慈光籤（觀音）') return jinmuFocusedPoems;
   if (god.poemSystem === '地藏大願籤（觀音）') return dizangFocusedPoems;
@@ -1019,7 +1018,6 @@ export function getPoemsByGod(godId: number) {
   if (god.poemSystem === '月老姻緣籤（六十甲子）') return yuelaoMarriagePoems;
   if (god.poemSystem === '諸葛神數') return zhugeShenShuPoems;
   if (god.poemSystem === '觀音靈籤') return guanyinLingQianPoems;
-  if (god.poemSystem === '二十八宿靈籤') return ershibaxiuPoems;
   if (god.poemSystem === '黃大仙靈籤') return huangdaxianPoems;
   if (god.poemSystem === '車公靈籤') return chegongPoems;
   return leiyushiPoems;

@@ -179,15 +179,15 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
       });
     case 10:
       return entry({
-        label: '玄天二十八宿籤',
-        totalPoems: 28,
-        sourceNote: '底本為傳統黃曆「二十八宿值日吉凶歌訣」（修造、嫁娶、安葬擇日用），籤文為傳統歌訣完整原文（逐字沿用，含 8 句全文），搭配玄天上帝鎮煞、護境與穩局的請示語境。',
-        completenessNote: '28 宿筆數完整，籤文原文為傳統定本；原文部分語氣較重（涉及傳統擇日凶兆），白話與分類解曰已在忠於原意的前提下轉譯為現代可理解的請示提醒。',
-        strengths: ['消災制煞', '家宅平安', '穩固局勢'],
-        sourceType: '傳統籤系（二十八宿值日歌訣）+ 玄天上帝專屬白話解讀',
-        editionNote: '二十八宿原文不改，補上分類解曰與典故前言，供求籤問事情境使用。',
-        suitabilityNote: '適合問家宅、消災、是非小人、事業穩固與行動時機。',
-        versionTag: 'xuantian-ershibaxiu-28-full-v2',
+        label: '玄天上帝感應靈籤',
+        totalPoems: 49,
+        sourceNote: '出自《正統道藏》續道藏《玄天上帝百字聖號》所附〈玄天上帝感應靈籤〉（DZ1482，明萬曆三十五年刊；本 App 依 Kanripo 漢籍リポジトリ數位版 KR5h0052，底本為三家本）。原典每籤另有謀望、家宅、婚姻、失物、官事、行人、占病七類詩與「解曰」。',
+        completenessNote: '49 首筆數完整；第 21 籤原典缺「行人」詩，第 40 籤原典缺一字（以「□」保留），少數疑似刻誤依原典保留原貌。',
+        strengths: ['鎮宅消災', '謀望進退', '官事是非'],
+        sourceType: '原典籤系（《正統道藏》玄天上帝感應靈籤）',
+        editionNote: '籤文、吉凶與籤題依原典，古字形轉為通行繁體；典故說明為原典「解曰」（斷句由本 App 加上）；白話與七類解曰由本 App 依原典解曰與七類詩撰寫。2026-10-17 取代原本使用的二十八宿值日歌訣（擇日口訣，非籤詩）。',
+        suitabilityNote: '適合問家宅平安、謀望進退、官事是非、行人消息與疾病調養。',
+        versionTag: 'xuantian-daozang-49-v1',
       });
     case 11:
       return entry({

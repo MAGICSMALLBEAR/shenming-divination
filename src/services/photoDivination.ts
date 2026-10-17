@@ -64,7 +64,9 @@ function findMatchedPoem(visionResult: VisionResult): MatchedPoem | null {
     '三太子衝關籤': [12],
     '月老姻緣籤': [13],
     '諸葛神數': [9],
-    '二十八宿靈籤': [10],
+    '玄天上帝感應靈籤': [10],
+    '黃大仙靈籤': [52],
+    '車公靈籤': [59],
   };
 
   let candidateGodIds: number[] = [];
