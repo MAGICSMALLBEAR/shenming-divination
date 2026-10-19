@@ -3,6 +3,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import * as StoreReview from 'expo-store-review';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 const REVIEW_ASKED_KEY = '@review_asked_v1';
 const REVIEW_DRAW_COUNT_KEY = '@review_draw_count';
@@ -13,7 +14,7 @@ const GOOD_POEM_LEVELS = ['上上籤', '上吉', '大吉', '吉', '中上'];
 
 export async function shouldRequestReview(poemLevel: string): Promise<boolean> {
   // 只對好籤觸發
-  const isGoodPoem = GOOD_POEM_LEVELS.some(level => poemLevel.includes(level));
+  const isGoodPoem = !isUnluckyLevel(poemLevel) && GOOD_POEM_LEVELS.some(level => poemLevel.includes(level));
   if (!isGoodPoem) return false;
 
   try {

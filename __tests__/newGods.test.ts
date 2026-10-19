@@ -13,7 +13,7 @@ describe('deity expansion batches', () => {
     { id: 29, name: '太歲星君', count: 60, guideNeedle: '太歲星君' },
     { id: 30, name: '臨水夫人', count: 99, guideNeedle: '臨水夫人' },
     { id: 31, name: '義民爺', count: 60, guideNeedle: '義民爺' },
-    { id: 32, name: '孔子', count: 100, guideNeedle: '至聖先師' },
+    { id: 32, name: '孔子', count: 72, guideNeedle: '至聖先師' },
     { id: 33, name: '藥師佛', count: 100, guideNeedle: '藥師佛' },
     { id: 34, name: '齊天大聖', count: 60, guideNeedle: '齊天大聖' },
     { id: 35, name: '鍾馗', count: 60, guideNeedle: '鍾馗天師' },

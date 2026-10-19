@@ -8,6 +8,7 @@ import { xuantianLingqianPoems } from './poems/xuantianLingqian';
 import { zhushengLingqianPoems } from './poems/zhushengLingqian';
 import { linshuiWeifangPoems } from './poems/linshuiWeifang';
 import { yuelaoHongKongPoems, yuelaoTaiwanPoems } from './poems/yuelao';
+import { kongziShengqianPoems } from './poems/kongziShengqian';
 import { getYuelaoEdition, type YuelaoEdition } from './yuelaoEdition';
 import { huangdaxianPoems } from './poems/huangdaxian';
 import { chegongPoems } from './poems/chegong';
@@ -522,8 +523,8 @@ export const gods: God[] = [
     name: '孔子',
     title: '大成至聖先師',
     description: '儒家至聖先師，重視修學、仁義、禮樂與因材施教。適合請示學習方法、師生關係、品德修養、教育與人生志向。',
-    poemSystem: '文昌功名百籤',
-    totalPoems: 100,
+    poemSystem: '孔子聖籤',
+    totalPoems: 72,
     image: require('@/assets/images/gods/generated/cards/confucius-card.webp'),
     blessing: '願至聖先師啟迪智慧，修學有成，立德立志，言行有禮。',
     tagline: '杏壇啟智，修學立德',
@@ -998,6 +999,7 @@ export function getPoemsByGod(godId: number, yuelaoEdition: YuelaoEdition = getY
   if (god.poemSystem === '六十甲子籤') return jiazi60Poems;
   if (god.poemSystem === '媽祖天后籤（六十甲子）') return mazuFocusedPoems;
   if (god.poemSystem === '文昌功名百籤') return wenchangFocusedPoems;
+  if (god.poemSystem === '孔子聖籤') return kongziShengqianPoems;
   if (god.poemSystem === '玄天上帝感應靈籤') return xuantianLingqianPoems;
   if (god.poemSystem === '城隍明鑑籤（雷雨師）') return chenghuangFocusedPoems;
   if (god.poemSystem === '金母慈光籤（觀音）') return jinmuFocusedPoems;

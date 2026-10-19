@@ -41,6 +41,7 @@ import * as Haptics from 'expo-haptics';
 import { ForWhomSelector } from '@/components/home/ForWhomSelector';
 import { DailyFortuneCard } from '@/components/home/DailyFortuneCard';
 import { DivinePresenceStage } from '@/components/divine-presence/DivinePresenceStage';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -131,7 +132,7 @@ export default function HomeScreen() {
     if (div.step === 'result' && div.drawnPoem) {
       playResultSound().catch(() => {});
       const level = div.drawnPoem.level;
-      if (level.includes('上') || level.includes('大吉')) {
+      if (!isUnluckyLevel(level) && (level.includes('上') || level.includes('大吉'))) {
         setShowFireworks(true);
         setTimeout(() => setShowFireworks(false), 3000);
       }
@@ -545,7 +546,7 @@ export default function HomeScreen() {
     await Share.share({ message: text });
   };
 
-  const isGoodFortune = div.drawnPoem?.level && (
+  const isGoodFortune = div.drawnPoem?.level && !isUnluckyLevel(div.drawnPoem.level) && (
     div.drawnPoem.level.includes('上') ||
     div.drawnPoem.level.includes('大吉') ||
     div.drawnPoem.level.includes('吉')

@@ -1,5 +1,6 @@
 import { getHistory, type DivinationRecord } from '@/services/storage';
 import { getWishes } from '@/services/wishTracker';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 export interface YearlyReview {
   year: number;
@@ -161,7 +162,7 @@ export async function generateYearlyReview(year?: number): Promise<YearlyReview>
     const month = new Date(record.timestamp).getMonth(); // 0-11
     monthlyDraws[month] += 1;
     monthlyTotalCounts[month] += 1;
-    if (record.poem.level.includes('上') || record.poem.level.includes('吉')) {
+    if (!isUnluckyLevel(record.poem.level) && (record.poem.level.includes('上') || record.poem.level.includes('吉'))) {
       monthlyLuckyCounts[month] += 1;
     }
 

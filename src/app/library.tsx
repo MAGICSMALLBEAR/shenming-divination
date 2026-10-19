@@ -21,6 +21,7 @@ import { gods, getAllPoemsByGod, questionCategories, type God } from '@/data/god
 import type { Poem } from '@/data/poems/leiyushi';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
 import { getYuelaoEditionOfPoem, YUELAO_EDITION_SHORT_LABELS } from '@/data/yuelaoEdition';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 type GodFilter = number | 'all';
 type LevelFilter = 'all' | 'good' | 'neutral' | 'caution';
@@ -59,14 +60,14 @@ const CATEGORY_TO_JIEYUE: Record<string, keyof NonNullable<Poem['jieYue']>> = {
 };
 
 function levelColor(level: string, theme: ThemeColors) {
+  if (isUnluckyLevel(level)) return theme.danger;
   if (level.includes('上上') || level.includes('大吉')) return theme.success;
   if (level.includes('吉')) return theme.gold;
-  if (level.includes('下') || level.includes('凶')) return theme.danger;
   return theme.textMuted;
 }
 
 function levelFilterOf(level: string): Exclude<LevelFilter, 'all'> {
-  if (level.includes('下') || level.includes('凶')) return 'caution';
+  if (isUnluckyLevel(level)) return 'caution';
   if (level.includes('上') || level.includes('吉')) return 'good';
   return 'neutral';
 }

@@ -23,6 +23,7 @@ import { buildActionPlan } from '@/services/actionPlan';
 import { addWish } from '@/services/wishTracker';
 import { updateVerification, type DivinationRecord, type VerificationStatus } from '@/services/storage';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 interface PoemCardProps {
   poem: Poem;
@@ -132,8 +133,8 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
   const cardOpacity = scrollAnim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] });
 
   const levelColor = (level: string) => {
+    if (isUnluckyLevel(level)) return theme.danger;
     if (level.includes('上') || level.includes('大吉')) return theme.success;
-    if (level.includes('下')) return theme.danger;
     return theme.warning;
   };
 

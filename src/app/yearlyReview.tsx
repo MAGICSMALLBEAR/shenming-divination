@@ -20,6 +20,7 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { generateYearlyReview, getAvailableYears, type YearlyReview } from '@/services/yearlyReview';
 import { gods } from '@/data/gods';
 import type { ThemeColors } from '@/constants/themes';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 const MONTH_NAMES = [
   '一月', '二月', '三月', '四月', '五月', '六月',
@@ -319,10 +320,10 @@ export default function YearlyReviewScreen() {
                 {review.levelDistribution.map((entry) => {
                   const color =
                     levelColors[entry.level] ??
-                    (entry.level.includes('上') || entry.level.includes('吉')
-                      ? theme.success
-                      : entry.level.includes('下') || entry.level.includes('凶')
+                    (isUnluckyLevel(entry.level)
                       ? theme.danger
+                      : entry.level.includes('上') || entry.level.includes('吉')
+                      ? theme.success
                       : theme.warning);
                   return (
                     <LevelBar
@@ -397,8 +398,8 @@ export default function YearlyReviewScreen() {
                         s.topPoemLevel,
                         {
                           backgroundColor:
-                            review.topPoem.level.includes('上') ||
-                            review.topPoem.level.includes('吉')
+                            !isUnluckyLevel(review.topPoem.level) &&
+                            (review.topPoem.level.includes('上') || review.topPoem.level.includes('吉'))
                               ? theme.success + '30'
                               : theme.warning + '30',
                         },

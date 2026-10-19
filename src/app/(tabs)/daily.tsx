@@ -37,6 +37,7 @@ import {
   toggleFollowedDeityId,
 } from '@/services/deityCalendarFollowing';
 import { scheduleGodBirthdayNotifications } from '@/services/notifications';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 function ZodiacFortuneStrip({ bazi }: { bazi: BaziInfo | null }) {
   const { theme } = useAppTheme();
@@ -45,8 +46,8 @@ function ZodiacFortuneStrip({ bazi }: { bazi: BaziInfo | null }) {
   const fortunes = useMemo(() => getZodiacDailyFortune(), []);
   const myFortune = bazi ? getMyZodiacFortune(bazi.birthYear) : null;
   const levelColor = (lvl: string) =>
+    isUnluckyLevel(lvl) ? theme.danger :
     lvl.includes('大吉') || lvl.includes('上吉') ? theme.success :
-    lvl.includes('下') ? theme.danger :
     lvl.includes('中平') || lvl.includes('中下') ? theme.textMuted :
     theme.warning;
   const levelBg = (lvl: string) => levelColor(lvl) + '20';

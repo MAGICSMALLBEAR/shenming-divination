@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import { normalizeInterpretationText } from './interpretation';
 import { getCachedInterpretation, setCachedInterpretation } from './offlineCache';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 const getDefaultApiUrl = () => {
   if (Platform.OS === 'android') return 'http://10.0.2.2:3001/api/interpret';
@@ -49,8 +50,8 @@ const categoryContext: Record<string, string> = {
 
 function buildFallbackInterpretation(params: AIInterpretRequest): string {
   const categoryLabel = categoryContext[params.questionCategory] ?? categoryContext.general;
-  const isPositive = params.poemLevel.includes('上') || params.poemLevel.includes('吉');
-  const isCautious = params.poemLevel.includes('下') || params.poemLevel.includes('凶');
+  const isCautious = isUnluckyLevel(params.poemLevel);
+  const isPositive = !isCautious && (params.poemLevel.includes('上') || params.poemLevel.includes('吉'));
 
   const summary = isPositive
     ? `${params.godName}給出的訊號偏正面，這題有機會順勢推進，但仍要踏實行動。`

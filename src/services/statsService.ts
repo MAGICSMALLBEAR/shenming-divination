@@ -1,4 +1,5 @@
 import { getFavorites, getHistory, type DivinationRecord } from './storage';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 export interface Stats {
   totalDraws: number;
@@ -158,7 +159,7 @@ export async function getYearlySummary(
     monthCounts[date.getMonth() + 1] = (monthCounts[date.getMonth() + 1] ?? 0) + 1;
     weekdayCounts[date.getDay()] = (weekdayCounts[date.getDay()] ?? 0) + 1;
 
-    if (record.poem.level.includes('上') || record.poem.level.includes('吉')) {
+    if (!isUnluckyLevel(record.poem.level) && (record.poem.level.includes('上') || record.poem.level.includes('吉'))) {
       luckyCount += 1;
     }
   }

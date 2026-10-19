@@ -15,6 +15,7 @@ import { ListItemSkeleton } from '@/components/Skeleton';
 import type { ThemeColors } from '@/constants/themes';
 import { isFirebaseConfigured } from '@/services/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 interface Post {
   id: string;
@@ -39,9 +40,9 @@ const SEED_POSTS: Post[] = [
 ];
 
 function levelColor(level: string) {
+  if (isUnluckyLevel(level)) return '#E05050';
   if (level.includes('上上') || level.includes('大吉')) return '#FFD700';
   if (level.includes('吉')) return '#7EC850';
-  if (level.includes('下') || level.includes('凶')) return '#E05050';
   return '#C9A96E';
 }
 

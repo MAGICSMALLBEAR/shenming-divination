@@ -179,8 +179,19 @@ export function getOracleCatalogByGodId(godId?: number | null, yuelaoEdition?: Y
         suitabilityNote: '適合問求子、備孕、孕期與待產的心情與準備；醫療問題請以醫師建議為準。',
         versionTag: 'zhusheng-daozang-64-v1',
       });
-    case 8:
     case 32:
+      return entry({
+        label: '孔子聖籤',
+        totalPoems: 72,
+        sourceNote: '南投日月潭文武廟「孔子聖籤」七十二首，籤號、籤詩與吉凶依文武廟官網「籤詩詳解」公布的全文。籤詩以儒家經典為本，每首附廟方籤註（如「積極進取者大吉」）。',
+        completenessNote: '72 首筆數完整；吉凶依廟方籤註分為大吉、吉、不吉三種。',
+        strengths: ['學業修身', '待人處世', '品德抉擇'],
+        sourceType: '廟宇籤系（日月潭文武廟孔子聖籤）',
+        editionNote: '籤詩依廟方官網；官網少數明顯打字錯誤依所引原典改正（如 #11「不舍晝夜」、#28「草偃」、#29「友朋」），字義未明者保留原文。網路轉錄站與官網逐字相同。籤題、白話、典故說明與七類解曰由本 App 撰寫，未使用廟方解說文字。2026-10-20 取代原本與文昌帝君共用的「文昌功名百籤」。',
+        suitabilityNote: '適合問學習方法、品德修養、待人處世、師生與人際關係。',
+        versionTag: 'kongzi-wenwu-72-v1',
+      });
+    case 8:
       return entry({
         label: '文昌功名百籤',
         totalPoems: 100,

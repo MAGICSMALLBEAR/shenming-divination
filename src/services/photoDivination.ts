@@ -60,7 +60,7 @@ function findMatchedPoem(visionResult: VisionResult): MatchedPoem | null {
     '保生健康籤': [5],
     '濟公活佛籤': [11],
     '觀音靈籤': [2],
-    '六十甲子籤': [3, 4, 6, 12, 13],
+    '六十甲子籤': [3, 4, 6, 12],
     '注生堂靈籤': [7],
     '衛房聖母靈應寶籤': [30],
     '三太子衝關籤': [12],
@@ -70,6 +70,7 @@ function findMatchedPoem(visionResult: VisionResult): MatchedPoem | null {
     '玄天上帝感應靈籤': [10],
     '黃大仙靈籤': [52],
     '車公靈籤': [59],
+    '孔子聖籤': [32],
   };
 
   let candidateGodIds: number[] = [];

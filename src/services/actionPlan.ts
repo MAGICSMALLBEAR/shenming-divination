@@ -1,4 +1,5 @@
 import type { Poem } from '@/data/poems/leiyushi';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 const CATEGORY_LABELS: Record<string, string> = {
   career: '工作與事業',
@@ -31,7 +32,7 @@ function isPositive(level: string): boolean {
 }
 
 function isCautious(level: string): boolean {
-  return level.includes('下') || level.includes('凶');
+  return isUnluckyLevel(level);
 }
 
 export function buildActionPlan(params: {

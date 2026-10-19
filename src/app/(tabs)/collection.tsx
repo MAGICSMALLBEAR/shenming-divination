@@ -43,6 +43,7 @@ import {
   type Folder,
   type VerificationStatus,
 } from '@/services/storage';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 type Tab = 'favorites' | 'history' | 'folders';
 type SortMode = 'newest' | 'oldest';
@@ -73,7 +74,7 @@ function normalizeText(value: string): string {
   return value.trim().toLowerCase();
 }
 function getLevelFilter(level: string): Exclude<LevelFilter, 'all'> {
-  if (level.includes('下') || level.includes('凶')) return 'caution';
+  if (isUnluckyLevel(level)) return 'caution';
   if (level.includes('上') || level.includes('吉')) return 'good';
   return 'neutral';
 }

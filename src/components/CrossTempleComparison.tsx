@@ -9,6 +9,7 @@ import { gods } from '@/data/gods';
 import { getGodCardImage } from '@/data/godImages';
 import { drawPoem } from '@/services/divination';
 import type { Poem } from '@/data/poems/leiyushi';
+import { isUnluckyLevel } from '@/data/poemLevel';
 
 interface CompareItem {
   godId: number;
@@ -46,9 +47,9 @@ export function CrossTempleComparison({ currentGodId, questionCategory }: Props)
   }, [currentGodId]);
 
   const levelColor = (level: string) => {
+    if (isUnluckyLevel(level)) return '#E05050';
     if (level.includes('上上') || level.includes('大吉')) return '#FFD700';
     if (level.includes('吉')) return '#7EC850';
-    if (level.includes('下') || level.includes('凶')) return '#E05050';
     return '#C9A96E';
   };
 
