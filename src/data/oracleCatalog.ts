@@ -323,15 +323,15 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
       });
     case 30:
       return entry({
-        label: '臨水護幼籤',
-        totalPoems: 100,
-        sourceNote: '底本為觀音靈籤（傳統籤系，籤文逐字沿用），加入臨水夫人婦幼守護、孕產照護的白話解讀層。',
-        completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依臨水信仰改寫，不取代醫療判斷。',
-        strengths: ['婦幼照護', '家庭支持', '身心安定'],
-        sourceType: '傳統籤系（觀音靈籤）+ 臨水夫人專屬白話解讀',
-        editionNote: '觀音原籤不改，新增臨水護生向標題、典故前言與照護解曰，聚焦安全與專業求助。',
-        suitabilityNote: '適合問婦幼照顧、親子安全、家庭分工與壓力安頓。',
-        versionTag: 'linshuifuren-guanyin-100-focused-v2',
+        label: '衛房聖母靈應寶籤',
+        totalPoems: 99,
+        sourceNote: '出自《正統道藏》正一部《大慈好生九天衛房聖母元君靈應寶籤》（DZ1300；Kanripo 漢籍リポジトリ數位版 KR5g0109，底本為三家本）。原為九天衛房聖母元君信仰中的求嗣安產籤，99 首以孕產、母子平安與孝親修善為主題，與護佑婦幼的臨水夫人相合。',
+        completenessNote: '99 首筆數完整；原典未標吉凶，一律以「原典未標」呈現，不另行判定；第 28 籤原典缺一字，以「□」保留。孕產與健康解讀僅作民俗參考，請以專業醫療意見為準。',
+        strengths: ['安胎待產', '母子平安', '孝親修善'],
+        sourceType: '原典籤系（《正統道藏》九天衛房聖母元君靈應寶籤）',
+        editionNote: '籤文與解曰依原典，古字形轉為通行繁體，解曰斷句為本 App 所加。原典無籤題與白話，籤題、白話與七類解曰由本 App 撰寫；原典部分籤文含勸孝、因果警示，白話保留原意並提醒疾病非個人罪過。2026-10-19 取代原本借用觀音靈籤的「臨水護幼籤」。',
+        suitabilityNote: '適合問安胎、待產、母子平安與家庭孝親；醫療問題請以醫師建議為準。',
+        versionTag: 'linshuifuren-daozang-weifang-99-v1',
       });
     case 31:
       return entry({

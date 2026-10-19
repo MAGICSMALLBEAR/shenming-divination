@@ -62,6 +62,7 @@ function findMatchedPoem(visionResult: VisionResult): MatchedPoem | null {
     '觀音靈籤': [2],
     '六十甲子籤': [3, 4, 6, 12, 13],
     '注生堂靈籤': [7],
+    '衛房聖母靈應寶籤': [30],
     '三太子衝關籤': [12],
     '月老姻緣籤': [13],
     '諸葛神數': [9],

@@ -203,18 +203,6 @@ const taisuiConfig: GodSpecificConfig = {
   levelAdvice: DEFAULT_LEVEL_ADVICE,
 };
 
-const linshuifurenConfig: GodSpecificConfig = {
-  idOffset: 6100,
-  label: '臨水護幼籤',
-  baseSystem: '觀音靈籤',
-  focusKey: 'health',
-  focusLabel: '臨水護幼',
-  titlePrefix: '臨水護生・',
-  storyPrefix: '臨水夫人籤解以婦幼安康、孕產照護與家庭分工為主軸；此籤承接觀音靈籤原意，轉作親子照護請示的白話指引。 ',
-  generalPrefix: '臨水夫人提醒',
-  levelAdvice: DEFAULT_LEVEL_ADVICE,
-};
-
 const yiminyeConfig: GodSpecificConfig = {
   idOffset: 6200,
   label: '義民忠義籤',
@@ -250,7 +238,6 @@ export const zhaogongmingWealthPoems = buildGodSpecificPoems(leiyushiPoems, zhao
 export const huyeGuardPoems = buildGodSpecificPoems(jiazi60Poems, huyeConfig);
 export const jiutianxuannuStrategyPoems = buildGodSpecificPoems(leiyushiPoems, jiutianxuannuConfig);
 export const taisuiPoems = buildGodSpecificPoems(jiazi60Poems, taisuiConfig);
-export const linshuifurenPoems = buildGodSpecificPoems(guanyinLingQianPoems, linshuifurenConfig);
 export const yiminyePoems = buildGodSpecificPoems(jiazi60Poems, yiminyeConfig);
 export const medicineBuddhaPoems = buildGodSpecificPoems(guanyinLingQianPoems, medicineBuddhaConfig);
 
@@ -266,7 +253,6 @@ export const godSpecificPoemSystemMeta = {
   huye: huyeConfig,
   jiutianxuannu: jiutianxuannuConfig,
   taisui: taisuiConfig,
-  linshuifuren: linshuifurenConfig,
   yiminye: yiminyeConfig,
   medicineBuddha: medicineBuddhaConfig,
 } as const;

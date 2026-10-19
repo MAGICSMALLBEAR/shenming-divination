@@ -6,6 +6,7 @@ import { zhugeShenShuPoems } from './poems/zhugeShenShu';
 import { guanyinLingQianPoems } from './poems/guanyinLingQian';
 import { xuantianLingqianPoems } from './poems/xuantianLingqian';
 import { zhushengLingqianPoems } from './poems/zhushengLingqian';
+import { linshuiWeifangPoems } from './poems/linshuiWeifang';
 import { huangdaxianPoems } from './poems/huangdaxian';
 import { chegongPoems } from './poems/chegong';
 import {
@@ -26,7 +27,6 @@ import {
   huyeGuardPoems,
   jiutianxuannuStrategyPoems,
   taisuiPoems,
-  linshuifurenPoems,
   yiminyePoems,
   medicineBuddhaPoems,
   baoshengHealthPoems,
@@ -491,8 +491,8 @@ export const gods: God[] = [
     name: '臨水夫人',
     title: '順天聖母・臨水夫人',
     description: '陳靖姑信仰中的婦幼守護神，護佑婦女、孕產、孩童與家庭照護。適合請示孕育照顧、親子安全、家庭分工與身心安定。',
-    poemSystem: '臨水護幼籤',
-    totalPoems: 100,
+    poemSystem: '衛房聖母靈應寶籤',
+    totalPoems: 99,
     image: require('@/assets/images/gods/generated/cards/linshuifuren-card.webp'),
     blessing: '願臨水夫人護佑婦幼安康，母子平安，家庭和順，身心有依。',
     tagline: '臨水護生，婦幼安康',
@@ -1010,7 +1010,7 @@ export function getPoemsByGod(godId: number) {
   if (god.poemSystem === '虎威護境籤') return huyeGuardPoems;
   if (god.poemSystem === '玄女兵法籤') return jiutianxuannuStrategyPoems;
   if (god.poemSystem === '太歲鎮年籤') return taisuiPoems;
-  if (god.poemSystem === '臨水護幼籤') return linshuifurenPoems;
+  if (god.poemSystem === '衛房聖母靈應寶籤') return linshuiWeifangPoems;
   if (god.poemSystem === '義民忠義籤') return yiminyePoems;
   if (god.poemSystem === '藥師護念籤') return medicineBuddhaPoems;
   if (god.poemSystem === '濟公活佛籤（雷雨師）') return jigongLingQianPoems;

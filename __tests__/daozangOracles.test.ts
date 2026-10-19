@@ -2,6 +2,7 @@ import { gods, getPoemsByGod } from '@/data/gods';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
 import { xuantianLingqianPoems } from '@/data/poems/xuantianLingqian';
 import { zhushengLingqianPoems } from '@/data/poems/zhushengLingqian';
+import { linshuiWeifangPoems } from '@/data/poems/linshuiWeifang';
 
 const QUATRAIN = /^[^，。\n]{7}，[^，。\n]{7}。\n[^，。\n]{7}，[^，。\n]{7}。$/;
 
@@ -41,5 +42,25 @@ describe('註生娘娘 注生堂靈籤', () => {
     for (const poem of zhushengLingqianPoems) {
       expect(poem.content).toMatch(/^[^，。\n]{7}，[^，。\n]{7}。\n[^，。\n]{7}，[^，。\n]{7}。$/);
     }
+  });
+});
+
+describe('臨水夫人 衛房聖母靈應寶籤', () => {
+  it('uses the 99-lot 九天衛房聖母元君靈應寶籤 without invented fortune levels', () => {
+    const god = gods.find((item) => item.id === 30);
+    expect(god?.poemSystem).toBe('衛房聖母靈應寶籤');
+    expect(getPoemsByGod(30)).toHaveLength(99);
+    expect(getOracleCatalogByGodId(30).totalPoems).toBe(99);
+    expect(linshuiWeifangPoems[0].content.startsWith('天尊有敕救人民')).toBe(true);
+    expect(new Set(linshuiWeifangPoems.map((poem) => poem.id)).size).toBe(99);
+    linshuiWeifangPoems.forEach((poem, index) => {
+      expect(poem.number).toBe(index + 1);
+      expect(poem.level).toBe('原典未標');
+      expect(poem.story.startsWith('原典解曰：')).toBe(true);
+      expect(poem.jieYue.health).toContain('醫');
+      expect(poem.content).toMatch(/^[^，。\n]+，[^，。\n]+。\n[^，。\n]+，[^，。\n]+。$/);
+      const lengths = poem.content.split(/[，。\n]+/).filter(Boolean).map((line) => line.length);
+      expect(new Set(lengths).size).toBe(1);
+    });
   });
 });
