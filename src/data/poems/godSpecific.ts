@@ -102,23 +102,6 @@ const santaiziConfig: GodSpecificConfig = {
   },
 };
 
-const yuelaoConfig: GodSpecificConfig = {
-  idOffset: 5300,
-  label: '月老姻緣籤',
-  baseSystem: '六十甲子籤',
-  focusKey: 'marriage',
-  focusLabel: '姻緣紅線',
-  titlePrefix: '月老紅線・',
-  storyPrefix: '月老籤解以姻緣、關係修復與相處時機為主軸；此籤承接六十甲子原意，轉作感情請示的白話指引。 ',
-  generalPrefix: '月老提醒',
-  levelAdvice: {
-    ...DEFAULT_LEVEL_ADVICE,
-    '上上': '紅線有力，宜真誠表達，也要尊重對方節奏。',
-    '中平': '緣分仍在整理，先把溝通方式變溫柔。',
-    '下下': '不宜強求，先照顧自己的界線與安全感。',
-  },
-};
-
 const fudezhengshenConfig: GodSpecificConfig = {
   idOffset: 5400,
   label: '土地公厚德籤',
@@ -230,7 +213,6 @@ const medicineBuddhaConfig: GodSpecificConfig = {
 export const baoshengHealthPoems = buildGodSpecificPoems(leiyushiPoems, baoshengConfig);
 export const jigongLingQianPoems = buildGodSpecificPoems(leiyushiPoems, jigongConfig);
 export const santaiziBreakthroughPoems = buildGodSpecificPoems(jiazi60Poems, santaiziConfig);
-export const yuelaoMarriagePoems = buildGodSpecificPoems(jiazi60Poems, yuelaoConfig);
 export const fudezhengshenBlessingPoems = buildGodSpecificPoems(jiazi60Poems, fudezhengshenConfig);
 export const sanguanBlessingPoems = buildGodSpecificPoems(jiazi60Poems, sanguanConfig);
 export const luzuGuidancePoems = buildGodSpecificPoems(leiyushiPoems, luzuConfig);
@@ -245,7 +227,6 @@ export const godSpecificPoemSystemMeta = {
   baosheng: baoshengConfig,
   jigong: jigongConfig,
   santaizi: santaiziConfig,
-  yuelao: yuelaoConfig,
   fudezhengshen: fudezhengshenConfig,
   sanguan: sanguanConfig,
   luzu: luzuConfig,

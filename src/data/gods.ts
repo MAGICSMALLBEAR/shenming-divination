@@ -7,6 +7,8 @@ import { guanyinLingQianPoems } from './poems/guanyinLingQian';
 import { xuantianLingqianPoems } from './poems/xuantianLingqian';
 import { zhushengLingqianPoems } from './poems/zhushengLingqian';
 import { linshuiWeifangPoems } from './poems/linshuiWeifang';
+import { yuelaoHongKongPoems, yuelaoTaiwanPoems } from './poems/yuelao';
+import { getYuelaoEdition, type YuelaoEdition } from './yuelaoEdition';
 import { huangdaxianPoems } from './poems/huangdaxian';
 import { chegongPoems } from './poems/chegong';
 import {
@@ -19,7 +21,6 @@ import {
 import {
   jigongLingQianPoems,
   santaiziBreakthroughPoems,
-  yuelaoMarriagePoems,
   fudezhengshenBlessingPoems,
   sanguanBlessingPoems,
   luzuGuidancePoems,
@@ -236,8 +237,8 @@ export const gods: God[] = [
     name: '月下老人',
     title: '月下老人',
     description: '手持天下姻緣簿與紅絲線，專司人間男女婚姻。傳說月下老人以紅線繫住有緣男女的腳，千里姻緣一線牽。信眾祈求良緣、感情和合、婚姻美滿。',
-    poemSystem: '月老姻緣籤（六十甲子）',
-    totalPoems: 60,
+    poemSystem: '月老靈籤',
+    totalPoems: 100,
     image: require('@/assets/images/gods/generated/cards/yuexialaoren-card.webp'),
     blessing: '願月老慈悲牽紅線，良緣早成，心意相通，有情人終成眷屬。',
     tagline: '紅線牽緣，良人可期',
@@ -989,8 +990,8 @@ export const questionCategories = [
   { id: 'general', name: '綜合運勢', icon: '🌟' },
 ];
 
-// 根據神明ID取得對應的籤詩
-export function getPoemsByGod(godId: number) {
+// 根據神明ID取得對應的籤詩；月老依目前選擇的版本（台灣版／香港版）回傳，可用 yuelaoEdition 指定
+export function getPoemsByGod(godId: number, yuelaoEdition: YuelaoEdition = getYuelaoEdition()) {
   const god = gods.find(g => g.id === godId);
   if (!god) return leiyushiPoems;
 
@@ -1015,12 +1016,19 @@ export function getPoemsByGod(godId: number) {
   if (god.poemSystem === '藥師護念籤') return medicineBuddhaPoems;
   if (god.poemSystem === '濟公活佛籤（雷雨師）') return jigongLingQianPoems;
   if (god.poemSystem === '三太子衝關籤（六十甲子）') return santaiziBreakthroughPoems;
-  if (god.poemSystem === '月老姻緣籤（六十甲子）') return yuelaoMarriagePoems;
+  if (god.poemSystem === '月老靈籤') return yuelaoEdition === 'hongkong' ? yuelaoHongKongPoems : yuelaoTaiwanPoems;
   if (god.poemSystem === '諸葛神數') return zhugeShenShuPoems;
   if (god.poemSystem === '觀音靈籤') return guanyinLingQianPoems;
   if (god.poemSystem === '黃大仙靈籤') return huangdaxianPoems;
   if (god.poemSystem === '車公靈籤') return chegongPoems;
   return leiyushiPoems;
+}
+
+// 籤詩庫、拍照解籤等需要涵蓋所有版本的情境使用：月老回傳台灣版與香港版兩套
+export function getAllPoemsByGod(godId: number) {
+  const god = gods.find(g => g.id === godId);
+  if (god?.poemSystem === '月老靈籤') return [...yuelaoTaiwanPoems, ...yuelaoHongKongPoems];
+  return getPoemsByGod(godId);
 }
 
 

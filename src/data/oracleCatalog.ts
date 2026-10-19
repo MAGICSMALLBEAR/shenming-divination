@@ -1,3 +1,5 @@
+import { getYuelaoEdition, type YuelaoEdition } from './yuelaoEdition';
+
 export interface OracleCatalogEntry {
   label: string;
   totalPoems: number;
@@ -50,7 +52,31 @@ const jiaziEntry = entry({
   versionTag: 'jiazi-60-app-v2',
 });
 
-export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEntry {
+const yuelaoTaiwanEntry = entry({
+  label: '月老靈籤・台灣版',
+  totalPoems: 100,
+  sourceNote: '新竹普天宮「月老聖籤一百籤」，籤號依台灣好廟網（temples.tw）收錄。籤文為一百則經典名句與俗語，出自《詩經》、四書、《左傳》、《西廂記》、唐宋詩詞等。',
+  completenessNote: '100 首筆數完整；籤號排序目前只有台灣好廟網一個來源。籤本未標吉凶，一律以「籤本未標」呈現，不另行判定。',
+  strengths: ['姻緣桃花', '交往時機', '婚嫁抉擇'],
+  sourceType: '廟宇籤系（新竹普天宮月老聖籤）',
+  editionNote: '與香港版是同一批名句，籤號排序不同。網站籤文錯字凡可考出處者依原典定字（逐首紀錄見 docs/yuelao-oracle-editions.md），出處未明者保留籤本文字。白話、出處說明與七類解曰由本 App 撰寫。2026-10-19 取代原本借用六十甲子籤的「月老姻緣籤」。',
+  suitabilityNote: '適合問曖昧、交往、復合、婚嫁與是否該主動表達。',
+  versionTag: 'yuelao-taiwan-putian-100-v1',
+});
+
+const yuelaoHongKongEntry = entry({
+  label: '月老靈簽・香港版',
+  totalPoems: 101,
+  sourceNote: '香港通行「月老靈簽」一百零一簽，第 101 簽為簽王；籤號與吉凶依 golla.tw 與 hkir.com 收錄（兩站錯字相同，屬同一來源）。',
+  completenessNote: '101 簽筆數完整；籤號與吉凶目前只有一個來源，籤文已用原典校正。',
+  strengths: ['姻緣桃花', '交往時機', '婚嫁抉擇'],
+  sourceType: '香港通行籤系（月老靈簽）',
+  editionNote: '與台灣版是同一批名句，籤號排序不同，另有簽王一首。網站籤文錯字凡可考出處者依原典定字（逐首紀錄見 docs/yuelao-oracle-editions.md），出處未明者保留籤本文字。白話、出處說明與七類解曰由本 App 撰寫，兩版共用。',
+  suitabilityNote: '適合問曖昧、交往、復合、婚嫁與是否該主動表達。',
+  versionTag: 'yuelao-hongkong-101-v1',
+});
+
+export function getOracleCatalogByGodId(godId?: number | null, yuelaoEdition?: YuelaoEdition): OracleCatalogEntry {
   switch (godId) {
     case 1:
     case 16:
@@ -214,17 +240,7 @@ export function getOracleCatalogByGodId(godId?: number | null): OracleCatalogEnt
         versionTag: 'santaizi-jiazi-v1',
       });
     case 13:
-      return entry({
-        label: '月老姻緣籤（六十甲子）',
-        totalPoems: 60,
-        sourceNote: '以六十甲子籤為骨幹，加入月老紅線、相處節奏與關係修復的白話語境。',
-        completenessNote: '60 首完整可抽；此為 App 專屬姻緣向解籤層，並非標榜某間廟宇唯一定本。',
-        strengths: ['姻緣桃花', '關係修復', '相處時機'],
-        sourceType: '傳統籤系骨幹 + 神明專屬白話解籤',
-        editionNote: '六十甲子原籤不改，新增月老姻緣向標題、典故前言與婚姻解曰。',
-        suitabilityNote: '適合問曖昧、復合、穩定關係、婚姻與是否該主動表達。',
-        versionTag: 'yuelao-jiazi-v1',
-      });
+      return (yuelaoEdition ?? getYuelaoEdition()) === 'hongkong' ? yuelaoHongKongEntry : yuelaoTaiwanEntry;
     case 14:
       return entry({
         label: '城隍明鑑籤（雷雨師）',

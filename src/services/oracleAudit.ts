@@ -1,5 +1,6 @@
 import { gods, getPoemsByGod, type God } from '@/data/gods';
 import { getOracleCatalogByGodId, type OracleCatalogEntry } from '@/data/oracleCatalog';
+import { DEFAULT_YUELAO_EDITION } from '@/data/yuelaoEdition';
 import type { Poem } from '@/data/poems/leiyushi';
 
 export type OracleSourceClass = 'traditional' | 'adapted' | 'original' | 'unclassified';
@@ -40,8 +41,9 @@ export function classifyOracleSource(sourceType: string): OracleSourceClass {
 }
 
 export function auditGodOracle(god: God): OracleAuditRow {
-  const poems = getPoemsByGod(god.id);
-  const catalog = getOracleCatalogByGodId(god.id);
+  // 月老有兩版，稽核以預設的台灣版對照神明資料的首數
+  const poems = getPoemsByGod(god.id, DEFAULT_YUELAO_EDITION);
+  const catalog = getOracleCatalogByGodId(god.id, DEFAULT_YUELAO_EDITION);
   const errors: string[] = [];
   const warnings: string[] = [];
 

@@ -2,7 +2,6 @@ import {
   baoshengHealthPoems,
   jigongLingQianPoems,
   santaiziBreakthroughPoems,
-  yuelaoMarriagePoems,
 } from '@/data/poems/godSpecific';
 
 describe('god-specific poem generation', () => {
@@ -24,7 +23,6 @@ describe('god-specific poem generation', () => {
     expect(baoshengHealthPoems).toHaveLength(100);
     expect(jigongLingQianPoems).toHaveLength(100);
     expect(santaiziBreakthroughPoems).toHaveLength(60);
-    expect(yuelaoMarriagePoems).toHaveLength(60);
 
     expect(baoshengHealthPoems[0].id).toBe(5000 + baoshengHealthPoems[0].number);
     expect(jigongLingQianPoems[0].id).toBe(5100 + jigongLingQianPoems[0].number);

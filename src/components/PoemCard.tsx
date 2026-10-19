@@ -13,6 +13,7 @@ import type { ThemeColors } from '@/constants/themes';
 import { getPoemTheme } from '@/data/poemThemes';
 import { getGodProfile } from '@/data/godProfiles';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
+import { getYuelaoEditionOfPoem } from '@/data/yuelaoEdition';
 import { PoemComments } from './PoemComments';
 import { AskFollowUp } from './AskFollowUp';
 import { ShareCardView } from './ShareCardView';
@@ -154,7 +155,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
   const godAccent = god?.accentColor || theme.goldLight;
   const godPrimary = god?.primaryColor || theme.red;
   const godProfile = getGodProfile(god?.id);
-  const oracleCatalog = getOracleCatalogByGodId(god?.id);
+  const oracleCatalog = getOracleCatalogByGodId(god?.id, getYuelaoEditionOfPoem(poem));
   const aiSections = useMemo(() => extractInterpretationSections(aiInterpretation), [aiInterpretation]);
   const aiNotice = useMemo(() => getAiInterpretationNotice(questionCategory, question), [questionCategory, question]);
   const sectionMeta: Record<string, { icon: string; accent: string }> = {

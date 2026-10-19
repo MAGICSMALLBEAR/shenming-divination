@@ -4,12 +4,14 @@ import * as Notifications from 'expo-notifications';
 import { router, Stack } from 'expo-router';
 import { initThemeFromSettings } from '@/services/themeStore';
 import { initSentry } from '@/services/sentry';
+import { initYuelaoEditionFromStorage } from '@/services/yuelaoEditionPreferences';
 import { OpeningGate } from '@/components/OpeningGate';
 
 export default function RootLayout() {
   useEffect(() => {
     initThemeFromSettings();
     initSentry();
+    initYuelaoEditionFromStorage();
   }, []);
 
   useEffect(() => {

@@ -17,9 +17,10 @@ import { useI18n } from '@/hooks/useI18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useFadeIn, useStaggeredList } from '@/hooks/useEntranceAnimation';
 import type { ThemeColors } from '@/constants/themes';
-import { gods, getPoemsByGod, questionCategories, type God } from '@/data/gods';
+import { gods, getAllPoemsByGod, questionCategories, type God } from '@/data/gods';
 import type { Poem } from '@/data/poems/leiyushi';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
+import { getYuelaoEditionOfPoem, YUELAO_EDITION_SHORT_LABELS } from '@/data/yuelaoEdition';
 
 type GodFilter = number | 'all';
 type LevelFilter = 'all' | 'good' | 'neutral' | 'caution';
@@ -77,8 +78,13 @@ function matchesGodCategory(god: God, categoryId: string): boolean {
   return allowed.includes(god.category);
 }
 
+function godLabel(row: LibraryRow): string {
+  const edition = getYuelaoEditionOfPoem(row.poem);
+  return edition ? `${row.god.name}・${YUELAO_EDITION_SHORT_LABELS[edition]}` : row.god.name;
+}
+
 function searchableText(row: LibraryRow): string {
-  const catalog = getOracleCatalogByGodId(row.god.id);
+  const catalog = getOracleCatalogByGodId(row.god.id, getYuelaoEditionOfPoem(row.poem));
   const jieYue = row.poem.jieYue ? Object.values(row.poem.jieYue).join(' ') : '';
   return [
     row.god.name,
@@ -119,7 +125,7 @@ export default function LibraryScreen() {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   const allRows = useMemo<LibraryRow[]>(
-    () => gods.flatMap((god) => getPoemsByGod(god.id).map((poem) => ({ god, poem: poem as Poem }))),
+    () => gods.flatMap((god) => getAllPoemsByGod(god.id).map((poem) => ({ god, poem: poem as Poem }))),
     []
   );
 
@@ -243,9 +249,9 @@ export default function LibraryScreen() {
           </ScrollView>
           <ScrollView style={styles.poemArea} contentContainerStyle={styles.listContent}>
             {filteredRows.map((row, i) => {
-              const key = `${row.god.id}-${row.poem.number}`;
+              const key = `${row.god.id}-${row.poem.id}`;
               const isOpen = expandedKey === key;
-              const catalog = getOracleCatalogByGodId(row.god.id);
+              const catalog = getOracleCatalogByGodId(row.god.id, getYuelaoEditionOfPoem(row.poem));
               const adviceKey = CATEGORY_TO_JIEYUE[selectedCategory] ?? 'general';
               const categoryAdvice = row.poem.jieYue?.[adviceKey] ?? row.poem.jieYue?.general;
 
@@ -258,7 +264,7 @@ export default function LibraryScreen() {
                 >
                   <View style={styles.poemHeader}>
                     <View style={styles.poemTitleGroup}>
-                      <Text style={styles.poemGod}>{row.god.name}</Text>
+                      <Text style={styles.poemGod}>{godLabel(row)}</Text>
                       <Text style={styles.poemTitle} numberOfLines={1}>第 {row.poem.number} 籤 · {row.poem.title}</Text>
                     </View>
                     <Text style={[styles.poemLevel, { color: levelColor(row.poem.level, theme), borderColor: levelColor(row.poem.level, theme) + '55' }]}>
@@ -378,9 +384,9 @@ export default function LibraryScreen() {
 
           <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
             {filteredRows.map((row, i) => {
-              const key = `${row.god.id}-${row.poem.number}`;
+              const key = `${row.god.id}-${row.poem.id}`;
               const isOpen = expandedKey === key;
-              const catalog = getOracleCatalogByGodId(row.god.id);
+              const catalog = getOracleCatalogByGodId(row.god.id, getYuelaoEditionOfPoem(row.poem));
               const adviceKey = CATEGORY_TO_JIEYUE[selectedCategory] ?? 'general';
               const categoryAdvice = row.poem.jieYue?.[adviceKey] ?? row.poem.jieYue?.general;
 
@@ -393,7 +399,7 @@ export default function LibraryScreen() {
                 >
                   <View style={styles.poemHeader}>
                     <View style={styles.poemTitleGroup}>
-                      <Text style={styles.poemGod}>{row.god.name}</Text>
+                      <Text style={styles.poemGod}>{godLabel(row)}</Text>
                       <Text style={styles.poemTitle} numberOfLines={1}>第 {row.poem.number} 籤 · {row.poem.title}</Text>
                     </View>
                     <Text style={[styles.poemLevel, { color: levelColor(row.poem.level, theme), borderColor: levelColor(row.poem.level, theme) + '55' }]}>

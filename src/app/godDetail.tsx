@@ -17,6 +17,8 @@ import { getGodCardImage } from '@/data/godImages';
 import { getGodProfile } from '@/data/godProfiles';
 import { getGodQuestionGuide } from '@/data/godQuestionGuides';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
+import { YUELAO_EDITION_LABELS, YUELAO_GOD_ID, type YuelaoEdition } from '@/data/yuelaoEdition';
+import { saveYuelaoEdition, useYuelaoEdition } from '@/services/yuelaoEditionPreferences';
 import { getHistory, type DivinationRecord } from '@/services/storage';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -39,7 +41,9 @@ export default function GodDetailScreen() {
   const cardImage = god ? getGodCardImage(god.id) : null;
   const profile = god ? getGodProfile(god.id) : null;
   const questionGuide = god ? getGodQuestionGuide(god.id) : null;
-  const oracleCatalog = god ? getOracleCatalogByGodId(god.id) : null;
+  const yuelaoEdition = useYuelaoEdition();
+  const oracleCatalog = god ? getOracleCatalogByGodId(god.id, yuelaoEdition) : null;
+  const hasEditions = god?.id === YUELAO_GOD_ID;
 
   const [historyRecords, setHistoryRecords] = React.useState<DivinationRecord[]>([]);
   const fadeContent = React.useRef(new Animated.Value(0)).current;
@@ -144,10 +148,35 @@ export default function GodDetailScreen() {
               <Text style={styles.sectionTitle}>📜 籤詩系統</Text>
               <View style={styles.infoRow}>
                 <View style={[styles.badge, { backgroundColor: god.primaryColor + '30', borderColor: god.accentColor + '50' }]}>
-                  <Text style={[styles.badgeText, { color: god.accentColor }]}>{god.poemSystem}</Text>
+                  <Text style={[styles.badgeText, { color: god.accentColor }]}>{hasEditions ? oracleCatalog.label : god.poemSystem}</Text>
                 </View>
-                <Text style={styles.muted}>共 {god.totalPoems} 首籤詩</Text>
+                <Text style={styles.muted}>共 {oracleCatalog.totalPoems} 首籤詩</Text>
               </View>
+              {hasEditions ? (
+                <View style={[styles.chipRow, { marginTop: 10 }]} accessibilityRole="radiogroup" accessibilityLabel="籤詩版本">
+                  {(Object.keys(YUELAO_EDITION_LABELS) as YuelaoEdition[]).map((edition) => {
+                    const selected = edition === yuelaoEdition;
+                    return (
+                      <TouchableOpacity
+                        key={edition}
+                        onPress={() => saveYuelaoEdition(edition)}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected }}
+                        style={[
+                          styles.chip,
+                          { borderColor: god.accentColor + (selected ? 'AA' : '30') },
+                          selected ? { backgroundColor: god.primaryColor + '40' } : null,
+                        ]}
+                      >
+                        <Text style={[styles.chipText, { color: god.accentColor }]}>{selected ? '● ' : '○ '}{YUELAO_EDITION_LABELS[edition]}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ) : null}
+              {hasEditions ? (
+                <Text style={[styles.muted, { marginTop: 6 }]}>抽籤時使用所選版本，選擇會自動記住。</Text>
+              ) : null}
               {oracleCatalog.sourceNote ? (
                 <Text style={[styles.muted, { marginTop: 8 }]}>{oracleCatalog.sourceNote}</Text>
               ) : null}
