@@ -11,6 +11,7 @@ import { yuelaoHongKongPoems, yuelaoTaiwanPoems } from './poems/yuelao';
 import { kongziShengqianPoems } from './poems/kongziShengqian';
 import { luzuZhinanPoems } from './poems/luzuZhinan';
 import { qingshuiZushiPoems } from './poems/qingshuiZushi';
+import { baoshengBaoanPoems } from './poems/baoshengBaoan';
 import { getYuelaoEdition, type YuelaoEdition } from './yuelaoEdition';
 import { huangdaxianPoems } from './poems/huangdaxian';
 import { chegongPoems } from './poems/chegong';
@@ -119,8 +120,8 @@ export const gods: God[] = [
     name: '保生大帝',
     title: '保生大帝',
     description: '醫藥之神，精通醫術。信眾祈求身體健康、疾病痊癒、藥方有效。',
-    poemSystem: '保生大帝靈籤',
-    totalPoems: 100,
+    poemSystem: '保安宮保生大帝籤',
+    totalPoems: 61,
     image: require('@/assets/images/gods/generated/cards/baoshengdadi-card.webp'),
     blessing: '願大帝慈悲醫治，藥到病除，身心安康，福壽綿長。',
     tagline: '慈心濟世，保生安康',
@@ -1006,6 +1007,7 @@ export function getPoemsByGod(godId: number, yuelaoEdition: YuelaoEdition = getY
   if (god.poemSystem === '城隍明鑑籤（雷雨師）') return chenghuangFocusedPoems;
   if (god.poemSystem === '金母慈光籤（觀音）') return jinmuFocusedPoems;
   if (god.poemSystem === '地藏大願籤（觀音）') return dizangFocusedPoems;
+  if (god.poemSystem === '保安宮保生大帝籤') return baoshengBaoanPoems;
   if (god.poemSystem === '保生大帝靈籤') return baoshengHealthPoems;
   if (god.poemSystem === '土地公厚德籤') return fudezhengshenBlessingPoems;
   if (god.poemSystem === '三官賜福籤') return sanguanBlessingPoems;

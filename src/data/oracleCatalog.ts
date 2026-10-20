@@ -142,6 +142,17 @@ export function getOracleCatalogByGodId(godId?: number | null, yuelaoEdition?: Y
     case 57:
       return jiaziEntry;
     case 5:
+      return entry({
+        label: '保安宮保生大帝籤',
+        totalPoems: 61,
+        sourceNote: '台北大龍峒保安宮保生大帝籤六十首加籤王。新聞報導引用保安宮所抽籤詩（如 2026 年國運籤第 44 首、商業籤第 18 首），與本套逐字相符。',
+        completenessNote: '61 首筆數完整（第 61 為籤王）；全文目前只有台灣好廟網一個公開來源，尚未取得保安宮籤書核對。籤本未標吉凶，以「籤本未標」呈現。',
+        strengths: ['身心調養', '祈福消災', '誠心問事'],
+        sourceType: '廟宇籤系（大龍峒保安宮保生大帝籤）',
+        editionNote: '籤文依台灣好廟網，並以新聞引用的保安宮籤詩抽查 5 首一致；與網路流傳以神咒字為序的「保生大帝靈籤六十六首」為不同兩套。籤題、白話、說明與七類解曰由本 App 撰寫，健康類不提供藥方。2026-10-20 取代原本借用雷雨師百首的版本（神農大帝仍沿用該版本）。',
+        suitabilityNote: '適合問身心調養、祈福消災、家宅平安與誠心請示之事；醫療問題請以醫師建議為準。',
+        versionTag: 'baosheng-baoan-61-v1',
+      });
     case 21:
       return entry({
         label: '保生大帝靈籤',
