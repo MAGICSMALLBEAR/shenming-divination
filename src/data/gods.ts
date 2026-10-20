@@ -9,6 +9,7 @@ import { zhushengLingqianPoems } from './poems/zhushengLingqian';
 import { linshuiWeifangPoems } from './poems/linshuiWeifang';
 import { yuelaoHongKongPoems, yuelaoTaiwanPoems } from './poems/yuelao';
 import { kongziShengqianPoems } from './poems/kongziShengqian';
+import { luzuZhinanPoems } from './poems/luzuZhinan';
 import { getYuelaoEdition, type YuelaoEdition } from './yuelaoEdition';
 import { huangdaxianPoems } from './poems/huangdaxian';
 import { chegongPoems } from './poems/chegong';
@@ -24,7 +25,6 @@ import {
   santaiziBreakthroughPoems,
   fudezhengshenBlessingPoems,
   sanguanBlessingPoems,
-  luzuGuidancePoems,
   zhaogongmingWealthPoems,
   huyeGuardPoems,
   jiutianxuannuStrategyPoems,
@@ -268,8 +268,8 @@ export const gods: God[] = [
     name: '呂洞賓',
     title: '孚佑帝君',
     description: '八仙中最著名的一位，道教全真派祖師，號純陽子。文武雙全，精通劍術、醫術與丹道。信眾祈求考試功名、身體健康、化解感情糾葛。',
-    poemSystem: '純陽指路籤',
-    totalPoems: 100,
+    poemSystem: '指南宮呂祖靈籤',
+    totalPoems: 61,
     image: require('@/assets/images/gods/generated/cards/lvdongbin-card.webp'),
     blessing: '願孚佑帝君純陽正氣加持，智慧清明，劍斬煩惱，功成名就，身心康泰。',
     tagline: '一劍斬煩惱，妙筆點功名',
@@ -1008,7 +1008,7 @@ export function getPoemsByGod(godId: number, yuelaoEdition: YuelaoEdition = getY
   if (god.poemSystem === '土地公厚德籤') return fudezhengshenBlessingPoems;
   if (god.poemSystem === '三官賜福籤') return sanguanBlessingPoems;
   if (god.poemSystem === '注生堂靈籤') return zhushengLingqianPoems;
-  if (god.poemSystem === '純陽指路籤') return luzuGuidancePoems;
+  if (god.poemSystem === '指南宮呂祖靈籤') return luzuZhinanPoems;
   if (god.poemSystem === '五路聚財籤') return zhaogongmingWealthPoems;
   if (god.poemSystem === '虎威護境籤') return huyeGuardPoems;
   if (god.poemSystem === '玄女兵法籤') return jiutianxuannuStrategyPoems;

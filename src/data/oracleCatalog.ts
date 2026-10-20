@@ -266,15 +266,15 @@ export function getOracleCatalogByGodId(godId?: number | null, yuelaoEdition?: Y
       });
     case 15:
       return entry({
-        label: '純陽指路籤',
-        totalPoems: 100,
-        sourceNote: '底本為雷雨師百首（文武廟等廟宇通用之傳統籤系，籤文逐字沿用），加入呂洞賓修心、功名與身心清明的白話解讀層。',
-        completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依呂祖信仰改寫。',
-        strengths: ['功名學業', '感情取捨', '修心明志'],
-        sourceType: '傳統籤系（雷雨師百首）+ 呂洞賓專屬白話解讀',
-        editionNote: '雷雨師原籤不改，新增純陽指路向標題、典故前言與取捨解曰。',
-        suitabilityNote: '適合問考試功名、感情是否該斷或續、身心清明與人生取捨。',
-        versionTag: 'luzu-leiyushi-100-focused-v2',
+        label: '指南宮呂祖靈籤',
+        totalPoems: 61,
+        sourceNote: '台北木柵指南宮「呂祖靈籤」六十首加籤王，籤序依六十甲子（甲子為第一籤）。籤詩逐首依指南宮官網公布的籤紙圖檔核對；指南宮為台灣呂祖信仰中心。',
+        completenessNote: '61 首筆數完整（第 61 為籤王）；籤紙未印吉凶，一律以「籤本未標」呈現，不另行判定。',
+        strengths: ['迷津指點', '修身勸善', '人事抉擇'],
+        sourceType: '廟宇籤系（台北指南宮呂祖靈籤）',
+        editionNote: '籤詩以指南宮籤紙為準，台灣好廟網文字與籤紙不同的 20 首依籤紙改正；籤紙第 17 首「藤王閣」依典故改為「滕王閣」。籤題沿用指南宮籤解流傳的典故。白話、典故說明與七類解曰由本 App 撰寫。2026-10-20 取代原本借用雷雨師百首的「純陽指路籤」。',
+        suitabilityNote: '適合問人生方向、修身改過、人際是非與待時進退。',
+        versionTag: 'luzu-zhinan-61-v1',
       });
     case 18:
       return entry({

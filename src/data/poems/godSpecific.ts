@@ -126,18 +126,6 @@ const sanguanConfig: GodSpecificConfig = {
   levelAdvice: DEFAULT_LEVEL_ADVICE,
 };
 
-const luzuConfig: GodSpecificConfig = {
-  idOffset: 5600,
-  label: '純陽指路籤',
-  baseSystem: '雷雨師百首',
-  focusKey: 'study',
-  focusLabel: '純陽明心',
-  titlePrefix: '純陽指路・',
-  storyPrefix: '呂洞賓籤解以修心、功名與身心清明為主軸；此籤承接雷雨師百首原意，轉作學業與人生取捨請示的白話指引。 ',
-  generalPrefix: '孚佑帝君提醒',
-  levelAdvice: DEFAULT_LEVEL_ADVICE,
-};
-
 const zhaogongmingConfig: GodSpecificConfig = {
   idOffset: 5700,
   label: '五路聚財籤',
@@ -215,7 +203,6 @@ export const jigongLingQianPoems = buildGodSpecificPoems(leiyushiPoems, jigongCo
 export const santaiziBreakthroughPoems = buildGodSpecificPoems(jiazi60Poems, santaiziConfig);
 export const fudezhengshenBlessingPoems = buildGodSpecificPoems(jiazi60Poems, fudezhengshenConfig);
 export const sanguanBlessingPoems = buildGodSpecificPoems(jiazi60Poems, sanguanConfig);
-export const luzuGuidancePoems = buildGodSpecificPoems(leiyushiPoems, luzuConfig);
 export const zhaogongmingWealthPoems = buildGodSpecificPoems(leiyushiPoems, zhaogongmingConfig);
 export const huyeGuardPoems = buildGodSpecificPoems(jiazi60Poems, huyeConfig);
 export const jiutianxuannuStrategyPoems = buildGodSpecificPoems(leiyushiPoems, jiutianxuannuConfig);
@@ -229,7 +216,6 @@ export const godSpecificPoemSystemMeta = {
   santaizi: santaiziConfig,
   fudezhengshen: fudezhengshenConfig,
   sanguan: sanguanConfig,
-  luzu: luzuConfig,
   zhaogongming: zhaogongmingConfig,
   huye: huyeConfig,
   jiutianxuannu: jiutianxuannuConfig,

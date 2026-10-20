@@ -56,7 +56,7 @@ function findMatchedPoem(visionResult: VisionResult): MatchedPoem | null {
 
   // 優先依籤系統比對
   const systemToGodIds: Record<string, number[]> = {
-    '雷雨師百首': [1, 5, 8, 11, 14, 15],
+    '雷雨師百首': [1, 5, 8, 11, 14],
     '保生健康籤': [5],
     '濟公活佛籤': [11],
     '觀音靈籤': [2],
@@ -71,6 +71,7 @@ function findMatchedPoem(visionResult: VisionResult): MatchedPoem | null {
     '黃大仙靈籤': [52],
     '車公靈籤': [59],
     '孔子聖籤': [32],
+    '呂祖靈籤': [15],
   };
 
   let candidateGodIds: number[] = [];
