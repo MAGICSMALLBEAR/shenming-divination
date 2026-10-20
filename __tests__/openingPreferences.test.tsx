@@ -57,7 +57,8 @@ describe('opening gate', () => {
     const view = await render(<OpeningGate />);
     await waitFor(() => expect(view.getByText('略過')).toBeTruthy());
     await waitFor(async () => expect(await AsyncStorage.getItem('opening_last_shown')).not.toBeNull());
-  });
+    // 檔案內第一次渲染 OpeningGate，CI 冷啟動常超過預設 5 秒
+  }, 15000);
 
   it('skips the opening when first-use has already been shown', async () => {
     await saveOpeningPreferences({ style: 'random', frequency: 'first-use' });

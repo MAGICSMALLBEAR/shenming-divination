@@ -105,8 +105,19 @@ export function getOracleCatalogByGodId(godId?: number | null, yuelaoEdition?: Y
         suitabilityNote: '適合問旅程、搬遷、家人平安、遠方消息與是否順風推進。',
         versionTag: 'mazu-jiazi-60-focused-v2',
       });
-    case 4:
     case 17:
+      return entry({
+        label: '清水祖師靈籤（臺北版）',
+        totalPoems: 50,
+        sourceNote: '臺北地區清水祖師廟通行的清水祖師靈籤四十八首加簽王二首（三峽長福巖、艋舺清水巖、淡水清水巖皆用此套），此籤系並見於《清水岩志略》。籤序與福建安溪清水岩版一致。',
+        completenessNote: '50 首筆數完整（第 49、50 為簽王）；48 首籤本未標吉凶，以「籤本未標」呈現；簽王依原標「總吉」「大吉」。',
+        strengths: ['趨吉避凶', '待時進退', '祈福消災'],
+        sourceType: '廟宇籤系（臺北清水祖師靈籤）',
+        editionNote: '依臺北版字句；臺北版與安溪版不同處依臺北版保留，網頁轉錄的明顯錯字依安溪版改正 7 處（如「此處」「運乖」「天籍」）。籤題、白話、說明與七類解曰由本 App 撰寫。2026-10-20 取代原本借用的六十甲子籤。',
+        suitabilityNote: '適合問時運進退、祈福消災、人事是非與待時而動。',
+        versionTag: 'qingshui-taipei-50-v1',
+      });
+    case 4:
     case 20:
     case 23:
     case 24:

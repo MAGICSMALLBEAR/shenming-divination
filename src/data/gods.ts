@@ -10,6 +10,7 @@ import { linshuiWeifangPoems } from './poems/linshuiWeifang';
 import { yuelaoHongKongPoems, yuelaoTaiwanPoems } from './poems/yuelao';
 import { kongziShengqianPoems } from './poems/kongziShengqian';
 import { luzuZhinanPoems } from './poems/luzuZhinan';
+import { qingshuiZushiPoems } from './poems/qingshuiZushi';
 import { getYuelaoEdition, type YuelaoEdition } from './yuelaoEdition';
 import { huangdaxianPoems } from './poems/huangdaxian';
 import { chegongPoems } from './poems/chegong';
@@ -298,8 +299,8 @@ export const gods: God[] = [
     name: '清水祖師',
     title: '清水祖師',
     description: '安溪高僧祖師，台灣北部與漳泉移民信仰重要神明。信眾祈求消災、護境、事業穩定與困厄化解。',
-    poemSystem: '六十甲子籤',
-    totalPoems: 60,
+    poemSystem: '清水祖師靈籤',
+    totalPoems: 50,
     image: require('@/assets/images/gods/generated/cards/qingshuizushi-card.webp'),
     blessing: '願祖師公護佑，清心定志，逢凶化吉，家宅安寧。',
     tagline: '清心護境，逢凶化吉',
@@ -1000,6 +1001,7 @@ export function getPoemsByGod(godId: number, yuelaoEdition: YuelaoEdition = getY
   if (god.poemSystem === '媽祖天后籤（六十甲子）') return mazuFocusedPoems;
   if (god.poemSystem === '文昌功名百籤') return wenchangFocusedPoems;
   if (god.poemSystem === '孔子聖籤') return kongziShengqianPoems;
+  if (god.poemSystem === '清水祖師靈籤') return qingshuiZushiPoems;
   if (god.poemSystem === '玄天上帝感應靈籤') return xuantianLingqianPoems;
   if (god.poemSystem === '城隍明鑑籤（雷雨師）') return chenghuangFocusedPoems;
   if (god.poemSystem === '金母慈光籤（觀音）') return jinmuFocusedPoems;

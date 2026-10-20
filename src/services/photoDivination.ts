@@ -72,6 +72,7 @@ function findMatchedPoem(visionResult: VisionResult): MatchedPoem | null {
     '車公靈籤': [59],
     '孔子聖籤': [32],
     '呂祖靈籤': [15],
+    '清水祖師靈籤': [17],
   };
 
   let candidateGodIds: number[] = [];
