@@ -24,7 +24,7 @@ export function ZhugeNumberInput({
   subtitle = '思之數・報數問卦',
   description = '靜心冥想片刻，\n心中浮現一個數字，\n即為天機所示之卦象。',
   confirmLabel = '報數問卦 →',
-  tip = '數字無上限，取模對應 64 卦',
+  tip = '數字無上限，依序循環對應 384 籤',
   placeholder = '請報一數',
   showHexagramHint = true,
   showContext = true,
@@ -95,7 +95,7 @@ export function ZhugeNumberInput({
       {showHexagramHint ? (
         <View style={styles.hexagramHint}>
           <Text style={styles.hexagramText}>☰ ☱ ☲ ☳ ☴ ☵ ☶ ☷</Text>
-          <Text style={styles.hexagramLabel}>六十四卦・易經推演</Text>
+          <Text style={styles.hexagramLabel}>三百八十四爻・易經推演</Text>
         </View>
       ) : null}
 

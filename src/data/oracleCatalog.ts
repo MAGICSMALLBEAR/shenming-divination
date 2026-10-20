@@ -205,14 +205,14 @@ export function getOracleCatalogByGodId(godId?: number | null, yuelaoEdition?: Y
       });    case 9:
       return entry({
         label: '諸葛神數',
-        totalPoems: 64,
-        sourceNote: '以六十四卦象義推演為核心，使用報數取模對應 1 到 64 的策略型籤解。',
-        completenessNote: '64 數完整可用；已補數理規則與卦象索引入口，後續可再擴充爻辭與典故來源。',
-        strengths: ['策略推演', '方案選擇', '風險辨識'],
-        sourceType: '易卦象義 + App 策略型白話解籤',
-        editionNote: '目前為 App 內建六十四卦白話版，重點在決策提醒，不等同完整易經占筮。',
-        suitabilityNote: '適合用在選方案、判斷風險、釐清下一步策略。',
-        versionTag: 'zhuge-64-hexagram-app-v2',
+        totalPoems: 384,
+        sourceNote: '傳統諸葛神數三百八十四籤，對應易經六十四卦三百八十四爻。籤文以三個公開全文來源逐首多數決定字，三方皆不同時以最完整的版本為準。',
+        completenessNote: '384 籤筆數完整；傳統諸葛神數不分吉凶等級，一律以「籤本未標」呈現。報數依序循環對應 1 到 384。',
+        strengths: ['策略推演', '方案選擇', '時機判斷'],
+        sourceType: '傳統籤系（諸葛神數三百八十四籤）',
+        editionNote: '籤文三方校對，少數字義未明處保留原文並於白話中註明。網路流傳的解籤同出一源，未採用；籤題、白話、說明與七類解曰由本 App 撰寫。2026-10-20 取代原本 App 自寫的六十四卦版。',
+        suitabilityNote: '適合用在選方案、判斷時機、釐清下一步策略。',
+        versionTag: 'zhuge-384-traditional-v1',
       });
     case 10:
       return entry({
