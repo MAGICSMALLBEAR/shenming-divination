@@ -9,6 +9,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  type StyleProp,
+  type ViewStyle,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
@@ -104,10 +106,10 @@ function searchableText(row: LibraryRow): string {
   ].join(' ').toLowerCase();
 }
 
-function AnimatedCard({ children, delay }: { children: React.ReactNode; delay: number }) {
+function AnimatedCard({ children, delay, style }: { children: React.ReactNode; delay: number; style?: StyleProp<ViewStyle> }) {
   const { opacity, translateY } = useFadeIn({ delay });
   return (
-    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
+    <Animated.View style={[style, { opacity, transform: [{ translateY }] }]}>
       {children}
     </Animated.View>
   );
@@ -257,7 +259,7 @@ export default function LibraryScreen() {
               const categoryAdvice = row.poem.jieYue?.[adviceKey] ?? row.poem.jieYue?.general;
 
               return (
-                <AnimatedCard key={key} delay={poemDelays[i]?.delay ?? 0}>
+                <AnimatedCard key={key} delay={poemDelays[i]?.delay ?? 0} style={styles.poemCell}>
                 <TouchableOpacity
                   style={styles.poemCard}
                   onPress={() => setExpandedKey(isOpen ? null : key)}
@@ -392,7 +394,7 @@ export default function LibraryScreen() {
               const categoryAdvice = row.poem.jieYue?.[adviceKey] ?? row.poem.jieYue?.general;
 
               return (
-                <AnimatedCard key={key} delay={poemDelays[i]?.delay ?? 0}>
+                <AnimatedCard key={key} delay={poemDelays[i]?.delay ?? 0} style={styles.poemCell}>
                 <TouchableOpacity
                   style={styles.poemCard}
                   onPress={() => setExpandedKey(isOpen ? null : key)}
@@ -449,8 +451,10 @@ export default function LibraryScreen() {
 
 function createStyles(theme: ThemeColors, layout: ReturnType<typeof useResponsiveLayout>) {
   const poemColumns = layout.isDesktop ? 3 : layout.isTablet ? 2 : 1;
+  // 寬度設在外層 AnimatedCard：清單容器是 row + wrap，外層沒寬度時內層的百分比會失準（收合半寬、展開撐破畫面）。
+  // 多欄時每欄扣 2% 留給 gap，避免三欄被擠成兩欄。
   const poemCardWidth = poemColumns > 1
-    ? `${Math.floor(100 / poemColumns)}%` as any
+    ? `${Math.floor(100 / poemColumns) - 2}%` as any
     : '100%' as any;
 
   return StyleSheet.create({
@@ -561,8 +565,8 @@ function createStyles(theme: ThemeColors, layout: ReturnType<typeof useResponsiv
       borderColor: theme.goldDark + '24',
       padding: TempleSpacing.md,
       marginBottom: TempleSpacing.sm,
-      width: poemCardWidth,
     },
+    poemCell: { width: poemCardWidth },
     poemHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     poemTitleGroup: { flex: 1 },
     poemGod: { color: theme.goldLight, fontWeight: '800', fontSize: 12, marginBottom: 3 },
