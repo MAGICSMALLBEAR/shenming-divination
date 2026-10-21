@@ -87,6 +87,9 @@ export function IncenseRitual({
   const [isDragging, setIsDragging] = useState(false);
   const ritualStyle = ritualStyles[ritualStyleKey];
   const godImage = getGodCloseupImage(godId);
+  // Bronze is the first continuous-censer treatment. Other styles retain the
+  // existing fallback until they receive matched planted-incense overlays.
+  const usesContinuousCenser = Boolean(ritualStyle.censer.plantedIncenseSprite);
 
   const incensePosition = useRef(new Animated.ValueXY(HAND_INCENSE_START)).current;
   const incenseLift = useRef(new Animated.Value(0)).current;
@@ -102,6 +105,7 @@ export function IncenseRitual({
   const smokeAnim = useRef(new Animated.Value(0)).current;
   const ashPressAnim = useRef(new Animated.Value(0)).current;
   const ashBurstAnim = useRef(new Animated.Value(0)).current;
+  const seatedIncenseAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const xListener = incensePosition.x.addListener(({ value }) => {
@@ -234,6 +238,7 @@ export function IncenseRitual({
 
     setStep('inserting');
     setIsDragging(false);
+    seatedIncenseAnim.setValue(0);
 
     const approachDuration = reducedMotion ? 1 : 260;
     const insertDuration = reducedMotion ? 1 : 160;
@@ -260,6 +265,9 @@ export function IncenseRitual({
         useNativeDriver: false,
       }),
     ]).start(() => {
+      // The hand-held bundle has reached the ash bed. Reveal the seated
+      // incense only now, so it reads as a continuation of the same action.
+      setStep('placed');
       Animated.sequence([
         Animated.parallel([
           Animated.timing(ashPressAnim, {
@@ -284,9 +292,14 @@ export function IncenseRitual({
           useNativeDriver: true,
         }),
       ]).start();
+      Animated.timing(seatedIncenseAnim, {
+        toValue: 1,
+        duration: reducedMotion ? 1 : 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
 
       void playIncenseSound().catch(() => {});
-      placedTimerRef.current = setTimeout(() => setStep('placed'), reducedMotion ? 1 : 180);
       completeTimerRef.current = setTimeout(onComplete, reducedMotion ? 300 : 950);
     });
   };
@@ -403,6 +416,18 @@ export function IncenseRitual({
   const ashBurstTranslateY = ashBurstAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, -14],
+  });
+  const seatedIncenseOpacity = seatedIncenseAnim.interpolate({
+    inputRange: [0, 0.18, 1],
+    outputRange: [0, 0.72, 1],
+  });
+  const seatedIncenseTranslateY = seatedIncenseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [12, 0],
+  });
+  const seatedIncenseScale = seatedIncenseAnim.interpolate({
+    inputRange: [0, 0.72, 1],
+    outputRange: [0.96, 1.018, 1],
   });
 
   const instruction =
@@ -547,7 +572,7 @@ export function IncenseRitual({
             </Animated.View>
           )}
 
-          {step === 'placed' ? (
+          {step === 'placed' && !usesContinuousCenser ? (
             <Image source={ritualStyle.censer.placedSprite} style={styles.fullCenserSprite} contentFit="contain" transition={150} />
           ) : (
             <View style={styles.censerSpriteViewport}>
@@ -555,7 +580,7 @@ export function IncenseRitual({
             </View>
           )}
 
-          {step !== 'placed' ? (
+          {step !== 'placed' || usesContinuousCenser ? (
             <>
               <View style={styles.spriteTopMask} />
               <View
@@ -599,6 +624,29 @@ export function IncenseRitual({
               ]}
             />
           )}
+
+          {step === 'placed' && ritualStyle.censer.plantedIncenseSprite ? (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.plantedIncense,
+                {
+                  opacity: seatedIncenseOpacity,
+                  transform: [
+                    { translateY: seatedIncenseTranslateY },
+                    { scale: seatedIncenseScale },
+                  ],
+                },
+              ]}
+            >
+              <Image
+                source={ritualStyle.censer.plantedIncenseSprite}
+                style={styles.plantedIncenseImage}
+                contentFit="contain"
+                transition={180}
+              />
+            </Animated.View>
+          ) : null}
 
           <Pressable
             style={styles.dropZone}
@@ -1207,6 +1255,19 @@ function createStyles(theme: ThemeColors) {
     borderRadius: 16,
     opacity: 0,
     zIndex: 6,
+  },
+  plantedIncense: {
+    position: 'absolute',
+    top: -20,
+    width: 108,
+    height: 162,
+    // The image is deliberately behind the lip and ash bed, so the sticks
+    // read as inserted rather than pasted onto the front of the censer.
+    zIndex: 2,
+  },
+  plantedIncenseImage: {
+    width: '100%',
+    height: '100%',
   },
   offerPanel: {
     position: 'absolute',

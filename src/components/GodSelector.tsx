@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Modal,
   ScrollView,
@@ -33,6 +33,10 @@ import { rankGods } from '@/services/godRanking';
 
 interface GodSelectorProps {
   onSelectGod: (godId: number) => void;
+  /** Lets the parent own vertical scrolling when embedded in a larger page. */
+  embedded?: boolean;
+  contentWidthOverride?: number;
+  columnsOverride?: number;
 }
 
 interface QuestionFormProps {
@@ -42,7 +46,12 @@ interface QuestionFormProps {
   forWhom?: string;
 }
 
-export function GodSelector({ onSelectGod }: GodSelectorProps) {
+export function GodSelector({
+  onSelectGod,
+  embedded = false,
+  contentWidthOverride,
+  columnsOverride,
+}: GodSelectorProps) {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -53,10 +62,13 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectorHistory, setSelectorHistory] = useState<Awaited<ReturnType<typeof getHistory>>>([]);
+  const [selectingGodId, setSelectingGodId] = useState<number | null>(null);
+  const selectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCompact = layout.width < 420;
-  const columns = layout.isWideDesktop ? 4 : layout.isDesktop ? 3 : isCompact ? 1 : 2;
+  const columns = columnsOverride ?? (layout.isWideDesktop ? 4 : layout.isDesktop || layout.isTablet ? 3 : isCompact ? 1 : 2);
   const maxContentWidth = layout.isWideDesktop ? 1180 : layout.contentMaxWidth;
-  const gridWidth = Math.min(Math.max(layout.width - layout.gutter * 2, 0), maxContentWidth);
+  const availableWidth = contentWidthOverride ?? Math.max(layout.width - layout.gutter * 2, 0);
+  const gridWidth = Math.min(availableWidth, maxContentWidth);
   const cardWidth =
     columns === 1
       ? gridWidth
@@ -83,8 +95,21 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
     });
   }, []);
 
+  useEffect(() => () => {
+    if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
+  }, []);
+
+  const handleGodPress = useCallback((godId: number) => {
+    if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
+    setSelectingGodId(godId);
+    selectionTimerRef.current = setTimeout(() => {
+      selectionTimerRef.current = null;
+      onSelectGod(godId);
+    }, 140);
+  }, [onSelectGod]);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, embedded && styles.containerEmbedded]}>
       <Text style={styles.title}>{t('selectGodTitle')}</Text>
       <Text style={styles.subtitle}>
         {patronGodId
@@ -136,8 +161,9 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={styles.scrollArea}
-        contentContainerStyle={[styles.scrollContent, { maxWidth: maxContentWidth }]}
+        scrollEnabled={!embedded}
+        style={[styles.scrollArea, embedded && styles.scrollAreaEmbedded]}
+        contentContainerStyle={[styles.scrollContent, embedded && styles.scrollContentEmbedded, { maxWidth: maxContentWidth }]}
       >
         <View style={styles.grid}>
           {visibleGods.map((god) => (
@@ -148,7 +174,8 @@ export function GodSelector({ onSelectGod }: GodSelectorProps) {
               isPatron={patronGodId === god.id}
               isPreferred={preferredGodId === god.id}
               cardStyle={isCompact && styles.cardWrapperCompact}
-              onPress={() => onSelectGod(god.id)}
+              isSelecting={selectingGodId === god.id}
+              onPress={() => handleGodPress(god.id)}
               onDetail={() => setDetailGod(god)}
             />
           ))}
@@ -177,6 +204,7 @@ function GodCard({
   width,
   isPatron,
   isPreferred,
+  isSelecting,
   onPress,
   onDetail,
   cardStyle,
@@ -185,6 +213,7 @@ function GodCard({
   width: DimensionValue;
   isPatron: boolean;
   isPreferred: boolean;
+  isSelecting: boolean;
   onPress: () => void;
   onDetail: () => void;
   cardStyle?: StyleProp<ViewStyle>;
@@ -195,7 +224,7 @@ function GodCard({
 
   return (
     <View style={[styles.cardWrapper, { width }, cardStyle]}>
-      <View style={[styles.godCard, { borderColor: god.accentColor + '66' }]}>
+      <View style={[styles.godCard, { borderColor: god.accentColor + '66' }, isSelecting && { borderColor: god.accentColor, opacity: 0.9, transform: [{ scale: 0.985 }] }]}>
         <TouchableOpacity onPress={onPress} activeOpacity={0.86} accessibilityRole="button" accessibilityLabel={'選擇' + god.name + '，' + god.tagline}>
         <View style={styles.badgeRow}>
           {isPatron ? (
@@ -212,7 +241,7 @@ function GodCard({
 
         <View style={[styles.godPortrait, { borderColor: god.accentColor + '55', backgroundColor: god.primaryColor + '50' }]}>
           {cardImage ? (
-            <Image source={cardImage} style={styles.godPortraitImage} contentFit="cover" contentPosition="top" transition={300} />
+            <Image source={cardImage} style={styles.godPortraitImage} contentFit="cover" contentPosition="top" transition={300} cachePolicy="memory-disk" recyclingKey={`god-card-${god.id}`} />
           ) : null}
           <View style={[styles.godPortraitOverlay, { backgroundColor: god.primaryColor + '16' }]} />
         </View>
@@ -624,6 +653,7 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
 function createStyles(theme: ThemeColors) {
   return StyleSheet.create({
   container: { flex: 1, overflow: "hidden" as const, paddingHorizontal: TempleSpacing.md },
+  containerEmbedded: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', overflow: 'visible' as const },
   title: {
     fontSize: TempleFonts.hero,
     fontWeight: TempleFonts.heavy,
@@ -692,7 +722,9 @@ function createStyles(theme: ThemeColors) {
   emptyGodTitle: { color: theme.goldLight, fontSize: TempleFonts.body, fontWeight: TempleFonts.heavy, marginBottom: 6 },
   emptyGodText: { color: theme.textMuted, fontSize: TempleFonts.small, textAlign: 'center' },
   scrollArea: { flex: 1, overflow: "scroll" as const },
+  scrollAreaEmbedded: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', overflow: 'visible' as const },
   scrollContent: { width: '100%', alignSelf: 'center', paddingBottom: TempleSpacing.lg },
+  scrollContentEmbedded: { flexGrow: 0 },
   grid: {
     width: '100%',
     flexDirection: 'row',

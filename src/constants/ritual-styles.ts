@@ -31,6 +31,8 @@ export interface RitualStyleDefinition {
     placedSprite: ImageSourcePropType;
     realisticHolderSprite: ImageSourcePropType;
     realisticStickSprite: ImageSourcePropType;
+    /** Overlay shown after the incense has been seated. Kept separate from the censer so the vessel never swaps mid-ritual. */
+    plantedIncenseSprite?: ImageSourcePropType;
   };
   jiaobei: {
     round: string;
@@ -78,6 +80,7 @@ export const ritualStyles: Record<RitualStyleKey, RitualStyleDefinition> = {
       placedSprite: require('@/assets/images/ritual/realistic/bronze-holder.png'),
       realisticHolderSprite: require('@/assets/images/ritual/realistic/bronze-holder-v2.png'),
       realisticStickSprite: require('@/assets/images/ritual/realistic/bronze-stick-v2.png'),
+      plantedIncenseSprite: require('@/assets/images/ritual/realistic/bronze-incense-planted-v1.png'),
     },
     jiaobei: {
       round: '#995322',
@@ -116,6 +119,7 @@ export const ritualStyles: Record<RitualStyleKey, RitualStyleDefinition> = {
       placedSprite: require('@/assets/images/ritual/realistic/porcelain-holder.png'),
       realisticHolderSprite: require('@/assets/images/ritual/realistic/celadon-holder-v2.png'),
       realisticStickSprite: require('@/assets/images/ritual/realistic/celadon-stick-v2.png'),
+      plantedIncenseSprite: require('@/assets/images/ritual/realistic/celadon-incense-planted-v1.png'),
     },
     jiaobei: {
       round: '#A1B89E',
@@ -154,6 +158,7 @@ export const ritualStyles: Record<RitualStyleKey, RitualStyleDefinition> = {
       placedSprite: require('@/assets/images/ritual/realistic/cinnabar-holder.png'),
       realisticHolderSprite: require('@/assets/images/ritual/realistic/cinnabar-holder-v2.png'),
       realisticStickSprite: require('@/assets/images/ritual/realistic/cinnabar-stick-v2.png'),
+      plantedIncenseSprite: require('@/assets/images/ritual/realistic/cinnabar-incense-planted-v1.png'),
     },
     jiaobei: {
       round: '#A23A2A',
@@ -186,6 +191,7 @@ export const ritualStyles: Record<RitualStyleKey, RitualStyleDefinition> = {
       placedSprite: require('@/assets/images/ritual/realistic/ebony-holder.png'),
       realisticHolderSprite: require('@/assets/images/ritual/realistic/ebony-holder-v2.png'),
       realisticStickSprite: require('@/assets/images/ritual/realistic/ebony-stick-v2.png'),
+      plantedIncenseSprite: require('@/assets/images/ritual/realistic/ebony-incense-planted-v1.png'),
     },
     jiaobei: {
       round: '#321D16', flat: '#21120F', panel: '#B83E2F', line: '#D8A847',
@@ -213,6 +219,7 @@ export const ritualStyles: Record<RitualStyleKey, RitualStyleDefinition> = {
       placedSprite: require('@/assets/images/ritual/realistic/jade-holder.png'),
       realisticHolderSprite: require('@/assets/images/ritual/realistic/jade-holder-v2.png'),
       realisticStickSprite: require('@/assets/images/ritual/realistic/jade-stick-v2.png'),
+      plantedIncenseSprite: require('@/assets/images/ritual/realistic/jade-incense-planted-v1.png'),
     },
     jiaobei: {
       round: '#EEE4CA', flat: '#D8CAA8', panel: '#F2E9D4', line: '#C4A85B',

@@ -11,12 +11,18 @@ export const GOD_CATEGORY_MATCH: Record<string, God['category'][]> = {
 };
 
 export function matchesGodSearch(god: God, query: string): boolean {
-  const keyword = query.trim().toLocaleLowerCase();
-  if (!keyword) return true;
+  const keywords = query
+    .trim()
+    .toLocaleLowerCase()
+    .split(/[\s,，、/]+/)
+    .filter(Boolean);
+  if (keywords.length === 0) return true;
   const profile = getGodProfile(god.id);
-  return [god.name, god.title, god.tagline, god.description, god.poemSystem,
+  const searchableText = [god.name, god.title, god.tagline, god.description, god.poemSystem,
     ...(profile?.aliases ?? []), ...(profile?.patronages ?? []), ...(profile?.suitableTopics ?? [])]
-    .join(' ').toLocaleLowerCase().includes(keyword);
+    .join(' ')
+    .toLocaleLowerCase();
+  return keywords.every((keyword) => searchableText.includes(keyword));
 }
 
 export function matchesQuestionCategory(god: God, categoryId: string): boolean {

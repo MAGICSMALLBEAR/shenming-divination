@@ -32,7 +32,7 @@ import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritual-styles';
 import { gods, type God } from '@/data/gods';
 import { tossJiaobei, type JiaobeiResult } from '@/services/divination';
-import { getGodCardImage } from '@/data/godImages';
+import { getGodCardImage, getGodCloseupImage } from '@/data/godImages';
 import { recommendGods, type GodRecommendation } from '@/services/recommendation';
 import { useShakeDetector } from '@/hooks/useShakeDetector';
 import { CrossTempleComparison } from '@/components/CrossTempleComparison';
@@ -79,6 +79,8 @@ export default function HomeScreen() {
   const [newFamRelation, setNewFamRelation] = React.useState('');
   const [settings, setSettings] = React.useState<AppSettings | null>(null);
   const [quickDrawGod, setQuickDrawGod] = React.useState<God | null>(null);
+  const selectionScrollRef = React.useRef<ScrollView>(null);
+  const [showSelectionBackToTop, setShowSelectionBackToTop] = React.useState(false);
   const solarTerm = React.useMemo(() => getCurrentSolarTerm(), []);
 
   // 搖手機求籤：在擲筊步驟偵測搖動
@@ -95,7 +97,7 @@ export default function HomeScreen() {
   const isCompact = layout.width < 420;
   const isTablet = layout.isTablet;
   const pageMaxWidth = layout.isWideDesktop ? 1180 : layout.isDesktop ? 1080 : layout.contentMaxWidth;
-  const selectedGodCardImage = getGodCardImage(div.selectedGod?.id);
+  const selectedGodCardImage = getGodCloseupImage(div.selectedGod?.id) ?? getGodCardImage(div.selectedGod?.id);
   const lastJiaobeiResult = div.jiaobeiResults.at(-1) ?? null;
   const showDivinePresence = div.selectedGod && div.step !== 'select-god';
   const compactDivinePresence =
@@ -327,7 +329,20 @@ export default function HomeScreen() {
     switch (div.step) {
       case 'select-god':
         return (
-          <View style={styles.fullScreen}>
+          <View style={styles.selectionPage}>
+            <ScrollView
+              ref={selectionScrollRef}
+              style={styles.selectionScroll}
+              contentContainerStyle={styles.selectionScrollContent}
+              showsVerticalScrollIndicator={false}
+              scrollEventThrottle={16}
+              onScroll={(event) => {
+                const nextVisible = event.nativeEvent.contentOffset.y > 360;
+                setShowSelectionBackToTop((visible) => visible === nextVisible ? visible : nextVisible);
+              }}
+            >
+              <View style={[styles.selectionLayout, layout.isDesktop && styles.selectionLayoutDesktop]}>
+              <View style={[styles.selectionContext, layout.isDesktop && styles.selectionContextDesktop]}>
             <ForWhomSelector
               familyMembers={familyMembers}
               selectedPerson={selectedPerson}
@@ -378,7 +393,28 @@ export default function HomeScreen() {
                 <Text style={styles.followUpShortcutText}>延續上一次的籤詩脈絡，直接追問細節或下一步。</Text>
               </TouchableOpacity>
             ) : null}
-            <GodSelector onSelectGod={handleSelectGod} />
+              </View>
+              <View style={[styles.selectionMain, layout.isDesktop && styles.selectionMainDesktop]}>
+                <GodSelector
+                  onSelectGod={handleSelectGod}
+                  embedded
+                  contentWidthOverride={layout.isDesktop ? pageMaxWidth - 300 : undefined}
+                  columnsOverride={layout.isDesktop ? 3 : undefined}
+                />
+              </View>
+            </View>
+            </ScrollView>
+            {showSelectionBackToTop ? (
+              <TouchableOpacity
+                style={styles.selectionBackToTop}
+                onPress={() => selectionScrollRef.current?.scrollTo({ y: 0, animated: !(reducedMotion || lowMotionMode) })}
+                accessibilityRole="button"
+                accessibilityLabel="回到神明選擇頁頂端"
+              >
+                <Text style={styles.selectionBackToTopIcon}>↑</Text>
+                <Text style={styles.selectionBackToTopText}>回到上方</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         );
       case 'set-question':
@@ -714,7 +750,7 @@ function QuickDrawCard({
 }) {
   const { theme } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme), [theme]);
-  const cardImage = getGodCardImage(god.id);
+  const portraitImage = getGodCloseupImage(god.id) ?? getGodCardImage(god.id);
   const fade = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
@@ -740,8 +776,8 @@ function QuickDrawCard({
     >
       <View style={styles.quickDrawRow}>
         <View style={[styles.quickDrawPortrait, { backgroundColor: god.primaryColor + '33' }]}>
-          {cardImage ? (
-            <Image source={cardImage} style={styles.quickDrawPortraitImg} contentFit="cover" contentPosition="top" />
+          {portraitImage ? (
+            <Image source={portraitImage} style={styles.quickDrawPortraitImg} contentFit="cover" contentPosition="top" />
           ) : null}
         </View>
         <View style={styles.quickDrawInfo}>
@@ -879,7 +915,7 @@ function DailyGodRecommendationCard({
 }) {
   const { theme } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme), [theme]);
-  const cardImage = getGodCardImage(recommendation.god.id);
+  const portraitImage = getGodCloseupImage(recommendation.god.id) ?? getGodCardImage(recommendation.god.id);
   const glowAnim = React.useRef(new Animated.Value(0)).current;
   const pressAnim = React.useRef(new Animated.Value(1)).current;
 
@@ -944,8 +980,8 @@ function DailyGodRecommendationCard({
         <Text style={styles.recommendReason}>{recommendation.reason}</Text>
       </View>
       <View style={[styles.recommendImageWrap, { borderColor: recommendation.god.accentColor + '55' }]}>
-        {cardImage ? (
-          <Image source={cardImage} style={styles.recommendImage} contentFit="cover" contentPosition="top" />
+        {portraitImage ? (
+          <Image source={portraitImage} style={styles.recommendImage} contentFit="cover" contentPosition="top" />
         ) : null}
       </View>
     </AnimatedTouchable>
@@ -1204,6 +1240,36 @@ function createStyles(theme: ThemeColors) {
   stepLineActive: { backgroundColor: theme.goldDark },
   content: { flex: 1, overflow: "hidden" },
   fullScreen: { flex: 1, overflow: "hidden" },
+  selectionPage: { flex: 1, position: 'relative' },
+  selectionScroll: { flex: 1 },
+  selectionScrollContent: { paddingBottom: TempleSpacing.xxl },
+  selectionLayout: { width: '100%', gap: TempleSpacing.lg, flexDirection: 'column-reverse' },
+  selectionLayoutDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
+  selectionContext: { width: '100%', gap: TempleSpacing.sm },
+  selectionContextDesktop: { width: 276, flexShrink: 0 },
+  selectionMain: { width: '100%' },
+  selectionMainDesktop: { flex: 1 },
+  selectionBackToTop: {
+    position: 'absolute',
+    right: TempleSpacing.lg,
+    bottom: TempleSpacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: theme.gold + 'AA',
+    backgroundColor: theme.bgCard + 'F2',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 10,
+  },
+  selectionBackToTopIcon: { color: theme.goldLight, fontSize: 17, fontWeight: TempleFonts.heavy, lineHeight: 18 },
+  selectionBackToTopText: { color: theme.goldLight, fontSize: 12, fontWeight: TempleFonts.heavy },
   recommendCard: {
     marginHorizontal: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,
@@ -1244,7 +1310,7 @@ function createStyles(theme: ThemeColors) {
   },
   recommendImageWrap: {
     width: 72,
-    height: 96,
+    height: 90,
     borderRadius: 14,
     borderWidth: 1,
     overflow: 'hidden',
