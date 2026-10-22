@@ -1,11 +1,101 @@
 import cors from 'cors';
 import express from 'express';
+import { existsSync } from 'node:fs';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawn } from 'node:child_process';
+
+// Local development uses backend/.env. Hosted platforms supply environment variables directly.
+if (existsSync('.env')) process.loadEnvFile('.env');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 const PORT = Number(process.env.PORT || '3001');
+const MAX_AUDIO_BYTES = 6 * 1024 * 1024;
+
+const MIME_EXTENSIONS: Record<string, string> = {
+  'audio/mp4': '.m4a',
+  'audio/m4a': '.m4a',
+  'audio/x-m4a': '.m4a',
+  'audio/wav': '.wav',
+  'audio/x-wav': '.wav',
+  'audio/webm': '.webm',
+  'audio/ogg': '.ogg',
+};
+
+function runWhisper(command: string, args: string[], timeoutMs: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: 'ignore' });
+    const timeout = setTimeout(() => {
+      child.kill();
+      reject(new Error('Whisper transcription timed out.'));
+    }, timeoutMs);
+
+    child.once('error', (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+    child.once('exit', (code) => {
+      clearTimeout(timeout);
+      if (code === 0) resolve();
+      else reject(new Error(`Whisper exited with code ${code ?? 'unknown'}.`));
+    });
+  });
+}
+
+app.post('/api/transcribe', async (req, res) => {
+  const { audioBase64, mimeType, language } = req.body as {
+    audioBase64?: string;
+    mimeType?: string;
+    language?: string;
+  };
+  const extension = mimeType ? MIME_EXTENSIONS[mimeType] : undefined;
+  if (!audioBase64 || !extension) {
+    res.status(400).json({ error: 'Provide an audio file in a supported format.' });
+    return;
+  }
+
+  const audio = Buffer.from(audioBase64, 'base64');
+  if (!audio.length || audio.length > MAX_AUDIO_BYTES) {
+    res.status(413).json({ error: 'Audio must be between 1 byte and 6 MB.' });
+    return;
+  }
+
+  const command = process.env.WHISPER_COMMAND;
+  if (!command) {
+    res.status(503).json({ error: 'Voice transcription is not configured on this server.' });
+    return;
+  }
+
+  const workDir = await mkdtemp(join(tmpdir(), 'shenming-whisper-'));
+  const inputPath = join(workDir, `question${extension}`);
+  const outputPath = join(workDir, 'question.json');
+  try {
+    await writeFile(inputPath, audio);
+    await runWhisper(command, [
+      inputPath,
+      '--model', process.env.WHISPER_MODEL || 'base',
+      '--language', language === 'zh' ? 'zh' : (process.env.WHISPER_LANGUAGE || 'zh'),
+      '--task', 'transcribe',
+      '--output_format', 'json',
+      '--output_dir', workDir,
+      '--verbose', 'False',
+    ], Number(process.env.WHISPER_TIMEOUT_MS || '45000'));
+
+    const output = JSON.parse(await readFile(outputPath, 'utf8')) as { text?: string; language?: string };
+    const text = output.text?.trim();
+    if (!text) throw new Error('Whisper returned no speech.');
+    res.json({ text, language: output.language || language || 'zh' });
+  } catch (error) {
+    console.error('Whisper transcription error:', error);
+    res.status(502).json({ error: 'Voice transcription failed. Please try again.' });
+  } finally {
+    await rm(workDir, { recursive: true, force: true });
+  }
+});
 
 type AIProvider = 'openai' | 'deepseek' | 'custom';
 

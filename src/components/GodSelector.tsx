@@ -30,6 +30,7 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useI18n } from '@/hooks/useI18n';
 import { filterGods } from '@/services/godFilter';
 import { rankGods } from '@/services/godRanking';
+import { VoiceQuestionInput } from '@/components/VoiceQuestionInput';
 
 interface GodSelectorProps {
   onSelectGod: (godId: number) => void;
@@ -159,12 +160,10 @@ export function GodSelector({
         </View>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={!embedded}
-        style={[styles.scrollArea, embedded && styles.scrollAreaEmbedded]}
-        contentContainerStyle={[styles.scrollContent, embedded && styles.scrollContentEmbedded, { maxWidth: maxContentWidth }]}
-      >
+      {/* The selector is rendered inside the page's main vertical ScrollView.
+          Keeping a disabled nested ScrollView here can trap touch gestures on Android,
+          so this section must expand naturally with the complete card grid. */}
+      <View style={[styles.scrollContent, { maxWidth: maxContentWidth }]}>
         <View style={styles.grid}>
           {visibleGods.map((god) => (
             <GodCard
@@ -186,7 +185,7 @@ export function GodSelector({
             </View>
           ) : null}
         </View>
-      </ScrollView>
+      </View>
 
       {detailGod && (
         <GodDetailModal
@@ -565,6 +564,11 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
             maxLength={80}
             textAlignVertical="top"
             accessibilityLabel="輸入想問的事情"
+          />
+          <VoiceQuestionInput
+            theme={theme}
+            disabled={question.length >= 80}
+            onTranscript={(text) => setQuestion((current) => `${current}${current ? ' ' : ''}${text}`.slice(0, 80))}
           />
           <View style={styles.questionMetaRow}>
             <Text style={styles.questionCount}>{question.length} / 80</Text>

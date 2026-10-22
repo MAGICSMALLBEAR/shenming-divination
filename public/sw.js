@@ -1,5 +1,7 @@
 ﻿// Service Worker for 神明占卜 PWA
-const CACHE_NAME = 'shenming-divination-v4';
+// Increment this whenever the client bundle changes so installed PWA clients
+// discard a stale JavaScript bundle on their next launch.
+const CACHE_NAME = 'shenming-divination-v5';
 const CORE_ASSETS = [
   '/',
   '/index.html',

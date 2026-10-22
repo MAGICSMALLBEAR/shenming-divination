@@ -8,9 +8,13 @@
     "scheme": "shenmingdivination",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "用於將您的提問語音轉換為文字。錄音只在辨識期間暫存。"
+      }
     },
     "android": {
+      "permissions": ["RECORD_AUDIO"],
       "adaptiveIcon": {
         "backgroundColor": "#1C0E06",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
