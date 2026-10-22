@@ -422,13 +422,13 @@ export function getOracleCatalogByGodId(godId?: number | null, yuelaoEdition?: Y
       return entry({
         label: '東嶽鎮嶽籤',
         totalPoems: 100,
-        sourceNote: '底本為觀音靈籤（傳統籤系，籤文逐字沿用），加入東嶽仁聖大帝延壽、消災與家運的白話解讀層。',
-        completenessNote: '100 首完整可抽；籤詩原文為傳統定本，解讀層為 App 依東嶽信仰改寫。',
+        sourceNote: '目前抽籤底本為觀音靈籤（傳統籤系，籤文逐字沿用），加入東嶽仁聖大帝延壽、消災與家運的白話解讀層；宜蘭東嶽廟二十八星宿籤已建立校勘索引，但尚未接入抽籤。',
+        completenessNote: '現行觀音靈籤 100 首完整可抽。宜蘭東嶽廟目標籤本為二十八宿加籤王，現有 2 筆可追溯公開實物證據；未完成全套校訂前不替換。',
         strengths: ['家運昌隆', '延壽增福', '消災解厄'],
         sourceType: '傳統籤系（觀音靈籤）+ 東嶽大帝專屬白話解讀',
-        editionNote: '觀音原籤不改，新增東嶽鎮嶽向標題、典故前言與家運解曰，聚焦安穩、因果與大方向。',
+        editionNote: '觀音原籤不改，新增東嶽鎮嶽向標題、典故前言與家運解曰，聚焦安穩、因果與大方向。宜蘭東嶽廟版本將待取得完整原始影像／廟方核定文字與使用同意後，以獨立籤系上線。',
         suitabilityNote: '適合問家運方向、長輩福壽、重大決策與消災解厄。',
-        versionTag: 'dongyue-guanyin-100-focused-v1',
+        versionTag: 'dongyue-guanyin-100-focused-v1+yilan-draft-2of29',
       });
     case 39:
       return entry({
