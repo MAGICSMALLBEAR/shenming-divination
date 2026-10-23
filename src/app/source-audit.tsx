@@ -1,8 +1,15 @@
 import React, { useMemo } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
+import { DEFAULT_YUELAO_EDITION } from '@/data/yuelaoEdition';
+import {
+  ORACLE_SOURCE_PENDING,
+  getOracleSourceCardByGodId,
+  getOracleSourceCardUsage,
+  oracleSourceCards,
+} from '@/data/oracleSourceCards';
 import { auditAllOracles, type OracleAuditRow } from '@/services/oracleAudit';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
@@ -19,6 +26,7 @@ export default function SourceAuditScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const audit = useMemo(() => auditAllOracles(), []);
   const rows = audit.rows;
+  const cardUsage = useMemo(() => getOracleSourceCardUsage(), []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -39,6 +47,7 @@ export default function SourceAuditScreen() {
 
         {rows.map((row) => {
           const { god, catalog } = row;
+          const sourceCard = getOracleSourceCardByGodId(god.id, DEFAULT_YUELAO_EDITION);
           return (
           <View key={god.id} style={styles.card}>
             <View style={styles.cardHeader}>
@@ -53,6 +62,7 @@ export default function SourceAuditScreen() {
 
             <Text style={styles.sourceNote}>{catalog.sourceNote}</Text>
             <Text style={styles.versionText}>版本：{catalog.versionTag}</Text>
+            <Text style={styles.auditText}>底本：{sourceCard ? sourceCard.title : '尚無來源卡'}</Text>
             <Text style={styles.auditText}>欄位完整度 {row.completenessPercent}% · 原文唯一 {row.uniqueContentCount}/{row.poemCount}</Text>
             <Text style={styles.metaTitle}>完整度</Text>
             <Text style={styles.metaText}>{catalog.completenessNote}</Text>
@@ -68,6 +78,52 @@ export default function SourceAuditScreen() {
               ))}
             </View>
           </View>
+          );
+        })}
+
+        <Text style={styles.sectionTitle}>籤本來源卡</Text>
+        <Text style={styles.sectionNote}>
+          共 {oracleSourceCards.length} 套底本。多位神明共用同一套底本時，籤詩原文相同，只有白話與解曰依神明改寫。標示「{ORACLE_SOURCE_PENDING}」的欄位目前沒有紀錄。
+        </Text>
+        {oracleSourceCards.map((item) => {
+          const users = cardUsage.get(item.id) ?? [];
+          const fields: [string, string][] = [
+            ['出處', item.origin],
+            ['版本', item.edition],
+            ['原始影像', item.originalImages],
+            ['權利', item.rights],
+            ['校對者', item.reviewer],
+            ['上架', `${item.listedAt}（${item.listedCommit}）`],
+            ['撤下機制', item.withdrawal],
+          ];
+          return (
+            <View key={item.id} style={styles.card}>
+              <Text style={styles.godName}>{item.title}</Text>
+              <Text style={styles.systemName}>{item.totalPoems} 首 · 使用神明 {users.length} 位</Text>
+              {fields.map(([label, value]) => (
+                <Text key={label} style={styles.metaText}>
+                  <Text style={styles.fieldLabel}>{label}：</Text>
+                  <Text style={value === ORACLE_SOURCE_PENDING ? styles.pendingText : undefined}>{value}</Text>
+                </Text>
+              ))}
+              <Text style={styles.metaTitle}>比對來源</Text>
+              {item.sources.map((source) => (
+                source.url ? (
+                  <TouchableOpacity
+                    key={source.label}
+                    onPress={() => Linking.openURL(source.url as string)}
+                    accessibilityRole="link"
+                  >
+                    <Text style={styles.linkText}>• {source.label} ↗</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text key={source.label} style={styles.metaText}>• {source.label}</Text>
+                )
+              ))}
+              {item.sourceGapNote ? <Text style={styles.warningText}>來源缺口：{item.sourceGapNote}</Text> : null}
+              <Text style={styles.metaTitle}>使用神明</Text>
+              <Text style={styles.metaText}>{users.map((god) => god.name).join('、') || '無'}</Text>
+            </View>
           );
         })}
 
@@ -132,6 +188,11 @@ function createStyles(theme: ThemeColors) {
     warningText: { color: theme.warning, fontSize: 12, lineHeight: 18, marginTop: 5 },
     metaTitle: { color: theme.goldLight, fontSize: 12, fontWeight: '800', marginTop: 6, marginBottom: 3 },
     metaText: { color: theme.textMuted, fontSize: 12, lineHeight: 18 },
+    sectionTitle: { color: theme.goldLight, fontSize: TempleFonts.body, fontWeight: '900', marginTop: TempleSpacing.sm, marginBottom: 4 },
+    sectionNote: { color: theme.textMuted, fontSize: 12, lineHeight: 18, marginBottom: TempleSpacing.md },
+    fieldLabel: { color: theme.goldLight, fontWeight: '800' },
+    pendingText: { color: theme.warning, fontWeight: '800' },
+    linkText: { color: theme.gold, fontSize: 12, lineHeight: 20 },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
     chip: { borderRadius: 999, borderWidth: 1, borderColor: theme.goldDark + '35', paddingHorizontal: 9, paddingVertical: 4 },
     chipText: { color: theme.textMuted, fontSize: 11, fontWeight: '700' },
