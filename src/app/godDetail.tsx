@@ -17,6 +17,7 @@ import { getGodCardImage } from '@/data/godImages';
 import { getGodProfile } from '@/data/godProfiles';
 import { getGodQuestionGuide } from '@/data/godQuestionGuides';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
+import { CHIFU_MEDICINE_ARCHIVE_GOD_ID } from '@/data/chifuMedicineLotArchive';
 import { YUELAO_EDITION_LABELS, YUELAO_GOD_ID, type YuelaoEdition } from '@/data/yuelaoEdition';
 import { saveYuelaoEdition, useYuelaoEdition } from '@/services/yuelaoEditionPreferences';
 import { getHistory, type DivinationRecord } from '@/services/storage';
@@ -192,6 +193,22 @@ export default function GodDetailScreen() {
                   ))}
                 </View>
               ) : null}
+            </View>
+          ) : null}
+
+          {/* 文化藥籤典藏：只在池府千歲顯示，與抽籤分開 */}
+          {god.id === CHIFU_MEDICINE_ARCHIVE_GOD_ID ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>🏛️ 文化藥籤典藏</Text>
+              <Text style={styles.bodyText}>虎尾德興宮池府千歲藥籤的文物目錄，連結國家文化記憶庫原始條目。</Text>
+              <Text style={[styles.muted, { marginTop: 4 }]}>文化典藏，非醫療建議；不提供藥方，也不會出現在抽籤結果中。</Text>
+              <TouchableOpacity
+                style={[styles.chip, { borderColor: god.accentColor + '60', marginTop: 10, alignSelf: 'flex-start' }]}
+                onPress={() => router.push('/chifu-medicine-archive' as never)}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.chipText, { color: god.accentColor }]}>查看典藏目錄 →</Text>
+              </TouchableOpacity>
             </View>
           ) : null}
 
