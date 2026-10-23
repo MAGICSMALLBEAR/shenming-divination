@@ -11,7 +11,6 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
@@ -31,6 +30,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { filterGods } from '@/services/godFilter';
 import { rankGods } from '@/services/godRanking';
 import { VoiceQuestionInput } from '@/components/VoiceQuestionInput';
+import { GodPortrait } from '@/components/GodPortrait';
 
 interface GodSelectorProps {
   onSelectGod: (godId: number) => void;
@@ -239,9 +239,17 @@ function GodCard({
         </View>
 
         <View style={[styles.godPortrait, { borderColor: god.accentColor + '55', backgroundColor: god.primaryColor + '50' }]}>
-          {cardImage ? (
-            <Image source={cardImage} style={styles.godPortraitImage} contentFit="cover" contentPosition="top" transition={300} cachePolicy="memory-disk" recyclingKey={`god-card-${god.id}`} />
-          ) : null}
+          <GodPortrait
+            source={cardImage}
+            name={god.name}
+            accentColor={god.accentColor}
+            primaryColor={god.primaryColor}
+            style={styles.godPortraitImage}
+            transition={300}
+            cachePolicy="memory-disk"
+            recyclingKey={`god-card-${god.id}`}
+            testID={`god-card-image-${god.id}`}
+          />
           <View style={[styles.godPortraitOverlay, { backgroundColor: god.primaryColor + '16' }]} />
         </View>
 
@@ -287,9 +295,15 @@ function GodDetailModal({ god, onClose, onSelect }: { god: God; onClose: () => v
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={modalStyles.scrollContent}>
           {/* 大圖 */}
           <View style={[modalStyles.heroWrap, { borderColor: god.accentColor + '66' }]}>
-            {cardImage ? (
-              <Image source={cardImage} style={modalStyles.heroImage} contentFit="cover" contentPosition="top" transition={300} />
-            ) : null}
+            <GodPortrait
+              source={cardImage}
+              name={god.name}
+              accentColor={god.accentColor}
+              primaryColor={god.primaryColor}
+              style={modalStyles.heroImage}
+              transition={300}
+              testID={`god-detail-image-${god.id}`}
+            />
             <View style={[modalStyles.heroOverlay, { backgroundColor: god.primaryColor + 'BB' }]} />
             <View style={modalStyles.heroContent}>
               <Text style={[modalStyles.heroTitle, { color: god.accentColor }]}>{god.title}</Text>
@@ -451,15 +465,15 @@ export function QuestionForm({ onSubmit, selectedGod, onSwitchGod, forWhom }: Qu
 
         {selectedGod ? (
           <View style={[styles.selectedCard, { borderColor: selectedGod.accentColor + '55' }]}>
-            {getGodCardImage(selectedGod.id) ? (
-              <Image
-                source={getGodCardImage(selectedGod.id)}
-                style={styles.selectedCardBg}
-                contentFit="cover"
-                contentPosition="top"
-                transition={300}
-              />
-            ) : null}
+            <GodPortrait
+              source={getGodCardImage(selectedGod.id)}
+              name={selectedGod.name}
+              accentColor={selectedGod.accentColor}
+              primaryColor={selectedGod.primaryColor}
+              style={styles.selectedCardBg}
+              transition={300}
+              testID={`selected-god-image-${selectedGod.id}`}
+            />
             <View style={[styles.selectedCardOverlay, { backgroundColor: selectedGod.primaryColor + 'CC' }]} />
             <View style={styles.selectedCardContent}>
               <Text style={[styles.selectedLabel, { color: selectedGod.accentColor }]}>目前請示對象</Text>
