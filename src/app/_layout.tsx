@@ -55,6 +55,7 @@ export default function RootLayout() {
       <Stack.Screen name="source-audit" />
       <Stack.Screen name="chifu-medicine-archive" />
       <Stack.Screen name="jiaobei-ask" />
+      <Stack.Screen name="sutra-copy" />
       <Stack.Screen name="library" />
       <Stack.Screen name="nameAnalysis" />
       <Stack.Screen name="character" />

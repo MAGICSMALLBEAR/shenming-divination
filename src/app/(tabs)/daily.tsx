@@ -29,6 +29,7 @@ import { getYearFortune, getMonthFortune, type YearFortune } from '@/services/ye
 import { getZodiacDailyFortune, getMyZodiacFortune } from '@/services/zodiacFortune';
 import type { BaziInfo } from '@/services/bazi';
 import { DailyDeityCard } from '@/components/home/DailyDeityCard';
+import { DailyPracticeCard } from '@/components/home/DailyPracticeCard';
 import { DeityCalendarExplorer } from '@/components/home/DeityCalendarExplorer';
 import { getDailyDeityOracle } from '@/services/dailyDeityOracle';
 import { exportDeityCalendarYear } from '@/services/deityCalendarExport';
@@ -212,6 +213,8 @@ export default function DailyScreen() {
         ]}
       >
         <Text style={styles.pageTitle}>{t('todayPageTitle')}</Text>
+
+        <DailyPracticeCard />
 
         <DailyDeityCard
           oracle={dailyDeityOracle}
