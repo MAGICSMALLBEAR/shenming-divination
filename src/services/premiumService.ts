@@ -62,8 +62,8 @@ export const PREMIUM_FEATURES: PremiumFeature[] = [
   },
   {
     id: 'online_candle',
-    name: '線上點燈',
-    description: '為神明點長明燈，祈求庇護',
+    name: '線上長明燈（App 內）',
+    description: '在 App 內為神明點長明燈，祈求庇護；非廟宇代為點燈',
     requiredPlan: 'monthly',
   },
   {

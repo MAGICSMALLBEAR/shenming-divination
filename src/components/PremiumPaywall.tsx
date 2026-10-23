@@ -132,7 +132,7 @@ export function PremiumPaywall({ visible, onClose, featureName, onActivated }: P
               <Text style={styles.comparePaid}>付費：✓</Text>
             </View>
             <View style={[styles.compareRow, { borderBottomWidth: 0 }]}>
-              <Text style={styles.compareFeature}>線上點燈</Text>
+              <Text style={styles.compareFeature}>線上長明燈（App 內）</Text>
               <Text style={styles.compareFree}>免費：—</Text>
               <Text style={styles.comparePaid}>付費：✓</Text>
             </View>
