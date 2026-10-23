@@ -43,13 +43,13 @@ const leiyushiEntry = entry({
 const jiaziEntry = entry({
   label: '甲子六十籤',
   totalPoems: 60,
-  sourceNote: '以六十甲子籤為骨幹，對日常、家宅、財務與現實選擇很夠用。',
+  sourceNote: '以六十甲子籤為骨幹，對日常、家宅、財務與現實選擇很夠用。60 首籤文於 2026-10-23 以台灣好廟網、台東東海龍門天聖宮官網、籤詩網（chance.org.tw）三個獨立公開來源逐字比對。',
   completenessNote: '60 首筆數完整；若要更在地，可再補各神明常見廟口解法與適用範圍。',
   strengths: ['家宅平安', '財務現實題', '日常抉擇'],
   sourceType: '傳統籤系 + App 白話修訂',
-  editionNote: '目前為內建修訂版，保留六十甲子排序，白話與分類解曰由本 App 統一整理。',
+  editionNote: '保留六十甲子排序，白話與分類解曰由本 App 統一整理。2026-10-23 依三方比對修正 6 首（#8 鼓舞、#13 命中／行舟、#29 反在、#38 中央、#41 實、#44 逢）；#55「總虛言」多數來源作「總言虛」，因「言」與「全」「然」押韻而保留。',
   suitabilityNote: '適合問家運、財務、日常抉擇與短中期現實安排。',
-  versionTag: 'jiazi-60-app-v2',
+  versionTag: 'jiazi-60-app-v3',
 });
 
 const yuelaoTaiwanEntry = entry({
@@ -85,13 +85,13 @@ export function getOracleCatalogByGodId(godId?: number | null, yuelaoEdition?: Y
       return entry({
         label: '觀音靈籤',
         totalPoems: 100,
-        sourceNote: '100 首全文經逐首比對 fortune-poems.blogspot.com 等多個獨立公開來源，確認與龍山寺、潭水亭等觀音廟宇通用之觀音靈籤百首傳統籤文逐字吻合。',
+        sourceNote: '100 首全文於 2026-10-23 以台灣好廟網、籤詩網（chance.org.tw）、fortune-poems.blogspot.com 三個獨立公開來源逐字比對；艋舺龍山寺等觀音廟宇通用此套百首觀音靈籤。',
         completenessNote: '100 首筆數完整，每首皆已補齊吉凶、白話、典故與七類解曰；日後可補寺廟版本差異。',
         strengths: ['感情因緣', '內在狀態', '困局轉念'],
         sourceType: '傳統籤系（觀音靈籤百首全文逐字沿用）',
-        editionNote: '籤詩原文為 2026-07-17 經完整稽核後的權威版本，100 首全數與公開傳統來源吻合；白話、典故與各類解曰由本 App 撰寫。',
+        editionNote: '2026-07-17 完成首次稽核；2026-10-23 三方比對修正 #2「鯨魚」、#9「勞君」，第 100 籤主詩改用籤本「詩曰一」（原本用的「詩曰二」改收入典故說明）。#18「恒／亘」兩來源各一，保留「恒」。白話、典故與各類解曰由本 App 撰寫。',
         suitabilityNote: '適合問平安、感情、身心狀態、困局如何轉念。',
-        versionTag: 'guanyin-100-verified-v3',
+        versionTag: 'guanyin-100-verified-v4',
       });
     case 3:
       return entry({
