@@ -96,7 +96,7 @@ export default function JiaobeiAskScreen() {
           </View>
           {granted ? (
             <View style={styles.grantedCard}>
-              <Text style={styles.grantedText}>聖筊：{god.name}允可這件事。</Text>
+              <Text style={styles.grantedText}>聖杯：{god.name}允可這件事。</Text>
               <TouchableOpacity style={styles.primaryBtn} onPress={askAnother} accessibilityRole="button">
                 <Text style={styles.primaryBtnText}>問下一件事</Text>
               </TouchableOpacity>
@@ -137,9 +137,9 @@ export default function JiaobeiAskScreen() {
 
           <View style={styles.guideCard}>
             <Text style={styles.guideTitle}>擲筊的意思</Text>
-            <Text style={styles.guideText}>聖筊（一正一反）：神明允可。</Text>
-            <Text style={styles.guideText}>笑筊（兩個正面）：神明笑而不答，通常是問題不夠清楚，可以換個問法再擲。</Text>
-            <Text style={styles.guideText}>陰筊（兩個反面）：神明不允，或時機未到。</Text>
+            <Text style={styles.guideText}>聖杯（聖筊，一正一反）：神明允可。</Text>
+            <Text style={styles.guideText}>笑杯（笑筊，兩個正面）：神明笑而不答，通常是問題不夠清楚，可以換個問法再擲。</Text>
+            <Text style={styles.guideText}>陰杯（陰筊，兩個反面）：神明不允，或時機未到。</Text>
             <Text style={[styles.guideText, { marginTop: 6 }]}>一次只問一件事，問題要具體，答案能用「是」或「否」回答。</Text>
           </View>
 

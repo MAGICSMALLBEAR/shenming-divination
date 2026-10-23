@@ -35,7 +35,7 @@ export function SameMatterNotice({ record, godName, allowOverride, onChangeQuest
             <ScrollView contentContainerStyle={styles.content}>
               <Text style={styles.title}>一事一籤</Text>
               <Text style={styles.body}>
-                你在{formatElapsed(record.timestamp)}已經向{godName}請示過這件事。傳統上同一件事只求一籤，神明的指示就是上次那一支，不宜一再重抽。
+                {formatElapsed(record.timestamp)}你已經向{godName}請示過這件事。傳統上同一件事只求一籤，神明的指示就是上次那一支，不宜一再重抽。
               </Text>
               <View style={styles.poemBox}>
                 <Text style={styles.poemMeta}>上次的問題：{record.question}</Text>

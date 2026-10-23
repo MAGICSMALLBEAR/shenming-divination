@@ -36,7 +36,7 @@ describe('擲筊問事', () => {
     await act(async () => {
       jest.advanceTimersByTime(1000);
     });
-    expect(view.getByText(`聖筊：${gods[0].name}允可這件事。`)).toBeTruthy();
+    expect(view.getByText(`聖杯：${gods[0].name}允可這件事。`)).toBeTruthy();
 
     await fireEvent.press(view.getByText('問下一件事'));
     expect(view.getByLabelText('想請示的事').props.value).toBe('');

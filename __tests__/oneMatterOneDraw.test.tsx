@@ -54,7 +54,7 @@ describe('一事一籤提醒視窗', () => {
     const view = await render(
       <SameMatterNotice record={previous} godName="關聖帝君" allowOverride onChangeQuestion={jest.fn()} onProceed={onProceed} />,
     );
-    expect(view.getByText(/2 小時前已經向關聖帝君請示過這件事/)).toBeTruthy();
+    expect(view.getByText(/2 小時前你已經向關聖帝君請示過這件事/)).toBeTruthy();
     expect(view.getByText(`第 ${previous.poem.number} 籤 · ${previous.poem.level} · ${previous.poem.title}`)).toBeTruthy();
     await fireEvent.press(view.getByText('事情有新變化，仍要請示'));
     expect(onProceed).toHaveBeenCalledTimes(1);
