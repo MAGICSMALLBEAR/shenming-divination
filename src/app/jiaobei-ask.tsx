@@ -31,17 +31,20 @@ export default function JiaobeiAskScreen() {
 
   const god = gods.find((item) => item.id === godId) ?? gods[0];
 
-  useEffect(() => {
-    getSettings().then((settings) => {
-      const preferred = gods.find((item) => item.id === settings?.preferredGodId);
-      if (preferred) selectGod(preferred.id);
-    }).catch(() => {});
-  }, []);
-
   const selectGod = (id: number) => {
     setGodId(id);
     setRitualStyle(getDefaultRitualStyleKey(gods.find((item) => item.id === id)));
   };
+
+  useEffect(() => {
+    getSettings().then((settings) => {
+      const preferred = gods.find((item) => item.id === settings?.preferredGodId);
+      if (preferred) {
+        setGodId(preferred.id);
+        setRitualStyle(getDefaultRitualStyleKey(preferred));
+      }
+    }).catch(() => {});
+  }, []);
 
   const startAsking = () => {
     if (!question.trim()) return;
