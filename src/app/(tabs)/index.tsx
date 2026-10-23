@@ -42,6 +42,8 @@ import { ForWhomSelector } from '@/components/home/ForWhomSelector';
 import { DailyFortuneCard } from '@/components/home/DailyFortuneCard';
 import { DivinePresenceStage } from '@/components/divine-presence/DivinePresenceStage';
 import { isUnluckyLevel } from '@/data/poemLevel';
+import { SameMatterNotice } from '@/components/SameMatterNotice';
+import { findSameMatterDraw } from '@/services/oneMatterOneDraw';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -79,6 +81,8 @@ export default function HomeScreen() {
   const [newFamRelation, setNewFamRelation] = React.useState('');
   const [settings, setSettings] = React.useState<AppSettings | null>(null);
   const [quickDrawGod, setQuickDrawGod] = React.useState<God | null>(null);
+  // 一事一籤：送出問題時若 24 小時內已向同一位神明問過，先提醒再決定
+  const [sameMatter, setSameMatter] = React.useState<{ record: DivinationRecord; question: string; category: string; name: string } | null>(null);
   const selectionScrollRef = React.useRef<ScrollView>(null);
   const [showSelectionBackToTop, setShowSelectionBackToTop] = React.useState(false);
   const solarTerm = React.useMemo(() => getCurrentSolarTerm(), []);
@@ -249,6 +253,16 @@ export default function HomeScreen() {
       setRitualStyle(getDefaultRitualStyleKey(god));
     }
     div.selectGod(godId);
+  };
+  const handleQuestionSubmit = async (question: string, category: string, name: string) => {
+    const godName = div.selectedGod?.name;
+    // 紀錄沒有保存代誰求籤，代家人求籤時無法分辨是不是同一件事，所以不檢查
+    const previous = godName && !selectedPerson ? findSameMatterDraw(await getHistory(), godName, question) : null;
+    if (previous) {
+      setSameMatter({ record: previous, question, category, name });
+      return;
+    }
+    div.startMeditation(question, category, name);
   };
 
   const handleAddWish = async () => {
@@ -432,7 +446,7 @@ export default function HomeScreen() {
               selectedGod={div.selectedGod}
               onSwitchGod={handleSelectGod}
               forWhom={selectedPerson ? `${selectedPerson.relation} ${selectedPerson.name}` : undefined}
-              onSubmit={(q, cat, name) => div.startMeditation(q, cat, name)}
+              onSubmit={handleQuestionSubmit}
             />
           </View>
         );
@@ -701,6 +715,16 @@ export default function HomeScreen() {
                 </View>
               </View>
             </Modal>
+            <SameMatterNotice
+              record={sameMatter?.record ?? null}
+              godName={div.selectedGod?.name ?? '神明'}
+              allowOverride={!strictMode}
+              onChangeQuestion={() => setSameMatter(null)}
+              onProceed={() => {
+                if (sameMatter) div.startMeditation(sameMatter.question, sameMatter.category, sameMatter.name);
+                setSameMatter(null);
+              }}
+            />
             <View style={styles.container}>
               <View style={[styles.pageShell, { maxWidth: pageMaxWidth }]}>
                 {renderHeader()}

@@ -40,6 +40,7 @@ const TOOL_LABEL_I18N: Record<string, string> = {
 const TOOLS: ToolEntry[] = [
   { route: '/library', label: '籤詩圖書館', icon: '📖', desc: '瀏覽・搜尋全部籤詩' },
   { route: '/oracle', label: '多元占卜', icon: '☯', desc: '易卦・塔羅・靈擺' },
+  { route: '/jiaobei-ask', label: '擲筊問事', icon: '🌓', desc: '不抽籤・直接請示是非題' },
   { route: '/bazi', label: '八字命盤', icon: '📜', desc: '四柱・五行・大運' },
   { route: '/ziwei', label: '紫微斗數', icon: '⭐', desc: '命宮・財帛・夫妻' },
   { route: '/fate', label: '合婚擇日', icon: '💞', desc: '八字配對・吉日查詢' },

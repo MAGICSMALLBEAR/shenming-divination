@@ -1,6 +1,7 @@
 // 池府千歲文化藥籤典藏 — 僅目錄與原始條目連結，不提供藥方或醫療建議
 import React, { useMemo } from 'react';
-import { Linking, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
