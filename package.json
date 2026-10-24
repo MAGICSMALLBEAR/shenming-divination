@@ -69,7 +69,9 @@
     "lint": "expo lint",
     "test": "jest",
     "test:watch": "jest --watchAll",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:e2e:pwa": "node ./scripts/e2e-pwa.js",
+    "release:rc": "node ./scripts/release-candidate.js"
   },
   "private": true,
   "jest": {

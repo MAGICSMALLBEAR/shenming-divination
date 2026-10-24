@@ -70,6 +70,7 @@ import { THEME_LABELS, type ThemeMode, type ThemeColors } from '@/constants/them
 import { onAuthChange, signInAnon, signOutUser, type AuthState } from '@/services/authService';
 import { getCloudBackupMeta, restoreCloudBackupToLocal, uploadLocalBackupToCloud, type CloudBackupMeta } from '@/services/syncService';
 import { DEITY_OBSERVANCES } from '@/services/lunarDeityCalendar';
+import { getAppVersionLabel } from '@/services/appVersion';
 import {
   normalizeDeityReminderPreferences,
   type DeityReminderDaysBefore,
@@ -1031,6 +1032,7 @@ export default function SettingsScreen() {
           <TouchableOpacity onPress={() => router.push('/source-audit' as never)}>
             <Text style={styles.privacyLink}>{t('settingsSourceAuditLink')}</Text>
           </TouchableOpacity>
+          <Text style={styles.aboutText} testID="settings-app-version">{getAppVersionLabel()}</Text>
         </View>
 
         <View style={{ height: 60 }} />
