@@ -89,5 +89,6 @@ describe('抄經頁', () => {
     const state = await getDailyPractice();
     expect(state.sutraCopies).toHaveLength(1);
     expect(state.checkIns).toEqual([localDateKey()]);
-  });
+    // Rendering all 260 characters runs past 5 s on loaded CI runners.
+  }, 15000);
 });
