@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Modal,
   ScrollView,
@@ -38,6 +38,16 @@ interface GodSelectorProps {
   embedded?: boolean;
   contentWidthOverride?: number;
   columnsOverride?: number;
+  /** Briefly outlines a card the deity directory just jumped to. */
+  highlightedGodId?: number | null;
+  /** Reports the gods currently shown (after search, category and ranking). */
+  onVisibleGodsChange?: (visibleGods: God[], categoryId: string) => void;
+  ref?: React.Ref<GodSelectorHandle>;
+}
+
+export interface GodSelectorHandle {
+  /** The god's card view, for measuring its position at the moment of a jump. */
+  getGodCard: (godId: number) => View | null;
 }
 
 interface QuestionFormProps {
@@ -52,6 +62,9 @@ export function GodSelector({
   embedded = false,
   contentWidthOverride,
   columnsOverride,
+  highlightedGodId = null,
+  onVisibleGodsChange,
+  ref,
 }: GodSelectorProps) {
   const layout = useResponsiveLayout();
   const { theme } = useAppTheme();
@@ -65,6 +78,9 @@ export function GodSelector({
   const [selectorHistory, setSelectorHistory] = useState<Awaited<ReturnType<typeof getHistory>>>([]);
   const [selectingGodId, setSelectingGodId] = useState<number | null>(null);
   const selectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Positions are measured on demand: react-native-web only fires onLayout on
+  // size changes, so offsets recorded there go stale when cards above move.
+  const cardRefs = useRef(new Map<number, View>());
   const isCompact = layout.width < 420;
   const columns = columnsOverride ?? (layout.isWideDesktop ? 4 : layout.isDesktop || layout.isTablet ? 3 : isCompact ? 1 : 2);
   const maxContentWidth = layout.isWideDesktop ? 1180 : layout.contentMaxWidth;
@@ -80,6 +96,14 @@ export function GodSelector({
       categoryId: selectedCategory, preferredGodId, patronGodId, history: selectorHistory,
     }).map((item) => item.god);
   }, [patronGodId, preferredGodId, searchText, selectedCategory, selectorHistory]);
+  useEffect(() => {
+    onVisibleGodsChange?.(visibleGods, selectedCategory);
+  }, [onVisibleGodsChange, selectedCategory, visibleGods]);
+
+  useImperativeHandle(ref, () => ({
+    getGodCard: (godId: number) => cardRefs.current.get(godId) ?? null,
+  }), []);
+
   const categoryFilters = useMemo(
     () => [{ id: 'all', name: '全部神明', icon: '⌘' }, ...questionCategories],
     []
@@ -174,6 +198,11 @@ export function GodSelector({
               isPreferred={preferredGodId === god.id}
               cardStyle={isCompact && styles.cardWrapperCompact}
               isSelecting={selectingGodId === god.id}
+              isHighlighted={highlightedGodId === god.id}
+              wrapperRef={(view) => {
+                if (view) cardRefs.current.set(god.id, view);
+                else cardRefs.current.delete(god.id);
+              }}
               onPress={() => handleGodPress(god.id)}
               onDetail={() => setDetailGod(god)}
             />
@@ -204,6 +233,8 @@ function GodCard({
   isPatron,
   isPreferred,
   isSelecting,
+  isHighlighted = false,
+  wrapperRef,
   onPress,
   onDetail,
   cardStyle,
@@ -213,6 +244,8 @@ function GodCard({
   isPatron: boolean;
   isPreferred: boolean;
   isSelecting: boolean;
+  isHighlighted?: boolean;
+  wrapperRef?: (view: View | null) => void;
   onPress: () => void;
   onDetail: () => void;
   cardStyle?: StyleProp<ViewStyle>;
@@ -222,8 +255,15 @@ function GodCard({
   const cardImage = getGodCardImage(god.id);
 
   return (
-    <View style={[styles.cardWrapper, { width }, cardStyle]}>
-      <View style={[styles.godCard, { borderColor: god.accentColor + '66' }, isSelecting && { borderColor: god.accentColor, opacity: 0.9, transform: [{ scale: 0.985 }] }]}>
+    <View ref={wrapperRef} style={[styles.cardWrapper, { width }, cardStyle]} testID={`god-card-${god.id}`}>
+      <View
+        style={[
+          styles.godCard,
+          { borderColor: god.accentColor + '66' },
+          isHighlighted && [styles.godCardHighlighted, { borderColor: theme.goldLight, shadowColor: theme.goldLight }],
+          isSelecting && { borderColor: god.accentColor, opacity: 0.9, transform: [{ scale: 0.985 }] },
+        ]}
+      >
         <TouchableOpacity onPress={onPress} activeOpacity={0.86} accessibilityRole="button" accessibilityLabel={'選擇' + god.name + '，' + god.tagline}>
         <View style={styles.badgeRow}>
           {isPatron ? (
@@ -753,6 +793,13 @@ function createStyles(theme: ThemeColors) {
   },
   cardWrapper: { flexGrow: 0, flexShrink: 0, width: '46%' },
   cardWrapperCompact: { width: '100%' },
+  godCardHighlighted: {
+    borderWidth: 2,
+    shadowOpacity: 0.7,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 12,
+  },
   godCard: {
     backgroundColor: theme.bgCard,
     borderRadius: 16,

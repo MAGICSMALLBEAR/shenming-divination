@@ -3,7 +3,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share, Animated, Easing, Modal, TextInput, ScrollView, type ImageSourcePropType } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useDivination } from '@/hooks/useDivination';
-import { GodSelector, QuestionForm } from '@/components/GodSelector';
+import { GodSelector, QuestionForm, type GodSelectorHandle } from '@/components/GodSelector';
+import { GodDirectorySheet } from '@/components/GodDirectorySheet';
 import { MeditationScreen } from '@/components/MeditationScreen';
 import { Jiaobei } from '@/components/Jiaobei';
 import { DrawAnimation } from '@/components/DrawAnimation';
@@ -85,6 +86,19 @@ export default function HomeScreen() {
   const [sameMatter, setSameMatter] = React.useState<{ record: DivinationRecord; question: string; category: string; name: string } | null>(null);
   const selectionScrollRef = React.useRef<ScrollView>(null);
   const [showSelectionBackToTop, setShowSelectionBackToTop] = React.useState(false);
+  // 神明名冊：列出選神頁目前顯示的神明，點名字捲到該卡片並短暫加框
+  const godSelectorRef = React.useRef<GodSelectorHandle>(null);
+  const selectionLayoutRef = React.useRef<View>(null);
+  const directoryHighlightTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [directoryOpen, setDirectoryOpen] = React.useState(false);
+  const [directoryGods, setDirectoryGods] = React.useState<{ gods: God[]; categoryId: string }>({ gods, categoryId: 'all' });
+  const [highlightedGodId, setHighlightedGodId] = React.useState<number | null>(null);
+  const handleVisibleGodsChange = React.useCallback((visibleGods: God[], categoryId: string) => {
+    setDirectoryGods({ gods: visibleGods, categoryId });
+  }, []);
+  React.useEffect(() => () => {
+    if (directoryHighlightTimerRef.current) clearTimeout(directoryHighlightTimerRef.current);
+  }, []);
   const solarTerm = React.useMemo(() => getCurrentSolarTerm(), []);
 
   // 搖手機求籤：在擲筊步驟偵測搖動
@@ -339,6 +353,25 @@ export default function HomeScreen() {
     );
   };
 
+  const jumpToDirectoryGod = (godId: number) => {
+    setDirectoryOpen(false);
+    const card = godSelectorRef.current?.getGodCard(godId);
+    const layoutRoot = selectionLayoutRef.current;
+    // The layout root is the first child of the scroll content, so its
+    // coordinates are scroll offsets.
+    if (card && layoutRoot) {
+      card.measureLayout(layoutRoot, (_x, y) => {
+        selectionScrollRef.current?.scrollTo({ y: Math.max(y - TempleSpacing.md, 0), animated: !(reducedMotion || lowMotionMode) });
+      });
+    }
+    setHighlightedGodId(godId);
+    if (directoryHighlightTimerRef.current) clearTimeout(directoryHighlightTimerRef.current);
+    directoryHighlightTimerRef.current = setTimeout(() => {
+      directoryHighlightTimerRef.current = null;
+      setHighlightedGodId(null);
+    }, 2400);
+  };
+
   const renderContent = () => {
     switch (div.step) {
       case 'select-god':
@@ -355,7 +388,10 @@ export default function HomeScreen() {
                 setShowSelectionBackToTop((visible) => visible === nextVisible ? visible : nextVisible);
               }}
             >
-              <View style={[styles.selectionLayout, layout.isDesktop && styles.selectionLayoutDesktop]}>
+              <View
+                ref={selectionLayoutRef}
+                style={[styles.selectionLayout, layout.isDesktop && styles.selectionLayoutDesktop]}
+              >
               <View style={[styles.selectionContext, layout.isDesktop && styles.selectionContextDesktop]}>
             <ForWhomSelector
               familyMembers={familyMembers}
@@ -408,9 +444,14 @@ export default function HomeScreen() {
               </TouchableOpacity>
             ) : null}
               </View>
-              <View style={[styles.selectionMain, layout.isDesktop && styles.selectionMainDesktop]}>
+              <View
+                style={[styles.selectionMain, layout.isDesktop && styles.selectionMainDesktop]}
+              >
                 <GodSelector
+                  ref={godSelectorRef}
                   onSelectGod={handleSelectGod}
+                  highlightedGodId={highlightedGodId}
+                  onVisibleGodsChange={handleVisibleGodsChange}
                   embedded
                   contentWidthOverride={layout.isDesktop ? pageMaxWidth - 300 : undefined}
                   columnsOverride={layout.isDesktop ? 3 : undefined}
@@ -419,16 +460,36 @@ export default function HomeScreen() {
             </View>
             </ScrollView>
             {showSelectionBackToTop ? (
-              <TouchableOpacity
-                style={styles.selectionBackToTop}
-                onPress={() => selectionScrollRef.current?.scrollTo({ y: 0, animated: !(reducedMotion || lowMotionMode) })}
-                accessibilityRole="button"
-                accessibilityLabel="回到神明選擇頁頂端"
-              >
-                <Text style={styles.selectionBackToTopIcon}>↑</Text>
-                <Text style={styles.selectionBackToTopText}>回到上方</Text>
-              </TouchableOpacity>
+              <View style={styles.selectionFloatingStack}>
+                <TouchableOpacity
+                  style={styles.selectionFloatingButton}
+                  onPress={() => setDirectoryOpen(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="開啟神明名冊，快速前往神明"
+                >
+                  <Text style={styles.selectionBackToTopIcon}>☰</Text>
+                  <Text style={styles.selectionBackToTopText}>神明名冊</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.selectionFloatingButton}
+                  onPress={() => selectionScrollRef.current?.scrollTo({ y: 0, animated: !(reducedMotion || lowMotionMode) })}
+                  accessibilityRole="button"
+                  accessibilityLabel="回到神明選擇頁頂端"
+                >
+                  <Text style={styles.selectionBackToTopIcon}>↑</Text>
+                  <Text style={styles.selectionBackToTopText}>回到上方</Text>
+                </TouchableOpacity>
+              </View>
             ) : null}
+            <GodDirectorySheet
+              visible={directoryOpen}
+              gods={directoryGods.gods}
+              categoryId={directoryGods.categoryId}
+              docked={layout.isDesktop}
+              reducedMotion={reducedMotion || lowMotionMode}
+              onClose={() => setDirectoryOpen(false)}
+              onJump={jumpToDirectoryGod}
+            />
           </View>
         );
       case 'set-question':
@@ -1290,10 +1351,14 @@ function createStyles(theme: ThemeColors) {
   selectionContextDesktop: { width: 276, flexShrink: 0 },
   selectionMain: { width: '100%' },
   selectionMainDesktop: { flex: 1 },
-  selectionBackToTop: {
+  selectionFloatingStack: {
     position: 'absolute',
     right: TempleSpacing.lg,
     bottom: TempleSpacing.lg,
+    alignItems: 'flex-end',
+    gap: TempleSpacing.sm,
+  },
+  selectionFloatingButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
