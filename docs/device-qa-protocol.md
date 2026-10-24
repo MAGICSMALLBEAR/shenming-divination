@@ -18,7 +18,7 @@ git rev-parse --short HEAD
 
 本輪基準版本：`67a28e0`（神明肖像載入失敗替代卡）。若改用後續 commit，請在紀錄表取代 SHA，且重新跑一次上述檢查。
 
-候選發佈 build 請用 `npm.cmd run release:rc` 產生 `docs/releases/` 下的候選紀錄：它會在乾淨的 commit 上跑完上述檢查，並記錄測試 SHA、變更摘要與本協定的 A/I/T/W 紀錄連結。安裝後在「設定 → 關於」底部核對版本與 build 號。W 裝置測試前，先在本機跑 `npm.cmd run test:e2e:pwa`（需全域 Playwright）確認離線、更新與快取失效流程。
+候選發佈 build 請用 `npm.cmd run release:rc` 產生 `docs/releases/` 下的候選紀錄：它會在乾淨的 commit 上跑完上述檢查，並記錄測試 SHA、變更摘要與本協定的 A/I/T/W 紀錄連結。安裝後在「設定 → 關於」底部核對版本與 build 號。W 裝置測試前，先在本機跑 `npm.cmd run test:e2e:pwa`（需全域 Playwright）確認離線、更新與快取失效流程；部署後再跑 `npm.cmd run test:e2e:pwa -- --url https://shenming-divination.vercel.app` 對正式站驗證（新版本提示情境需可替換 sw.js，正式站會略過）。
 
 真機應優先使用 development build 或候選發佈 build；Expo Go 只可用於快速介面巡檢，不能作為原生權限、通知、音訊、效能或上架驗收的唯一證據。Expo 的 development build 可透過 `npx expo run:android --device` 或 macOS 上的 `npx expo run:ios --device` 安裝；僅在原生相依套件或 `app.json` 變更後才需要重建。iOS 16 以上測試機需先開啟 Developer Mode。
 
