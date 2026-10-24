@@ -2,7 +2,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Share, Animated, Easing, Modal, TextInput, ScrollView, type ImageSourcePropType } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image } from 'expo-image';
 import { useDivination } from '@/hooks/useDivination';
 import { GodSelector, QuestionForm } from '@/components/GodSelector';
 import { MeditationScreen } from '@/components/MeditationScreen';
@@ -33,6 +32,7 @@ import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritua
 import { gods, type God } from '@/data/gods';
 import { tossJiaobei, type JiaobeiResult } from '@/services/divination';
 import { getGodCardImage, getGodCloseupImage } from '@/data/godImages';
+import { GodPortrait } from '@/components/GodPortrait';
 import { recommendGods, type GodRecommendation } from '@/services/recommendation';
 import { useShakeDetector } from '@/hooks/useShakeDetector';
 import { CrossTempleComparison } from '@/components/CrossTempleComparison';
@@ -800,9 +800,14 @@ function QuickDrawCard({
     >
       <View style={styles.quickDrawRow}>
         <View style={[styles.quickDrawPortrait, { backgroundColor: god.primaryColor + '33' }]}>
-          {portraitImage ? (
-            <Image source={portraitImage} style={styles.quickDrawPortraitImg} contentFit="cover" contentPosition="top" />
-          ) : null}
+          <GodPortrait
+            source={portraitImage}
+            name={god.name}
+            accentColor={god.accentColor}
+            primaryColor={god.primaryColor}
+            style={styles.quickDrawPortraitImg}
+            testID={`quick-draw-portrait-${god.id}`}
+          />
         </View>
         <View style={styles.quickDrawInfo}>
           <Text style={[styles.quickDrawEyebrow, { color: god.accentColor }]}>⚡ 快速求籤</Text>
@@ -905,9 +910,16 @@ function SelectedGodEntranceBanner({
         ))}
         <Animated.View style={{ transform: [{ scale: imageScale }] }}>
           <View style={[styles.selectedGodPortrait, isCompact && styles.selectedGodPortraitCompact, { borderColor: god.accentColor + '55' }]}>
-            {image ? (
-              <Image source={image} style={styles.selectedGodImage} contentFit="cover" transition={200} />
-            ) : null}
+            <GodPortrait
+              source={image}
+              name={god.name}
+              accentColor={god.accentColor}
+              primaryColor={god.primaryColor}
+              style={styles.selectedGodImage}
+              contentPosition="center"
+              transition={200}
+              testID={`selected-god-portrait-${god.id}`}
+            />
             <View style={[styles.selectedGodPortraitOverlay, { backgroundColor: god.primaryColor + '18' }]} />
           </View>
         </Animated.View>
@@ -1004,9 +1016,14 @@ function DailyGodRecommendationCard({
         <Text style={styles.recommendReason}>{recommendation.reason}</Text>
       </View>
       <View style={[styles.recommendImageWrap, { borderColor: recommendation.god.accentColor + '55' }]}>
-        {portraitImage ? (
-          <Image source={portraitImage} style={styles.recommendImage} contentFit="cover" contentPosition="top" />
-        ) : null}
+        <GodPortrait
+          source={portraitImage}
+          name={recommendation.god.name}
+          accentColor={recommendation.god.accentColor}
+          primaryColor={recommendation.god.primaryColor}
+          style={styles.recommendImage}
+          testID={`recommend-portrait-${recommendation.god.id}`}
+        />
       </View>
     </AnimatedTouchable>
   );

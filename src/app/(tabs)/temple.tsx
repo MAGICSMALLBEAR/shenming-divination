@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Image } from 'expo-image';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
@@ -22,6 +21,7 @@ import { GodCardSkeleton } from '@/components/Skeleton';
 import type { ThemeColors } from '@/constants/themes';
 import { gods, type God } from '@/data/gods';
 import { getGodCardImage, getGodSoftImage } from '@/data/godImages';
+import { GodPortrait } from '@/components/GodPortrait';
 import { getTemplePrayerFlow } from '@/data/templeFlows';
 import { useI18n } from '@/hooks/useI18n';
 import { t as tRaw } from '@/services/i18n';
@@ -320,11 +320,13 @@ export default function TempleScreen() {
 
         <View style={[styles.ritualPanel, layout.isDesktop && styles.ritualPanelDesktop]}>
           <View style={[styles.selectedGodPanel, { borderColor: selectedGod.accentColor + '55' }]}>
-            <Image
+            <GodPortrait
               source={getGodSoftImage(selectedGod.id) ?? getGodCardImage(selectedGod.id) ?? selectedGod.image}
+              name={selectedGod.name}
+              accentColor={selectedGod.accentColor}
+              primaryColor={selectedGod.primaryColor}
               style={styles.selectedGodImage}
-              contentFit="cover"
-              contentPosition="top"
+              testID={`temple-selected-god-portrait-${selectedGod.id}`}
             />
             <View style={[styles.selectedGodOverlay, { backgroundColor: selectedGod.primaryColor + 'CC' }]} />
             <View style={styles.selectedGodContent}>
@@ -582,11 +584,14 @@ function TempleGodCard({
       onPress={onPress}
       activeOpacity={0.86}
     >
-      <Image
+      <GodPortrait
         source={getGodCardImage(god.id) ?? god.image}
+        name={god.name}
+        accentColor={god.accentColor}
+        primaryColor={god.primaryColor}
         style={styles.godImage}
-        contentFit="cover"
-        contentPosition="top"
+        recyclingKey={`temple-god-${god.id}`}
+        testID={`temple-god-portrait-${god.id}`}
       />
       <View style={[styles.godOverlay, { backgroundColor: god.primaryColor + 'B8' }]} />
       <View style={styles.godCardContent}>

@@ -1,12 +1,12 @@
 // 籤詩卡片 - 捲軸展開動畫 + 逐行浮現 + 籤詩配圖 + 解曰高亮 + 複製 + 圖卡分享
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, ScrollView, TouchableOpacity, Alert, Platform, useWindowDimensions, type DimensionValue } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import type { Poem } from '@/data/poems/leiyushi';
 import type { God } from '@/data/gods';
 import { getGodCloseupImage } from '@/data/godImages';
+import { GodPortrait } from '@/components/GodPortrait';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
@@ -305,9 +305,15 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
         {god ? (
           <View style={[styles.godOracleHeader, isCompact && styles.godOracleHeaderCompact, { borderBottomColor: godAccent + '35' }]}>
             <View style={[styles.godOracleImageWrap, { borderColor: godAccent + '70' }]}>
-              {closeupImage ? (
-                <Image source={closeupImage} style={styles.godOracleImage} contentFit="cover" contentPosition="top" transition={200} />
-              ) : null}
+              <GodPortrait
+                source={closeupImage}
+                name={god.name}
+                accentColor={godAccent}
+                primaryColor={godPrimary}
+                style={styles.godOracleImage}
+                transition={200}
+                testID="poem-god-portrait"
+              />
               <View style={[styles.godOracleImageOverlay, { backgroundColor: godPrimary + '18' }]} />
             </View>
             <View style={[styles.godOracleText, isCompact && styles.godOracleTextCompact]}>

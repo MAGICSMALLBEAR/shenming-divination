@@ -16,6 +16,7 @@ import { RitualStylePicker } from '@/components/RitualStylePicker';
 import { ritualStyles, type RitualStyleKey } from '@/constants/ritual-styles';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { getGodCloseupImage } from '@/data/godImages';
+import { GodPortrait } from '@/components/GodPortrait';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
 import { playIncenseSound } from '@/services/proceduralSound';
@@ -483,13 +484,15 @@ export function IncenseRitual({
         <View style={styles.shrineFrame}>
           <View style={[styles.shrineGlow, { backgroundColor: ritualStyle.glowColor + '28' }]} />
           <View style={styles.godPortraitFrame}>
-            {godImage ? (
-              <Image source={godImage} style={styles.godPortraitImage} contentFit="cover" contentPosition="top" transition={220} />
-            ) : (
-              <View style={styles.godPortraitFallback}>
-                <Text style={styles.godPortraitFallbackText}>{godName.slice(0, 2)}</Text>
-              </View>
-            )}
+            <GodPortrait
+              source={godImage}
+              name={godName}
+              accentColor={theme.goldLight}
+              primaryColor="#342019"
+              style={styles.godPortraitImage}
+              transition={220}
+              testID="incense-god-portrait"
+            />
             <View style={[styles.godPortraitVeil, { backgroundColor: ritualStyle.glowColor + '12' }]} />
           </View>
           <View style={styles.nameTablet}>
@@ -894,17 +897,6 @@ function createStyles(theme: ThemeColors) {
     right: 0,
     bottom: 0,
     left: 0,
-  },
-  godPortraitFallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#342019',
-  },
-  godPortraitFallbackText: {
-    color: theme.goldLight,
-    fontSize: 30,
-    fontWeight: '900',
   },
   nameTablet: {
     marginTop: -8,

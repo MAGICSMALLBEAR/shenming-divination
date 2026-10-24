@@ -1,8 +1,8 @@
 // 升級版分享圖卡（P4）— 3 種精美模板
 import React, { forwardRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
 import { getGodCardImage } from '@/data/godImages';
+import { GodPortrait } from '@/components/GodPortrait';
 import type { Poem } from '@/data/poems/leiyushi';
 
 export type ShareCardTemplate = 'classic' | 'festival' | 'minimal';
@@ -22,7 +22,14 @@ function ClassicCard({ godId, godName, poem, aiSummary }: Props) {
   return (
     <View style={classic.card}>
       <View style={classic.header}>
-        <Image source={getGodCardImage(godId)} style={classic.godImg} contentFit="cover" />
+        <GodPortrait
+          source={getGodCardImage(godId)}
+          name={godName}
+          accentColor="#FFD700"
+          primaryColor="#1A1210"
+          style={classic.godImg}
+          testID="share-classic-god-portrait"
+        />
         <View style={classic.headerText}>
           <Text style={classic.appName}>神明占卜</Text>
           <Text style={classic.godName}>{godName} 靈籤</Text>
@@ -53,7 +60,14 @@ function FestivalCard({ godId, godName, poem, festivalName, aiSummary }: Props) 
         <Text style={festival.festivalSub}>神明指引・好運隨行</Text>
       </View>
       <View style={festival.body}>
-        <Image source={getGodCardImage(godId)} style={festival.godImg} contentFit="cover" />
+        <GodPortrait
+          source={getGodCardImage(godId)}
+          name={godName}
+          accentColor="#FFD700"
+          primaryColor="#6D0000"
+          style={festival.godImg}
+          testID="share-festival-god-portrait"
+        />
         <Text style={festival.godName}>{godName}</Text>
         <Text style={festival.poemNum}>第 {poem.number} 籤・{poem.level}</Text>
         {poem.content.split('\n').slice(0, 2).map(line => (
