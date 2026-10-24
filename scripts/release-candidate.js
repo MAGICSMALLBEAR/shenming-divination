@@ -122,7 +122,8 @@ function detectBlockers(appJson, qaRecords) {
 
 function renderReleaseNote({ version, rc, buildNumber, sha, date, gates, changes, previousSha, qaRecords, blockers }) {
   const gatesFailed = gates.some((gate) => gate.status === 'fail');
-  const verdict = gatesFailed ? '不可發佈（自動檢查失敗）' : blockers.length ? '待處理阻擋項目' : '可交付真機驗收';
+  const gatesSkipped = gates.some((gate) => gate.status === 'skipped');
+  const verdict = gatesFailed ? '不可發佈（自動檢查失敗）' : gatesSkipped ? '不可發佈（略過自動檢查，僅供預覽）' : blockers.length ? '待處理阻擋項目' : '可交付真機驗收';
   const lines = [
     `# v${version}-rc.${rc} 候選發佈紀錄`,
     '',

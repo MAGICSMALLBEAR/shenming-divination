@@ -107,6 +107,16 @@ describe('release-candidate flow', () => {
     expect(note).toContain('- [ ] 尚缺真機 QA 回填紀錄：I');
     expect(note).toContain('git checkout abc1234');
   });
+
+  it('never marks a run with skipped checks as releasable', () => {
+    const note = rc.renderReleaseNote({
+      version: '1.0.1', rc: 1, buildNumber: 1, sha: 'abc1234', date: '2026-10-24',
+      gates: [{ name: 'Lint', command: 'npm run lint', status: 'skipped' }],
+      changes: [], previousSha: null, qaRecords: rc.findQaRecords([]), blockers: [],
+    });
+    expect(note).toContain('不可發佈（略過自動檢查，僅供預覽）');
+    expect(note).toContain('| Lint | `npm run lint` | 略過 | - |');
+  });
 });
 
 describe('app version label', () => {
