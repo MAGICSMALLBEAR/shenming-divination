@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Image } from 'expo-image';
 
 import type { FlowStep } from '@/hooks/useDivination';
@@ -29,6 +29,38 @@ type DivinePresenceStageProps = {
 };
 
 const GUAN_DI_BLINK = require('@/assets/images/gods/generated/animation/guanshengdijun-blink.webp');
+
+// Soft portraits are 1024×1536 (2:3). Blink window and face position are
+// measured on a 250px-wide render and scaled to the actual portrait width.
+const ART_ASPECT = 2 / 3;
+const ART_BASE_WIDTH = 250;
+const BLINK_WINDOW = { left: 44, top: 82, width: 164, height: 48 };
+const FACE_CENTER_Y = 104;
+
+const STAGE_BACKGROUND = '#100B08';
+const NARROW_STAGE_WIDTH = 480;
+const BACKDROP_OPACITY = 0.72;
+// Eased steps so the portrait's right edge dissolves into the stage.
+const FADE_STEPS = Array.from({ length: 12 }, (_, index) => Number((((index + 1) / 12) ** 1.6).toFixed(3)));
+
+function parseHex(color: string): { rgb: [number, number, number]; alpha: number } {
+  const hex = color.replace('#', '');
+  const rgb = [0, 2, 4].map((offset) => parseInt(hex.slice(offset, offset + 2), 16)) as [number, number, number];
+  const alpha = hex.length >= 8 ? parseInt(hex.slice(6, 8), 16) / 255 : 1;
+  return { rgb, alpha };
+}
+
+/** Solid colour seen where `overlay` (optionally #RRGGBBAA) sits on `base` at `opacity`. */
+export function blendOver(base: string, overlay: string, opacity: number): string {
+  const bottom = parseHex(base).rgb;
+  const top = parseHex(overlay);
+  const weight = top.alpha * opacity;
+  return '#' + bottom
+    .map((channel, index) => Math.round(channel * (1 - weight) + top.rgb[index] * weight))
+    .map((channel) => channel.toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
+}
 
 const COPY: Record<DivinePresenceMode, { eyebrow: string; title: string }> = {
   listening: { eyebrow: '神前稟明', title: '請定心說明所問之事' },
@@ -161,7 +193,6 @@ export function DivinePresenceStage({
   const palette = useMemo(() => getModePalette(mode, god), [god, mode]);
   const portraitScale = breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1.018] });
   const portraitLift = breath.interpolate({ inputRange: [0, 1], outputRange: [2, -2] });
-  const auraScale = aura.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.09] });
   const auraOpacity = aura.interpolate({
     inputRange: [0, 1],
     outputRange: mode === 'decline' ? [0.14, 0.22] : [0.22, 0.48],
@@ -179,56 +210,36 @@ export function DivinePresenceStage({
       : [1, 1, 1],
   });
 
+  // The portrait scales with the stage instead of a fixed 250×360 box, so the
+  // blink overlay and halo are placed from the measured width.
+  const [portraitBox, setPortraitBox] = useState<{ width: number; height: number } | null>(null);
+  const handlePortraitLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setPortraitBox((prev) => (prev && prev.width === width && prev.height === height ? prev : { width, height }));
+  };
+  const artScale = portraitBox ? portraitBox.width / ART_BASE_WIDTH : 1;
+  // Art is top-aligned and fills the width while the box is wider than 2:3.
+  const artFillsWidth = Boolean(portraitBox && portraitBox.width / portraitBox.height >= ART_ASPECT);
+  const haloTop = (portraitBox ? FACE_CENTER_Y * artScale : 104) + (compact ? 0 : 8);
+  const fadeColor = blendOver(STAGE_BACKGROUND, palette.backdrop, BACKDROP_OPACITY);
+  // On phones the caption column is ~170px; a smaller title keeps the
+  // nine-character lines from orphaning their last character.
+  const [stageWidth, setStageWidth] = useState(0);
+  const narrow = stageWidth > 0 && stageWidth < NARROW_STAGE_WIDTH;
+
   return (
     <View
       pointerEvents="none"
       accessible
       accessibilityRole="image"
       accessibilityLabel={`${god.name}互動神像。${copy.eyebrow}，${copy.title}`}
+      onLayout={(event) => setStageWidth(event.nativeEvent.layout.width)}
       style={[styles.stage, compact && styles.stageCompact, { borderColor: palette.border }]}
     >
       <View style={[styles.backdrop, { backgroundColor: palette.backdrop }]} />
-      <Animated.View
-        style={[
-          styles.auraOuter,
-          {
-            backgroundColor: palette.aura,
-            opacity: auraOpacity,
-            transform: [{ scale: auraScale }],
-          },
-        ]}
-      />
-      <View style={[styles.auraRing, { borderColor: palette.ring }]} />
-      {!lowMotion && mode !== 'decline' ? (
-        <Animated.View
-          style={[
-            styles.responseBurst,
-            {
-              borderColor: palette.ring,
-              opacity: burstOpacity,
-              transform: [{ scale: burstScale }],
-            },
-          ]}
-        />
-      ) : null}
-      {!lowMotion
-        ? Array.from({ length: mode === 'approve' ? 10 : 6 }, (_, index) => (
-            <Animated.View
-              key={index}
-              style={[
-                styles.rayAnchor,
-                {
-                  opacity: mode === 'decline' ? 0.08 : auraOpacity,
-                  transform: [{ rotate: `${index * (360 / (mode === 'approve' ? 10 : 6))}deg` }],
-                },
-              ]}
-            >
-              <View style={[styles.ray, { backgroundColor: palette.ring }]} />
-            </Animated.View>
-          ))
-        : null}
 
       <Animated.View
+        onLayout={handlePortraitLayout}
         style={[
           styles.portraitWrap,
           compact && styles.portraitWrapCompact,
@@ -250,23 +261,77 @@ export function DivinePresenceStage({
             transition={180}
           />
         ) : null}
-        {god.id === 1 && !lowMotion && !compact ? (
-          <Animated.View style={[styles.blinkWindow, { opacity: blink }]}>
+        {god.id === 1 && !lowMotion && !compact && portraitBox && artFillsWidth ? (
+          <Animated.View
+            style={[
+              styles.blinkWindow,
+              {
+                left: BLINK_WINDOW.left * artScale,
+                top: BLINK_WINDOW.top * artScale,
+                width: BLINK_WINDOW.width * artScale,
+                height: BLINK_WINDOW.height * artScale,
+                opacity: blink,
+              },
+            ]}
+          >
             <Image
               source={GUAN_DI_BLINK}
-              style={styles.blinkPortrait}
+              style={{
+                position: 'absolute',
+                left: -BLINK_WINDOW.left * artScale,
+                top: -BLINK_WINDOW.top * artScale,
+                width: portraitBox.width,
+                height: portraitBox.width / ART_ASPECT,
+              }}
               contentFit="cover"
               contentPosition="top"
             />
           </Animated.View>
         ) : null}
         <View style={[styles.portraitShade, { backgroundColor: palette.shade }]} />
+        <View style={styles.portraitFade}>
+          {FADE_STEPS.map((opacity) => (
+            <View key={opacity} style={[styles.portraitFadeStep, { backgroundColor: fadeColor, opacity }]} />
+          ))}
+        </View>
       </Animated.View>
 
-      <View style={styles.vignette} />
+      {!lowMotion && mode !== 'decline' ? (
+        <Animated.View
+          style={[
+            styles.responseBurst,
+            compact && styles.haloAnchorCompact,
+            {
+              top: haloTop,
+              borderColor: palette.ring,
+              opacity: burstOpacity,
+              transform: [{ scale: burstScale }],
+            },
+          ]}
+        />
+      ) : null}
+      {!lowMotion
+        ? Array.from({ length: mode === 'approve' ? 10 : 6 }, (_, index) => (
+            <Animated.View
+              key={index}
+              style={[
+                styles.rayAnchor,
+                compact && styles.haloAnchorCompact,
+                {
+                  top: haloTop,
+                  opacity: mode === 'decline' ? 0.08 : auraOpacity,
+                  transform: [{ rotate: `${index * (360 / (mode === 'approve' ? 10 : 6))}deg` }],
+                },
+              ]}
+            >
+              <View style={[styles.ray, { backgroundColor: palette.ring }]} />
+            </Animated.View>
+          ))
+        : null}
+
       <Animated.View style={[styles.caption, compact && styles.captionCompact, { opacity: captionOpacity }]}>
         <Text style={[styles.eyebrow, { color: palette.text }]}>{copy.eyebrow}</Text>
-        <Text style={styles.title} numberOfLines={2}>{copy.title}</Text>
+        <Text style={[styles.title, narrow && styles.titleNarrow]} numberOfLines={2}>{copy.title}</Text>
         <View style={[styles.rule, { backgroundColor: palette.ring }]} />
         <Text style={styles.godName}>{god.name}</Text>
       </Animated.View>
@@ -315,7 +380,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     overflow: 'hidden',
-    backgroundColor: '#100B08',
+    backgroundColor: STAGE_BACKGROUND,
     marginBottom: 14,
   },
   stageCompact: {
@@ -324,30 +389,11 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFill,
-    opacity: 0.72,
-  },
-  auraOuter: {
-    position: 'absolute',
-    left: '8%',
-    top: -40,
-    width: 310,
-    height: 310,
-    borderRadius: 155,
-  },
-  auraRing: {
-    position: 'absolute',
-    left: '10%',
-    top: -18,
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    borderWidth: 1,
-    opacity: 0.42,
+    opacity: BACKDROP_OPACITY,
   },
   responseBurst: {
     position: 'absolute',
-    left: '22%',
-    top: 86,
+    left: '21%',
     width: 90,
     height: 90,
     marginLeft: -45,
@@ -357,10 +403,12 @@ const styles = StyleSheet.create({
   },
   rayAnchor: {
     position: 'absolute',
-    left: '22%',
-    top: 104,
+    left: '21%',
     width: 1,
     height: 1,
+  },
+  haloAnchorCompact: {
+    left: '20%',
   },
   ray: {
     position: 'absolute',
@@ -373,17 +421,14 @@ const styles = StyleSheet.create({
   },
   portraitWrap: {
     position: 'absolute',
-    left: '3%',
-    top: 8,
-    width: 250,
-    height: 360,
-    borderRadius: 18,
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: '42%',
     overflow: 'hidden',
   },
   portraitWrapCompact: {
-    top: 4,
-    width: 176,
-    height: 255,
+    width: '40%',
   },
   portrait: {
     width: '100%',
@@ -391,32 +436,25 @@ const styles = StyleSheet.create({
   },
   blinkWindow: {
     position: 'absolute',
-    left: 44,
-    top: 82,
-    width: 164,
-    height: 48,
     overflow: 'hidden',
-  },
-  blinkPortrait: {
-    position: 'absolute',
-    left: -44,
-    top: -82,
-    width: 250,
-    height: 360,
   },
   portraitShade: {
     ...StyleSheet.absoluteFill,
   },
-  vignette: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'transparent',
-    borderWidth: 18,
-    borderColor: '#09060455',
-    borderRadius: 22,
+  portraitFade: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: '38%',
+    flexDirection: 'row',
+  },
+  portraitFadeStep: {
+    flex: 1,
   },
   caption: {
     position: 'absolute',
-    left: '39%',
+    left: '45%',
     right: 26,
     top: 54,
     bottom: 30,
@@ -424,7 +462,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   captionCompact: {
-    left: '36%',
+    left: '43%',
     top: 22,
     bottom: 18,
   },
@@ -440,6 +478,11 @@ const styles = StyleSheet.create({
     lineHeight: 29,
     fontWeight: '800',
     letterSpacing: 1.2,
+  },
+  titleNarrow: {
+    fontSize: 17,
+    lineHeight: 25,
+    letterSpacing: 0.4,
   },
   rule: {
     width: 68,
