@@ -53,14 +53,19 @@ function loadWorker({
   };
   vm.runInNewContext(SW_SOURCE, { self, caches, fetch: fetchImpl, Response, URL, Promise, console });
 
+  // Resolves with the response as soon as respondWith settles; background work
+  // registered through waitUntil is collected in `background` for tests to await.
+  const background: Promise<unknown>[] = [];
   async function dispatchFetch(pathname: string, mode = 'no-cors') {
     let responded: Promise<Response> | undefined;
     handlers.fetch({
       request: { url: ORIGIN + pathname, method: 'GET', mode },
       respondWith: (value: Promise<Response>) => { responded = value; },
+      waitUntil: (value: Promise<unknown>) => { background.push(value); },
     });
     return responded ? await responded : undefined;
   }
+  const settleBackground = () => Promise.all(background);
 
   async function dispatch(type: string, data?: unknown) {
     let waited: Promise<unknown> = Promise.resolve();
@@ -68,7 +73,7 @@ function loadWorker({
     return waited;
   }
 
-  return { self, caches, cache, store, posted, dispatchFetch, dispatch };
+  return { self, caches, cache, store, posted, dispatchFetch, dispatch, settleBackground };
 }
 
 describe('service worker resilience', () => {
@@ -114,7 +119,31 @@ describe('service worker resilience', () => {
 
     const response = await worker.dispatchFetch('/temple', 'navigate');
     expect(await response!.text()).toBe('fresh page');
+    await worker.settleBackground();
     expect(worker.posted).toContainEqual({ type: 'storage-full' });
+  });
+
+  it('hands an image to the page before the cache copy has been written', async () => {
+    let finishPut: () => void = () => undefined;
+    const worker = loadWorker({
+      fetchImpl: async () => new Response('portrait bytes', { status: 200 }),
+      putImpl: () => new Promise<void>((resolve) => { finishPut = resolve; }),
+    });
+
+    const response = await worker.dispatchFetch('/assets/gods/wenchang-soft.webp');
+    expect(await response!.text()).toBe('portrait bytes');
+    expect(worker.cache.put).toHaveBeenCalledTimes(1);
+
+    finishPut();
+    await worker.settleBackground();
+  });
+
+  it('serves the cached copy on the next request once the background write is done', async () => {
+    const worker = loadWorker({ fetchImpl: async () => new Response('portrait bytes', { status: 200 }) });
+    await worker.dispatchFetch('/assets/gods/wenchang-soft.webp');
+    await worker.settleBackground();
+
+    expect(worker.store.has('/assets/gods/wenchang-soft.webp')).toBe(true);
   });
 
   it('falls back to the cached app shell for an unvisited route while offline', async () => {

@@ -67,15 +67,22 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-async function cacheResponse(request, response) {
+// Hands the response to the page right away and stores a copy in the
+// background: waiting for cache.put meant a large deity image showed nothing
+// until it had been fully downloaded and written, which on slow links looked
+// like a broken portrait.
+function cacheResponse(event, request, response) {
   if (!response || response.status !== 200 || request.method !== 'GET') return response;
-  try {
-    const cache = await caches.open(CACHE_NAME);
-    await cache.put(request, response.clone());
-  } catch (error) {
-    // Running out of space must not break the page; it just won't work offline.
-    if (isQuotaError(error)) await notifyClients({ type: 'storage-full' });
-  }
+  const copy = response.clone();
+  event.waitUntil((async () => {
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, copy);
+    } catch (error) {
+      // Running out of space must not break the page; it just won't work offline.
+      if (isQuotaError(error)) await notifyClients({ type: 'storage-full' });
+    }
+  })());
   return response;
 }
 
@@ -86,9 +93,10 @@ function unredirected(response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers: response.headers });
 }
 
-async function navigationResponse(request) {
+async function navigationResponse(event) {
+  const { request } = event;
   try {
-    return await cacheResponse(request, await fetch(request));
+    return cacheResponse(event, request, await fetch(request));
   } catch {
     const cached = (await caches.match(request))
       || (await caches.match('/'))
@@ -103,11 +111,12 @@ async function navigationResponse(request) {
   }
 }
 
-async function staticResponse(request) {
+async function staticResponse(event) {
+  const { request } = event;
   const cached = await caches.match(request);
   if (cached) return cached;
   try {
-    return await cacheResponse(request, await fetch(request));
+    return cacheResponse(event, request, await fetch(request));
   } catch {
     // A bundle chunk that is neither cached nor reachable means the offline copy
     // is stale or was evicted; the page offers a reload once it is back online.
@@ -125,9 +134,9 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
 
   if (request.mode === 'navigate' || OFFLINE_ROUTES.includes(url.pathname)) {
-    event.respondWith(navigationResponse(request));
+    event.respondWith(navigationResponse(event));
     return;
   }
 
-  event.respondWith(staticResponse(request));
+  event.respondWith(staticResponse(event));
 });
