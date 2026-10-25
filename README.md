@@ -103,6 +103,10 @@ Update `public/sw.js`, `public/manifest.json`, and `scripts/patch-pwa.js` togeth
 The app includes `/privacy` for privacy policy and terms, plus `/disclaimer` for AI, medical, legal, financial, and divination boundary notices. Keep these screens aligned with any future paid subscription, cloud sync, AI provider, or source-text licensing changes.
 ## AI Configuration
 
-The app can run with fallback interpretation, but AI features need provider credentials configured in the environment or deployment platform. See `src/services/ai.ts`, `api/interpret.js`, and `backend/src/server.ts` for provider-specific behavior.
+The app can run with fallback interpretation, but AI features need provider credentials configured in the environment or deployment platform. See `src/services/ai.ts`, `api/interpret.js`, and `backend/src/server.ts` for provider-specific behavior. On Vercel, set `DEEPSEEK_API_KEY` to use DeepSeek (`deepseek-flash`, thinking mode disabled), `OPENAI_API_KEY` for OpenAI, or `AI_API_KEY` with `AI_BASE_URL` for another OpenAI-compatible provider; `api/_aiProvider.js` documents the order.
+
+## Voice Transcription
+
+The deployed web app uses browser speech recognition when it is available. Other browsers and native builds send a short recording to `/api/transcribe`, which requires `TRANSCRIPTION_API_KEY` (or `OPENAI_API_KEY`) in the deployment environment; DeepSeek has no speech-to-text API, so a DeepSeek key alone does not enable it. The endpoint uses `gpt-transcribe` by default; set `TRANSCRIPTION_API_BASE_URL` and `TRANSCRIPTION_MODEL` only when using a compatible alternative provider. Released native builds derive an absolute endpoint from `EXPO_PUBLIC_SITE_URL`; set `EXPO_PUBLIC_TRANSCRIBE_URL` only when pointing a development device or emulator at a separate backend. Keep individual recordings short (under 3 MB) because Vercel limits Function request bodies to 4.5 MB and Base64 expands the audio payload.
 
 

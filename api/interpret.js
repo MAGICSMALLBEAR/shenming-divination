@@ -1,25 +1,14 @@
 // Vercel Serverless Function — AI 解籤
 // POST /api/interpret
-// 支援 OpenAI 相容 API，若無 API key 則回傳錯誤讓前端觸發 fallback
+// 支援 OpenAI 相容 API（含 DeepSeek，見 _aiProvider.js），若無 API key 則回傳錯誤讓前端觸發 fallback
 
-export default async function handler(req) {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+import { createChatCompletion, jsonResponse, resolveChatProvider } from './_aiProvider.js';
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  const model = process.env.AI_MODEL || 'gpt-4o-mini';
-  const baseUrl = process.env.AI_BASE_URL || 'https://api.openai.com/v1';
+async function handler(req) {
+  if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
-  if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: 'AI API key not configured' }),
-      { status: 503, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
+  const provider = resolveChatProvider();
+  if (!provider) return jsonResponse({ error: 'AI API key not configured' }, 503);
 
   try {
     const body = await req.json();
@@ -82,41 +71,23 @@ export default async function handler(req) {
       .filter(Boolean)
       .join('\n');
 
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 800,
-      }),
+    const interpretation = await createChatCompletion(provider, {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: 0.7,
+      maxTokens: 800,
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error('AI API error:', response.status, err);
-      throw new Error(`AI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const interpretation = data.choices?.[0]?.message?.content || '';
-
-    return new Response(JSON.stringify({ interpretation }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ interpretation });
   } catch (error) {
     console.error('Interpret error:', error.message);
-    return new Response(
-      JSON.stringify({ error: 'AI service unavailable' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ error: 'AI service unavailable' }, error.status || 500);
   }
 }
+
+// Vercel's Node runtime only uses a returned Response from the Web-standard
+// `fetch` export; a default-exported function is called as (req, res) and its
+// return value is ignored, which left every request hanging until the timeout.
+export default { fetch: handler };
