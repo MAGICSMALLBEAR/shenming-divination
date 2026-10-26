@@ -66,10 +66,10 @@ const COPY: Record<DivinePresenceMode, { eyebrow: string; title: string }> = {
   listening: { eyebrow: '神前稟明', title: '請定心說明所問之事' },
   offering: { eyebrow: '香煙上達', title: '心意正傳達於神前' },
   meditating: { eyebrow: '屏息凝神', title: '默念姓名與所問之事' },
-  awaiting: { eyebrow: '神前請示', title: '心念安定後再行儀式' },
-  approve: { eyebrow: '聖筊', title: '神意允可・可循此方向前行' },
-  reconsider: { eyebrow: '笑筊', title: '請重新整理心念與問題' },
-  decline: { eyebrow: '陰筊', title: '目前不宜依原方向進行' },
+  awaiting: { eyebrow: '驗籤請示', title: '請確認剛抽出的這支籤' },
+  approve: { eyebrow: '聖筊', title: '此支籤的確認正在進行' },
+  reconsider: { eyebrow: '笑筊', title: '此支籤未獲確認・請重新抽籤' },
+  decline: { eyebrow: '陰筊', title: '此支籤未獲確認・請重新抽籤' },
   revealing: { eyebrow: '神籤將現', title: '請靜心領受籤中指引' },
   resting: { eyebrow: '神意已示', title: '籤意在心・仍須審慎而行' },
 };
@@ -81,7 +81,7 @@ export function getDivinePresenceMode(
 ): DivinePresenceMode {
   if (step === 'set-question') return 'listening';
   if (step === 'meditate') return incenseDone ? 'meditating' : 'offering';
-  if (step === 'toss-jiaobei') {
+  if (step === 'verify-poem') {
     if (lastJiaobei === 'shengbei') return 'approve';
     if (lastJiaobei === 'xiaobei') return 'reconsider';
     if (lastJiaobei === 'yinbei') return 'decline';

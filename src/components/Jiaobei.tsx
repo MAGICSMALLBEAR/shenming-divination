@@ -16,6 +16,7 @@ const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 interface JiaobeiProps {
   onToss: () => JiaobeiResult;
   onShengbei: () => void;
+  onRejected?: () => void;
   results: JiaobeiResult[];
   requiredShengbei?: number;
   phase?: 'permission' | 'verification';
@@ -31,6 +32,7 @@ type JiaobeiFace = 'round' | 'flat';
 export function Jiaobei({
   onToss,
   onShengbei,
+  onRejected,
   results,
   strictMode,
   requiredShengbei = strictMode ? 3 : 1,
@@ -45,6 +47,8 @@ export function Jiaobei({
   const [isAnimating, setIsAnimating] = React.useState(false);
   const [currentResult, setCurrentResult] = React.useState<JiaobeiResult | null>(null);
   const [showParticle, setShowParticle] = React.useState(false);
+  const finalizingRef = useRef(false);
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ritualStyle = ritualStyles[ritualStyleKey];
 
   const tossProgress = useRef(new Animated.Value(0)).current;
@@ -60,11 +64,15 @@ export function Jiaobei({
     : '第 ' + (results.length + 1) + ' 次擲筊';
   const lastTossSignal = useRef(tossSignal);
 
+  React.useEffect(() => () => {
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+  }, []);
+
   const landingFaces = useMemo(() => getLandingFaces(currentResult), [currentResult]);
   const landingPose = useMemo(() => getLandingPose(currentResult), [currentResult]);
 
   const handleToss = React.useCallback(() => {
-    if (isAnimating) {
+    if (isAnimating || finalizingRef.current) {
       return;
     }
     preTossResultLength.current = results.length;
@@ -82,7 +90,8 @@ export function Jiaobei({
       duration: lowMotion ? 420 : 980,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: USE_NATIVE_DRIVER,
-    }).start(async () => {
+    }).start(async ({ finished }) => {
+      if (!finished) return;
       const result = onToss();
       setCurrentResult(result);
       tossProgress.setValue(0);
@@ -110,14 +119,19 @@ export function Jiaobei({
           tension: 62,
           useNativeDriver: USE_NATIVE_DRIVER,
         }),
-      ]).start(() => {
+      ]).start(({ finished: settled }) => {
+        if (!settled) return;
         setIsAnimating(false);
-        if (result === 'shengbei' && countTrailingShengbei(results) + 1 >= requiredShengbei) {
-          setTimeout(onShengbei, 900);
+        if (phase === 'verification' && result !== 'shengbei') {
+          finalizingRef.current = true;
+          transitionTimerRef.current = setTimeout(() => onRejected?.(), 900);
+        } else if (result === 'shengbei' && countTrailingShengbei(results) + 1 >= requiredShengbei) {
+          finalizingRef.current = true;
+          transitionTimerRef.current = setTimeout(onShengbei, 900);
         }
       });
     });
-  }, [isAnimating, lowMotion, onShengbei, onToss, requiredShengbei, resultFade, results, settleProgress, tossProgress]);
+  }, [isAnimating, lowMotion, onRejected, onShengbei, onToss, phase, requiredShengbei, resultFade, results, settleProgress, tossProgress]);
 
   React.useEffect(() => {
     if (tossSignal == null || lastTossSignal.current === tossSignal) {
@@ -297,23 +311,36 @@ export function Jiaobei({
           >
             <Text style={styles.resultEmoji}>{resultInfo.emoji}</Text>
             <Text style={[styles.resultText, { color: resultInfo.color }]}>{resultInfo.text}</Text>
-            <Text style={styles.resultDesc}>{resultInfo.desc}</Text>
+            <Text style={styles.resultDesc}>
+              {isVerification
+                ? currentResult === 'shengbei'
+                  ? confirmationComplete
+                    ? '此支籤已獲三次聖筊確認。'
+                    : `此支籤已獲 ${results.length} 次聖筊，請繼續確認。`
+                  : '此支籤未獲確認，請重新抽籤。'
+                : resultInfo.desc}
+            </Text>
             {confirmationComplete ? (
               <Text style={styles.strictCompleteText}>{'三次聖筊已成，此支籤已確認。'}</Text>
             ) : null}
-            {currentResult !== 'shengbei' && !isAnimating ? (
+            {currentResult !== 'shengbei' && !isAnimating && !isVerification ? (
               <TouchableOpacity style={styles.retryBtn} onPress={handleToss} accessibilityRole="button" accessibilityLabel="再擲一次">
                 <Text style={styles.retryBtnText}>{'\u518d\u64f2\u4e00\u6b21'}</Text>
               </TouchableOpacity>
             ) : null}
           </Animated.View>
         ) : null}
+        {isVerification && currentResult && currentResult !== 'shengbei' ? (
+          <Text style={styles.strictModeNote}>此籤未獲確認，即將回到籤筒重新抽籤。</Text>
+        ) : null}
       </View>
 
       {!currentResult && !isAnimating ? (
         <View style={styles.primaryAction}>
           <Text style={styles.actionHint}>
-            {'\u96d9\u624b\u5408\u638c\u9ed8\u5ff5\u554f\u984c\uff0c\u518d\u6309\u4e0b\u64f2\u7b4a\u8acb\u793a'}
+            {isVerification
+              ? '默念剛抽出的籤號，擲筊確認是否為本次指示。'
+              : '\u96d9\u624b\u5408\u638c\u9ed8\u5ff5\u554f\u984c\uff0c\u518d\u6309\u4e0b\u64f2\u7b4a\u8acb\u793a'}
           </Text>
           <TouchableOpacity
             style={styles.tossBtn}

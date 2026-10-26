@@ -27,11 +27,10 @@ import { useI18n } from '@/hooks/useI18n';
 import { addWish } from '@/services/wishTracker';
 import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
 import { playResultSound, startAmbientSound, stopAmbientSound } from '@/services/proceduralSound';
-import { getHistory, getLastPoemContext, getSettings, getFamilyMembers, addFamilyMember, removeFamilyMember, updatePoemConfirmation, getVerificationFollowUps, type AppSettings, type DivinationRecord, type FamilyMember, type VerificationFollowUpSummary } from '@/services/storage';
+import { getHistory, getLastPoemContext, getSettings, getFamilyMembers, addFamilyMember, removeFamilyMember, getVerificationFollowUps, type AppSettings, type DivinationRecord, type FamilyMember, type VerificationFollowUpSummary } from '@/services/storage';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
 import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritual-styles';
 import { gods, type God } from '@/data/gods';
-import { tossJiaobei, type JiaobeiResult } from '@/services/divination';
 import { getGodCardImage, getGodCloseupImage } from '@/data/godImages';
 import { GodPortrait } from '@/components/GodPortrait';
 import { recommendGods, type GodRecommendation } from '@/services/recommendation';
@@ -72,8 +71,6 @@ export default function HomeScreen() {
   const [reviewSummary, setReviewSummary] = React.useState<VerificationFollowUpSummary | null>(null);
   const [verificationCardDismissed, setVerificationCardDismissed] = React.useState(false);
   const [showCrossCompare, setShowCrossCompare] = React.useState(false);
-  const [poemConfirming, setPoemConfirming] = React.useState(false);
-  const [poemConfirmText, setPoemConfirmText] = React.useState<string | null>(null);
   const [familyMembers, setFamilyMembers] = React.useState<FamilyMember[]>([]);
   const [selectedPerson, setSelectedPerson] = React.useState<FamilyMember | null>(null);
   const [showAddFamily, setShowAddFamily] = React.useState(false);
@@ -100,22 +97,22 @@ export default function HomeScreen() {
   }, []);
   const solarTerm = React.useMemo(() => getCurrentSolarTerm(), []);
 
-  // 搖手機求籤：在擲筊步驟偵測搖動
+  // 驗籤時也可搖動手機擲筊。
   useShakeDetector(
     React.useCallback(() => {
-      if (div.step === 'toss-jiaobei') {
+      if (div.step === 'verify-poem') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setShakeTossSignal((value) => value + 1);
       }
     }, [div.step]),
-    div.step === 'toss-jiaobei'
+    div.step === 'verify-poem'
   );
 
   const isCompact = layout.width < 420;
   const isTablet = layout.isTablet;
   const pageMaxWidth = layout.isWideDesktop ? 1180 : layout.isDesktop ? 1080 : layout.contentMaxWidth;
   const selectedGodCardImage = getGodCloseupImage(div.selectedGod?.id) ?? getGodCardImage(div.selectedGod?.id);
-  const lastJiaobeiResult = (div.step === 'verify-poem' ? div.verificationResults : div.jiaobeiResults).at(-1) ?? null;
+  const lastJiaobeiResult = div.step === 'verify-poem' ? div.verificationResults.at(-1) ?? null : null;
   const showDivinePresence = div.selectedGod && div.step !== 'select-god';
   const compactDivinePresence =
     div.step === 'drawing' ||
@@ -162,7 +159,7 @@ export default function HomeScreen() {
   // 環境音效：冥想 / 擲筊步驟啟動，其他步驟停止
   React.useEffect(() => {
     if (!settings) return;
-    const ambientSteps = ['meditate', 'toss-jiaobei', 'verify-poem'];
+    const ambientSteps = ['meditate', 'verify-poem'];
     if (settings.ambientSound) {
       if (ambientSteps.includes(div.step)) {
         startAmbientSound().catch(() => {});
@@ -241,13 +238,13 @@ export default function HomeScreen() {
     if (selectedPerson?.id === id) setSelectedPerson(null);
   };
 
-  const showBack = div.step === 'set-question' || div.step === 'meditate' || div.step === 'choose-draw-method' || div.step === 'toss-jiaobei' || div.step === 'enter-zhuge-number';
+  const showBack = div.step === 'set-question' || div.step === 'meditate' || div.step === 'choose-draw-method' || div.step === 'enter-zhuge-number';
 
   const handleBack = () => {
     switch (div.step) {
       case 'set-question': div.goToStep('select-god'); break;
       case 'meditate': if (incenseDone) { setIncenseDone(false); } else { div.goToStep('set-question'); } break;
-      case 'choose-draw-method': setIncenseDone(false); div.goToStep('set-question'); break;
+      case 'choose-draw-method': div.performDraw(); break;
       case 'enter-zhuge-number':
         if (div.selectedGod?.poemSystem === '諸葛神數') {
           div.goToStep('meditate');
@@ -255,11 +252,10 @@ export default function HomeScreen() {
           div.goToStep('choose-draw-method');
         }
         break;
-      case 'toss-jiaobei': div.goToStep('choose-draw-method'); break;
       default: handleReset();
     }
   };
-  const handleReset = () => { setIncenseDone(false); setWishAdded(false); setPoemConfirmText(null); setPoemConfirming(false); div.reset(); };
+  const handleReset = () => { setIncenseDone(false); setWishAdded(false); div.reset(); };
   const handleSelectGod = (godId: number) => {
     const god = gods.find((item) => item.id === godId);
     if (god) {
@@ -319,14 +315,14 @@ export default function HomeScreen() {
       { key: 'select-god', icon: '🏛️' },
       { key: 'set-question', icon: '📝' },
       { key: 'meditate', icon: '🧘' },
-      { key: isZhuge ? 'enter-zhuge-number' : 'choose-draw-method', icon: isZhuge ? '🔢' : '🎛️' },
+      ...(isZhuge ? [{ key: 'enter-zhuge-number', icon: '🔢' }] : []),
       { key: 'drawing', icon: '🎋' },
       { key: 'verify-poem', icon: '🌓' },
       { key: 'result', icon: '✨' },
     ];
     const stepKey = (s: string) => {
       if (s === 'reveal-poem' || s === 'ai-interpret') return 'result';
-      if (!isZhuge && (s === 'toss-jiaobei' || s === 'enter-zhuge-number')) return 'choose-draw-method';
+      if (!isZhuge && (s === 'choose-draw-method' || s === 'enter-zhuge-number')) return 'drawing';
       return s;
     };
     const currentIndex = steps.findIndex(s => s.key === stepKey(div.step));
@@ -384,7 +380,7 @@ export default function HomeScreen() {
               showsVerticalScrollIndicator={false}
               scrollEventThrottle={16}
               onScroll={(event) => {
-                const nextVisible = event.nativeEvent.contentOffset.y > 360;
+                const nextVisible = event.nativeEvent.contentOffset.y > 120;
                 setShowSelectionBackToTop((visible) => visible === nextVisible ? visible : nextVisible);
               }}
             >
@@ -459,8 +455,7 @@ export default function HomeScreen() {
               </View>
             </View>
             </ScrollView>
-            {showSelectionBackToTop ? (
-              <View style={styles.selectionFloatingStack}>
+            <View style={styles.selectionFloatingStack}>
                 <TouchableOpacity
                   style={styles.selectionFloatingButton}
                   onPress={() => setDirectoryOpen(true)}
@@ -470,7 +465,7 @@ export default function HomeScreen() {
                   <Text style={styles.selectionBackToTopIcon}>☰</Text>
                   <Text style={styles.selectionBackToTopText}>神明名冊</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
+                {showSelectionBackToTop ? <TouchableOpacity
                   style={styles.selectionFloatingButton}
                   onPress={() => selectionScrollRef.current?.scrollTo({ y: 0, animated: !(reducedMotion || lowMotionMode) })}
                   accessibilityRole="button"
@@ -478,9 +473,8 @@ export default function HomeScreen() {
                 >
                   <Text style={styles.selectionBackToTopIcon}>↑</Text>
                   <Text style={styles.selectionBackToTopText}>回到上方</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> : null}
               </View>
-            ) : null}
             <GodDirectorySheet
               visible={directoryOpen}
               gods={directoryGods.gods}
@@ -548,32 +542,18 @@ export default function HomeScreen() {
           />
         );
       }
-      case 'toss-jiaobei':
-        return (
-          <View style={styles.fullScreen}>
-            <Jiaobei
-              onToss={div.performPermissionJiaobei}
-              onShengbei={div.drawMethod === 'jiaobei-auto' ? div.performAutoDraw : div.performDraw}
-              results={div.jiaobeiResults}
-              tossSignal={shakeTossSignal}
-              lowMotion={lowMotionMode}
-              ritualStyleKey={ritualStyle}
-              onStyleChange={setRitualStyle}
-            />
-            <View style={styles.shakeHint}>
-              <Text style={styles.shakeHintText}>{div.drawMethod === 'jiaobei-auto' ? '聖筊後會自動開籤，不需要搖籤筒' : '📳 或搖動手機擲筊'}</Text>
-            </View>
-          </View>
-        );
       case 'verify-poem':
         return (
           <View style={styles.fullScreen}>
+            <Text style={styles.verificationHeading}>第 {div.drawnPoem?.number ?? '?'} 籤 · 請擲筊確認</Text>
             <Jiaobei
               phase="verification"
               requiredShengbei={3}
               onToss={div.performVerificationJiaobei}
               onShengbei={div.completeVerification}
+              onRejected={div.rejectVerification}
               results={div.verificationResults}
+              tossSignal={shakeTossSignal}
               lowMotion={lowMotionMode}
               ritualStyleKey={ritualStyle}
               onStyleChange={setRitualStyle}
@@ -582,17 +562,30 @@ export default function HomeScreen() {
         );
       case 'drawing':
         return (
+          <View style={styles.fullScreen}>
+          {div.drawPhase === 'shaking' ? (
+            <TouchableOpacity
+              style={styles.alternateDrawButton}
+              onPress={() => div.goToStep('choose-draw-method')}
+              accessibilityRole="button"
+              accessibilityLabel="其他取籤方式"
+            >
+              <Text style={styles.alternateDrawButtonText}>其他取籤方式</Text>
+            </TouchableOpacity>
+          ) : null}
           <DrawAnimation
             god={div.selectedGod}
             poemNumber={div.pendingPoem?.number}
             durationMs={div.drawAnimationDurationMs}
             styleKey={div.drawAnimationStyleKey}
             lowMotion={lowMotionMode}
-            interactive={div.selectedGod?.poemSystem !== '諸葛神數' && div.drawMethod === 'jiaobei-shake'}
+            interactive={div.selectedGod?.poemSystem !== '諸葛神數' && div.drawMethod === 'shake'}
+            requiresVerification={div.drawMethod === 'shake' || div.drawMethod === 'auto'}
             shakeMode={settings?.shakeMode === 'hold' ? 'hold' : 'drag'}
             onShakeComplete={div.completeShake}
             onComplete={div.finishDrawAnimation}
           />
+          </View>
         );
       case 'reveal-poem':
       case 'ai-interpret':
@@ -685,19 +678,6 @@ export default function HomeScreen() {
     await Share.share({ message: blessing });
   };
 
-  const handleConfirmPoem = async () => {
-    if (!div.currentRecord || poemConfirming) return;
-    setPoemConfirming(true);
-    const result: JiaobeiResult = tossJiaobei();
-    const confirmed = result === 'shengbei';
-    const label = result === 'shengbei' ? '聖筊，神明允此籤' : result === 'xiaobei' ? '笑筊，請再觀察籤意' : '陰筊，先保守解讀';
-    setPoemConfirmText(label);
-    await updatePoemConfirmation(div.currentRecord.id, confirmed, label);
-    Haptics.notificationAsync(
-      confirmed ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning
-    ).catch(() => {});
-    setPoemConfirming(false);
-  };
   const handleAskFollowUp = () => {
     router.push('/chat');
   };
@@ -742,10 +722,6 @@ export default function HomeScreen() {
               <Text style={styles.actionBtnIcon}>🧭</Text>
               <Text style={styles.actionBtnText}>回訪</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn, isTablet && styles.actionBtnTablet]} onPress={handleConfirmPoem} disabled={poemConfirming}>
-              <Text style={styles.actionBtnIcon}>筊</Text>
-              <Text style={styles.actionBtnText}>{poemConfirmText ? '已確認' : poemConfirming ? '確認中' : '確認此籤'}</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={[styles.actionBtn, isTablet && styles.actionBtnTablet]} onPress={handleAskFollowUp}>
               <Text style={styles.actionBtnIcon}>AI</Text>
               <Text style={styles.actionBtnText}>追問</Text>
@@ -770,7 +746,7 @@ export default function HomeScreen() {
         ) : (
           <>
             {!lowMotionMode ? <StarBackground /> : null}
-            {!lowMotionMode && (div.step === 'meditate' || div.step === 'toss-jiaobei') ? <IncenseSmoke /> : null}
+            {!lowMotionMode && div.step === 'meditate' ? <IncenseSmoke /> : null}
             <FireworksEffect active={showFireworks && !lowMotionMode} />
             <WishBindEffect active={showWishBind && !reducedMotion && !lowMotionMode} />
             <Modal visible={showAddFamily} transparent animationType="fade" onRequestClose={() => setShowAddFamily(false)}>
@@ -810,7 +786,7 @@ export default function HomeScreen() {
                     step={div.step}
                     incenseDone={incenseDone}
                     lastJiaobei={lastJiaobeiResult}
-                    responseKey={div.step === 'verify-poem' ? div.verificationResults.length : div.jiaobeiResults.length}
+                    responseKey={div.verificationResults.length}
                     lowMotion={reducedMotion || lowMotionMode}
                     compact={compactDivinePresence}
                   />
@@ -1371,6 +1347,7 @@ function createStyles(theme: ThemeColors) {
     bottom: TempleSpacing.lg,
     alignItems: 'flex-end',
     gap: TempleSpacing.sm,
+    zIndex: 20,
   },
   selectionFloatingButton: {
     flexDirection: 'row',
@@ -1390,6 +1367,16 @@ function createStyles(theme: ThemeColors) {
   },
   selectionBackToTopIcon: { color: theme.goldLight, fontSize: 17, fontWeight: TempleFonts.heavy, lineHeight: 18 },
   selectionBackToTopText: { color: theme.goldLight, fontSize: 12, fontWeight: TempleFonts.heavy },
+  alternateDrawButton: {
+    alignSelf: 'flex-end', marginRight: TempleSpacing.md, marginTop: TempleSpacing.xs,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999,
+    borderWidth: 1, borderColor: theme.gold + '88', backgroundColor: theme.bgCard,
+  },
+  alternateDrawButtonText: { color: theme.goldLight, fontSize: 12, fontWeight: TempleFonts.heavy },
+  verificationHeading: {
+    color: theme.goldLight, fontSize: TempleFonts.heading, fontWeight: TempleFonts.heavy,
+    textAlign: 'center', marginTop: TempleSpacing.sm,
+  },
   recommendCard: {
     marginHorizontal: TempleSpacing.md,
     marginBottom: TempleSpacing.sm,

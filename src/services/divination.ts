@@ -58,6 +58,8 @@ export async function saveDivinationRecord(params: {
   questionCategory: string;
   aiInterpretation?: string;
   actionPlan?: string[];
+  poemConfirmed?: boolean;
+  poemConfirmResult?: string;
 }): Promise<DivinationRecord> {
   const record: DivinationRecord = {
     id: generateId(),

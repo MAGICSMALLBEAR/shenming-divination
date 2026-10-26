@@ -81,7 +81,7 @@ export function MeditationScreen({ godName, onComplete }: MeditationProps) {
           ))}
         </View>
         <Text style={styles.progressText}>
-          {isReady ? '\u5df2\u5b8c\u6210\u975c\u5fc3 \u00b7 \u53ef\u4ee5\u9078\u64c7\u62bd\u7c64\u65b9\u5f0f' : `\u975c\u5fc3\u51a5\u60f3\u4e2d... ${5 - seconds}`}
+        {isReady ? '已完成靜心 · 可以開始搖籤' : `\u975c\u5fc3\u51a5\u60f3\u4e2d... ${5 - seconds}`}
 
         </Text>
       </View>
@@ -91,10 +91,10 @@ export function MeditationScreen({ godName, onComplete }: MeditationProps) {
         onPress={isReady ? onComplete : undefined}
         disabled={!isReady}
         accessibilityRole="button"
-        accessibilityLabel={isReady ? '選擇抽籤方式' : '請靜心等待'}
+        accessibilityLabel={isReady ? '開始搖籤' : '請靜心等待'}
       >
         <Text style={[styles.continueBtnText, isReady && styles.continueBtnTextActive]}>
-          {isReady ? '\u9078\u64c7\u62bd\u7c64\u65b9\u5f0f' : '\u8acb\u975c\u5fc3\u7b49\u5f85...'}
+          {isReady ? '開始搖籤' : '\u8acb\u975c\u5fc3\u7b49\u5f85...'}
 
         </Text>
       </TouchableOpacity>

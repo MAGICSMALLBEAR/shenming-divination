@@ -32,12 +32,12 @@ describe('ritual interactions', () => {
     await act(async () => {
       jest.advanceTimersByTime(4999);
     });
-    expect(view.queryByText('\u9078\u64c7\u62bd\u7c64\u65b9\u5f0f')).toBeNull();
+    expect(view.queryByText('開始搖籤')).toBeNull();
 
     await act(async () => {
       jest.advanceTimersByTime(1);
     });
-    await fireEvent.press(view.getByText('\u9078\u64c7\u62bd\u7c64\u65b9\u5f0f'));
+    await fireEvent.press(view.getByText('開始搖籤'));
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
@@ -102,6 +102,32 @@ describe('ritual interactions', () => {
       jest.advanceTimersByTime(500);
     });
     expect(onToss).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects the current poem after a non-divine verification toss', async () => {
+    const onRejected = jest.fn();
+    const onShengbei = jest.fn();
+    const view = await render(
+      <Jiaobei
+        phase="verification"
+        requiredShengbei={3}
+        onToss={() => 'xiaobei'}
+        onShengbei={onShengbei}
+        onRejected={onRejected}
+        results={[]}
+        lowMotion
+        ritualStyleKey="bronze"
+        onStyleChange={jest.fn()}
+      />
+    );
+
+    await fireEvent.press(view.getByLabelText('擲筊請示'));
+    await act(async () => { jest.advanceTimersByTime(500); });
+    await act(async () => { jest.advanceTimersByTime(1000); });
+    await act(async () => { jest.advanceTimersByTime(1000); });
+
+    expect(onRejected).toHaveBeenCalledTimes(1);
+    expect(onShengbei).not.toHaveBeenCalled();
   });
 
   it('changes between all ritual material choices', async () => {

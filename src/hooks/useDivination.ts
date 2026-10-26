@@ -23,7 +23,6 @@ export type FlowStep =
   | 'meditate'
   | 'enter-zhuge-number'
   | 'choose-draw-method'
-  | 'toss-jiaobei'
   | 'drawing'
   | 'verify-poem'
   | 'reveal-poem'
@@ -33,7 +32,7 @@ export type FlowStep =
 // drawing 步驟底下的子階段：shaking = 等待使用者親自搖籤筒（尚未決定籤詩），
 // revealing = 籤枝已跳出，播放既有的開籤演出
 export type DrawPhase = 'shaking' | 'revealing';
-export type DrawMethod = 'jiaobei-shake' | 'jiaobei-auto' | 'direct' | 'number';
+export type DrawMethod = 'shake' | 'auto' | 'direct' | 'number';
 
 export function useDivination() {
   const [step, setStep] = useState<FlowStep>('select-god');
@@ -41,7 +40,6 @@ export function useDivination() {
   const [question, setQuestion] = useState('');
   const [questionCategory, setQuestionCategory] = useState('general');
   const [userName, setUserName] = useState('');
-  const [jiaobeiResults, setJiaobeiResults] = useState<JiaobeiResult[]>([]);
   const [verificationResults, setVerificationResults] = useState<JiaobeiResult[]>([]);
   const [zhugeNumber, setZhugeNumber] = useState<number | null>(null);
   const [drawnPoem, setDrawnPoem] = useState<Poem | null>(null);
@@ -57,7 +55,7 @@ export function useDivination() {
   const animationResolverRef = useRef<(() => void) | null>(null);
   const shakeCompletedRef = useRef(false);
   const [drawPhase, setDrawPhase] = useState<DrawPhase>('revealing');
-  const [drawMethod, setDrawMethod] = useState<DrawMethod>('jiaobei-shake');
+  const [drawMethod, setDrawMethod] = useState<DrawMethod>('shake');
 
   const selectedGod = selectedGodId ? gods.find(g => g.id === selectedGodId) : null;
 
@@ -80,21 +78,23 @@ export function useDivination() {
     setStep('meditate');
   }, []);
 
+  const performDraw = useCallback(() => {
+    if (!selectedGodId) return;
+    shakeCompletedRef.current = false;
+    setDrawMethod('shake');
+    setDrawPhase('shaking');
+    setStep('drawing');
+  }, [selectedGodId]);
+
   const finishMeditation = useCallback(() => {
     const god = selectedGodId ? gods.find(g => g.id === selectedGodId) : null;
     if (god?.poemSystem === '諸葛神數') {
       setDrawMethod('number');
       setStep('enter-zhuge-number');
     } else {
-      setStep('choose-draw-method');
+      performDraw();
     }
-  }, [selectedGodId]);
-
-  const performPermissionJiaobei = useCallback((): JiaobeiResult => {
-    const result = tossJiaobei();
-    setJiaobeiResults(prev => [...prev, result]);
-    return result;
-  }, []);
+  }, [selectedGodId, performDraw]);
 
   const performVerificationJiaobei = useCallback((): JiaobeiResult => {
     const result = tossJiaobei();
@@ -111,7 +111,7 @@ export function useDivination() {
     setStep('drawing');
   }, []);
 
-  const completeDivination = useCallback(async (poem: Poem, godName: string) => {
+  const completeDivination = useCallback(async (poem: Poem, godName: string, confirmed: boolean) => {
     setStep('ai-interpret');
     let interpretation: string | null = null;
     try {
@@ -154,6 +154,8 @@ export function useDivination() {
       questionCategory,
       aiInterpretation: interpretation || undefined,
       actionPlan: buildActionPlan({ poem, questionCategory, question }),
+      poemConfirmed: confirmed || undefined,
+      poemConfirmResult: confirmed ? '連續三次聖筊確認' : undefined,
     });
     setCurrentRecord(record);
     setIsFavorited(await isFavorite(poem.number, godName));
@@ -204,30 +206,31 @@ export function useDivination() {
       setStep('verify-poem');
       return;
     }
-    await completeDivination(poem, god?.name || '神明');
+    await completeDivination(poem, god?.name || '神明', false);
   }, [selectedGodId, zhugeNumber, completeDivination]);
 
   const completeVerification = useCallback(() => {
+    if (!drawnPoem || verificationResults.length < 3 ||
+        verificationResults.slice(-3).some((result) => result !== 'shengbei')) return;
+    void completeDivination(drawnPoem, selectedGod?.name || '神明', true);
+  }, [completeDivination, drawnPoem, selectedGod?.name, verificationResults]);
+
+  const rejectVerification = useCallback(() => {
     if (!drawnPoem) return;
-    void completeDivination(drawnPoem, selectedGod?.name || '神明');
-  }, [completeDivination, drawnPoem, selectedGod?.name]);
+    setDrawnPoem(null);
+    setPendingPoem(null);
+    setVerificationResults([]);
+    setIsLoading(false);
+    shakeCompletedRef.current = false;
+    setDrawMethod('shake');
+    setDrawPhase('shaking');
+    setStep('drawing');
+    showToast('此籤未獲確認，請重新搖籤。');
+  }, [drawnPoem, showToast]);
 
   // 開始抽籤：諸葛神數已經有使用者輸入的數字，卦象是固定的，不需要搖籤筒，
   // 直接進入開籤演出；一般籤詩則先進入 shaking 子階段，等使用者親自搖出籤枝
   // 之後（見 completeShake）才真正決定抽到哪一支。
-  const performDraw = useCallback((inputZhugeNumber?: number) => {
-    if (!selectedGodId) return;
-    shakeCompletedRef.current = false;
-    const god = gods.find(g => g.id === selectedGodId);
-    setStep('drawing');
-    if (god?.poemSystem === '諸葛神數' && inputZhugeNumber != null) {
-      setDrawPhase('revealing');
-      void revealDraw(inputZhugeNumber, undefined, false);
-      return;
-    }
-    setDrawPhase('shaking');
-  }, [selectedGodId, revealDraw]);
-
   const performAutoDraw = useCallback((seed?: number, requiresVerification = true) => {
     if (!selectedGodId) return;
     setStep('drawing');
@@ -251,9 +254,12 @@ export function useDivination() {
 
   const chooseDrawMethod = useCallback((method: DrawMethod) => {
     setDrawMethod(method);
-    if (method === 'jiaobei-shake' || method === 'jiaobei-auto') {
-      setJiaobeiResults([]);
-      setStep('toss-jiaobei');
+    if (method === 'shake') {
+      performDraw();
+      return;
+    }
+    if (method === 'auto') {
+      performAutoDraw();
       return;
     }
     if (method === 'number') {
@@ -261,14 +267,14 @@ export function useDivination() {
       return;
     }
     performAutoDraw(undefined, false);
-  }, [performAutoDraw]);
+  }, [performAutoDraw, performDraw]);
 
   // 搖籤筒的互動階段結束時呼叫：seed 來自使用者操作遙測的雜湊，
   // 用來決定實際抽到哪一支籤。
   const completeShake = useCallback((seed: number) => {
-        if (shakeCompletedRef.current) return;
+    if (shakeCompletedRef.current) return;
     shakeCompletedRef.current = true;
-setDrawPhase('revealing');
+    setDrawPhase('revealing');
     void revealDraw(undefined, seed, true);
   }, [revealDraw]);
 
@@ -295,7 +301,6 @@ setDrawPhase('revealing');
     setQuestion('');
     setQuestionCategory('general');
     setUserName('');
-    setJiaobeiResults([]);
     setVerificationResults([]);
     setZhugeNumber(null);
     setDrawnPoem(null);
@@ -305,7 +310,7 @@ setDrawPhase('revealing');
     setIsFavorited(false);
     setIsLoading(false);
     setDrawPhase('revealing');
-    setDrawMethod('jiaobei-shake');
+    setDrawMethod('shake');
   }, []);
 
   return {
@@ -315,7 +320,6 @@ setDrawPhase('revealing');
     question,
     questionCategory,
     userName,
-    jiaobeiResults,
     verificationResults,
     drawnPoem,
     pendingPoem,
@@ -333,7 +337,6 @@ setDrawPhase('revealing');
     selectGod,
     startMeditation,
     finishMeditation,
-    performPermissionJiaobei,
     performVerificationJiaobei,
     submitZhugeNumber,
     performDraw,
@@ -342,6 +345,7 @@ setDrawPhase('revealing');
     chooseDrawMethod,
     completeShake,
     completeVerification,
+    rejectVerification,
     finishDrawAnimation,
     toggleFavorite,
     reset,

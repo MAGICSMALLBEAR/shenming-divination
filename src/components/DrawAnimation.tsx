@@ -66,6 +66,7 @@ interface DrawAnimationProps {
   // interactive：true 時籤枝不會自動跳出，使用者必須親自「搖籤筒」
   // （依 shakeMode 用拖曳或長按）才會決定籤詩、進入既有的開籤演出。
   interactive?: boolean;
+  requiresVerification?: boolean;
   shakeMode?: ShakeMode;
   onShakeComplete?: (seed: number) => void;
   onComplete?: () => void;
@@ -79,6 +80,7 @@ export function DrawAnimation({
   lowMotion = false,
   soundEnabled = true,
   interactive = false,
+  requiresVerification = false,
   shakeMode = 'drag',
   onShakeComplete,
   onComplete,
@@ -1035,8 +1037,12 @@ export function DrawAnimation({
           },
         ]}
       >
-        <Text style={[styles.revealCardTitle, { color: highlightColor }]}>聖意已定</Text>
-        <Text style={styles.revealCardText}>第 {poemNumber ?? '?'} 籤已落定，請恭讀聖意。</Text>
+        <Text style={[styles.revealCardTitle, { color: highlightColor }]}>籤號已抽出</Text>
+        <Text style={styles.revealCardText}>
+          {requiresVerification
+            ? `第 ${poemNumber ?? '?'} 籤已抽出，接著請擲筊驗籤。`
+            : `第 ${poemNumber ?? '?'} 籤已抽出，請恭讀籤詩。`}
+        </Text>
       </Animated.View>
     </ScrollView>
   );

@@ -11,7 +11,7 @@ describe('divine presence state mapping', () => {
     ['xiaobei', 'reconsider'],
     ['yinbei', 'decline'],
   ] as const)('maps %s to the matching deity response', (result, expected) => {
-    expect(getDivinePresenceMode('toss-jiaobei', result)).toBe(expected);
+    expect(getDivinePresenceMode('verify-poem', result)).toBe(expected);
   });
 
   it('hands the visual focus to the poem during drawing and interpretation', () => {

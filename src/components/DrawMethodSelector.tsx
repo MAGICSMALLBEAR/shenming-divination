@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -20,26 +20,25 @@ const methodOptions: {
   icon: string;
 }[] = [
   {
-    id: 'jiaobei-shake',
-    title: '完整儀式：擲筊搖籤',
-    subtitle: '聖筊後親自搖籤筒',
-    desc: '先請示、親自搖籤，抽出後再以三聖筊驗籤；適合手機或可拖曳操作的裝置。',
+    id: 'shake',
+    title: '完整儀式：搖籤驗籤',
+    subtitle: '親自搖籤筒，抽出後驗籤',
+    desc: '抽出一支籤後以連續三次聖筊確認；任一次未獲聖筊，就重新抽籤。',
     badge: '完整流程',
     icon: '🎋',
   },
   {
-    id: 'jiaobei-auto',
-    title: '快捷：擲筊後自動開籤',
-    subtitle: '請示神明後直接開籤',
-    desc: '省略手動搖籤，仍會先請示並在抽籤後進行三聖筊驗籤。',
-    badge: Platform.OS === 'web' ? '網頁推薦' : undefined,
+    id: 'auto',
+    title: '快捷：自動抽籤',
+    subtitle: '無須手動搖籤筒',
+    desc: '系統抽出一支籤，之後仍需連續三次聖筊驗籤。',
     icon: '🌓',
   },
   {
     id: 'direct',
     title: '快捷：直接點籤',
     subtitle: '一念既定，直接抽籤',
-    desc: '省略請示、搖籤與驗籤，適合快速回顧或操作不便時。',
+    desc: '省略搖籤與驗籤，適合快速回顧或操作不便時。',
     icon: '☝️',
   },
   {
@@ -60,7 +59,7 @@ export function DrawMethodSelector({ godName = '神明', onSelect }: DrawMethodS
       <View style={styles.header}>
         <Text style={styles.eyebrow}>求籤方式</Text>
         <Text style={styles.title}>選擇抽籤方式</Text>
-        <Text style={styles.subtitle}>向{godName}請示前，選一種最適合你現在裝置與心境的方式。</Text>
+        <Text style={styles.subtitle}>向{godName}求籤，可選擇適合裝置與心境的方式。</Text>
       </View>
 
       <View style={styles.grid}>
@@ -90,7 +89,7 @@ export function DrawMethodSelector({ godName = '神明', onSelect }: DrawMethodS
 
       <View style={styles.noteCard}>
         <Text style={styles.noteTitle}>網頁版提示</Text>
-        <Text style={styles.noteText}>如果無法拖曳或晃動籤筒，建議選「擲筊後自動開籤」或「心中報數」。抽籤結果仍會保存、解籤與回訪。</Text>
+        <Text style={styles.noteText}>若不方便拖曳籤筒，可選「自動抽籤」後驗籤，或以「心中報數」快速取籤。</Text>
       </View>
     </ScrollView>
   );
