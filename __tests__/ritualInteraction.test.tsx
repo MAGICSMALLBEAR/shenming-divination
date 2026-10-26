@@ -42,10 +42,11 @@ describe('ritual interactions', () => {
   });
 
   it('moves from lighting incense to the offering action', async () => {
+    const onComplete = jest.fn();
     const view = await render(
       <IncenseRitual
         godName="Test God"
-        onComplete={jest.fn()}
+        onComplete={onComplete}
         ritualStyleKey="bronze"
         onStyleChange={jest.fn()}
       />
@@ -67,6 +68,13 @@ describe('ritual interactions', () => {
     expect(offerButton).toBeTruthy();
     await fireEvent.press(offerButton);
     expect(view.queryByText('\u5c07\u9999\u5949\u5165\u9999\u7210')).toBeNull();
+
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(onComplete).not.toHaveBeenCalled();
+    await fireEvent.press(view.getByText('\u5408\u638c\u975c\u5fc3\uff0c\u958b\u59cb\u8acb\u793a'));
+    expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
   it('detects the incense over the censer in scene coordinates', () => {

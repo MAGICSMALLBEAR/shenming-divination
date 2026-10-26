@@ -96,7 +96,6 @@ export function IncenseRitual({
   const incenseLift = useRef(new Animated.Value(0)).current;
   const incenseTranslationRef = useRef(HAND_INCENSE_START);
   const placedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const completeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 三個不同週期的燃燒抖動來源疊加，組合起來才會像真實火苗不規則跳動，
   // 而不是單一等速明滅。
   const flameFlickerFast = useRef(new Animated.Value(0)).current;
@@ -120,7 +119,6 @@ export function IncenseRitual({
       incensePosition.x.removeListener(xListener);
       incensePosition.y.removeListener(yListener);
       if (placedTimerRef.current) clearTimeout(placedTimerRef.current);
-      if (completeTimerRef.current) clearTimeout(completeTimerRef.current);
     };
   }, [incensePosition]);
 
@@ -301,7 +299,6 @@ export function IncenseRitual({
       }).start();
 
       void playIncenseSound().catch(() => {});
-      completeTimerRef.current = setTimeout(onComplete, reducedMotion ? 300 : 950);
     });
   };
 
@@ -442,7 +439,7 @@ export function IncenseRitual({
             : '\u5df2\u9ede\u9999\uff0c\u62d6\u66f3\u5230\u9999\u7210\u4e2d\u592e\u6216\u76f4\u63a5\u9ede\u9999\u7210\u3002'
           : step === 'inserting'
             ? '\u6b63\u5c07\u9999\u7a69\u7a69\u5949\u5165\u9999\u7210\u2026'
-          : '\u4e09\u70b7\u9999\u5df2\u5165\u7210\uff0c\u7a0d\u5f8c\u5c31\u80fd\u9032\u5165\u4e0b\u4e00\u6bb5\u5100\u5f0f\u3002';
+          : '\u4e09\u70b7\u9999\u5df2\u5165\u7210\uff0c\u5408\u638c\u975c\u5fc3\u5f8c\u518d\u958b\u59cb\u8acb\u793a\u3002';
 
   const detailText =
     step === 'idle'
@@ -453,7 +450,7 @@ export function IncenseRitual({
           ? '\u628a\u9999\u79fb\u5230\u7210\u53e3\u4e0a\u65b9\uff0c\u63d2\u5165\u6642\u6703\u6709\u9999\u7070\u4e0b\u58d3\u8207\u63da\u7070\u53cd\u61c9\u3002'
           : step === 'inserting'
             ? '\u9999\u675f\u5df2\u5c0d\u6e96\u7210\u5fc3\uff0c\u6b63\u7de9\u7de9\u5165\u7210\u3002'
-          : '\u9999\u5df2\u5b89\u5ea7\uff0c\u8acb\u7a0d\u5019\u795e\u524d\u56de\u61c9\u3002';
+          : '\u9999\u5df2\u5b89\u5ea7\uff0c\u8acb\u5148\u5408\u638c\u6574\u7406\u5fc3\u5ff5\uff0c\u6e96\u5099\u9032\u5165\u975c\u5fc3\u3002';
 
   const showHandIncense = step !== 'placed';
 
@@ -778,6 +775,17 @@ export function IncenseRitual({
             accessibilityLabel="將香奉入香爐"
           >
             <Text style={styles.lightBtnText}>{'\u5c07\u9999\u5949\u5165\u9999\u7210'}</Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {step === 'placed' ? (
+          <TouchableOpacity
+            style={[styles.lightBtn, styles.offerBtn]}
+            onPress={onComplete}
+            accessibilityRole="button"
+            accessibilityLabel="合掌靜心，開始請示"
+          >
+            <Text style={styles.lightBtnText}>合掌靜心，開始請示</Text>
           </TouchableOpacity>
         ) : null}
       </View>

@@ -498,15 +498,6 @@ export default function SettingsScreen() {
         <View style={[styles.section, layout.isDesktop && styles.fullWidthSection]}>
           <Text style={styles.sectionTitle}>{t('settingsDivinationFlow')}</Text>
           <ToggleRow
-            label={t('settingsStrictMode')}
-            description={t('settingsStrictModeDesc')}
-            value={Boolean(settings.strictMode)}
-            onToggle={() =>
-              setSettings((prev) => ({ ...prev, strictMode: !prev.strictMode }))
-            }
-          />
-
-          <ToggleRow
             label={t('settingsLowMotion')}
             description={t('settingsLowMotionDesc')}
             value={Boolean(settings.lowMotionMode)}

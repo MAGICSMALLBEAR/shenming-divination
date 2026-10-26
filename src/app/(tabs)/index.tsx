@@ -57,7 +57,6 @@ export default function HomeScreen() {
   const { theme } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme), [theme]);
   const reducedMotion = useReducedMotion();
-  const [strictMode, setStrictMode] = React.useState(false);
   const [lowMotionMode, setLowMotionMode] = React.useState(false);
   const [shakeTossSignal, setShakeTossSignal] = React.useState(0);
   const [incenseDone, setIncenseDone] = React.useState(false);
@@ -116,10 +115,11 @@ export default function HomeScreen() {
   const isTablet = layout.isTablet;
   const pageMaxWidth = layout.isWideDesktop ? 1180 : layout.isDesktop ? 1080 : layout.contentMaxWidth;
   const selectedGodCardImage = getGodCloseupImage(div.selectedGod?.id) ?? getGodCardImage(div.selectedGod?.id);
-  const lastJiaobeiResult = div.jiaobeiResults.at(-1) ?? null;
+  const lastJiaobeiResult = (div.step === 'verify-poem' ? div.verificationResults : div.jiaobeiResults).at(-1) ?? null;
   const showDivinePresence = div.selectedGod && div.step !== 'select-god';
   const compactDivinePresence =
     div.step === 'drawing' ||
+    div.step === 'verify-poem' ||
     div.step === 'reveal-poem' ||
     div.step === 'ai-interpret' ||
     div.step === 'result';
@@ -162,7 +162,7 @@ export default function HomeScreen() {
   // 環境音效：冥想 / 擲筊步驟啟動，其他步驟停止
   React.useEffect(() => {
     if (!settings) return;
-    const ambientSteps = ['meditate', 'toss-jiaobei'];
+    const ambientSteps = ['meditate', 'toss-jiaobei', 'verify-poem'];
     if (settings.ambientSound) {
       if (ambientSteps.includes(div.step)) {
         startAmbientSound().catch(() => {});
@@ -175,7 +175,6 @@ export default function HomeScreen() {
 
   React.useEffect(() => {
     if (!settings) return;
-    setStrictMode(settings.strictMode || false);
     setLowMotionMode(Boolean(settings.lowMotionMode));
   }, [settings]);
 
@@ -322,6 +321,7 @@ export default function HomeScreen() {
       { key: 'meditate', icon: '🧘' },
       { key: isZhuge ? 'enter-zhuge-number' : 'choose-draw-method', icon: isZhuge ? '🔢' : '🎛️' },
       { key: 'drawing', icon: '🎋' },
+      { key: 'verify-poem', icon: '🌓' },
       { key: 'result', icon: '✨' },
     ];
     const stepKey = (s: string) => {
@@ -552,10 +552,9 @@ export default function HomeScreen() {
         return (
           <View style={styles.fullScreen}>
             <Jiaobei
-              onToss={div.performJiaobei}
+              onToss={div.performPermissionJiaobei}
               onShengbei={div.drawMethod === 'jiaobei-auto' ? div.performAutoDraw : div.performDraw}
               results={div.jiaobeiResults}
-              strictMode={strictMode}
               tossSignal={shakeTossSignal}
               lowMotion={lowMotionMode}
               ritualStyleKey={ritualStyle}
@@ -564,6 +563,21 @@ export default function HomeScreen() {
             <View style={styles.shakeHint}>
               <Text style={styles.shakeHintText}>{div.drawMethod === 'jiaobei-auto' ? '聖筊後會自動開籤，不需要搖籤筒' : '📳 或搖動手機擲筊'}</Text>
             </View>
+          </View>
+        );
+      case 'verify-poem':
+        return (
+          <View style={styles.fullScreen}>
+            <Jiaobei
+              phase="verification"
+              requiredShengbei={3}
+              onToss={div.performVerificationJiaobei}
+              onShengbei={div.completeVerification}
+              results={div.verificationResults}
+              lowMotion={lowMotionMode}
+              ritualStyleKey={ritualStyle}
+              onStyleChange={setRitualStyle}
+            />
           </View>
         );
       case 'drawing':
@@ -779,7 +793,7 @@ export default function HomeScreen() {
             <SameMatterNotice
               record={sameMatter?.record ?? null}
               godName={div.selectedGod?.name ?? '神明'}
-              allowOverride={!strictMode}
+              allowOverride
               onChangeQuestion={() => setSameMatter(null)}
               onProceed={() => {
                 if (sameMatter) div.startMeditation(sameMatter.question, sameMatter.category, sameMatter.name);
@@ -796,7 +810,7 @@ export default function HomeScreen() {
                     step={div.step}
                     incenseDone={incenseDone}
                     lastJiaobei={lastJiaobeiResult}
-                    responseKey={div.jiaobeiResults.length}
+                    responseKey={div.step === 'verify-poem' ? div.verificationResults.length : div.jiaobeiResults.length}
                     lowMotion={reducedMotion || lowMotionMode}
                     compact={compactDivinePresence}
                   />

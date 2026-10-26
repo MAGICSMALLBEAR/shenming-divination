@@ -178,7 +178,9 @@ async function main() {
   if (!remoteUrl) {
     if (!fs.existsSync(path.join(DIST, 'sw.js'))) throw new Error('dist/ is missing; run npm run export:web first.');
     swSource = fs.readFileSync(path.join(DIST, 'sw.js'), 'utf8');
-    if (swSource.includes("'__BUILD_ID__'")) throw new Error('dist/sw.js was not patched; run npm run export:web.');
+    if (/const BUILD_ID = '__BUILD_ID__';/.test(swSource)) {
+      throw new Error('dist/sw.js was not patched; run npm run export:web.');
+    }
   }
 
   const { chromium } = loadPlaywright();

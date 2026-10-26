@@ -25,6 +25,7 @@ export type FlowStep =
   | 'choose-draw-method'
   | 'toss-jiaobei'
   | 'drawing'
+  | 'verify-poem'
   | 'reveal-poem'
   | 'ai-interpret'
   | 'result';
@@ -41,6 +42,7 @@ export function useDivination() {
   const [questionCategory, setQuestionCategory] = useState('general');
   const [userName, setUserName] = useState('');
   const [jiaobeiResults, setJiaobeiResults] = useState<JiaobeiResult[]>([]);
+  const [verificationResults, setVerificationResults] = useState<JiaobeiResult[]>([]);
   const [zhugeNumber, setZhugeNumber] = useState<number | null>(null);
   const [drawnPoem, setDrawnPoem] = useState<Poem | null>(null);
   const [pendingPoem, setPendingPoem] = useState<Poem | null>(null);
@@ -88,9 +90,15 @@ export function useDivination() {
     }
   }, [selectedGodId]);
 
-  const performJiaobei = useCallback((): JiaobeiResult => {
+  const performPermissionJiaobei = useCallback((): JiaobeiResult => {
     const result = tossJiaobei();
     setJiaobeiResults(prev => [...prev, result]);
+    return result;
+  }, []);
+
+  const performVerificationJiaobei = useCallback((): JiaobeiResult => {
+    const result = tossJiaobei();
+    setVerificationResults(prev => [...prev, result]);
     return result;
   }, []);
 
@@ -103,7 +111,59 @@ export function useDivination() {
     setStep('drawing');
   }, []);
 
-  // revealDraw 負責「籤詩已經決定之後」的整段流程：開籤動畫、AI 解籤、存檔。
+  const completeDivination = useCallback(async (poem: Poem, godName: string) => {
+    setStep('ai-interpret');
+    let interpretation: string | null = null;
+    try {
+      const recentHistory = (await getHistory())
+        .filter((record) => record.questionCategory === questionCategory)
+        .slice(0, 3)
+        .map((record) => `${record.godName}第${record.poem.number}籤/${record.poem.level}/${record.verificationStatus ?? '待驗證'}`)
+        .join('；');
+      interpretation = await getAIInterpretation({
+        godName,
+        userName: userName || '善信',
+        question,
+        questionCategory,
+        poemNumber: poem.number,
+        poemContent: poem.content,
+        poemMeaning: poem.vernacular,
+        poemStory: poem.story,
+        poemLevel: poem.level,
+        recentHistorySummary: recentHistory || undefined,
+      });
+      setAIInterpretation(interpretation);
+    } catch {
+      setAIInterpretation(null);
+    }
+
+    await saveLastPoemContext({
+      godName,
+      poemContent: poem.content,
+      poemTitle: poem.title || '',
+      poemLevel: poem.level,
+      aiInterpretation: interpretation || undefined,
+      question,
+      timestamp: Date.now(),
+    });
+
+    const record = await saveDivinationRecord({
+      godName,
+      poem,
+      question,
+      questionCategory,
+      aiInterpretation: interpretation || undefined,
+      actionPlan: buildActionPlan({ poem, questionCategory, question }),
+    });
+    setCurrentRecord(record);
+    setIsFavorited(await isFavorite(poem.number, godName));
+    setIsLoading(false);
+    setStep('result');
+
+    if (await shouldRequestReview(poem.level)) requestReview();
+  }, [question, questionCategory, userName]);
+
+  // revealDraw 負責「籤詩已經決定之後」的開籤動畫。完整儀式會先驗籤，再解籤與存檔。
   // seed 若有值（來自搖籤筒的操作遙測），一般求籤會用它決定抽到哪一支籤；
   // 諸葛神數的情況則直接依 inputZhugeNumber 對應固定的卦象，不受 seed 影響。
   const revealDraw = useCallback(async (inputZhugeNumber?: number, seed?: number) => {
@@ -135,73 +195,18 @@ export function useDivination() {
 
     setDrawnPoem(poem);
     setPendingPoem(null);
-    setStep('reveal-poem');
-
-    // 開始 AI 解籤
-    setStep('ai-interpret');
-    let interpretation: string | null = null;
-    try {
-    const recentHistory = (await getHistory())
-      .filter((record) => record.questionCategory === questionCategory)
-      .slice(0, 3)
-      .map((record) => `${record.godName}第${record.poem.number}籤/${record.poem.level}/${record.verificationStatus ?? '待驗證'}`)
-      .join('；');
-      interpretation = await getAIInterpretation({
-        godName: god?.name || '神明',
-        userName: userName || '善信',
-        question,
-        questionCategory,
-        poemNumber: poem.number,
-        poemContent: poem.content,
-        poemMeaning: poem.vernacular,
-        poemStory: poem.story,
-        poemLevel: poem.level,
-        recentHistorySummary: recentHistory || undefined,
-      });
-      setAIInterpretation(interpretation);
-    } catch {
-      setAIInterpretation(null);
+    if (drawMethod === 'jiaobei-shake' || drawMethod === 'jiaobei-auto') {
+      setVerificationResults([]);
+      setStep('verify-poem');
+      return;
     }
+    await completeDivination(poem, god?.name || '神明');
+  }, [selectedGodId, zhugeNumber, drawMethod, completeDivination]);
 
-    // 儲存最後籤詩供對話頁使用
-    await saveLastPoemContext({
-      godName: god?.name || '神明',
-      poemContent: poem.content,
-      poemTitle: poem.title || '',
-      poemLevel: poem.level,
-      aiInterpretation: interpretation || undefined,
-      question,
-      timestamp: Date.now(),
-    });
-
-    // 儲存紀錄
-    const actionPlan = buildActionPlan({
-      poem,
-      questionCategory,
-      question,
-    });
-
-    const record = await saveDivinationRecord({
-      godName: god?.name || '神明',
-      poem,
-      question,
-      questionCategory,
-      aiInterpretation: interpretation || undefined,
-      actionPlan,
-    });
-    setCurrentRecord(record);
-
-    // 檢查是否已收藏
-    const fav = await isFavorite(poem.number, god?.name);
-    setIsFavorited(fav);
-
-    setIsLoading(false);
-    setStep('result');
-
-    if (await shouldRequestReview(poem.level)) {
-      requestReview();
-    }
-  }, [selectedGodId, question, questionCategory, userName, zhugeNumber]);
+  const completeVerification = useCallback(() => {
+    if (!drawnPoem) return;
+    void completeDivination(drawnPoem, selectedGod?.name || '神明');
+  }, [completeDivination, drawnPoem, selectedGod?.name]);
 
   // 開始抽籤：諸葛神數已經有使用者輸入的數字，卦象是固定的，不需要搖籤筒，
   // 直接進入開籤演出；一般籤詩則先進入 shaking 子階段，等使用者親自搖出籤枝
@@ -287,6 +292,7 @@ setDrawPhase('revealing');
     setQuestionCategory('general');
     setUserName('');
     setJiaobeiResults([]);
+    setVerificationResults([]);
     setZhugeNumber(null);
     setDrawnPoem(null);
     setPendingPoem(null);
@@ -306,6 +312,7 @@ setDrawPhase('revealing');
     questionCategory,
     userName,
     jiaobeiResults,
+    verificationResults,
     drawnPoem,
     pendingPoem,
     aiInterpretation,
@@ -322,13 +329,15 @@ setDrawPhase('revealing');
     selectGod,
     startMeditation,
     finishMeditation,
-    performJiaobei,
+    performPermissionJiaobei,
+    performVerificationJiaobei,
     submitZhugeNumber,
     performDraw,
     performAutoDraw,
     performNumberDraw,
     chooseDrawMethod,
     completeShake,
+    completeVerification,
     finishDrawAnimation,
     toggleFavorite,
     reset,
