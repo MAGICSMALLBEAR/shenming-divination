@@ -166,7 +166,11 @@ export function useDivination() {
   // revealDraw 負責「籤詩已經決定之後」的開籤動畫。完整儀式會先驗籤，再解籤與存檔。
   // seed 若有值（來自搖籤筒的操作遙測），一般求籤會用它決定抽到哪一支籤；
   // 諸葛神數的情況則直接依 inputZhugeNumber 對應固定的卦象，不受 seed 影響。
-  const revealDraw = useCallback(async (inputZhugeNumber?: number, seed?: number) => {
+  const revealDraw = useCallback(async (
+    inputZhugeNumber: number | undefined,
+    seed: number | undefined,
+    requiresVerification: boolean
+  ) => {
     if (!selectedGodId) return;
     const god = gods.find(g => g.id === selectedGodId);
     const num = inputZhugeNumber ?? zhugeNumber;
@@ -195,13 +199,13 @@ export function useDivination() {
 
     setDrawnPoem(poem);
     setPendingPoem(null);
-    if (drawMethod === 'jiaobei-shake' || drawMethod === 'jiaobei-auto') {
+    if (requiresVerification) {
       setVerificationResults([]);
       setStep('verify-poem');
       return;
     }
     await completeDivination(poem, god?.name || '神明');
-  }, [selectedGodId, zhugeNumber, drawMethod, completeDivination]);
+  }, [selectedGodId, zhugeNumber, completeDivination]);
 
   const completeVerification = useCallback(() => {
     if (!drawnPoem) return;
@@ -218,17 +222,17 @@ export function useDivination() {
     setStep('drawing');
     if (god?.poemSystem === '諸葛神數' && inputZhugeNumber != null) {
       setDrawPhase('revealing');
-      void revealDraw(inputZhugeNumber);
+      void revealDraw(inputZhugeNumber, undefined, false);
       return;
     }
     setDrawPhase('shaking');
   }, [selectedGodId, revealDraw]);
 
-  const performAutoDraw = useCallback((seed?: number) => {
+  const performAutoDraw = useCallback((seed?: number, requiresVerification = true) => {
     if (!selectedGodId) return;
     setStep('drawing');
     setDrawPhase('revealing');
-    void revealDraw(undefined, seed ?? (Date.now() + selectedGodId));
+    void revealDraw(undefined, seed ?? (Date.now() + selectedGodId), requiresVerification);
   }, [selectedGodId, revealDraw]);
 
   const performNumberDraw = useCallback((n: number) => {
@@ -238,11 +242,11 @@ export function useDivination() {
     setStep('drawing');
     setDrawPhase('revealing');
     if (god?.poemSystem === '諸葛神數') {
-      void revealDraw(n);
+      void revealDraw(n, undefined, false);
       return;
     }
     const seed = (Math.imul(n >>> 0, 2654435761) ^ Math.imul(selectedGodId, 1597334677) ^ Date.now()) >>> 0;
-    void revealDraw(undefined, seed);
+    void revealDraw(undefined, seed, false);
   }, [selectedGodId, revealDraw]);
 
   const chooseDrawMethod = useCallback((method: DrawMethod) => {
@@ -256,7 +260,7 @@ export function useDivination() {
       setStep('enter-zhuge-number');
       return;
     }
-    performAutoDraw();
+    performAutoDraw(undefined, false);
   }, [performAutoDraw]);
 
   // 搖籤筒的互動階段結束時呼叫：seed 來自使用者操作遙測的雜湊，
@@ -265,7 +269,7 @@ export function useDivination() {
         if (shakeCompletedRef.current) return;
     shakeCompletedRef.current = true;
 setDrawPhase('revealing');
-    void revealDraw(undefined, seed);
+    void revealDraw(undefined, seed, true);
   }, [revealDraw]);
 
   // 收藏/取消收藏
