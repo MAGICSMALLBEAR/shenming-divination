@@ -31,14 +31,6 @@ interface Post {
 const LOCAL_KEY = '@community_posts_v1';
 const MAX_LOCAL = 30;
 
-// 預設示範貼文
-const SEED_POSTS: Post[] = [
-  { id: 's1', godName: '媽祖', poemNumber: 12, poemLevel: '上上籤', comment: '求感情求到上上籤！媽祖保佑真的很靈，一個月後就和好了 🙏', timestamp: Date.now() - 86400000 * 2, likes: 14 },
-  { id: 's2', godName: '關聖帝君', poemNumber: 38, poemLevel: '中平籤', comment: '求事業求到中平，關帝說要穩紮穩打，果然沒過多久升職了', timestamp: Date.now() - 86400000 * 5, likes: 8 },
-  { id: 's3', godName: '土地公', poemNumber: 7, poemLevel: '吉籤', comment: '買房前來求籤，求到吉籤，最後真的順利過戶！感恩福德正神', timestamp: Date.now() - 86400000 * 8, likes: 21 },
-  { id: 's4', godName: '觀世音菩薩', poemNumber: 51, poemLevel: '上吉籤', comment: '家人生病求菩薩保佑，求到上吉，後來手術很順利，南無觀世音菩薩', timestamp: Date.now() - 86400000 * 12, likes: 35 },
-];
-
 function levelColor(level: string) {
   if (isUnluckyLevel(level)) return '#E05050';
   if (level.includes('上上') || level.includes('大吉')) return '#FFD700';
@@ -91,9 +83,9 @@ export default function CommunityScreen() {
     try {
       const raw = await AsyncStorage.getItem(LOCAL_KEY);
       const local: Post[] = raw ? JSON.parse(raw) : [];
-      setPosts([...local, ...SEED_POSTS]);
+      setPosts(local);
     } catch {
-      setPosts(SEED_POSTS);
+      setPosts([]);
     }
     setLoading(false);
   }, [usingFirebase]);
@@ -228,6 +220,8 @@ export default function CommunityScreen() {
                 <ListItemSkeleton lines={2} />
                 <ListItemSkeleton lines={3} />
               </View>
+            ) : posts.length === 0 ? (
+              <Text style={styles.emptyText}>{t('communityEmpty')}</Text>
             ) : (
               posts.map((post, i) => (
                 <AnimatedPostItem key={post.id} delay={postDelays[i]?.delay ?? 0}>
@@ -404,5 +398,6 @@ function createTextStyles(theme: ThemeColors) {
   postTime: { color: theme.textMuted, fontSize: 11 },
   postComment: { color: theme.textLight, fontSize: 14, lineHeight: 22 },
   likeBtnText: { color: theme.textMuted, fontSize: 13 },
+  emptyText: { color: theme.textMuted, fontSize: 14, lineHeight: 22, textAlign: 'center', marginTop: 32 },
   });
 }

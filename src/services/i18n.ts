@@ -476,6 +476,7 @@ const translations: Record<string, Record<Lang, string>> = {
   // ── 社群 / Community ──────────────────────────────────────────
   communityHeaderSub: { 'zh-TW': '分享你的求籤心得與靈驗故事', en: 'Share your divination stories and experiences', ja: 'おみくじの感想や霊験を共有しましょう' },
   communityLocalBadge: { 'zh-TW': '本機模式（未連接雲端）', en: 'Local Mode (Offline)', ja: 'ローカルモード（オフライン）' },
+  communityEmpty: { 'zh-TW': '還沒有心得。分享你的第一則求籤心得吧！', en: 'No posts yet. Share your first divination story!', ja: 'まだ投稿はありません。最初の感想を共有しましょう！' },
   communityAddBtn: { 'zh-TW': '✏️ 分享求籤心得', en: '✏️ Share Your Story', ja: '✏️ 体験を共有' },
   communityAddBtnCollapse: { 'zh-TW': '▲ 收起', en: '▲ Collapse', ja: '▲ 閉じる' },
   communityPlaceholderGod: { 'zh-TW': '神明名稱（如：媽祖）', en: 'Deity name (e.g. Mazu)', ja: '神様の名前（例：媽祖）' },
