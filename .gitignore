@@ -57,3 +57,6 @@ dist-verify/
 .vercel
 # local screenshots
 debug*.png
+
+# 參考用籤本 PDF（來源與版權不明，不入庫）
+/*.pdf
