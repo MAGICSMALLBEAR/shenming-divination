@@ -60,3 +60,6 @@ debug*.png
 
 # 參考用籤本 PDF（來源與版權不明，不入庫）
 /*.pdf
+
+# 本機語音轉寫（Whisper）用的 Python 環境
+backend/.venv/
