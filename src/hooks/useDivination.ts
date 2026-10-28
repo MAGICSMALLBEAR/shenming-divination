@@ -35,6 +35,9 @@ export function useDivination() {
   const [questionCategory, setQuestionCategory] = useState('general');
   const [userName, setUserName] = useState('');
   const [verificationResults, setVerificationResults] = useState<JiaobeiResult[]>([]);
+  // Jiaobei completes after an animation delay. A ref prevents that delayed
+  // callback from reading the previous render's verification results.
+  const verificationResultsRef = useRef<JiaobeiResult[]>([]);
   const [zhugeNumber, setZhugeNumber] = useState<number | null>(null);
   const [drawnPoem, setDrawnPoem] = useState<Poem | null>(null);
   const [pendingPoem, setPendingPoem] = useState<Poem | null>(null);
@@ -90,7 +93,9 @@ export function useDivination() {
 
   const performVerificationJiaobei = useCallback((): JiaobeiResult => {
     const result = tossJiaobei();
-    setVerificationResults(prev => [...prev, result]);
+    const nextResults = [...verificationResultsRef.current, result];
+    verificationResultsRef.current = nextResults;
+    setVerificationResults(nextResults);
     return result;
   }, []);
 
@@ -188,6 +193,7 @@ export function useDivination() {
     setDrawnPoem(poem);
     setPendingPoem(null);
     if (requiresVerification) {
+      verificationResultsRef.current = [];
       setVerificationResults([]);
       setStep('verify-poem');
       return;
@@ -196,15 +202,17 @@ export function useDivination() {
   }, [selectedGodId, zhugeNumber, completeDivination]);
 
   const completeVerification = useCallback(() => {
-    if (!drawnPoem || verificationResults.length < 3 ||
-        verificationResults.slice(-3).some((result) => result !== 'shengbei')) return;
+    const results = verificationResultsRef.current;
+    if (!drawnPoem || results.length < 3 ||
+        results.slice(-3).some((result) => result !== 'shengbei')) return;
     void completeDivination(drawnPoem, selectedGod?.name || '神明', true);
-  }, [completeDivination, drawnPoem, selectedGod?.name, verificationResults]);
+  }, [completeDivination, drawnPoem, selectedGod?.name]);
 
   const rejectVerification = useCallback(() => {
     if (!drawnPoem) return;
     setDrawnPoem(null);
     setPendingPoem(null);
+    verificationResultsRef.current = [];
     setVerificationResults([]);
     setIsLoading(false);
     shakeCompletedRef.current = false;
@@ -287,6 +295,7 @@ export function useDivination() {
     setQuestion('');
     setQuestionCategory('general');
     setUserName('');
+    verificationResultsRef.current = [];
     setVerificationResults([]);
     setZhugeNumber(null);
     setDrawnPoem(null);

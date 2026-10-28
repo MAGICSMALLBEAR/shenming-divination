@@ -74,4 +74,27 @@ describe('求籤主流程', () => {
       random.mockRestore();
     }
   });
+
+  it('第三次聖筊的延遲 callback 仍會顯示籤詩結果', async () => {
+    const god = gods.find((item) => item.poemSystem !== '隢貉?蟡')!;
+    const { result } = await renderHook(() => useDivination());
+    await act(async () => result.current.selectGod(god.id));
+    await act(async () => result.current.chooseDrawMethod('auto'));
+    await act(async () => result.current.finishDrawAnimation());
+
+    // Jiaobei schedules this before onToss triggers a state rerender.
+    const delayedCompletion = result.current.completeVerification;
+    const random = jest.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      await act(async () => result.current.performVerificationJiaobei());
+      await act(async () => result.current.performVerificationJiaobei());
+      await act(async () => result.current.performVerificationJiaobei());
+      await act(async () => delayedCompletion());
+
+      expect(result.current.step).toBe('result');
+      expect(result.current.currentRecord?.poemConfirmed).toBe(true);
+    } finally {
+      random.mockRestore();
+    }
+  });
 });
