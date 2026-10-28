@@ -2,12 +2,6 @@
 import { useState, useCallback, useRef } from 'react';
 import type { Poem } from '@/data/poems/leiyushi';
 import { DRAW_ANIMATION_DEFAULT_MS, normalizeDrawAnimationDuration } from '@/constants/divination';
-import {
-  normalizeDrawAnimationMode,
-  normalizeDrawAnimationStyleKey,
-  pickRandomDrawAnimationStyleKey,
-  type DrawAnimationStyleKey,
-} from '@/constants/draw-animation-styles';
 import { gods } from '@/data/gods';
 import { tossJiaobei, drawPoem, drawZhugePoem, saveDivinationRecord } from '@/services/divination';
 import { addFavorite, getHistory, getSettings, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
@@ -50,8 +44,6 @@ export function useDivination() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [drawAnimationDurationMs, setDrawAnimationDurationMs] = useState(DRAW_ANIMATION_DEFAULT_MS);
-  const [drawAnimationStyleKey, setDrawAnimationStyleKey] =
-    useState<DrawAnimationStyleKey>('bronze');
   const animationResolverRef = useRef<(() => void) | null>(null);
   const shakeCompletedRef = useRef(false);
   const [drawPhase, setDrawPhase] = useState<DrawPhase>('revealing');
@@ -181,15 +173,9 @@ export function useDivination() {
       : drawPoem(selectedGodId, seed);
     const settings = await getSettings();
     const animationDuration = normalizeDrawAnimationDuration(settings?.drawAnimationDurationMs);
-    const animationMode = normalizeDrawAnimationMode(settings?.drawAnimationMode);
-    const animationStyle =
-      animationMode === 'fixed'
-        ? normalizeDrawAnimationStyleKey(settings?.drawAnimationStyleKey)
-        : pickRandomDrawAnimationStyleKey(Date.now() + poem.number + selectedGodId);
 
     setPendingPoem(poem);
     setDrawAnimationDurationMs(animationDuration);
-    setDrawAnimationStyleKey(animationStyle);
     setIsLoading(true);
 
     await new Promise<void>((resolve) => {
@@ -329,7 +315,6 @@ export function useDivination() {
     isFavorited,
     toastMessage,
     drawAnimationDurationMs,
-    drawAnimationStyleKey,
     drawPhase,
     drawMethod,
     // actions

@@ -660,14 +660,6 @@ export function IncenseRitual({
           />
         </View>
 
-        <View style={styles.offerPanel}>
-          <View style={styles.offerPanelTitleRow}>
-            <Text style={styles.offerPanelTitle}>{'\u5100\u5f0f\u72c0\u614b'}</Text>
-            <Text style={[styles.offerPanelTag, { color: ritualStyle.chipColor }]}>{ritualStyle.label}</Text>
-          </View>
-          <Text style={styles.offerPanelText}>{detailText}</Text>
-        </View>
-
         {showHandIncense ? (
           <Animated.View
             style={[
@@ -745,6 +737,15 @@ export function IncenseRitual({
             </TouchableOpacity>
           </Animated.View>
         ) : null}
+      </View>
+
+      {/* 儀式狀態放在場景下方：疊在場景裡會蓋住神像與燈籠 */}
+      <View style={styles.offerPanel}>
+        <View style={styles.offerPanelTitleRow}>
+          <Text style={styles.offerPanelTitle}>{'儀式狀態'}</Text>
+          <Text style={[styles.offerPanelTag, { color: ritualStyle.chipColor }]}>{ritualStyle.label}</Text>
+        </View>
+        <Text style={styles.offerPanelText}>{detailText}</Text>
       </View>
 
       <Text style={styles.instruction}>{instruction}</Text>
@@ -1270,17 +1271,15 @@ function createStyles(theme: ThemeColors) {
     height: '100%',
   },
   offerPanel: {
-    position: 'absolute',
-    left: 12,
-    top: 12,
-    width: 150,
+    width: '100%',
+    maxWidth: 460,
     borderRadius: 12,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 9,
-    backgroundColor: theme.bgCard + 'E8',
+    backgroundColor: theme.bgCard,
     borderWidth: 1,
     borderColor: theme.goldDark + '38',
-    zIndex: 8,
+    marginBottom: TempleSpacing.sm,
   },
   offerPanelTitleRow: {
     flexDirection: 'row',

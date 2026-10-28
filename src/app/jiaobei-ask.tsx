@@ -6,12 +6,13 @@ import { useRouter } from 'expo-router';
 
 import { Jiaobei } from '@/components/Jiaobei';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
-import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritual-styles';
+import { type RitualStyleKey } from '@/constants/ritual-styles';
+import { resolveDefaultRitualStyleKey } from '@/constants/draw-animation-styles';
 import { gods } from '@/data/gods';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { tossJiaobei, type JiaobeiResult } from '@/services/divination';
-import { getSettings } from '@/services/storage';
+import { getSettings, type AppSettings } from '@/services/storage';
 import type { ThemeColors } from '@/constants/themes';
 
 const QUESTION_MAX_LENGTH = 80;
@@ -27,22 +28,22 @@ export default function JiaobeiAskScreen() {
   const [round, setRound] = useState(0);
   const [results, setResults] = useState<JiaobeiResult[]>([]);
   const [granted, setGranted] = useState(false);
-  const [ritualStyle, setRitualStyle] = useState<RitualStyleKey>(getDefaultRitualStyleKey(gods[0]));
+  const [ritualStyle, setRitualStyle] = useState<RitualStyleKey>(resolveDefaultRitualStyleKey(gods[0]));
+  const [settings, setSettings] = useState<AppSettings | null>(null);
 
   const god = gods.find((item) => item.id === godId) ?? gods[0];
 
   const selectGod = (id: number) => {
     setGodId(id);
-    setRitualStyle(getDefaultRitualStyleKey(gods.find((item) => item.id === id)));
+    setRitualStyle(resolveDefaultRitualStyleKey(gods.find((item) => item.id === id), settings));
   };
 
   useEffect(() => {
-    getSettings().then((settings) => {
-      const preferred = gods.find((item) => item.id === settings?.preferredGodId);
-      if (preferred) {
-        setGodId(preferred.id);
-        setRitualStyle(getDefaultRitualStyleKey(preferred));
-      }
+    getSettings().then((stored) => {
+      setSettings(stored);
+      const preferred = gods.find((item) => item.id === stored?.preferredGodId);
+      if (preferred) setGodId(preferred.id);
+      setRitualStyle(resolveDefaultRitualStyleKey(preferred ?? gods[0], stored));
     }).catch(() => {});
   }, []);
 

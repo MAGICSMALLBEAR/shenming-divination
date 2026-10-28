@@ -31,6 +31,10 @@ export interface RitualStyleDefinition {
     placedSprite: ImageSourcePropType;
     realisticHolderSprite: ImageSourcePropType;
     realisticStickSprite: ImageSourcePropType;
+    /** 籤筒前層：挖掉筒口與上半圈口緣，籤枝夾在原圖與這張之間，看起來才像插在筒裡。 */
+    realisticHolderFrontSprite: ImageSourcePropType;
+    /** 籤筒圖內的筒口位置，皆為相對整張圖寬高的比例，供籤枝與飛籤定位。 */
+    realisticHolderMouth: { centerY: number; frontY: number; innerHalfW: number; bodyHalfW: number };
     /** Overlay shown after the incense has been seated. Kept separate from the censer so the vessel never swaps mid-ritual. */
     plantedIncenseSprite?: ImageSourcePropType;
   };
@@ -80,6 +84,8 @@ export const ritualStyles: Record<RitualStyleKey, RitualStyleDefinition> = {
       placedSprite: require('@/assets/images/ritual/realistic/bronze-holder.png'),
       realisticHolderSprite: require('@/assets/images/ritual/realistic/bronze-holder-v2.png'),
       realisticStickSprite: require('@/assets/images/ritual/realistic/bronze-stick-v2.png'),
+      realisticHolderFrontSprite: require('@/assets/images/ritual/realistic/bronze-holder-front-v2.png'),
+      realisticHolderMouth: { centerY: 0.0755, frontY: 0.1096, innerHalfW: 0.211, bodyHalfW: 0.2425 },
       plantedIncenseSprite: require('@/assets/images/ritual/realistic/bronze-incense-planted-v1.png'),
     },
     jiaobei: {
@@ -119,6 +125,8 @@ export const ritualStyles: Record<RitualStyleKey, RitualStyleDefinition> = {
       placedSprite: require('@/assets/images/ritual/realistic/porcelain-holder.png'),
       realisticHolderSprite: require('@/assets/images/ritual/realistic/celadon-holder-v2.png'),
       realisticStickSprite: require('@/assets/images/ritual/realistic/celadon-stick-v2.png'),
+      realisticHolderFrontSprite: require('@/assets/images/ritual/realistic/celadon-holder-front-v2.png'),
+      realisticHolderMouth: { centerY: 0.0814, frontY: 0.1192, innerHalfW: 0.2425, bodyHalfW: 0.2788 },
       plantedIncenseSprite: require('@/assets/images/ritual/realistic/celadon-incense-planted-v1.png'),
     },
     jiaobei: {
@@ -158,6 +166,8 @@ export const ritualStyles: Record<RitualStyleKey, RitualStyleDefinition> = {
       placedSprite: require('@/assets/images/ritual/realistic/cinnabar-holder.png'),
       realisticHolderSprite: require('@/assets/images/ritual/realistic/cinnabar-holder-v2.png'),
       realisticStickSprite: require('@/assets/images/ritual/realistic/cinnabar-stick-v2.png'),
+      realisticHolderFrontSprite: require('@/assets/images/ritual/realistic/cinnabar-holder-front-v2.png'),
+      realisticHolderMouth: { centerY: 0.0718, frontY: 0.1023, innerHalfW: 0.2132, bodyHalfW: 0.245 },
       plantedIncenseSprite: require('@/assets/images/ritual/realistic/cinnabar-incense-planted-v1.png'),
     },
     jiaobei: {
@@ -191,6 +201,8 @@ export const ritualStyles: Record<RitualStyleKey, RitualStyleDefinition> = {
       placedSprite: require('@/assets/images/ritual/realistic/ebony-holder.png'),
       realisticHolderSprite: require('@/assets/images/ritual/realistic/ebony-holder-v2.png'),
       realisticStickSprite: require('@/assets/images/ritual/realistic/ebony-stick-v2.png'),
+      realisticHolderFrontSprite: require('@/assets/images/ritual/realistic/ebony-holder-front-v2.png'),
+      realisticHolderMouth: { centerY: 0.0779, frontY: 0.1139, innerHalfW: 0.2142, bodyHalfW: 0.2463 },
       plantedIncenseSprite: require('@/assets/images/ritual/realistic/ebony-incense-planted-v1.png'),
     },
     jiaobei: {
@@ -219,6 +231,8 @@ export const ritualStyles: Record<RitualStyleKey, RitualStyleDefinition> = {
       placedSprite: require('@/assets/images/ritual/realistic/jade-holder.png'),
       realisticHolderSprite: require('@/assets/images/ritual/realistic/jade-holder-v2.png'),
       realisticStickSprite: require('@/assets/images/ritual/realistic/jade-stick-v2.png'),
+      realisticHolderFrontSprite: require('@/assets/images/ritual/realistic/jade-holder-front-v2.png'),
+      realisticHolderMouth: { centerY: 0.0623, frontY: 0.0863, innerHalfW: 0.2001, bodyHalfW: 0.23 },
       plantedIncenseSprite: require('@/assets/images/ritual/realistic/jade-incense-planted-v1.png'),
     },
     jiaobei: {

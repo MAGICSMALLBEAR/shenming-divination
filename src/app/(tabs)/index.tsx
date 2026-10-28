@@ -29,7 +29,8 @@ import { getDailyFortune, type DailyFortune } from '@/services/dailyFortune';
 import { playResultSound, startAmbientSound, stopAmbientSound } from '@/services/proceduralSound';
 import { getHistory, getLastPoemContext, getSettings, getFamilyMembers, addFamilyMember, removeFamilyMember, getVerificationFollowUps, type AppSettings, type DivinationRecord, type FamilyMember, type VerificationFollowUpSummary } from '@/services/storage';
 import { calcBazi, parseBirthYear } from '@/services/bazi';
-import { getDefaultRitualStyleKey, type RitualStyleKey } from '@/constants/ritual-styles';
+import { type RitualStyleKey } from '@/constants/ritual-styles';
+import { resolveDefaultRitualStyleKey } from '@/constants/draw-animation-styles';
 import { gods, type God } from '@/data/gods';
 import { getGodCardImage, getGodCloseupImage } from '@/data/godImages';
 import { GodPortrait } from '@/components/GodPortrait';
@@ -259,7 +260,7 @@ export default function HomeScreen() {
   const handleSelectGod = (godId: number) => {
     const god = gods.find((item) => item.id === godId);
     if (god) {
-      setRitualStyle(getDefaultRitualStyleKey(god));
+      setRitualStyle(resolveDefaultRitualStyleKey(god, settings));
     }
     div.selectGod(godId);
   };
@@ -577,7 +578,8 @@ export default function HomeScreen() {
             god={div.selectedGod}
             poemNumber={div.pendingPoem?.number}
             durationMs={div.drawAnimationDurationMs}
-            styleKey={div.drawAnimationStyleKey}
+            // 與上香、擲筊用同一種質感：使用者在上香時選定的籤筒不會在搖出籤後換成另一種
+            styleKey={ritualStyle}
             lowMotion={lowMotionMode}
             interactive={div.selectedGod?.poemSystem !== '諸葛神數' && div.drawMethod === 'shake'}
             requiresVerification={div.drawMethod === 'shake' || div.drawMethod === 'auto'}

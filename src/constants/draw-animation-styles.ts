@@ -1,9 +1,11 @@
 import {
+  getDefaultRitualStyleKey,
   ritualStyleOrder,
   ritualStyles,
   type RitualStyleKey,
 } from '@/constants/ritual-styles';
 
+// 上香預設質感：random = 依神明屬性預設（名稱沿用舊設定值，避免已存的設定失效），fixed = 固定用 drawAnimationStyleKey
 export type DrawAnimationMode = 'random' | 'fixed';
 export type DrawAnimationStyleKey = RitualStyleKey;
 
@@ -111,9 +113,14 @@ export function normalizeDrawAnimationStyleKey(
     : fallback;
 }
 
-export function pickRandomDrawAnimationStyleKey(seed = Date.now()): DrawAnimationStyleKey {
-  const index = Math.abs(seed) % drawAnimationStyleOrder.length;
-  return drawAnimationStyleOrder[index];
+// 選定神明時預先帶入的質感（香爐、籤筒、筊杯同一套）；使用者在上香或擲筊時仍可再換
+export function resolveDefaultRitualStyleKey(
+  god: Parameters<typeof getDefaultRitualStyleKey>[0],
+  settings?: { drawAnimationMode?: string | null; drawAnimationStyleKey?: string | null } | null
+): RitualStyleKey {
+  return normalizeDrawAnimationMode(settings?.drawAnimationMode) === 'fixed'
+    ? normalizeDrawAnimationStyleKey(settings?.drawAnimationStyleKey)
+    : getDefaultRitualStyleKey(god);
 }
 
 export function getDrawAnimationRitualStyle(key: DrawAnimationStyleKey) {
