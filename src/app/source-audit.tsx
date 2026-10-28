@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Linking, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { DEFAULT_YUELAO_EDITION } from '@/data/yuelaoEdition';
+import { getOracleIntakeProgress } from '@/data/oracleIntakeProgress';
 import {
   ORACLE_SOURCE_PENDING,
   getOracleSourceCardByGodId,
@@ -27,6 +28,14 @@ export default function SourceAuditScreen() {
   const audit = useMemo(() => auditAllOracles(), []);
   const rows = audit.rows;
   const cardUsage = useMemo(() => getOracleSourceCardUsage(), []);
+  const intakeProgress = useMemo(() => getOracleIntakeProgress(), []);
+  const [expandedEditionId, setExpandedEditionId] = useState<string | null>(null);
+  const statusCounts = {
+    available: intakeProgress.filter((item) => item.status === '可抽籤').length,
+    transcribed: intakeProgress.filter((item) => item.status === '原文已校・待展示權').length,
+    reviewing: intakeProgress.filter((item) => item.status === '校對中').length,
+    awaiting: intakeProgress.filter((item) => item.status === '待取得底本').length,
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -39,6 +48,71 @@ export default function SourceAuditScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.sectionTitle}>籤本收錄進度</Text>
+        <Text style={styles.sectionNote}>
+          可抽籤 {statusCounts.available} 套・原文已校待展示權 {statusCounts.transcribed} 套・校對中 {statusCounts.reviewing} 套・待取得底本 {statusCounts.awaiting} 套。來源連結代表可查到目錄，並不代表籤文已校對或取得 App 展示權。
+        </Text>
+        {intakeProgress.map((item) => {
+          const expanded = expandedEditionId === item.editionId;
+          const statusColor = item.status === '可抽籤'
+            ? theme.success
+            : item.status === '原文已校・待展示權'
+              ? theme.gold
+              : item.status === '校對中' ? theme.warning : theme.textMuted;
+          return (
+            <View key={item.editionId} style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardTitleGroup}>
+                  <Text style={styles.godName}>{item.title}</Text>
+                  <Text style={styles.systemName}>{item.temple}・{item.plannedSlots ?? '未核定'} 首／槽位</Text>
+                </View>
+                <View style={[styles.statusPill, { borderColor: statusColor }]}>
+                  <Text style={[styles.statusText, { color: statusColor }]}>{item.status}</Text>
+                </View>
+              </View>
+              <Text style={styles.metaText}>{item.note}</Text>
+              <Text style={styles.auditText}>
+                {item.status === '可抽籤'
+                  ? `已上線 ${item.checkedTextCount} 首`
+                  : `逐首頁連結 ${item.officialLinks}/${item.entries.length}・原文已轉錄 ${item.checkedTextCount} 首・無待確認用字 ${item.cleanTextCount} 首`}
+              </Text>
+              <Text style={styles.metaText}>App 展示權：{item.rightsCleared ? '已確認' : '待確認或待補紀錄'}</Text>
+              {item.sourceUrl ? (
+                <TouchableOpacity onPress={() => Linking.openURL(item.sourceUrl as string)} accessibilityRole="link">
+                  <Text style={styles.linkText}>查看數量或目錄依據 ↗</Text>
+                </TouchableOpacity>
+              ) : null}
+              {item.entries.length > 0 ? (
+                <TouchableOpacity
+                  onPress={() => setExpandedEditionId(expanded ? null : item.editionId)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${expanded ? '收起' : '查看'}${item.title}逐首來源`}
+                >
+                  <Text style={styles.linkText}>{expanded ? '收起' : '查看'}逐首來源與缺口（{item.entries.length} 筆）</Text>
+                </TouchableOpacity>
+              ) : null}
+              {expanded ? item.entries.map((entry, index) => (
+                <View key={`${item.editionId}-${index}`} style={styles.intakeEntry}>
+                  <Text style={styles.metaText}>
+                    {entry.officialLabel ?? (entry.number == null ? '未核定號碼' : `第 ${entry.number} 首`)}
+                    {entry.ritualPattern ? `・筊象 ${entry.ritualPattern}` : ''}
+                  </Text>
+                  <Text style={styles.pendingText}>
+                    {item.status === '原文已校・待展示權'
+                      ? '原文已轉錄・展示權待確認'
+                      : item.status === '校對中' ? '原文待轉錄／校對・展示權待確認' : '底本待取得・展示權待確認'}
+                  </Text>
+                  {entry.sourceUrl ? (
+                    <TouchableOpacity onPress={() => Linking.openURL(entry.sourceUrl as string)} accessibilityRole="link">
+                      <Text style={styles.linkText}>查看逐首頁 ↗</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              )) : null}
+            </View>
+          );
+        })}
+
         <View style={styles.summaryCard}>
           <Text style={styles.summaryNumber}>{audit.completeCount} / {rows.length}</Text>
           <Text style={styles.summaryLabel}>套籤系結構完整</Text>
@@ -179,8 +253,8 @@ function createStyles(theme: ThemeColors) {
     cardTitleGroup: { flex: 1 },
     godName: { color: theme.goldLight, fontSize: TempleFonts.body, fontWeight: '900' },
     systemName: { color: theme.textLight, fontSize: TempleFonts.small, marginTop: 3 },
-    statusPill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
-    statusText: { fontSize: 11, fontWeight: '800' },
+    statusPill: { borderWidth: 1, borderColor: theme.goldDark + '66', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
+    statusText: { color: theme.goldLight, fontSize: 11, fontWeight: '800' },
     sourceNote: { color: theme.textMuted, fontSize: TempleFonts.small, lineHeight: 21, marginBottom: 8 },
     versionText: { color: theme.gold, fontSize: 12, fontWeight: '800', marginBottom: 8 },
     auditText: { color: theme.textLight, fontSize: 12, fontWeight: '700', marginBottom: 6 },
@@ -192,6 +266,7 @@ function createStyles(theme: ThemeColors) {
     sectionNote: { color: theme.textMuted, fontSize: 12, lineHeight: 18, marginBottom: TempleSpacing.md },
     fieldLabel: { color: theme.goldLight, fontWeight: '800' },
     pendingText: { color: theme.warning, fontWeight: '800' },
+    intakeEntry: { paddingTop: 8, marginTop: 8, borderTopWidth: 1, borderTopColor: theme.goldDark + '25' },
     linkText: { color: theme.gold, fontSize: 12, lineHeight: 20 },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
     chip: { borderRadius: 999, borderWidth: 1, borderColor: theme.goldDark + '35', paddingHorizontal: 9, paddingVertical: 4 },

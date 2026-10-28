@@ -209,7 +209,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
   const handleShareCard = async () => {
     if (sharing || Platform.OS === 'web') {
       // Web 降級為文字分享
-      const text = `【${godName}靈籤】第 ${poem.number} 籤 · ${poem.title} · ${poem.level}\n${poem.ganzhi}\n\n${poem.content}\n\n— 神明占卜`;
+      const text = `【${godName}靈籤】第 ${poem.number} 籤 · ${poem.title} · ${poem.level}\n版本：${record?.editionLabel ?? oracleCatalog.label}\n${poem.ganzhi}\n\n${poem.content}\n\n— 神明占卜`;
       await Clipboard.setStringAsync(text);
       Alert.alert('已複製', '圖卡分享在 Web 上不支援，已複製文字版本。');
       return;
@@ -228,6 +228,7 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
 
   const handleCopy = async () => {
     let text = `【${godName}靈籤】第 ${poem.number} 籤 · ${poem.title} · ${poem.level}\n`;
+    text += `版本：${record?.editionLabel ?? oracleCatalog.label}\n`;
     text += `${poem.ganzhi}\n\n`;
     text += `${poem.content}\n\n白話：${poem.vernacular}\n`;
     if (aiInterpretation) text += `\n解籤：\n${aiInterpretation}`;
@@ -340,13 +341,13 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
             <Text style={[styles.metadataTitle, { color: godAccent }]}>籤系統資訊</Text>
             <Text style={styles.metadataCount}>{oracleCatalog.totalPoems} 首</Text>
           </View>
-          <Text style={styles.metadataLabel}>{oracleCatalog.label}</Text>
+          <Text style={styles.metadataLabel}>{record?.editionLabel ?? oracleCatalog.label}</Text>
           <Text style={styles.metadataText}>{oracleCatalog.sourceNote}</Text>
           <Text style={styles.metadataHint}>{oracleCatalog.completenessNote}</Text>
           <Text style={styles.metadataSubTitle}>來源與版本</Text>
           <Text style={styles.metadataBullet}>• {oracleCatalog.sourceType}</Text>
           <Text style={styles.metadataBullet}>• {oracleCatalog.editionNote}</Text>
-          <Text style={styles.metadataBullet}>• 版本：{oracleCatalog.versionTag}</Text>
+          <Text style={styles.metadataBullet}>• 版本：{record?.editionVersionTag ?? oracleCatalog.versionTag}</Text>
           <Text style={styles.metadataSubTitle}>適用題型</Text>
           <Text style={styles.metadataText}>{oracleCatalog.suitabilityNote}</Text>
           <View style={styles.metadataChipRow}>

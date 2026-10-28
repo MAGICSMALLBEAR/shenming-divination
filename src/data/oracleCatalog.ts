@@ -1,4 +1,6 @@
 import { getYuelaoEdition, type YuelaoEdition } from './yuelaoEdition';
+import { resolveOracleEdition } from './oracleEditionRegistry';
+import { getSelectedOracleEditionId } from './oracleEditionSelection';
 
 export interface OracleCatalogEntry {
   label: string;
@@ -77,6 +79,22 @@ const yuelaoHongKongEntry = entry({
 });
 
 export function getOracleCatalogByGodId(godId?: number | null, yuelaoEdition?: YuelaoEdition): OracleCatalogEntry {
+  if (godId != null && yuelaoEdition == null) {
+    const selected = resolveOracleEdition(godId, getSelectedOracleEditionId(godId));
+    if (selected?.status === 'published') {
+      return entry({
+        label: selected.label,
+        totalPoems: selected.poems?.length ?? 0,
+        sourceNote: `${selected.temple}核定籤本；來源：${selected.sourceUrl ?? '待補'}`,
+        completenessNote: '逐首來源、原文與 App 展示權已通過發布閘門。',
+        strengths: [],
+        sourceType: '廟宇籤系',
+        editionNote: `廟本識別：${selected.id}；求籤方式：${selected.drawMethod === 'three-cup-direct' ? '三筊直接定籤' : '抽籤後驗籤'}。`,
+        suitabilityNote: '依此廟本及其求籤規則使用。',
+        versionTag: selected.id,
+      });
+    }
+  }
   switch (godId) {
     case 1:
     case 16:

@@ -3,8 +3,12 @@ import { useState, useCallback, useRef } from 'react';
 import type { Poem } from '@/data/poems/leiyushi';
 import { DRAW_ANIMATION_DEFAULT_MS, normalizeDrawAnimationDuration } from '@/constants/divination';
 import { gods } from '@/data/gods';
+import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
+import { resolveOracleEdition } from '@/data/oracleEditionRegistry';
+import { getSelectedOracleEditionId } from '@/services/oracleEditionPreferences';
+import { resolveTianhouThreeCupNumber } from '@/services/threeCupOracle';
 import { tossJiaobei, drawPoem, drawZhugePoem, saveDivinationRecord } from '@/services/divination';
-import { addFavorite, getHistory, getSettings, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
+import { addFavorite, findFavoriteRecord, getHistory, getSettings, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
 import { getAIInterpretation } from '@/services/ai';
 import { buildActionPlan } from '@/services/actionPlan';
 import { requestReview, shouldRequestReview } from '@/services/reviewService';
@@ -18,6 +22,7 @@ export type FlowStep =
   | 'enter-zhuge-number'
   | 'choose-draw-method'
   | 'drawing'
+  | 'three-cup-draw'
   | 'verify-poem'
   | 'reveal-poem'
   | 'ai-interpret'
@@ -31,6 +36,7 @@ export type DrawMethod = 'shake' | 'auto' | 'direct' | 'number';
 export function useDivination() {
   const [step, setStep] = useState<FlowStep>('select-god');
   const [selectedGodId, setSelectedGodId] = useState<number | null>(null);
+  const [activeEditionId, setActiveEditionId] = useState<string | null>(null);
   const [question, setQuestion] = useState('');
   const [questionCategory, setQuestionCategory] = useState('general');
   const [userName, setUserName] = useState('');
@@ -53,6 +59,7 @@ export function useDivination() {
   const [drawMethod, setDrawMethod] = useState<DrawMethod>('shake');
 
   const selectedGod = selectedGodId ? gods.find(g => g.id === selectedGodId) : null;
+  const selectedEdition = selectedGodId ? resolveOracleEdition(selectedGodId, activeEditionId) : null;
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
@@ -63,6 +70,9 @@ export function useDivination() {
 
   const selectGod = useCallback((godId: number) => {
     setSelectedGodId(godId);
+    setActiveEditionId(getSelectedOracleEditionId(godId));
+    verificationResultsRef.current = [];
+    setVerificationResults([]);
     setStep('set-question');
   }, []);
 
@@ -83,13 +93,18 @@ export function useDivination() {
 
   const finishMeditation = useCallback(() => {
     const god = selectedGodId ? gods.find(g => g.id === selectedGodId) : null;
+    const edition = selectedGodId ? resolveOracleEdition(selectedGodId, activeEditionId) : null;
     if (god?.poemSystem === '諸葛神數') {
       setDrawMethod('number');
       setStep('enter-zhuge-number');
+    } else if (edition?.drawMethod === 'three-cup-direct') {
+      verificationResultsRef.current = [];
+      setVerificationResults([]);
+      setStep('three-cup-draw');
     } else {
       performDraw();
     }
-  }, [selectedGodId, performDraw]);
+  }, [activeEditionId, selectedGodId, performDraw]);
 
   const performVerificationJiaobei = useCallback((): JiaobeiResult => {
     const result = tossJiaobei();
@@ -108,7 +123,7 @@ export function useDivination() {
     setStep('drawing');
   }, []);
 
-  const completeDivination = useCallback(async (poem: Poem, godName: string, confirmed: boolean) => {
+  const completeDivination = useCallback(async (poem: Poem, godName: string, confirmed: boolean, ritualPattern?: JiaobeiResult[]) => {
     setStep('ai-interpret');
     let interpretation: string | null = null;
     try {
@@ -144,6 +159,8 @@ export function useDivination() {
       timestamp: Date.now(),
     });
 
+    const edition = selectedGodId ? resolveOracleEdition(selectedGodId, activeEditionId) : null;
+    const catalog = selectedGodId ? getOracleCatalogByGodId(selectedGodId) : null;
     const record = await saveDivinationRecord({
       godName,
       poem,
@@ -153,14 +170,18 @@ export function useDivination() {
       actionPlan: buildActionPlan({ poem, questionCategory, question }),
       poemConfirmed: confirmed || undefined,
       poemConfirmResult: confirmed ? '連續三次聖筊確認' : undefined,
+      editionId: activeEditionId ?? undefined,
+      editionLabel: edition?.label ?? catalog?.label,
+      editionVersionTag: edition?.id ?? catalog?.versionTag,
+      ritualPattern,
     });
     setCurrentRecord(record);
-    setIsFavorited(await isFavorite(poem.number, godName));
+    setIsFavorited(await isFavorite(poem.number, godName, activeEditionId ?? undefined, poem.content));
     setIsLoading(false);
     setStep('result');
 
     if (await shouldRequestReview(poem.level)) requestReview();
-  }, [question, questionCategory, userName]);
+  }, [activeEditionId, question, questionCategory, selectedGodId, userName]);
 
   // revealDraw 負責「籤詩已經決定之後」的開籤動畫。完整儀式會先驗籤，再解籤與存檔。
   // seed 若有值（來自搖籤筒的操作遙測），一般求籤會用它決定抽到哪一支籤；
@@ -168,14 +189,16 @@ export function useDivination() {
   const revealDraw = useCallback(async (
     inputZhugeNumber: number | undefined,
     seed: number | undefined,
-    requiresVerification: boolean
+    requiresVerification: boolean,
+    fixedPoem?: Poem,
+    ritualPattern?: JiaobeiResult[],
   ) => {
     if (!selectedGodId) return;
     const god = gods.find(g => g.id === selectedGodId);
     const num = inputZhugeNumber ?? zhugeNumber;
-    const poem = (god?.poemSystem === '諸葛神數' && num != null)
+    const poem = fixedPoem ?? ((god?.poemSystem === '諸葛神數' && num != null)
       ? drawZhugePoem(num)
-      : drawPoem(selectedGodId, seed);
+      : drawPoem(selectedGodId, seed, activeEditionId));
     const settings = await getSettings();
     const animationDuration = normalizeDrawAnimationDuration(settings?.drawAnimationDurationMs);
 
@@ -198,8 +221,25 @@ export function useDivination() {
       setStep('verify-poem');
       return;
     }
-    await completeDivination(poem, god?.name || '神明', false);
-  }, [selectedGodId, zhugeNumber, completeDivination]);
+    await completeDivination(poem, god?.name || '神明', false, ritualPattern);
+  }, [activeEditionId, selectedGodId, zhugeNumber, completeDivination]);
+
+  const completeThreeCupDraw = useCallback(() => {
+    if (!selectedGodId || selectedEdition?.drawMethod !== 'three-cup-direct') return;
+    const results = verificationResultsRef.current;
+    const number = resolveTianhouThreeCupNumber(results);
+    const poem = selectedEdition.poems?.find((item) => item.number === number);
+    if (!number || !poem) {
+      showToast('三筊對照資料尚未備妥，請重新請示。');
+      verificationResultsRef.current = [];
+      setVerificationResults([]);
+      setStep('meditate');
+      return;
+    }
+    setDrawPhase('revealing');
+    setStep('drawing');
+    void revealDraw(undefined, undefined, false, poem, [...results]);
+  }, [revealDraw, selectedEdition, selectedGodId, showToast]);
 
   const completeVerification = useCallback(() => {
     const results = verificationResultsRef.current;
@@ -276,7 +316,13 @@ export function useDivination() {
   const toggleFavorite = useCallback(async () => {
     if (!currentRecord) return;
     if (isFavorited) {
-      await removeFavorite(currentRecord.id);
+      const favorite = await findFavoriteRecord(
+        currentRecord.poem.number,
+        currentRecord.godName,
+        currentRecord.editionId,
+        currentRecord.poem.content,
+      );
+      if (favorite) await removeFavorite(favorite.id);
       setIsFavorited(false);
       showToast('已取消收藏');
     } else {
@@ -292,6 +338,7 @@ export function useDivination() {
     shakeCompletedRef.current = false;
     setStep('select-god');
     setSelectedGodId(null);
+    setActiveEditionId(null);
     setQuestion('');
     setQuestionCategory('general');
     setUserName('');
@@ -316,6 +363,7 @@ export function useDivination() {
     questionCategory,
     userName,
     verificationResults,
+    selectedEdition,
     drawnPoem,
     pendingPoem,
     aiInterpretation,
@@ -339,6 +387,7 @@ export function useDivination() {
     chooseDrawMethod,
     completeShake,
     completeVerification,
+    completeThreeCupDraw,
     rejectVerification,
     finishDrawAnimation,
     toggleFavorite,

@@ -13,6 +13,8 @@ import { luzuZhinanPoems } from './poems/luzuZhinan';
 import { qingshuiZushiPoems } from './poems/qingshuiZushi';
 import { baoshengBaoanPoems } from './poems/baoshengBaoan';
 import { getYuelaoEdition, type YuelaoEdition } from './yuelaoEdition';
+import { getAllSelectableOraclePoems, resolveOracleEdition } from './oracleEditionRegistry';
+import { getSelectedOracleEditionId } from './oracleEditionSelection';
 import { huangdaxianPoems } from './poems/huangdaxian';
 import { chegongPoems } from './poems/chegong';
 import {
@@ -994,9 +996,15 @@ export const questionCategories = [
 ];
 
 // 根據神明ID取得對應的籤詩；月老依目前選擇的版本（台灣版／香港版）回傳，可用 yuelaoEdition 指定
-export function getPoemsByGod(godId: number, yuelaoEdition: YuelaoEdition = getYuelaoEdition()) {
+export function getPoemsByGod(godId: number, yuelaoEdition?: YuelaoEdition) {
   const god = gods.find(g => g.id === godId);
   if (!god) return leiyushiPoems;
+
+  const editionId = godId === 13 && yuelaoEdition
+    ? (yuelaoEdition === 'hongkong' ? 'yuelao-hongkong-101' : 'yuelao-taiwan-100')
+    : getSelectedOracleEditionId(godId);
+  const edition = resolveOracleEdition(godId, editionId);
+  if (edition?.poems) return edition.poems as typeof leiyushiPoems;
 
   if (god.poemSystem === '六十甲子籤') return jiazi60Poems;
   if (god.poemSystem === '媽祖天后籤（六十甲子）') return mazuFocusedPoems;
@@ -1022,7 +1030,7 @@ export function getPoemsByGod(godId: number, yuelaoEdition: YuelaoEdition = getY
   if (god.poemSystem === '藥師護念籤') return medicineBuddhaPoems;
   if (god.poemSystem === '濟公活佛籤（雷雨師）') return jigongLingQianPoems;
   if (god.poemSystem === '三太子衝關籤（六十甲子）') return santaiziBreakthroughPoems;
-  if (god.poemSystem === '月老靈籤') return yuelaoEdition === 'hongkong' ? yuelaoHongKongPoems : yuelaoTaiwanPoems;
+  if (god.poemSystem === '月老靈籤') return (yuelaoEdition ?? getYuelaoEdition()) === 'hongkong' ? yuelaoHongKongPoems : yuelaoTaiwanPoems;
   if (god.poemSystem === '諸葛神數') return zhugeShenShuPoems;
   if (god.poemSystem === '觀音靈籤') return guanyinLingQianPoems;
   if (god.poemSystem === '黃大仙靈籤') return huangdaxianPoems;
@@ -1032,6 +1040,8 @@ export function getPoemsByGod(godId: number, yuelaoEdition: YuelaoEdition = getY
 
 // 籤詩庫、拍照解籤等需要涵蓋所有版本的情境使用：月老回傳台灣版與香港版兩套
 export function getAllPoemsByGod(godId: number) {
+  const editionPoems = getAllSelectableOraclePoems(godId);
+  if (editionPoems.length) return editionPoems;
   const god = gods.find(g => g.id === godId);
   if (god?.poemSystem === '月老靈籤') return [...yuelaoTaiwanPoems, ...yuelaoHongKongPoems];
   return getPoemsByGod(godId);

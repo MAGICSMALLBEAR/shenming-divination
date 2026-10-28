@@ -15,11 +15,12 @@ const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 
 interface JiaobeiProps {
   onToss: () => JiaobeiResult;
-  onShengbei: () => void;
+  onShengbei?: () => void;
+  onSequenceComplete?: () => void;
   onRejected?: () => void;
   results: JiaobeiResult[];
   requiredShengbei?: number;
-  phase?: 'permission' | 'verification';
+  phase?: 'permission' | 'verification' | 'three-cup-direct';
   strictMode?: boolean;
   tossSignal?: number;
   lowMotion?: boolean;
@@ -32,6 +33,7 @@ type JiaobeiFace = 'round' | 'flat';
 export function Jiaobei({
   onToss,
   onShengbei,
+  onSequenceComplete,
   onRejected,
   results,
   strictMode,
@@ -50,6 +52,7 @@ export function Jiaobei({
   const finalizingRef = useRef(false);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ritualStyle = ritualStyles[ritualStyleKey];
+  const isDirect = phase === 'three-cup-direct';
 
   const tossProgress = useRef(new Animated.Value(0)).current;
   const settleProgress = useRef(new Animated.Value(0)).current;
@@ -122,16 +125,19 @@ export function Jiaobei({
       ]).start(({ finished: settled }) => {
         if (!settled) return;
         setIsAnimating(false);
-        if (phase === 'verification' && result !== 'shengbei') {
+        if (isDirect && results.length + 1 === 3) {
+          finalizingRef.current = true;
+          transitionTimerRef.current = setTimeout(() => onSequenceComplete?.(), 900);
+        } else if (phase === 'verification' && result !== 'shengbei') {
           finalizingRef.current = true;
           transitionTimerRef.current = setTimeout(() => onRejected?.(), 900);
-        } else if (result === 'shengbei' && countTrailingShengbei(results) + 1 >= requiredShengbei) {
+        } else if (!isDirect && result === 'shengbei' && countTrailingShengbei(results) + 1 >= requiredShengbei) {
           finalizingRef.current = true;
-          transitionTimerRef.current = setTimeout(onShengbei, 900);
+          transitionTimerRef.current = setTimeout(() => onShengbei?.(), 900);
         }
       });
     });
-  }, [isAnimating, lowMotion, onRejected, onShengbei, onToss, phase, requiredShengbei, resultFade, results, settleProgress, tossProgress]);
+  }, [isAnimating, isDirect, lowMotion, onRejected, onSequenceComplete, onShengbei, onToss, phase, requiredShengbei, resultFade, results, settleProgress, tossProgress]);
 
   React.useEffect(() => {
     if (tossSignal == null || lastTossSignal.current === tossSignal) {
@@ -246,7 +252,7 @@ export function Jiaobei({
         };
   });
 
-  const confirmationComplete = shengbeiStreak >= requiredShengbei && currentResult === 'shengbei';
+  const confirmationComplete = !isDirect && shengbeiStreak >= requiredShengbei && currentResult === 'shengbei';
   const resultInfo = currentResult ? getResultInfo(currentResult, theme) : null;
   const isVerification = phase === 'verification';
 
@@ -259,14 +265,16 @@ export function Jiaobei({
     >
       <ParticleEffect active={showParticle && !lowMotion} type="gold" />
 
-      <Text style={styles.title}>{isVerification ? '驗籤確認' : '\u64f2\u7b4a\u8acb\u793a'}</Text>
+      <Text style={styles.title}>{isDirect ? '三筊定籤' : isVerification ? '驗籤確認' : '\u64f2\u7b4a\u8acb\u793a'}</Text>
       <Text style={styles.attemptText}>
         {attemptLabel}
-        {requiredShengbei > 1 ? (
+        {isDirect ? <Text style={styles.strictHint}>{` | 筊象 ${Math.min(3, results.length)}/3`}</Text> : requiredShengbei > 1 ? (
           <Text style={styles.strictHint}>{` | 連續聖筊 ${Math.min(requiredShengbei, shengbeiStreak)}/${requiredShengbei}`}</Text>
         ) : null}
       </Text>
-      {requiredShengbei > 1 ? (
+      {isDirect ? (
+        <Text style={styles.strictModeNote}>依序擲三次筊，聖、陽、陰皆計入；第三次後直接對應籤號。</Text>
+      ) : requiredShengbei > 1 ? (
         <Text style={styles.strictModeNote}>請確認此支籤，需連續三次聖筊後才會恭讀籤詩。</Text>
       ) : null}
       <RitualStylePicker value={ritualStyleKey} onChange={onStyleChange} compact />
@@ -310,9 +318,11 @@ export function Jiaobei({
             ]}
           >
             <Text style={styles.resultEmoji}>{resultInfo.emoji}</Text>
-            <Text style={[styles.resultText, { color: resultInfo.color }]}>{resultInfo.text}</Text>
+            <Text style={[styles.resultText, { color: resultInfo.color }]}>{isDirect && currentResult === 'xiaobei' ? '陽杯' : resultInfo.text}</Text>
             <Text style={styles.resultDesc}>
-              {isVerification
+              {isDirect
+                ? results.length >= 3 ? '三次筊象已記錄，正在依順序取籤。' : `第 ${results.length} 次筊象已記錄，請繼續擲筊。`
+                : isVerification
                 ? currentResult === 'shengbei'
                   ? confirmationComplete
                     ? '此支籤已獲三次聖筊確認。'
@@ -323,7 +333,7 @@ export function Jiaobei({
             {confirmationComplete ? (
               <Text style={styles.strictCompleteText}>{'三次聖筊已成，此支籤已確認。'}</Text>
             ) : null}
-            {currentResult !== 'shengbei' && !isAnimating && !isVerification ? (
+            {currentResult !== 'shengbei' && !isAnimating && !isVerification && !isDirect ? (
               <TouchableOpacity style={styles.retryBtn} onPress={handleToss} accessibilityRole="button" accessibilityLabel="再擲一次">
                 <Text style={styles.retryBtnText}>{'\u518d\u64f2\u4e00\u6b21'}</Text>
               </TouchableOpacity>
@@ -338,7 +348,9 @@ export function Jiaobei({
       {!currentResult && !isAnimating ? (
         <View style={styles.primaryAction}>
           <Text style={styles.actionHint}>
-            {isVerification
+            {isDirect
+              ? '依序擲三次筊，以三次筊象直接取得月老籤。'
+              : isVerification
               ? '默念剛抽出的籤號，擲筊確認是否為本次指示。'
               : '\u96d9\u624b\u5408\u638c\u9ed8\u5ff5\u554f\u984c\uff0c\u518d\u6309\u4e0b\u64f2\u7b4a\u8acb\u793a'}
           </Text>
@@ -346,22 +358,26 @@ export function Jiaobei({
             style={styles.tossBtn}
             onPress={handleToss}
             accessibilityRole="button"
-            accessibilityLabel={'\u64f2\u7b4a\u8acb\u793a'}
+            accessibilityLabel={isDirect ? '擲筊定籤' : '\u64f2\u7b4a\u8acb\u793a'}
           >
-            <Text style={styles.tossBtnText}>{'\u64f2\u7b4a\u8acb\u793a'}</Text>
+            <Text style={styles.tossBtnText}>{isDirect ? '擲筊定籤' : '\u64f2\u7b4a\u8acb\u793a'}</Text>
           </TouchableOpacity>
         </View>
       ) : null}
 
-      {requiredShengbei > 1 && currentResult === 'shengbei' && !isAnimating && !confirmationComplete ? (
+      {isDirect && currentResult && !isAnimating && results.length < 3 ? (
+        <TouchableOpacity style={styles.nextTossBtn} onPress={handleToss} accessibilityRole="button" accessibilityLabel="繼續擲筊">
+          <Text style={styles.nextTossBtnText}>繼續擲筊 {results.length + 1}/3</Text>
+        </TouchableOpacity>
+      ) : !isDirect && requiredShengbei > 1 && currentResult === 'shengbei' && !isAnimating && !confirmationComplete ? (
         <TouchableOpacity style={styles.nextTossBtn} onPress={handleToss} accessibilityRole="button" accessibilityLabel="繼續擲筊">
           <Text style={styles.nextTossBtnText}>{'繼續擲筊 ' + Math.min(requiredShengbei, shengbeiStreak + 1) + '/' + requiredShengbei}</Text>
         </TouchableOpacity>
       ) : null}
 
-      {confirmationComplete && !isAnimating ? (
+      {(confirmationComplete || (isDirect && results.length === 3)) && !isAnimating ? (
         <Text style={styles.strictCompleteText}>
-          {isVerification ? '籤詩確認中…' : '神意允可，準備開始抽籤。'}
+          {isDirect ? '三筊已成，正在對照籤號…' : isVerification ? '籤詩確認中…' : '神意允可，準備開始抽籤。'}
         </Text>
       ) : null}
 
@@ -372,7 +388,7 @@ export function Jiaobei({
             return (
               <View key={`${result}-${index}`} style={styles.historyItem}>
                 <Text style={styles.historyIndex}>{index + 1}</Text>
-                <Text style={[styles.historyText, { color: info.color }]}>{info.text}</Text>
+                <Text style={[styles.historyText, { color: info.color }]}>{isDirect && result === 'xiaobei' ? '陽杯' : info.text}</Text>
               </View>
             );
           })}

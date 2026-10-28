@@ -1,5 +1,6 @@
 // 抽籤與擲筊核心邏輯
 import { getPoemsByGod } from '@/data/gods';
+import { resolveOracleEdition } from '@/data/oracleEditionRegistry';
 import type { Poem } from '@/data/poems/leiyushi';
 import type { DivinationRecord } from './storage';
 import { addHistory } from './storage';
@@ -27,8 +28,9 @@ export function tossJiaobei(): JiaobeiResult {
 // 取得籤詩（均勻分佈的隨機）
 // seed 若提供（例如來自搖籤筒的操作遙測雜湊），改用種子亂數決定索引，
 // 讓「這支籤是你搖出來的」在技術上也成立；未提供時維持原本的系統亂數。
-export function drawPoem(godId: number, seed?: number): Poem {
-  const poems = getPoemsByGod(godId);
+export function drawPoem(godId: number, seed?: number, editionId?: string | null): Poem {
+  const edition = editionId ? resolveOracleEdition(godId, editionId) : null;
+  const poems = edition?.poems ?? getPoemsByGod(godId);
   let index: number;
   if (seed != null) {
     index = Math.floor(mulberry32(seed)() * poems.length) % poems.length;
@@ -60,6 +62,10 @@ export async function saveDivinationRecord(params: {
   actionPlan?: string[];
   poemConfirmed?: boolean;
   poemConfirmResult?: string;
+  editionId?: string;
+  editionLabel?: string;
+  editionVersionTag?: string;
+  ritualPattern?: JiaobeiResult[];
 }): Promise<DivinationRecord> {
   const record: DivinationRecord = {
     id: generateId(),

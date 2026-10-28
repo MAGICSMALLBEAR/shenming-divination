@@ -1,0 +1,2566 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-28",
+  "activeForDraw": false,
+  "purpose": "逐首來源與缺口索引；不是籤文原文或可上線抽籤資料",
+  "transcriptionNote": "2026-10-28：前四套已於 repo 外完成逐字轉錄（見 oracleEditionRegistry 的 transcription 與 docs/oracle-transcription-report-2026-10-28.md）。各集合的 textStatus 保留調查當時狀態，不代表目前進度。",
+  "collections": [
+    {
+      "id": "zizhu_guanyin_28",
+      "order": 1,
+      "temple": "內門紫竹寺",
+      "deityGodId": 2,
+      "expectedSlots": 28,
+      "countBasis": "official_index",
+      "countSourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&cmd=list",
+      "numberingStatus": "official_index_complete",
+      "textStatus": "not_transcribed",
+      "rightsStatus": "app_display_unverified",
+      "entries": [
+        {
+          "number": 1,
+          "officialLabel": "籤首",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090028248&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 2,
+          "officialLabel": "第二籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090027991&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 3,
+          "officialLabel": "第三籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090026557&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 4,
+          "officialLabel": "第四籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090025514&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 5,
+          "officialLabel": "第五籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090024829&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 6,
+          "officialLabel": "第六籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090023536&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 7,
+          "officialLabel": "第七籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090022516&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 8,
+          "officialLabel": "第八籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090021614&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 9,
+          "officialLabel": "第九籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090020787&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 10,
+          "officialLabel": "第十籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090019483&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 11,
+          "officialLabel": "第十一籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090018406&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 12,
+          "officialLabel": "第十二籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090017060&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 13,
+          "officialLabel": "第十三籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090016859&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 14,
+          "officialLabel": "第十四籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090015354&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 15,
+          "officialLabel": "第十五籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090014910&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 16,
+          "officialLabel": "第十六籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090013794&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 17,
+          "officialLabel": "第十七籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090012001&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 18,
+          "officialLabel": "第十八籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090011820&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 19,
+          "officialLabel": "第十九籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090010438&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 20,
+          "officialLabel": "第二十籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090009753&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 21,
+          "officialLabel": "第二十一籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090008042&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 22,
+          "officialLabel": "第二十二籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090007926&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 23,
+          "officialLabel": "第二十三籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090006656&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 24,
+          "officialLabel": "第二十四籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090005886&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 25,
+          "officialLabel": "第二十五籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090004582&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 26,
+          "officialLabel": "第二十六籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090003780&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 27,
+          "officialLabel": "第二十七籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090002938&cmd=detail",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 28,
+          "officialLabel": "第二十八籤",
+          "sourceUrl": "https://www.nmzizhusi.org.tw/?act=jieqianyuandi&ad_id=202212090001153&cmd=detail",
+          "evidence": "official_detail_linked"
+        }
+      ]
+    },
+    {
+      "id": "wenwu_yuelao_40",
+      "order": 2,
+      "temple": "日月潭文武廟",
+      "deityGodId": 13,
+      "expectedSlots": 40,
+      "countBasis": "official_pagination",
+      "countSourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51.html",
+      "numberingStatus": "official_index_complete",
+      "textStatus": "not_transcribed",
+      "rightsStatus": "app_display_unverified",
+      "entries": [
+        {
+          "number": 1,
+          "officialLabel": "第一首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-09-08-18-09.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 2,
+          "officialLabel": "第二首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-09-08-18-38.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 3,
+          "officialLabel": "第三首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-09-08-18-56.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 4,
+          "officialLabel": "第四首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-09-08-19-13.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 5,
+          "officialLabel": "第五首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-00-58-34.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 6,
+          "officialLabel": "第六首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-00-59-15.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 7,
+          "officialLabel": "第七首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-00-59-33.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 8,
+          "officialLabel": "第八首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-00-59-50.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 9,
+          "officialLabel": "第九首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-00-07.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 10,
+          "officialLabel": "第十首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-00-27.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 11,
+          "officialLabel": "第十一首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-00-48.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 12,
+          "officialLabel": "第十二首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-01-10.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 13,
+          "officialLabel": "第十三首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-01-29.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 14,
+          "officialLabel": "第十四首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-01-49.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 15,
+          "officialLabel": "第十五首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-03-18.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 16,
+          "officialLabel": "第十六首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-03-35.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 17,
+          "officialLabel": "第十七首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-03-52.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 18,
+          "officialLabel": "第十八首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-04-09.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 19,
+          "officialLabel": "第十九首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-04-24.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 20,
+          "officialLabel": "第二十首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-04-40.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 21,
+          "officialLabel": "第二十一首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-05-00.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 22,
+          "officialLabel": "第二十二首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-05-17.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 23,
+          "officialLabel": "第二十三首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-05-35.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 24,
+          "officialLabel": "第二十四首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-05-59.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 25,
+          "officialLabel": "第二十五首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-06-21.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 26,
+          "officialLabel": "第二十六首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-06-38.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 27,
+          "officialLabel": "第二十七首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-06-55.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 28,
+          "officialLabel": "第二十八首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-07-29.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 29,
+          "officialLabel": "第二十九首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-07-46.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 30,
+          "officialLabel": "第三十首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-08-01.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 31,
+          "officialLabel": "第三十一首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-08-18.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 32,
+          "officialLabel": "第三十二首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-08-39.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 33,
+          "officialLabel": "第三十三首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-09-07.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 34,
+          "officialLabel": "第三十四首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-09-24.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 35,
+          "officialLabel": "第三十五首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-09-39.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 36,
+          "officialLabel": "第三十六首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-09-54.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 37,
+          "officialLabel": "第三十七首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-10-11.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 38,
+          "officialLabel": "第三十八首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-10-27.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 39,
+          "officialLabel": "第三十九首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-10-42.html",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 40,
+          "officialLabel": "第四十首",
+          "sourceUrl": "https://www.wenwu.org.tw/index.php/zh/2023-05-15-03-52-29/2023-05-21-01-58-51/2023-05-10-01-10-58.html",
+          "evidence": "official_detail_linked"
+        }
+      ]
+    },
+    {
+      "id": "cifeng_mazu_100",
+      "order": 3,
+      "temple": "屏東慈鳳宮",
+      "deityGodId": 3,
+      "expectedSlots": 100,
+      "countBasis": "official_site_api_index",
+      "countSourceUrl": "https://www.323pt.org.tw/?act=menuinfo&api=list&cmd=list&ml_id=20260818003",
+      "numberingStatus": "official_index_complete",
+      "textStatus": "not_transcribed",
+      "rightsStatus": "app_display_unverified",
+      "entries": [
+        {
+          "number": 1,
+          "officialLabel": "第一籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190100328&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 2,
+          "officialLabel": "第二籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190099546&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 3,
+          "officialLabel": "第三籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190098928&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 4,
+          "officialLabel": "第四籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190097212&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 5,
+          "officialLabel": "第五籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190096437&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 6,
+          "officialLabel": "第六籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190095132&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 7,
+          "officialLabel": "第七籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190094026&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 8,
+          "officialLabel": "第八籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190093865&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 9,
+          "officialLabel": "第九籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190092494&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 10,
+          "officialLabel": "第十籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190091197&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 11,
+          "officialLabel": "第十一籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190090292&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 12,
+          "officialLabel": "第十二籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190089967&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 13,
+          "officialLabel": "第十三籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190088943&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 14,
+          "officialLabel": "第十四籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190087162&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 15,
+          "officialLabel": "第十五籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190086287&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 16,
+          "officialLabel": "第十六籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190085887&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 17,
+          "officialLabel": "第十七籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190084430&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 18,
+          "officialLabel": "第十八籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190083498&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 19,
+          "officialLabel": "第十九籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190082965&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 20,
+          "officialLabel": "第二十籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190081464&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 21,
+          "officialLabel": "第二十一籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190080668&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 22,
+          "officialLabel": "第二十二籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190079317&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 23,
+          "officialLabel": "第二十三籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190078020&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 24,
+          "officialLabel": "第二十四籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190077734&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 25,
+          "officialLabel": "第二十五籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190076742&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 26,
+          "officialLabel": "第二十六籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190075516&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 27,
+          "officialLabel": "第二十七籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190074361&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 28,
+          "officialLabel": "第二十八籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190073790&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 29,
+          "officialLabel": "第二十九籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190072893&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 30,
+          "officialLabel": "第三十籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190071688&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 31,
+          "officialLabel": "第三十一籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190070337&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 32,
+          "officialLabel": "第三十二籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190069700&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 33,
+          "officialLabel": "第三十三籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190068708&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 34,
+          "officialLabel": "第三十四籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190067681&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 35,
+          "officialLabel": "第三十五籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190066077&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 36,
+          "officialLabel": "第三十六籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190065497&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 37,
+          "officialLabel": "第三十七籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190064448&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 38,
+          "officialLabel": "第三十八籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190063287&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 39,
+          "officialLabel": "第三十九籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190062473&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 40,
+          "officialLabel": "第四十籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190061596&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 41,
+          "officialLabel": "第四十一籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190060084&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 42,
+          "officialLabel": "第四十二籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190059645&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 43,
+          "officialLabel": "第四十三籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190058824&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 44,
+          "officialLabel": "第四十四籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190057358&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 45,
+          "officialLabel": "第四十五籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190056207&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 46,
+          "officialLabel": "第四十六籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190055285&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 47,
+          "officialLabel": "第四十七籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190054445&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 48,
+          "officialLabel": "第四十八籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190053855&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 49,
+          "officialLabel": "第四十九籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190052522&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 50,
+          "officialLabel": "第五十籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190051803&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 51,
+          "officialLabel": "第五十一籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190050791&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 52,
+          "officialLabel": "第五十二籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190049038&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 53,
+          "officialLabel": "第五十三籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190048073&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 54,
+          "officialLabel": "第五十四籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190047020&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 55,
+          "officialLabel": "第五十五籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190046037&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 56,
+          "officialLabel": "第五十六籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190045460&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 57,
+          "officialLabel": "第五十七籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190044410&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 58,
+          "officialLabel": "第五十八籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190043590&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 59,
+          "officialLabel": "第五十九籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190042560&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 60,
+          "officialLabel": "第六十籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190041868&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 61,
+          "officialLabel": "第六十一籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190040525&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 62,
+          "officialLabel": "第六十二籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190039342&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 63,
+          "officialLabel": "第六十三籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190038520&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 64,
+          "officialLabel": "第六十四籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190037218&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 65,
+          "officialLabel": "第六十五籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190036768&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 66,
+          "officialLabel": "第六十六籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190035922&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 67,
+          "officialLabel": "第六十七籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190034435&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 68,
+          "officialLabel": "第六十八籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190033262&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 69,
+          "officialLabel": "第六十九籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190032745&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 70,
+          "officialLabel": "第七十籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190031114&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 71,
+          "officialLabel": "第七十一籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190030769&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 72,
+          "officialLabel": "第七十二籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190029254&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 73,
+          "officialLabel": "第七十三籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190028387&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 74,
+          "officialLabel": "第七十四籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190027101&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 75,
+          "officialLabel": "第七十五籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190026508&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 76,
+          "officialLabel": "第七十六籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190025244&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 77,
+          "officialLabel": "第七十七籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190024873&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 78,
+          "officialLabel": "第七十八籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190023950&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 79,
+          "officialLabel": "第七十九籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190022092&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 80,
+          "officialLabel": "第八十籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190021322&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 81,
+          "officialLabel": "第八十一籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190020524&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 82,
+          "officialLabel": "第八十二籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190019034&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 83,
+          "officialLabel": "第八十三籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190018914&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 84,
+          "officialLabel": "第八十四籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190017132&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 85,
+          "officialLabel": "第八十五籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190016652&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 86,
+          "officialLabel": "第八十六籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190015399&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 87,
+          "officialLabel": "第八十七籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190014882&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 88,
+          "officialLabel": "第八十八籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190013127&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": true
+        },
+        {
+          "number": 89,
+          "officialLabel": "第八十九籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190012215&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 90,
+          "officialLabel": "第九十籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190011718&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 91,
+          "officialLabel": "第九十一籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190010049&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 92,
+          "officialLabel": "第九十二籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190009539&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 93,
+          "officialLabel": "第九十三籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190008489&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 94,
+          "officialLabel": "第九十四籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190007854&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 95,
+          "officialLabel": "第九十五籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190006854&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 96,
+          "officialLabel": "第九十六籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190005593&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 97,
+          "officialLabel": "第九十七籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190004314&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 98,
+          "officialLabel": "第九十八籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190003021&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 99,
+          "officialLabel": "第九十九籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190002990&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        },
+        {
+          "number": 100,
+          "officialLabel": "第一百籤",
+          "sourceUrl": "https://www.323pt.org.tw/?act=jieqianyuandi&ad_id=202608190001923&cmd=detail",
+          "evidence": "official_index_linked",
+          "detailPageChecked": false
+        }
+      ]
+    },
+    {
+      "id": "tainan_tianhou_yuelao_27",
+      "order": 4,
+      "temple": "祀典大天后宮",
+      "deityGodId": 13,
+      "expectedSlots": 27,
+      "countBasis": "official_index",
+      "countSourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=list&ml_id=20220121003",
+      "ritualSourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&ml_id=20220122002",
+      "numberingStatus": "official_index_complete",
+      "textStatus": "image_not_transcribed",
+      "rightsStatus": "app_display_unverified",
+      "entries": [
+        {
+          "number": 1,
+          "ritualPattern": [
+            "聖",
+            "聖",
+            "聖"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122105&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 2,
+          "ritualPattern": [
+            "聖",
+            "聖",
+            "陽"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122106&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 3,
+          "ritualPattern": [
+            "聖",
+            "聖",
+            "陰"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122107&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 4,
+          "ritualPattern": [
+            "聖",
+            "陰",
+            "聖"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122108&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 5,
+          "ritualPattern": [
+            "聖",
+            "陽",
+            "聖"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122109&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 6,
+          "ritualPattern": [
+            "聖",
+            "陰",
+            "陰"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122110&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 7,
+          "ritualPattern": [
+            "聖",
+            "陽",
+            "陽"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122111&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 8,
+          "ritualPattern": [
+            "聖",
+            "陽",
+            "陰"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122112&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 9,
+          "ritualPattern": [
+            "聖",
+            "陰",
+            "陽"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122113&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 10,
+          "ritualPattern": [
+            "陽",
+            "陽",
+            "陽"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122114&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 11,
+          "ritualPattern": [
+            "陽",
+            "聖",
+            "聖"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122115&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 12,
+          "ritualPattern": [
+            "陽",
+            "陽",
+            "陰"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122116&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 13,
+          "ritualPattern": [
+            "陽",
+            "聖",
+            "陽"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122117&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 14,
+          "ritualPattern": [
+            "陽",
+            "聖",
+            "陰"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122118&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 15,
+          "ritualPattern": [
+            "陽",
+            "陰",
+            "聖"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122119&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 16,
+          "ritualPattern": [
+            "陽",
+            "陰",
+            "陽"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122120&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 17,
+          "ritualPattern": [
+            "陽",
+            "陰",
+            "陰"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122121&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 18,
+          "ritualPattern": [
+            "陽",
+            "陽",
+            "聖"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122122&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 19,
+          "ritualPattern": [
+            "陰",
+            "陰",
+            "陰"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122123&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 20,
+          "ritualPattern": [
+            "陰",
+            "陰",
+            "陽"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122124&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 21,
+          "ritualPattern": [
+            "陰",
+            "陰",
+            "聖"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122125&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 22,
+          "ritualPattern": [
+            "陰",
+            "聖",
+            "陽"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122126&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 23,
+          "ritualPattern": [
+            "陰",
+            "聖",
+            "陰"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122127&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 24,
+          "ritualPattern": [
+            "陰",
+            "聖",
+            "聖"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122128&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 25,
+          "ritualPattern": [
+            "陰",
+            "陽",
+            "陽"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122129&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 26,
+          "ritualPattern": [
+            "陰",
+            "陽",
+            "聖"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122130&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        },
+        {
+          "number": 27,
+          "ritualPattern": [
+            "陰",
+            "陽",
+            "陰"
+          ],
+          "sourceUrl": "https://www.gtainanmazu.org.tw/?act=menuinfo&cmd=detail&mi_id=20220122131&ml_id=20220121003",
+          "evidence": "official_detail_linked"
+        }
+      ]
+    },
+    {
+      "id": "mamingshan_wunian_50",
+      "order": 5,
+      "temple": "馬鳴山鎮安宮",
+      "deityGodId": 43,
+      "expectedSlots": 50,
+      "countBasis": "official_total_only",
+      "countSourceUrl": "https://mamingshan.tw/services/fortune.html",
+      "numberingStatus": "provisional_sequential_slots",
+      "textStatus": "official_text_unavailable",
+      "rightsStatus": "app_display_unverified",
+      "secondarySourceNote": "zhenantemple.com 有部分逐首頁，但與 mamingshan.tw 的廟方關係未核實；僅作查找線索。",
+      "entries": [
+        {
+          "number": 1,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": "https://zhenantemple.com/"
+        },
+        {
+          "number": 2,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 3,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 4,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": "https://zhenantemple.com/4-50/"
+        },
+        {
+          "number": 5,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 6,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 7,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 8,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 9,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 10,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 11,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 12,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": "https://zhenantemple.com/12-50/"
+        },
+        {
+          "number": 13,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 14,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": "https://zhenantemple.com/14-50/"
+        },
+        {
+          "number": 15,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 16,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": "https://zhenantemple.com/16-50/"
+        },
+        {
+          "number": 17,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 18,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 19,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 20,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 21,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 22,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 23,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 24,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 25,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 26,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 27,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 28,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 29,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 30,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 31,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 32,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 33,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 34,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 35,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 36,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 37,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 38,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 39,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": "https://zhenantemple.com/39-50/"
+        },
+        {
+          "number": 40,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 41,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 42,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 43,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 44,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 45,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 46,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 47,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 48,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 49,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 50,
+          "sourceUrl": null,
+          "evidence": "official_total_only",
+          "secondaryLeadUrl": "https://zhenantemple.com/第五十籤-50-50/"
+        }
+      ]
+    },
+    {
+      "id": "yilan_dongyue_28_king",
+      "order": 6,
+      "temple": "宜蘭東嶽廟",
+      "deityGodId": 38,
+      "expectedSlots": 29,
+      "countBasis": "museum_report_28_plus_king",
+      "countSourceUrl": "https://www.lym.gov.tw/ch/collection/epaper/epaper-detail/288e8a09-1331-11ef-a1c3-2760f1289ae7/",
+      "numberingStatus": "28_numbers_plus_distinct_king",
+      "textStatus": "official_text_unavailable",
+      "rightsStatus": "app_display_unverified",
+      "entries": [
+        {
+          "number": 1,
+          "sourceUrl": null,
+          "evidence": "secondary_object_lead",
+          "secondaryLeadUrl": "https://9collection.blogspot.com/2011/11/?m=0"
+        },
+        {
+          "number": 2,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 3,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 4,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 5,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 6,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 7,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 8,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 9,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 10,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 11,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 12,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 13,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 14,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 15,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 16,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 17,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 18,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 19,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 20,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 21,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 22,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 23,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 24,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 25,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 26,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 27,
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 28,
+          "sourceUrl": null,
+          "evidence": "secondary_object_lead",
+          "secondaryLeadUrl": "https://9collection.blogspot.com/2011/11/?m=0"
+        },
+        {
+          "number": "籤王",
+          "sourceUrl": null,
+          "evidence": "museum_total_only",
+          "secondaryLeadUrl": null
+        }
+      ]
+    },
+    {
+      "id": "guangze_ancient_provisional",
+      "order": 7,
+      "temple": null,
+      "deityGodId": 24,
+      "expectedSlots": null,
+      "provisionalNumberSlots": 100,
+      "additionalSlotsUnconfirmed": [
+        "籤王",
+        "籤頭"
+      ],
+      "countBasis": "secondary_transcription_only",
+      "countSourceUrl": "https://www.sheup.org/winfo/38/2702.html",
+      "numberingStatus": "unverified_temple_edition",
+      "textStatus": "not_transcribed",
+      "rightsStatus": "app_display_unverified",
+      "entries": [
+        {
+          "number": 1,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": "https://www.sheup.org/winfo/38/2702.html"
+        },
+        {
+          "number": 2,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": "https://www.sheup.org/winfo/38/2703.html"
+        },
+        {
+          "number": 3,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 4,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 5,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 6,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 7,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 8,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 9,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 10,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 11,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 12,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 13,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 14,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 15,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 16,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 17,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 18,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 19,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 20,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 21,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 22,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 23,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 24,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 25,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 26,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 27,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 28,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 29,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 30,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 31,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 32,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 33,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 34,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 35,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 36,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 37,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 38,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 39,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 40,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 41,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 42,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 43,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 44,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 45,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 46,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 47,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 48,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 49,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 50,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": "https://www.sheup.org/winfo/38/2751.html"
+        },
+        {
+          "number": 51,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 52,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 53,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 54,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 55,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 56,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 57,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 58,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 59,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 60,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 61,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 62,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 63,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 64,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 65,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 66,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 67,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 68,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 69,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 70,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 71,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 72,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 73,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 74,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 75,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 76,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 77,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 78,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 79,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 80,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 81,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 82,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 83,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 84,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 85,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 86,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 87,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 88,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 89,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 90,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 91,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 92,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 93,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 94,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 95,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 96,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 97,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 98,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 99,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": null
+        },
+        {
+          "number": 100,
+          "sourceUrl": null,
+          "evidence": "provisional_slot_only",
+          "secondaryLeadUrl": "https://www.sheup.org/winfo/38/2801.html"
+        }
+      ]
+    }
+  ]
+}

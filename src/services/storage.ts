@@ -1,5 +1,6 @@
 import type { Lang } from '@/services/i18n';
 import type { Poem } from '@/data/poems/leiyushi';
+import { getRecordEditionDisplay } from '@/data/oracleRecordEdition';
 import {
   DRAW_ANIMATION_DEFAULT_MS,
   normalizeDrawAnimationDuration,
@@ -41,6 +42,10 @@ export interface DivinationRecord {
   id: string;
   godName: string;
   poem: Poem;
+  editionId?: string;
+  editionLabel?: string;
+  editionVersionTag?: string;
+  ritualPattern?: ('shengbei' | 'xiaobei' | 'yinbei')[];
   question: string;
   questionCategory: string;
   aiInterpretation?: string;
@@ -187,8 +192,10 @@ export async function setFavorites(records: DivinationRecord[]): Promise<void> {
 
 export async function addFavorite(record: DivinationRecord): Promise<void> {
   const favorites = await getFavorites();
-  favorites.unshift(normalizeRecord(record));
-  await setFavorites(favorites);
+  const retained = favorites.filter((favorite) =>
+    !sameFavoritePoem(favorite, record.poem.number, record.godName, record.editionId, record.poem.content),
+  );
+  await setFavorites([normalizeRecord(record), ...retained]);
 }
 
 export async function removeFavorite(id: string): Promise<void> {
@@ -196,12 +203,37 @@ export async function removeFavorite(id: string): Promise<void> {
   await setFavorites(favorites.filter((record) => record.id !== id));
 }
 
-export async function isFavorite(poemNumber: number, godName?: string): Promise<boolean> {
+function sameFavoritePoem(
+  record: DivinationRecord,
+  poemNumber: number,
+  godName?: string,
+  editionId?: string,
+  poemContent?: string,
+): boolean {
+  if (record.poem.number !== poemNumber || (godName && record.godName !== godName)) return false;
+  const recordEditionId = getRecordEditionDisplay(record).id;
+  if (editionId) return recordEditionId === editionId;
+  if (recordEditionId) return false;
+  return poemContent == null || record.poem.content === poemContent;
+}
+
+export async function findFavoriteRecord(
+  poemNumber: number,
+  godName?: string,
+  editionId?: string,
+  poemContent?: string,
+): Promise<DivinationRecord | null> {
   const favorites = await getFavorites();
-  return favorites.some((record) =>
-    record.poem.number === poemNumber &&
-    (!godName || record.godName === godName)
-  );
+  return favorites.find((record) => sameFavoritePoem(record, poemNumber, godName, editionId, poemContent)) ?? null;
+}
+
+export async function isFavorite(
+  poemNumber: number,
+  godName?: string,
+  editionId?: string,
+  poemContent?: string,
+): Promise<boolean> {
+  return (await findFavoriteRecord(poemNumber, godName, editionId, poemContent)) != null;
 }
 
 export async function getHistory(): Promise<DivinationRecord[]> {

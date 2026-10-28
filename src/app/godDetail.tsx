@@ -17,9 +17,10 @@ import { getGodCardImage } from '@/data/godImages';
 import { getGodProfile } from '@/data/godProfiles';
 import { getGodQuestionGuide } from '@/data/godQuestionGuides';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
+import { getSelectableOracleEditions, oracleEditions, resolveOracleEdition } from '@/data/oracleEditionRegistry';
 import { CHIFU_MEDICINE_ARCHIVE_GOD_ID } from '@/data/chifuMedicineLotArchive';
-import { YUELAO_EDITION_LABELS, YUELAO_GOD_ID, type YuelaoEdition } from '@/data/yuelaoEdition';
-import { saveYuelaoEdition, useYuelaoEdition } from '@/services/yuelaoEditionPreferences';
+import type { YuelaoEdition } from '@/data/yuelaoEdition';
+import { saveOracleEditionSelection, useOracleEditionSelection } from '@/services/oracleEditionPreferences';
 import { getHistory, type DivinationRecord } from '@/services/storage';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -42,9 +43,13 @@ export default function GodDetailScreen() {
   const cardImage = god ? getGodCardImage(god.id) : null;
   const profile = god ? getGodProfile(god.id) : null;
   const questionGuide = god ? getGodQuestionGuide(god.id) : null;
-  const yuelaoEdition = useYuelaoEdition();
-  const oracleCatalog = god ? getOracleCatalogByGodId(god.id, yuelaoEdition) : null;
-  const hasEditions = god?.id === YUELAO_GOD_ID;
+  const selectedEditionId = useOracleEditionSelection(godId);
+  const selectableEditions = god ? getSelectableOracleEditions(god.id) : [];
+  const selectedEdition = god ? resolveOracleEdition(god.id, selectedEditionId) : null;
+  const pendingEditionCount = god ? oracleEditions.filter((edition) => edition.godId === god.id && edition.status === 'draft').length : 0;
+  const yuelaoEdition: YuelaoEdition = selectedEdition?.id === 'yuelao-hongkong-101' ? 'hongkong' : 'taiwan';
+  const oracleCatalog = god ? getOracleCatalogByGodId(god.id, god.id === 13 && selectedEdition?.status === 'legacy' ? yuelaoEdition : undefined) : null;
+  const hasEditions = selectableEditions.length > 1;
 
   const [historyRecords, setHistoryRecords] = React.useState<DivinationRecord[]>([]);
   const fadeContent = React.useRef(new Animated.Value(0)).current;
@@ -149,18 +154,18 @@ export default function GodDetailScreen() {
               <Text style={styles.sectionTitle}>📜 籤詩系統</Text>
               <View style={styles.infoRow}>
                 <View style={[styles.badge, { backgroundColor: god.primaryColor + '30', borderColor: god.accentColor + '50' }]}>
-                  <Text style={[styles.badgeText, { color: god.accentColor }]}>{hasEditions ? oracleCatalog.label : god.poemSystem}</Text>
+                  <Text style={[styles.badgeText, { color: god.accentColor }]}>{selectedEdition?.label ?? god.poemSystem}</Text>
                 </View>
-                <Text style={styles.muted}>共 {oracleCatalog.totalPoems} 首籤詩</Text>
+                <Text style={styles.muted}>共 {selectedEdition?.poems?.length ?? oracleCatalog.totalPoems} 首籤詩</Text>
               </View>
               {hasEditions ? (
                 <View style={[styles.chipRow, { marginTop: 10 }]} accessibilityRole="radiogroup" accessibilityLabel="籤詩版本">
-                  {(Object.keys(YUELAO_EDITION_LABELS) as YuelaoEdition[]).map((edition) => {
-                    const selected = edition === yuelaoEdition;
+                  {selectableEditions.map((edition) => {
+                    const selected = edition.id === selectedEdition?.id;
                     return (
                       <TouchableOpacity
-                        key={edition}
-                        onPress={() => saveYuelaoEdition(edition)}
+                        key={edition.id}
+                        onPress={() => { void saveOracleEditionSelection(god.id, edition.id); }}
                         accessibilityRole="radio"
                         accessibilityState={{ selected }}
                         style={[
@@ -169,7 +174,7 @@ export default function GodDetailScreen() {
                           selected ? { backgroundColor: god.primaryColor + '40' } : null,
                         ]}
                       >
-                        <Text style={[styles.chipText, { color: god.accentColor }]}>{selected ? '● ' : '○ '}{YUELAO_EDITION_LABELS[edition]}</Text>
+                        <Text style={[styles.chipText, { color: god.accentColor }]}>{selected ? '● ' : '○ '}{edition.label}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -177,6 +182,13 @@ export default function GodDetailScreen() {
               ) : null}
               {hasEditions ? (
                 <Text style={[styles.muted, { marginTop: 6 }]}>抽籤時使用所選版本，選擇會自動記住。</Text>
+              ) : null}
+              {pendingEditionCount > 0 ? (
+                <TouchableOpacity onPress={() => router.push('/source-audit' as never)} accessibilityRole="link">
+                  <Text style={[styles.muted, { marginTop: 6 }]}>
+                    {pendingEditionCount} 套廟本仍在整理中。查看來源與校勘進度 →
+                  </Text>
+                </TouchableOpacity>
               ) : null}
               {oracleCatalog.sourceNote ? (
                 <Text style={[styles.muted, { marginTop: 8 }]}>{oracleCatalog.sourceNote}</Text>

@@ -17,6 +17,7 @@ import {
 import { useLocalSearchParams } from 'expo-router';
 
 import { gods, questionCategories } from '@/data/gods';
+import { getRecordEditionDisplay } from '@/data/oracleRecordEdition';
 import { TempleFonts, TempleSpacing } from '@/constants/temple-theme';
 import { useI18n } from '@/hooks/useI18n';
 import { t as tRaw } from '@/services/i18n';
@@ -247,12 +248,14 @@ export default function CollectionScreen() {
       '【籤詩對照】',
       '',
       `── ${r1.godName} 第 ${r1.poem.number} 籤 ──`,
+      `版本：${getRecordEditionDisplay(r1).label}`,
       `等級：${r1.poem.level}`,
       `籤題：${r1.poem.title}`,
       `籤文：${r1.poem.content}`,
       r1.aiInterpretation ? `AI解讀：${r1.aiInterpretation.replace(/\n+/g, ' ').slice(0, 200)}` : '',
       '',
       `── ${r2.godName} 第 ${r2.poem.number} 籤 ──`,
+      `版本：${getRecordEditionDisplay(r2).label}`,
       `等級：${r2.poem.level}`,
       `籤題：${r2.poem.title}`,
       `籤文：${r2.poem.content}`,
@@ -434,6 +437,7 @@ export default function CollectionScreen() {
       lines.push('');
       lines.push(`【第 ${i + 1} 筆】${formatDate(record.timestamp)}`);
       lines.push(`神明：${record.godName}`);
+      lines.push(`版本：${getRecordEditionDisplay(record).label}`);
       lines.push(`籤號：第 ${record.poem.number} 籤・${record.poem.title}・${record.poem.level}`);
       if (record.question) lines.push(t('collectionQuestionLabel', { q: record.question }));
       lines.push(`籤文：${record.poem.content}`);
@@ -577,12 +581,18 @@ export default function CollectionScreen() {
 
   const isCompareSelected = (id: string) => selectedForCompare.includes(id);
 
-  const renderCardBody = (record: DivinationRecord, isFavorite: boolean) => (
+  const renderCardBody = (record: DivinationRecord, isFavorite: boolean) => {
+    const editionDisplay = getRecordEditionDisplay(record);
+    return (
     <>
       <View style={styles.recordHeader}>
         <View style={styles.recordMeta}>
           <Text style={styles.recordGod}>{record.godName}</Text>
           <Text style={styles.recordDate}>{formatDate(record.timestamp)}</Text>
+          <Text style={styles.recordEdition}>
+            版本：{editionDisplay.label}
+            {editionDisplay.inferred ? '（依籤文推定）' : ''}
+          </Text>
         </View>
         <View style={styles.recordNumberBadge}>
           <Text style={styles.recordNumber}>第 {record.poem.number} 籤</Text>
@@ -689,7 +699,8 @@ export default function CollectionScreen() {
         <Text style={styles.folderAddBtnText}>📁 加入分類</Text>
       </TouchableOpacity>
     </>
-  );
+    );
+  };
 
   const renderRecord = (record: DivinationRecord, isFavorite: boolean) => (
     <View
@@ -1276,6 +1287,7 @@ export default function CollectionScreen() {
                     const isSameGod = compareRecords[0].godName === compareRecords[1].godName;
                     const isSameNumber = compareRecords[0].poem.number === compareRecords[1].poem.number;
                     const isSameLevel = compareRecords[0].poem.level === compareRecords[1].poem.level;
+                    const editionDisplay = getRecordEditionDisplay(rec);
 
                     return (
                       <View
@@ -1318,6 +1330,7 @@ export default function CollectionScreen() {
                             <Text style={styles.compareDiffHint}>等級不同</Text>
                           ) : null}
                         </View>
+                        <Text style={styles.recordEdition}>版本：{editionDisplay.label}{editionDisplay.inferred ? '（依籤文推定）' : ''}</Text>
 
                         <View style={styles.recordPoem}>
                           {rec.poem.content.split('\n').map((line, li) => (
@@ -1583,6 +1596,11 @@ function createStyles(theme: ThemeColors) {
     fontSize: 11,
     color: theme.textMuted,
     marginTop: 2,
+  },
+  recordEdition: {
+    fontSize: 11,
+    color: theme.gold,
+    marginTop: 3,
   },
   recordNumberBadge: {
     backgroundColor: theme.red + '28',

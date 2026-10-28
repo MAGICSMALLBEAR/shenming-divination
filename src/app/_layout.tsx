@@ -5,13 +5,14 @@ import { router, Stack } from 'expo-router';
 import { initThemeFromSettings } from '@/services/themeStore';
 import { initSentry } from '@/services/sentry';
 import { initYuelaoEditionFromStorage } from '@/services/yuelaoEditionPreferences';
+import { initOracleEditionSelections } from '@/services/oracleEditionPreferences';
 import { OpeningGate } from '@/components/OpeningGate';
 
 export default function RootLayout() {
   useEffect(() => {
     initThemeFromSettings();
     initSentry();
-    initYuelaoEditionFromStorage();
+    void initYuelaoEditionFromStorage().then(initOracleEditionSelections);
   }, []);
 
   useEffect(() => {

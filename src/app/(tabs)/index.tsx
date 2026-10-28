@@ -98,26 +98,27 @@ export default function HomeScreen() {
   }, []);
   const solarTerm = React.useMemo(() => getCurrentSolarTerm(), []);
 
-  // 驗籤時也可搖動手機擲筊。
+  // 驗籤及三筊定籤時也可搖動手機擲筊。
   useShakeDetector(
     React.useCallback(() => {
-      if (div.step === 'verify-poem') {
+      if (div.step === 'verify-poem' || div.step === 'three-cup-draw') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setShakeTossSignal((value) => value + 1);
       }
     }, [div.step]),
-    div.step === 'verify-poem'
+    div.step === 'verify-poem' || div.step === 'three-cup-draw'
   );
 
   const isCompact = layout.width < 420;
   const isTablet = layout.isTablet;
   const pageMaxWidth = layout.isWideDesktop ? 1180 : layout.isDesktop ? 1080 : layout.contentMaxWidth;
   const selectedGodCardImage = getGodCloseupImage(div.selectedGod?.id) ?? getGodCardImage(div.selectedGod?.id);
-  const lastJiaobeiResult = div.step === 'verify-poem' ? div.verificationResults.at(-1) ?? null : null;
+  const lastJiaobeiResult = div.step === 'verify-poem' || div.step === 'three-cup-draw' ? div.verificationResults.at(-1) ?? null : null;
   const showDivinePresence = div.selectedGod && div.step !== 'select-god';
   const compactDivinePresence =
     div.step === 'drawing' ||
     div.step === 'verify-poem' ||
+    div.step === 'three-cup-draw' ||
     div.step === 'reveal-poem' ||
     div.step === 'ai-interpret' ||
     div.step === 'result';
@@ -160,7 +161,7 @@ export default function HomeScreen() {
   // 環境音效：冥想 / 擲筊步驟啟動，其他步驟停止
   React.useEffect(() => {
     if (!settings) return;
-    const ambientSteps = ['meditate', 'verify-poem'];
+    const ambientSteps = ['meditate', 'verify-poem', 'three-cup-draw'];
     if (settings.ambientSound) {
       if (ambientSteps.includes(div.step)) {
         startAmbientSound().catch(() => {});
@@ -239,13 +240,14 @@ export default function HomeScreen() {
     if (selectedPerson?.id === id) setSelectedPerson(null);
   };
 
-  const showBack = div.step === 'set-question' || div.step === 'meditate' || div.step === 'choose-draw-method' || div.step === 'enter-zhuge-number';
+  const showBack = div.step === 'set-question' || div.step === 'meditate' || div.step === 'choose-draw-method' || div.step === 'enter-zhuge-number' || div.step === 'three-cup-draw';
 
   const handleBack = () => {
     switch (div.step) {
       case 'set-question': div.goToStep('select-god'); break;
       case 'meditate': if (incenseDone) { setIncenseDone(false); } else { div.goToStep('set-question'); } break;
       case 'choose-draw-method': div.performDraw(); break;
+      case 'three-cup-draw': div.goToStep('meditate'); break;
       case 'enter-zhuge-number':
         if (div.selectedGod?.poemSystem === '諸葛神數') {
           div.goToStep('meditate');
@@ -312,17 +314,18 @@ export default function HomeScreen() {
 
   const renderStepIndicator = () => {
     const isZhuge = div.selectedGod?.poemSystem === '諸葛神數';
+    const isThreeCup = div.selectedEdition?.drawMethod === 'three-cup-direct';
     const steps = [
       { key: 'select-god', icon: '🏛️' },
       { key: 'set-question', icon: '📝' },
       { key: 'meditate', icon: '🧘' },
       ...(isZhuge ? [{ key: 'enter-zhuge-number', icon: '🔢' }] : []),
-      { key: 'drawing', icon: '🎋' },
-      { key: 'verify-poem', icon: '🌓' },
+      ...(isThreeCup ? [{ key: 'three-cup-draw', icon: '🌓' }] : [{ key: 'drawing', icon: '🎋' }, { key: 'verify-poem', icon: '🌓' }]),
       { key: 'result', icon: '✨' },
     ];
     const stepKey = (s: string) => {
       if (s === 'reveal-poem' || s === 'ai-interpret') return 'result';
+      if (isThreeCup && s === 'drawing') return 'three-cup-draw';
       if (!isZhuge && (s === 'choose-draw-method' || s === 'enter-zhuge-number')) return 'drawing';
       return s;
     };
@@ -561,6 +564,22 @@ export default function HomeScreen() {
             />
           </View>
         );
+      case 'three-cup-draw':
+        return (
+          <View style={styles.fullScreen}>
+            <Text style={styles.verificationHeading}>祀典大天后宮月老籤 · 連擲三次定籤</Text>
+            <Jiaobei
+              phase="three-cup-direct"
+              onToss={div.performVerificationJiaobei}
+              onSequenceComplete={div.completeThreeCupDraw}
+              results={div.verificationResults}
+              tossSignal={shakeTossSignal}
+              lowMotion={lowMotionMode}
+              ritualStyleKey={ritualStyle}
+              onStyleChange={setRitualStyle}
+            />
+          </View>
+        );
       case 'drawing':
         return (
           <View style={styles.fullScreen}>
@@ -662,7 +681,7 @@ export default function HomeScreen() {
     const aiText = div.aiInterpretation
       ? `\n\n開示摘要：${div.aiInterpretation.slice(0, 160)}${div.aiInterpretation.length > 160 ? '...' : ''}`
       : '';
-    const text = `【${div.selectedGod?.name || '神明'}靈籤】第 ${div.drawnPoem.number} 籤 · ${div.drawnPoem.title} · ${div.drawnPoem.level}\n${div.drawnPoem.ganzhi}\n\n${div.drawnPoem.content}\n\n白話：${div.drawnPoem.vernacular}${aiText}${actionText}\n\n— 神明占卜`;
+    const text = `【${div.selectedGod?.name || '神明'}靈籤】第 ${div.drawnPoem.number} 籤 · ${div.drawnPoem.title} · ${div.drawnPoem.level}\n版本：${div.currentRecord?.editionLabel ?? div.selectedEdition?.label ?? '版本未註明'}\n${div.drawnPoem.ganzhi}\n\n${div.drawnPoem.content}\n\n白話：${div.drawnPoem.vernacular}${aiText}${actionText}\n\n— 神明占卜`;
     await Share.share({ message: text });
   };
 
@@ -676,7 +695,7 @@ export default function HomeScreen() {
     if (!div.drawnPoem) return;
     const godName = div.selectedGod?.name || '神明';
     const line1 = div.drawnPoem.content.split('\n')[0] || div.drawnPoem.content.slice(0, 30);
-    const blessing = `🌸 ${godName} 賜福祝卡 🌸\n\n好消息！我在神明占卜求得吉籤：\n\n【第 ${div.drawnPoem.number} 籤 · ${div.drawnPoem.title}】\n"${line1}"\n\n願此福氣也能帶給你 ✨\n祝你諸事順心，好運連連！\n\n— 由神明占卜送出 🏛️`;
+    const blessing = `🌸 ${godName} 賜福祝卡 🌸\n\n好消息！我在神明占卜求得吉籤：\n\n【第 ${div.drawnPoem.number} 籤 · ${div.drawnPoem.title}】\n版本：${div.currentRecord?.editionLabel ?? div.selectedEdition?.label ?? '版本未註明'}\n"${line1}"\n\n願此福氣也能帶給你 ✨\n祝你諸事順心，好運連連！\n\n— 由神明占卜送出 🏛️`;
     await Share.share({ message: blessing });
   };
 
