@@ -3,6 +3,7 @@
 import { getDirection, getDailyDirection, getAllDirections } from '@/services/fengshuiCompass';
 import { worshipGuides } from '@/data/worshipGuide';
 import { analyzeDream } from '@/services/dreamAnalysis';
+import { EXTENDED_DREAM_SYMBOL_COUNT } from '@/data/dreamSymbolsExtended';
 import { generateYearlyReview, getAvailableYears } from '@/services/yearlyReview';
 
 // ─── Mocks for yearlyReview ───
@@ -221,6 +222,17 @@ describe('worshipGuide', () => {
 // ─── 解夢 (dreamAnalysis) ───
 
 describe('dreamAnalysis', () => {
+  it('includes a substantial, maintainable extended dream-symbol catalog', () => {
+    expect(EXTENDED_DREAM_SYMBOL_COUNT).toBeGreaterThanOrEqual(50);
+  });
+
+  it('recognizes extended natural, life, and spiritual dream symbols', () => {
+    const result = analyzeDream('我夢見彩虹、蝴蝶、搬家，最後走進一座寺廟拜拜');
+    expect(result.symbols).toEqual(expect.arrayContaining(['彩虹', '蝴蝶', '搬家', '寺廟']));
+    expect(result.interpretation).toContain('彩虹');
+    expect(result.advice).toContain('行動');
+  });
+
   it('returns result with symbols, interpretation, fortune, and advice', () => {
     const result = analyzeDream('我夢見一條龍在天空中飛翔');
     expect(result).toHaveProperty('symbols');

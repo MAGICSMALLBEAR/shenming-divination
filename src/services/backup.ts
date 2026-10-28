@@ -2,6 +2,7 @@ import { COMMENTS_KEY } from './commentsService';
 import { STORAGE_KEYS, getItem, setItem } from './storage';
 import { TEMPLE_RECORDS_KEY } from './templeService';
 import { WISHES_KEY } from './wishTracker';
+import { DREAM_JOURNAL_KEY } from './dreamJournal';
 
 const BACKUP_VERSION = 1;
 
@@ -13,6 +14,7 @@ const BACKUP_KEYS = [
   WISHES_KEY,
   COMMENTS_KEY,
   TEMPLE_RECORDS_KEY,
+  DREAM_JOURNAL_KEY,
 ] as const;
 
 export interface BackupPayload {

@@ -1,5 +1,6 @@
 // 解夢服務 — 後端 API 不可用時的本地規則分析
 // 基於常見夢境元素的心理象徵與傳統解夢
+import { EXTENDED_DREAM_SYMBOLS } from '@/data/dreamSymbolsExtended';
 
 export interface DreamResult {
   symbols: string[];
@@ -9,7 +10,7 @@ export interface DreamResult {
 }
 
 /** 50+ 常見夢境元素及其象徵意義 */
-const SYMBOL_DICTIONARY: Record<string, { interpretation: string; fortune: '吉' | '中' | '凶'; advice: string }> = {
+const BASE_SYMBOL_DICTIONARY: Record<string, { interpretation: string; fortune: '吉' | '中' | '凶'; advice: string }> = {
   // 自然元素
   '水': {
     interpretation: '水象徵情感與財運。清澈平靜的水代表內心平和、財運順遂；渾濁洶湧的水則暗示情緒波動或財務不穩。',
@@ -302,6 +303,9 @@ const SYMBOL_DICTIONARY: Record<string, { interpretation: string; fortune: '吉'
     advice: '舊的格局已經結束，新的機會正在開啟。以嶄新的心態迎接人生的下一個階段。',
   },
 };
+
+// 擴充資料庫放在獨立檔案，便於審閱、維護與持續新增夢象。
+const SYMBOL_DICTIONARY = { ...BASE_SYMBOL_DICTIONARY, ...EXTENDED_DREAM_SYMBOLS };
 
 /** 情緒詞彙 → 對解讀的調整 */
 const FEELING_ADJUSTMENTS: Record<string, { direction: 'positive' | 'negative' | 'neutral'; modifier: string; advicePrefix: string }> = {

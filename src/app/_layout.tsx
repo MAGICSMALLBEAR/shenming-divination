@@ -60,6 +60,14 @@ export default function RootLayout() {
       <Stack.Screen name="nameAnalysis" />
       <Stack.Screen name="character" />
       <Stack.Screen name="dream" />
+      <Stack.Screen name="dream-journal" />
+      <Stack.Screen name="dream-dictionary" />
+      <Stack.Screen name="dream-insights" />
+      <Stack.Screen name="dream-entry/[id]" />
+      <Stack.Screen name="dream-calendar" />
+      <Stack.Screen name="dream-privacy" />
+      <Stack.Screen name="dream-report" />
+      <Stack.Screen name="dream-hub" />
       <Stack.Screen name="boneWeight" />
       <Stack.Screen name="yearlyReview" />
       <Stack.Screen name="fengshui" />

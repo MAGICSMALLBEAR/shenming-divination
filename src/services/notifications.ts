@@ -10,7 +10,7 @@ import {
 import { getDailyPoem } from './dailyPoem';
 import { getCurrentSolarTerm, getNextSolarTerm } from './solarTerms';
 
-type NotificationKind = 'daily-poem' | 'god-birthday' | 'wish-reminder' | 'fortune-widget';
+type NotificationKind = 'daily-poem' | 'god-birthday' | 'wish-reminder' | 'fortune-widget' | 'dream-reminder';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -64,6 +64,25 @@ async function cancelNotificationsByType(types: NotificationKind[]): Promise<voi
 
 export async function cancelDailyNotifications(): Promise<void> {
   await cancelNotificationsByType(['daily-poem']);
+}
+
+export async function cancelDreamReminder(): Promise<void> {
+  await cancelNotificationsByType(['dream-reminder']);
+}
+
+export async function scheduleDreamReminder(hour = 7, minute = 30): Promise<boolean> {
+  const hasPermission = await requestPermissions();
+  if (!hasPermission) return false;
+  await cancelDreamReminder();
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '記下昨晚的夢境',
+      body: '趁記憶還清楚，花一分鐘留下畫面、感受與夢象。',
+      data: { type: 'dream-reminder', url: '/dream' },
+    },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute },
+  });
+  return true;
 }
 
 export async function cancelGodBirthdayNotifications(): Promise<void> {

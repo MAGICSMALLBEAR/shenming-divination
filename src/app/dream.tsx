@@ -13,6 +13,9 @@ import { useFadeIn } from '@/hooks/useEntranceAnimation';
 import { useI18n } from '@/hooks/useI18n';
 import type { ThemeColors } from '@/constants/themes';
 import { analyzeDream, DreamResult } from '@/services/dreamAnalysis';
+import { saveDreamEntry, type DreamTag } from '@/services/dreamJournal';
+import { VoiceQuestionInput } from '@/components/VoiceQuestionInput';
+import { getDreamReminderPreferences, setDreamReminderEnabled } from '@/services/dreamReminder';
 
 const API_BASE = 'http://localhost:3001';
 
@@ -23,6 +26,8 @@ const EMOJI_QUICK_SELECT = [
   { emoji: '😡', label: '生氣' },
   { emoji: '🤔', label: '困惑' },
 ];
+
+const DREAM_TAGS: DreamTag[] = ['惡夢', '好夢', '清醒夢', '反覆夢', '奇異夢'];
 
 function FortuneBadge({ fortune, theme }: { fortune: string; theme: ThemeColors }) {
   const bgColor =
@@ -62,6 +67,11 @@ export default function DreamScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [provider, setProvider] = useState('');
+  const [tags, setTags] = useState<DreamTag[]>([]);
+  const [saved, setSaved] = useState(false);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+
+  React.useEffect(() => { getDreamReminderPreferences().then((prefs) => setReminderEnabled(prefs.enabled)); }, []);
 
   const handleSubmit = async () => {
     if (!dream.trim()) {
@@ -73,6 +83,7 @@ export default function DreamScreen() {
     setLoading(true);
     setResult(null);
     setProvider('');
+    setSaved(false);
 
     try {
       const res = await fetch(`${API_BASE}/api/dream`, {
@@ -115,6 +126,25 @@ export default function DreamScreen() {
     }
   };
 
+  const toggleTag = (tag: DreamTag) => {
+    setTags((current) => current.includes(tag) ? current.filter((item) => item !== tag) : [...current, tag]);
+    setSaved(false);
+  };
+
+  const handleSave = async () => {
+    if (!result || saved) return;
+    await saveDreamEntry({ dream: dream.trim(), feeling: feeling.trim() || undefined, tags, result });
+    setSaved(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const toggleReminder = async () => {
+    const next = !reminderEnabled;
+    const applied = await setDreamReminderEnabled(next);
+    if (applied) setReminderEnabled(next);
+    else setError('未取得通知權限，請在裝置設定允許通知後再試一次。');
+  };
+
   const maxWidth = layout.isDesktop ? 700 : 600;
   const fadeIn = useFadeIn({ delay: 0 });
 
@@ -150,6 +180,7 @@ export default function DreamScreen() {
               textAlignVertical="top"
               accessibilityLabel="夢境描述輸入框"
             />
+            <VoiceQuestionInput theme={theme} disabled={loading} onTranscript={(text) => { setDream((current) => current ? `${current}\n${text}` : text); setError(''); setResult(null); setSaved(false); }} />
 
             <Text style={[s.inputLabel, { marginTop: TempleSpacing.md }]}>{t('dreamLabelFeeling')}</Text>
             <TextInput
@@ -181,6 +212,18 @@ export default function DreamScreen() {
                   <Text style={[s.emojiLabel, feeling === item.label && { color: theme.textGold }]}>
                     {item.label}
                   </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity style={s.reminderRow} onPress={toggleReminder} accessibilityLabel="設定早晨解夢提醒">
+              <Text style={s.reminderText}>☀️ 每天早上 7:30 提醒我記錄夢境</Text><Text style={[s.reminderState, reminderEnabled && s.reminderStateOn]}>{reminderEnabled ? '已開啟' : '開啟'}</Text>
+            </TouchableOpacity>
+
+            <Text style={s.tagLabel}>夢境標籤（選填）</Text>
+            <View style={s.emojiRow}>
+              {DREAM_TAGS.map((tag) => (
+                <TouchableOpacity key={tag} style={[s.tagChip, tags.includes(tag) && s.tagChipActive]} onPress={() => toggleTag(tag)} accessibilityLabel={`標記為${tag}`}>
+                  <Text style={[s.tagText, tags.includes(tag) && s.tagTextActive]}>{tag}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -248,6 +291,9 @@ export default function DreamScreen() {
                   <Text style={s.adviceText}>{result.advice}</Text>
                 </View>
               ) : null}
+              <TouchableOpacity style={[s.saveBtn, saved && s.saveBtnSaved]} onPress={handleSave} disabled={saved} accessibilityLabel="儲存到夢境日記">
+                <Text style={s.saveText}>{saved ? '已儲存至夢境日記' : '儲存到夢境日記'}</Text>
+              </TouchableOpacity>
             </Animated.View>
           )}
         </ScrollView>
@@ -339,6 +385,26 @@ function createStyles(theme: ThemeColors) {
       fontSize: TempleFonts.small,
       color: theme.textMuted,
     },
+    tagLabel: {
+      fontSize: TempleFonts.small,
+      color: theme.textMuted,
+      marginTop: TempleSpacing.xs,
+    },
+    tagChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.gold + '35',
+      backgroundColor: theme.bgMedium,
+    },
+    tagChipActive: { backgroundColor: theme.gold },
+    tagText: { fontSize: TempleFonts.caption, color: theme.textMuted },
+    tagTextActive: { color: theme.bgDark, fontWeight: 'bold' },
+    reminderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderRadius: 10, padding: TempleSpacing.sm, backgroundColor: theme.gold + '14', borderColor: theme.gold + '35', borderWidth: 1, marginBottom: TempleSpacing.sm },
+    reminderText: { color: theme.textLight, fontSize: TempleFonts.small },
+    reminderState: { color: theme.textGold, fontSize: TempleFonts.small, fontWeight: 'bold' },
+    reminderStateOn: { color: theme.success },
     errorText: {
       color: theme.danger,
       fontSize: TempleFonts.small,
@@ -420,5 +486,14 @@ function createStyles(theme: ThemeColors) {
       borderLeftWidth: 3,
       borderLeftColor: theme.gold,
     },
+    saveBtn: {
+      backgroundColor: theme.gold,
+      borderRadius: 22,
+      alignItems: 'center',
+      paddingVertical: 13,
+      marginTop: TempleSpacing.sm,
+    },
+    saveBtnSaved: { backgroundColor: theme.success },
+    saveText: { color: theme.bgDark, fontWeight: 'bold', fontSize: TempleFonts.body },
   });
 }

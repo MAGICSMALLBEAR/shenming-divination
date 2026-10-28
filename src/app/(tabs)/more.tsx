@@ -52,7 +52,7 @@ const TOOLS: ToolEntry[] = [
   { route: '/map', label: '廟宇地圖', icon: '🗺️', desc: 'GPS 定位・打卡評論' },
   { route: '/source-audit', label: '籤詩校勘', icon: '🧾', desc: '來源・版本・完整度' },
   { route: '/nameAnalysis', label: '姓名學', icon: '📛', desc: '三才五格・五行筆畫' },
-  { route: '/dream', label: '解夢', icon: '🌙', desc: '夢境解析・象徵分析' },
+  { route: '/dream-hub', label: '夢境專區', icon: '🌙', desc: '解夢、日記、月曆與洞察' },
   { route: '/character', label: '測字', icon: '🔤', desc: '以字形斷吉凶・字義解疑惑' },
   { route: '/boneWeight', label: '八字稱骨', icon: '🦴', desc: '袁天罡稱骨歌訣・命重解析' },
   { route: '/yearlyReview', label: '年度回顧', icon: '📊', desc: '年度求籤回顧・統計分析' },
