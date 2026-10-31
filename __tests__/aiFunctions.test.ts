@@ -100,6 +100,25 @@ describe('chat provider selection', () => {
 });
 
 describe('/api/interpret and /api/chat with DeepSeek', () => {
+  it.each([
+    ['yuelao-taiwan-100', '月老靈籤・台灣版', 'taiwan-v1'],
+    ['yuelao-hongkong-101', '月老靈簽・香港版', 'hongkong-v1'],
+  ])('keeps edition %s and history in the upstream prompt', async (editionId, editionLabel, editionVersionTag) => {
+    process.env.DEEPSEEK_API_KEY = 'ds-key';
+    const calls = mockUpstream(() => chatReply('【一句結論】解讀'));
+    await (interpret as FetchHandler).fetch(post('/api/interpret', {
+      godName: '月下老人', poemNumber: 1, poemContent: '本次原文', editionId, editionLabel, editionVersionTag,
+      editionTemple: '廟本名稱', editionSource: '來源說明', editionSourceUrl: 'https://example.org/source',
+      drawMethod: 'stick-confirmation', recentHistorySummary: '月老第1籤／另一廟本／舊版',
+    }));
+    const { messages } = JSON.parse(String(calls[0].init.body));
+    expect(messages[0].content).toContain('不得將同號的其他廟本混為一談');
+    expect(messages[0].content).toContain('不得宣稱為廟方原解');
+    for (const value of [editionId, editionLabel, editionVersionTag, '廟本名稱', '來源說明', 'https://example.org/source', 'stick-confirmation', '月老第1籤／另一廟本／舊版', '本次原文']) {
+      expect(messages[1].content).toContain(value);
+    }
+  });
+
   it('sends the reading request to DeepSeek and returns the interpretation', async () => {
     process.env.DEEPSEEK_API_KEY = 'ds-key';
     const calls = mockUpstream(() => chatReply('【一句結論】順勢而為'));

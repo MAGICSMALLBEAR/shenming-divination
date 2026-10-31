@@ -4,12 +4,14 @@ import type { Poem } from '@/data/poems/leiyushi';
 import { DRAW_ANIMATION_DEFAULT_MS, normalizeDrawAnimationDuration } from '@/constants/divination';
 import { gods } from '@/data/gods';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
+import { getYuelaoEditionOfPoem } from '@/data/yuelaoEdition';
 import { resolveOracleEdition } from '@/data/oracleEditionRegistry';
 import { getSelectedOracleEditionId } from '@/services/oracleEditionPreferences';
 import { resolveTianhouThreeCupNumber } from '@/services/threeCupOracle';
 import { tossJiaobei, drawPoem, drawZhugePoem, saveDivinationRecord } from '@/services/divination';
 import { addFavorite, findFavoriteRecord, getHistory, getSettings, removeFavorite, isFavorite, saveLastPoemContext } from '@/services/storage';
 import { getAIInterpretation } from '@/services/ai';
+import { buildRecentHistorySummary, type OracleAIContext } from '@/services/oracleAIContext';
 import { buildActionPlan } from '@/services/actionPlan';
 import { requestReview, shouldRequestReview } from '@/services/reviewService';
 import type { JiaobeiResult } from '@/services/divination';
@@ -123,16 +125,28 @@ export function useDivination() {
     setStep('drawing');
   }, []);
 
-  const completeDivination = useCallback(async (poem: Poem, godName: string, confirmed: boolean, ritualPattern?: JiaobeiResult[]) => {
+  const completeDivination = useCallback(async (poem: Poem, godName: string, confirmed: boolean, ritualPattern?: JiaobeiResult[], method?: DrawMethod) => {
     setStep('ai-interpret');
+    // Capture the drawn edition before awaiting storage or the AI response.
+    const edition = selectedGodId ? resolveOracleEdition(selectedGodId, activeEditionId) : null;
+    const catalog = getOracleCatalogByGodId(selectedGodId, getYuelaoEditionOfPoem(poem));
+    const oracleContext: OracleAIContext = {
+      editionId: edition?.id,
+      editionLabel: edition?.label ?? catalog.label,
+      editionVersionTag: edition && edition.status !== 'legacy' ? edition.id : catalog.versionTag,
+      editionTemple: edition?.temple,
+      editionSource: edition && edition.status !== 'legacy'
+        ? '依此廟本核定來源；AI 與白話解讀由 App 提供。'
+        : catalog.sourceNote,
+      editionSourceUrl: edition?.sourceUrl,
+      drawMethod: edition?.drawMethod === 'three-cup-direct' ? 'three-cup-direct'
+        : confirmed ? 'stick-confirmation' : method,
+    };
     let interpretation: string | null = null;
     try {
-      const recentHistory = (await getHistory())
-        .filter((record) => record.questionCategory === questionCategory)
-        .slice(0, 3)
-        .map((record) => `${record.godName}第${record.poem.number}籤/${record.poem.level}/${record.verificationStatus ?? '待驗證'}`)
-        .join('；');
+      const recentHistory = buildRecentHistorySummary(await getHistory(), questionCategory);
       interpretation = await getAIInterpretation({
+        ...oracleContext,
         godName,
         userName: userName || '善信',
         question,
@@ -150,7 +164,9 @@ export function useDivination() {
     }
 
     await saveLastPoemContext({
+      ...oracleContext,
       godName,
+      poemNumber: poem.number,
       poemContent: poem.content,
       poemTitle: poem.title || '',
       poemLevel: poem.level,
@@ -159,9 +175,8 @@ export function useDivination() {
       timestamp: Date.now(),
     });
 
-    const edition = selectedGodId ? resolveOracleEdition(selectedGodId, activeEditionId) : null;
-    const catalog = selectedGodId ? getOracleCatalogByGodId(selectedGodId) : null;
     const record = await saveDivinationRecord({
+      ...oracleContext,
       godName,
       poem,
       question,
@@ -170,9 +185,6 @@ export function useDivination() {
       actionPlan: buildActionPlan({ poem, questionCategory, question }),
       poemConfirmed: confirmed || undefined,
       poemConfirmResult: confirmed ? '連續三次聖筊確認' : undefined,
-      editionId: activeEditionId ?? undefined,
-      editionLabel: edition?.label ?? catalog?.label,
-      editionVersionTag: edition?.id ?? catalog?.versionTag,
       ritualPattern,
     });
     setCurrentRecord(record);
@@ -192,6 +204,7 @@ export function useDivination() {
     requiresVerification: boolean,
     fixedPoem?: Poem,
     ritualPattern?: JiaobeiResult[],
+    method: DrawMethod = 'shake',
   ) => {
     if (!selectedGodId) return;
     const god = gods.find(g => g.id === selectedGodId);
@@ -221,7 +234,7 @@ export function useDivination() {
       setStep('verify-poem');
       return;
     }
-    await completeDivination(poem, god?.name || '神明', false, ritualPattern);
+    await completeDivination(poem, god?.name || '神明', false, ritualPattern, method);
   }, [activeEditionId, selectedGodId, zhugeNumber, completeDivination]);
 
   const completeThreeCupDraw = useCallback(() => {
@@ -269,7 +282,7 @@ export function useDivination() {
     if (!selectedGodId) return;
     setStep('drawing');
     setDrawPhase('revealing');
-    void revealDraw(undefined, seed ?? (Date.now() + selectedGodId), requiresVerification);
+    void revealDraw(undefined, seed ?? (Date.now() + selectedGodId), requiresVerification, undefined, undefined, requiresVerification ? 'auto' : 'direct');
   }, [selectedGodId, revealDraw]);
 
   const performNumberDraw = useCallback((n: number) => {
@@ -279,11 +292,11 @@ export function useDivination() {
     setStep('drawing');
     setDrawPhase('revealing');
     if (god?.poemSystem === '諸葛神數') {
-      void revealDraw(n, undefined, false);
+      void revealDraw(n, undefined, false, undefined, undefined, 'number');
       return;
     }
     const seed = (Math.imul(n >>> 0, 2654435761) ^ Math.imul(selectedGodId, 1597334677) ^ Date.now()) >>> 0;
-    void revealDraw(undefined, seed, false);
+    void revealDraw(undefined, seed, false, undefined, undefined, 'number');
   }, [selectedGodId, revealDraw]);
 
   const chooseDrawMethod = useCallback((method: DrawMethod) => {

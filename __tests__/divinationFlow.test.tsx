@@ -11,8 +11,40 @@ jest.mock('@/services/reviewService', () => ({
 
 import { gods } from '@/data/gods';
 import { useDivination } from '@/hooks/useDivination';
+import { getAIInterpretation } from '@/services/ai';
+import { getLastPoemContext } from '@/services/storage';
+import * as registry from '@/data/oracleEditionRegistry';
+import * as selection from '@/data/oracleEditionSelection';
 
 describe('求籤主流程', () => {
+  it.each(['yuelao-taiwan-100', 'yuelao-hongkong-101'])('passes drawn edition %s to AI, history and follow-up storage', async (editionId) => {
+    const selectionSpy = jest.spyOn(selection, 'getSelectedOracleEditionId').mockReturnValue(editionId);
+    const edition = registry.getOracleEditionById(editionId)!;
+    try {
+      const { result } = await renderHook(() => useDivination());
+      await act(async () => result.current.selectGod(13));
+      await act(async () => result.current.startMeditation('感情方向', 'love', '善信'));
+      await act(async () => result.current.chooseDrawMethod('direct'));
+      await act(async () => result.current.finishDrawAnimation());
+      expect(result.current.step).toBe('result');
+      expect(getAIInterpretation).toHaveBeenLastCalledWith(expect.objectContaining({
+        editionId, editionLabel: edition.label, editionTemple: edition.temple,
+        editionVersionTag: expect.stringContaining(editionId === 'yuelao-taiwan-100' ? 'taiwan' : 'hongkong'),
+        editionSource: expect.any(String), drawMethod: 'direct',
+        poemContent: result.current.drawnPoem!.content,
+      }));
+      const request = (getAIInterpretation as jest.Mock).mock.calls.at(-1)![0];
+      for (const stored of [result.current.currentRecord, await getLastPoemContext()]) {
+        expect(stored).toMatchObject({
+          editionId, editionLabel: request.editionLabel, editionVersionTag: request.editionVersionTag,
+          editionSource: request.editionSource, drawMethod: request.drawMethod,
+        });
+      }
+    } finally {
+      selectionSpy.mockRestore();
+    }
+  });
+
   it('靜心完成後直接進入搖籤，無抽前擲筊', async () => {
     const god = gods.find((item) => item.poemSystem !== '諸葛神數')!;
     const { result } = await renderHook(() => useDivination());

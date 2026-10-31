@@ -11,11 +11,13 @@ import {
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ThemeColors } from '@/constants/themes';
+import { formatOracleAIContext, ORACLE_AI_EDITION_RULE, type OracleAIContext } from '@/services/oracleAIContext';
 
 interface AskFollowUpProps {
   godName: string;
   poemContent: string;
   aiInterpretation?: string | null;
+  oracleContext?: OracleAIContext;
 }
 
 interface Message {
@@ -23,7 +25,7 @@ interface Message {
   text: string;
 }
 
-export function AskFollowUp({ godName, poemContent, aiInterpretation }: AskFollowUpProps) {
+export function AskFollowUp({ godName, poemContent, aiInterpretation, oracleContext = {} }: AskFollowUpProps) {
   const { theme } = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [expanded, setExpanded] = useState(false);
@@ -57,6 +59,8 @@ export function AskFollowUp({ godName, poemContent, aiInterpretation }: AskFollo
           role: 'system',
           content: [
             `你正在延續解讀 ${godName} 的籤詩。`,
+            ORACLE_AI_EDITION_RULE,
+            formatOracleAIContext(oracleContext),
             `籤文：${poemContent}`,
             aiInterpretation ? `先前解讀：${aiInterpretation}` : '',
             '請用溫和、具體、短而有用的方式回答，盡量給下一步。',

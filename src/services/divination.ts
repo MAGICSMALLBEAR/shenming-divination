@@ -5,6 +5,7 @@ import type { Poem } from '@/data/poems/leiyushi';
 import type { DivinationRecord } from './storage';
 import { addHistory } from './storage';
 import { mulberry32 } from './seededRandom';
+import type { OracleAIContext } from './oracleAIContext';
 export { drawZhugePoem } from '@/data/poems/zhugeShenShu';
 
 // 擲筊結果
@@ -62,11 +63,8 @@ export async function saveDivinationRecord(params: {
   actionPlan?: string[];
   poemConfirmed?: boolean;
   poemConfirmResult?: string;
-  editionId?: string;
-  editionLabel?: string;
-  editionVersionTag?: string;
   ritualPattern?: JiaobeiResult[];
-}): Promise<DivinationRecord> {
+} & OracleAIContext): Promise<DivinationRecord> {
   const record: DivinationRecord = {
     id: generateId(),
     ...params,

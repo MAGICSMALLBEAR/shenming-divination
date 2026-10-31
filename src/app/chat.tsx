@@ -18,6 +18,7 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useI18n } from '@/hooks/useI18n';
 import type { ThemeColors } from '@/constants/themes';
+import { formatOracleAIContext, ORACLE_AI_EDITION_RULE } from '@/services/oracleAIContext';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -34,6 +35,7 @@ function buildInitialAssistantMessage(lastPoem: LastPoemContext | null): string 
   return [
     '我已經接上你上一支籤的脈絡。',
     `${lastPoem.godName} · ${lastPoem.poemTitle} · ${lastPoem.poemLevel}`,
+    `籤本：${lastPoem.editionLabel || '版本未註明'}`,
     lastPoem.question ? `你當時問的是：${lastPoem.question}` : '',
     lastPoem.aiInterpretation
       ? `先前解讀摘要：${lastPoem.aiInterpretation.replace(/\n+/g, ' ').slice(0, 120)}...`
@@ -113,6 +115,9 @@ export default function ChatScreen() {
       const systemContent = lastPoem
         ? [
             `你正在延續解讀 ${lastPoem.godName} 的籤詩。`,
+            ORACLE_AI_EDITION_RULE,
+            formatOracleAIContext(lastPoem),
+            lastPoem.poemNumber != null ? `籤號：第 ${lastPoem.poemNumber} 籤` : '',
             `籤題：${lastPoem.poemTitle} / ${lastPoem.poemLevel}`,
             `籤文：${lastPoem.poemContent}`,
             lastPoem.question ? `原本提問：${lastPoem.question}` : '',

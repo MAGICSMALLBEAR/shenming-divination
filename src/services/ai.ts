@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import { normalizeInterpretationText } from './interpretation';
 import { getCachedInterpretation, setCachedInterpretation } from './offlineCache';
 import { isUnluckyLevel } from '@/data/poemLevel';
+import type { AIInterpretRequest } from './oracleAIContext';
 
 const getDefaultApiUrl = () => {
   if (Platform.OS === 'android') return 'http://10.0.2.2:3001/api/interpret';
@@ -22,19 +23,6 @@ async function getAiConfig(): Promise<{ url: string; apiKey?: string }> {
     }
   } catch {}
   return { url: process.env.EXPO_PUBLIC_AI_API_URL || getDefaultApiUrl() };
-}
-
-interface AIInterpretRequest {
-  godName: string;
-  userName: string;
-  question: string;
-  questionCategory: string;
-  poemNumber: number;
-  poemContent: string;
-  poemMeaning: string;
-  poemStory: string;
-  poemLevel: string;
-  recentHistorySummary?: string;
 }
 
 const categoryContext: Record<string, string> = {
@@ -92,6 +80,7 @@ function buildFallbackInterpretation(params: AIInterpretRequest): string {
   return normalizeInterpretationText(
     [
       '【一句結論】',
+      `本次籤本：${params.editionLabel || '版本未註明'}（版次：${params.editionVersionTag || '版本未註明'}）。`,
       summary,
       '',
       '【目前狀態】',
@@ -121,7 +110,7 @@ function buildFallbackInterpretation(params: AIInterpretRequest): string {
 
 export async function getAIInterpretation(params: AIInterpretRequest): Promise<string> {
   // Cache-first: return cached result immediately if available
-  const cached = await getCachedInterpretation(params.godName, params.poemNumber, params.questionCategory);
+  const cached = await getCachedInterpretation(params);
   if (cached) return cached;
 
   const { url: apiUrl, apiKey } = await getAiConfig();
@@ -147,12 +136,12 @@ export async function getAIInterpretation(params: AIInterpretRequest): Promise<s
 
     const data = await response.json();
     const rawText =
-      typeof data?.interpretation === 'string' ? data.interpretation : buildFallbackInterpretation(params);
+      typeof data?.interpretation === 'string' && data.provider !== 'fallback' ? data.interpretation : buildFallbackInterpretation(params);
 
     const result = normalizeInterpretationText(rawText, params.question);
     // Only cache successful AI responses (not local fallbacks)
-    if (typeof data?.interpretation === 'string') {
-      await setCachedInterpretation(params.godName, params.poemNumber, params.questionCategory, result);
+    if (typeof data?.interpretation === 'string' && data.provider !== 'fallback') {
+      await setCachedInterpretation(params, result);
     }
     return result;
   } catch (error) {

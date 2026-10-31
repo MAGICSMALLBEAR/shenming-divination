@@ -14,6 +14,7 @@ import { getPoemTheme } from '@/data/poemThemes';
 import { getGodProfile } from '@/data/godProfiles';
 import { getOracleCatalogByGodId } from '@/data/oracleCatalog';
 import { getYuelaoEditionOfPoem } from '@/data/yuelaoEdition';
+import { getRecordEditionDisplay } from '@/data/oracleRecordEdition';
 import { PoemComments } from './PoemComments';
 import { AskFollowUp } from './AskFollowUp';
 import { ShareCardView } from './ShareCardView';
@@ -563,9 +564,11 @@ export function PoemCard({ poem, godName, aiInterpretation, isLoading, lowMotion
 
       {/* AI 追問 */}
       <AskFollowUp
+        key={JSON.stringify([godName, poem.content, record?.editionId, record?.editionVersionTag])}
         godName={godName}
         poemContent={poem.content}
         aiInterpretation={aiInterpretation}
+        oracleContext={record ? { ...record, editionLabel: getRecordEditionDisplay(record).label } : {}}
       />
 
       {/* 社群留言 */}

@@ -1,5 +1,6 @@
 import type { Lang } from '@/services/i18n';
 import type { Poem } from '@/data/poems/leiyushi';
+import type { OracleAIContext } from './oracleAIContext';
 import { getRecordEditionDisplay } from '@/data/oracleRecordEdition';
 import {
   DRAW_ANIMATION_DEFAULT_MS,
@@ -38,13 +39,10 @@ export interface FamilyMember {
 
 export type VerificationStatus = 'pending' | 'matched' | 'unmatched';
 
-export interface DivinationRecord {
+export interface DivinationRecord extends OracleAIContext {
   id: string;
   godName: string;
   poem: Poem;
-  editionId?: string;
-  editionLabel?: string;
-  editionVersionTag?: string;
   ritualPattern?: ('shengbei' | 'xiaobei' | 'yinbei')[];
   question: string;
   questionCategory: string;
@@ -86,8 +84,9 @@ export interface AppSettings {
   aiApiKey?: string;
 }
 
-export interface LastPoemContext {
+export interface LastPoemContext extends OracleAIContext {
   godName: string;
+  poemNumber?: number;
   poemContent: string;
   poemTitle: string;
   poemLevel: string;

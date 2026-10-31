@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { AIInterpretRequest } from './oracleAIContext';
 
-const CACHE_PREFIX = '@ai_cache:';
+// v2 intentionally never reads keys from the old number/category-only cache.
+const CACHE_PREFIX = '@ai_cache:v2:';
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const MAX_ENTRIES = 50;
 const INDEX_KEY = '@ai_cache_index';
@@ -8,10 +10,27 @@ const INDEX_KEY = '@ai_cache_index';
 interface CacheEntry {
   value: string;
   expiresAt: number;
+  context: string;
 }
 
-function buildKey(godName: string, poemNumber: number, questionCategory: string): string {
-  return `${CACHE_PREFIX}${godName}:${poemNumber}:${questionCategory}`;
+function serializeContext(params: AIInterpretRequest): string {
+  // Fixed order makes equivalent requests independent of object property order.
+  return JSON.stringify([
+    params.godName, params.poemNumber, params.editionId ?? '', params.editionLabel ?? '',
+    params.editionVersionTag ?? '', params.editionTemple ?? '', params.editionSource ?? '',
+    params.editionSourceUrl ?? '', params.drawMethod ?? '', params.poemContent,
+    params.poemMeaning, params.poemStory, params.poemLevel, params.userName,
+    params.question, params.questionCategory, params.recentHistorySummary ?? '',
+  ]);
+}
+
+function buildKey(context: string): string {
+  // Compact lookup only; the full context is also checked so hash collisions cannot reuse a reading.
+  let hash = 2166136261;
+  for (let i = 0; i < context.length; i++) {
+    hash = Math.imul(hash ^ context.charCodeAt(i), 16777619);
+  }
+  return `${CACHE_PREFIX}${(hash >>> 0).toString(16)}`;
 }
 
 async function getIndex(): Promise<string[]> {
@@ -40,7 +59,7 @@ async function evictOldest(index: string[]): Promise<string[]> {
       const raw = await AsyncStorage.getItem(key);
       if (raw) {
         const entry: CacheEntry = JSON.parse(raw);
-        if (entry.expiresAt > now) {
+        if (key.startsWith(CACHE_PREFIX) && entry.expiresAt > now) {
           alive.push(key);
         } else {
           await AsyncStorage.removeItem(key);
@@ -59,11 +78,10 @@ async function evictOldest(index: string[]): Promise<string[]> {
 }
 
 export async function getCachedInterpretation(
-  godName: string,
-  poemNumber: number,
-  questionCategory: string
+  params: AIInterpretRequest
 ): Promise<string | null> {
-  const key = buildKey(godName, poemNumber, questionCategory);
+  const context = serializeContext(params);
+  const key = buildKey(context);
   try {
     const raw = await AsyncStorage.getItem(key);
     if (!raw) return null;
@@ -72,25 +90,25 @@ export async function getCachedInterpretation(
       await AsyncStorage.removeItem(key);
       return null;
     }
-    return entry.value;
+    return entry.context === context && typeof entry.value === 'string' ? entry.value : null;
   } catch {
     return null;
   }
 }
 
 export async function setCachedInterpretation(
-  godName: string,
-  poemNumber: number,
-  questionCategory: string,
+  params: AIInterpretRequest,
   value: string
 ): Promise<void> {
-  const key = buildKey(godName, poemNumber, questionCategory);
+  const context = serializeContext(params);
+  const key = buildKey(context);
   const entry: CacheEntry = {
     value,
     expiresAt: Date.now() + CACHE_TTL_MS,
+    context,
   };
   try {
-    let index = await getIndex();
+    let index = (await getIndex()).filter((existing) => existing !== key);
     index = await evictOldest(index);
     if (!index.includes(key)) index.push(key);
     await AsyncStorage.setItem(key, JSON.stringify(entry));

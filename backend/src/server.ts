@@ -275,6 +275,14 @@ app.post('/api/interpret', async (req, res) => {
       poemMeaning,
       poemStory,
       poemLevel,
+      editionId,
+      editionLabel,
+      editionVersionTag,
+      editionTemple,
+      editionSource,
+      editionSourceUrl,
+      drawMethod,
+      recentHistorySummary,
     } = req.body as Record<string, string>;
 
     if (!godName || !poemContent) {
@@ -314,6 +322,8 @@ app.post('/api/interpret', async (req, res) => {
     const personality = getGodPersonality(godName);
     const systemPrompt = [
       personality,
+      '解讀時請先標明提供的籤本名稱與版次；只依本次籤文解讀，不得將同號的其他廟本混為一談。版本未註明時請明說，不要猜測廟本。來源資訊僅供辨識，AI 解讀與 App 白話不得宣稱為廟方原解。',
+      '近期紀錄只供回顧，請分別保留其籤本版次，不可據此替換本次籤文。',
       `使用者稱呼：${userName || '信眾'}`,
       '請直接輸出以下七段，標題必須完全一致：',
       '【一句結論】',
@@ -328,6 +338,14 @@ app.post('/api/interpret', async (req, res) => {
     ].join('\n');
 
     const userPrompt = [
+      `籤本：${editionLabel || '版本未註明'}`,
+      `籤本識別：${editionId || '未註明'}`,
+      `版次：${editionVersionTag || '版本未註明'}`,
+      `廟宇／傳本：${editionTemple || '未註明'}`,
+      `來源說明：${editionSource || '未註明'}`,
+      `來源連結：${editionSourceUrl || '未註明'}`,
+      `取籤方式：${drawMethod || '未註明'}`,
+      `近期紀錄（各自版次）：${recentHistorySummary || '無'}`,
       `問題類型：${categoryLabel}`,
       `使用者問題：${question || '未提供'}`,
       `籤號：第 ${poemNumber} 籤`,

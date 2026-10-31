@@ -22,6 +22,14 @@ async function handler(req) {
       poemMeaning = '',
       poemStory = '',
       poemLevel = '',
+      editionId = '',
+      editionLabel = '版本未註明',
+      editionVersionTag = '版本未註明',
+      editionTemple = '',
+      editionSource = '',
+      editionSourceUrl = '',
+      drawMethod = '',
+      recentHistorySummary = '',
     } = body;
 
     const categoryMap = {
@@ -38,6 +46,8 @@ async function handler(req) {
 
     const systemPrompt = `你是台灣廟宇解籤老師，用溫和、具體、白話的方式解讀籤詩。
 你正在為信眾解讀${godName}的籤詩。請根據籤文內容、白話解釋和信眾的問題，給出個人化的解讀。
+解讀時請先標明提供的籤本名稱與版次；只依本次籤文解讀，不得將同號的其他廟本混為一談。版本未註明時請明說，不要猜測廟本。來源資訊僅供辨識，AI 解讀與 App 白話不得宣稱為廟方原解。
+近期紀錄只供回顧，請分別保留其籤本版次，不可據此替換本次籤文。
 
 回覆格式（請嚴格遵守）：
 【一句結論】
@@ -58,6 +68,13 @@ async function handler(req) {
     const userPrompt = [
       `信眾稱呼：${userName}`,
       `請示神明：${godName}`,
+      `籤本：${editionLabel}`,
+      editionId ? `籤本識別：${editionId}` : '',
+      `版次：${editionVersionTag}`,
+      editionTemple ? `廟宇／傳本：${editionTemple}` : '',
+      editionSource ? `來源說明：${editionSource}` : '',
+      editionSourceUrl ? `來源連結：${editionSourceUrl}` : '',
+      drawMethod ? `取籤方式：${drawMethod}` : '',
       `問題類型：${categoryLabel}`,
       `信眾問題：${question}`,
       `籤詩編號：第 ${poemNumber} 籤`,
@@ -65,6 +82,7 @@ async function handler(req) {
       `籤詩內容：${poemContent}`,
       `白話解釋：${poemMeaning}`,
       poemStory ? `典故：${poemStory}` : '',
+      recentHistorySummary ? `近期紀錄（各自版次）：${recentHistorySummary}` : '',
       '',
       '請幫我解讀這支籤詩對我問題的指引。',
     ]
