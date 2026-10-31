@@ -24,3 +24,21 @@ export async function setDreamReminderEnabled(enabled: boolean): Promise<boolean
   await setItem(KEY, JSON.stringify({ ...prefs, enabled }));
   return true;
 }
+
+export async function setDreamReminderTime(hour: number, minute: number): Promise<boolean> {
+  const prefs = await getDreamReminderPreferences();
+  const validHour = Math.max(0, Math.min(23, Math.floor(hour)));
+  const validMinute = Math.max(0, Math.min(59, Math.floor(minute)));
+  const nextPrefs: DreamReminderPreferences = { ...prefs, hour: validHour, minute: validMinute };
+  if (nextPrefs.enabled) {
+    const scheduled = await scheduleDreamReminder(validHour, validMinute);
+    if (!scheduled) return false;
+  }
+  await setItem(KEY, JSON.stringify(nextPrefs));
+  return true;
+}
+
+export function formatDreamReminderTime(hour: number, minute: number): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(hour)}:${pad(minute)}`;
+}

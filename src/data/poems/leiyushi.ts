@@ -2,11 +2,21 @@
 // 行天宮、城隍廟、文武廟等廟宇採用，第100籤末句「我本天仙雷雨師」而得名
 // 以十天干兩兩相配（甲甲至癸癸）共100首，吉凶等級依傳統定本校正
 
+export type PoemKind = 'standard' | 'qian-wang' | 'qian-shou' | 'head' | 'tail' | 'special';
+
 export interface Poem {
   id: number;
   number: number;
+  displayNumber?: string;             // 籤號顯示名稱（如「籤王」、「籤首」、「第 28 首 特殊」）
+  kind?: PoemKind;                    // 籤型分類：標準籤、籤王、籤首、頭籤、尾籤、特殊
+  isKingPoem?: boolean;               // 是否為籤王
+  isHeadPoem?: boolean;               // 是否為籤首/頭籤
+  unrankedLevel?: boolean;            // 是否未標吉凶（不需補假吉凶）
+  nonStandardMeter?: boolean;         // 是否非標準七言絕句
+  specialNote?: string;               // 特殊格式備註
+  imageTranscriptionPending?: boolean;// 影像待逐字轉錄狀態
   ganzhi: string;   // 納甲（天干組合）
-  level: string;    // 吉凶：大吉 / 上上 / 上吉 / 中吉 / 中平 / 下下
+  level: string;    // 吉凶：大吉 / 上上 / 上吉 / 中吉 / 中平 / 下下 / 未標
   title: string;    // 籤題
   content: string;  // 籤詩（七言絕句）
   vernacular: string;

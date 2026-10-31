@@ -7,6 +7,8 @@ export interface DreamResult {
   interpretation: string;
   fortune: '吉' | '中' | '凶';
   advice: string;
+  traditionalView?: string;   // 周公解夢與傳統民俗視角
+  psychologicalView?: string; // 現代心理學與內在自我覺察
 }
 
 /** 50+ 常見夢境元素及其象徵意義 */
@@ -440,7 +442,13 @@ function buildGenericAnalysis(dream: string, feeling?: string): Omit<DreamResult
     }
   }
 
-  return { interpretation, fortune, advice };
+  return {
+    interpretation,
+    fortune,
+    advice,
+    traditionalView: '《周公解夢》觀點：夜夢乃心神感應之象，事由心轉，境由心造。心存謙和敬意，行止端正，自然逢凶化吉。',
+    psychologicalView: '深度心理學覺察：夢境是潛意識整理生活記憶與情緒壓力的自然機制。透過記錄與覺察夢境，你能更清晰地辨識內心深處的真正渴望與盲點。',
+  };
 }
 
 /** 主函數：分析夢境 */
@@ -511,8 +519,20 @@ export function analyzeDream(dream: string, feeling?: string): DreamResult {
   // 情緒調整
   const adjusted = applyFeelingAdjustment(baseResult, feeling);
 
+  // 雙重視角生成（周公解夢原典視角 & 現代心理學覺察視角）
+  const primarySymbol = symbols[0];
+  const traditionalView = primarySymbol
+    ? `《周公解夢》原典解析：夢見【${primarySymbol}】，古人多視為氣運流轉之徵兆。若感應安適，主家業生機、逢貴人引領；若感應困頓，則主心有牽掛，宜修德自省、廣積善緣，自能消災納祥。`
+    : '《周公解夢》觀點：夜夢乃心神感應之象，事由心轉，境由心造。心存謙和敬意，行止端正，自然逢凶化吉。';
+
+  const psychologicalView = primarySymbol
+    ? `深度心理學覺察：夢中的【${primarySymbol}】往往是潛意識的重要隱喻。它反映了你近期在自我認同、壓力調適或親密關係中未完全表達的情感需求。夢境並非命定的預言，而是一面內在明鏡，邀請你溫柔接納當前的心境。`
+    : '深度心理學覺察：夢境是潛意識整理生活記憶與情緒壓力的自然機制。透過記錄與覺察夢境，你能更清晰地辨識內心深處的真正渴望與盲點。';
+
   return {
     symbols,
+    traditionalView,
+    psychologicalView,
     ...adjusted,
   };
 }

@@ -25,6 +25,10 @@ import {
   sortByDistance,
   type Temple,
 } from '@/data/temples';
+import {
+  calculateIncenseHeat,
+  getCuratedReviews,
+} from '@/data/templeCommunity';
 import { useI18n } from '@/hooks/useI18n';
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout';
 
@@ -266,6 +270,14 @@ export default function MapScreen() {
                   <View style={styles.cardTitleRow}>
                     <Text style={styles.templeName}>{temple.name}</Text>
                     <Text style={styles.templeCity}>{temple.city}</Text>
+                    {(() => {
+                      const heat = calculateIncenseHeat(temple.id);
+                      return (
+                        <View style={[styles.heatBadge, heat.level === 'blazing' && styles.heatBlazing, heat.level === 'bustling' && styles.heatBustling]}>
+                          <Text style={styles.heatBadgeText}>{heat.heatLabel}</Text>
+                        </View>
+                      );
+                    })()}
                     {getCheckInCount(temple.id) > 0 && (
                       <View style={styles.checkInBadge}>
                         <Text style={styles.checkInBadgeText}>打卡 {getCheckInCount(temple.id)}</Text>
@@ -303,12 +315,37 @@ export default function MapScreen() {
             )}
           </ScrollView>
 
-          {/* 右側：選中廟宇詳情 or 打卡/評論 */}
+            {/* 右側：選中廟宇詳情 or 打卡/評論 */}
           <ScrollView style={styles.rightPanel} contentContainerStyle={styles.rightPanelContent} keyboardShouldPersistTaps="handled">
             {selectedTemple ? (
               <View>
                 <Text style={[styles.pageTitle, { textAlign: 'left' }]}>{selectedTemple.name}</Text>
                 <Text style={styles.templeCity}>{selectedTemple.city}</Text>
+
+                {/* 即時香火指數卡片 */}
+                {(() => {
+                  const heat = calculateIncenseHeat(selectedTemple.id);
+                  return (
+                    <View style={styles.incenseCard}>
+                      <View style={styles.incenseCardHeader}>
+                        <Text style={styles.incenseCardTitle}>🔥 即時香火熱度指數</Text>
+                        <View style={[styles.heatBadge, heat.level === 'blazing' && styles.heatBlazing, heat.level === 'bustling' && styles.heatBustling]}>
+                          <Text style={styles.heatBadgeText}>{heat.heatLabel}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.incenseBarBg}>
+                        <View style={[styles.incenseBarFill, { width: `${heat.crowdIndex}%` }]} />
+                      </View>
+                      <Text style={styles.incenseTip}>💡 參拜指引：{heat.recommendedHours}</Text>
+                      {heat.specialNotice ? (
+                        <Text style={[styles.incenseTip, { marginTop: 4, color: theme.goldLight }]}>
+                          ⚠️ {heat.specialNotice}
+                        </Text>
+                      ) : null}
+                    </View>
+                  );
+                })()}
+
                 <View style={styles.divider} />
                 <Text style={styles.detailAddress}>📍 {selectedTemple.address}</Text>
                 <Text style={styles.detailTime}>🕐 {selectedTemple.openHours}</Text>
@@ -336,9 +373,35 @@ export default function MapScreen() {
                     ) : null}
                   </TouchableOpacity>
                 </View>
+
+                {/* 精選信眾靈驗心得 */}
+                {(() => {
+                  const curated = getCuratedReviews(selectedTemple.id);
+                  if (curated.length === 0) return null;
+                  return (
+                    <View style={styles.curatedSection}>
+                      <Text style={styles.curatedSectionTitle}>📿 精選信眾靈驗事蹟</Text>
+                      {curated.map(c => (
+                        <View key={c.id} style={styles.curatedItem}>
+                          <View style={styles.curatedHeader}>
+                            <Text style={styles.curatedAuthor}>{c.avatarEmoji} {c.author}</Text>
+                            <View style={styles.curatedCategoryBadge}>
+                              <Text style={styles.curatedCategoryText}>{c.tag}</Text>
+                            </View>
+                            <Text style={styles.reviewStars}>{'★'.repeat(c.rating)}</Text>
+                            <Text style={styles.curatedLikes}>👍 {c.likes}</Text>
+                          </View>
+                          <Text style={styles.curatedExperience}>{c.text}</Text>
+                          <Text style={styles.curatedDate}>{c.dateStr}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  );
+                })()}
+
                 {/* 評論區 */}
                 <View style={styles.reviewSection}>
-                  <Text style={styles.reviewTitle}>廟宇評論</Text>
+                  <Text style={styles.reviewTitle}>信眾心得交流 ({reviews.length})</Text>
                   {reviews.map(r => (
                     <View key={r.id} style={styles.reviewItem}>
                       <View style={styles.reviewHeader}>
@@ -349,7 +412,7 @@ export default function MapScreen() {
                       <Text style={styles.reviewText}>{r.text}</Text>
                     </View>
                   ))}
-                  {reviews.length === 0 && <Text style={styles.noReviews}>還沒有評論，來第一個留言吧！</Text>}
+                  {reviews.length === 0 && <Text style={styles.noReviews}>還沒有信眾在此留言，成為第一個留下心願或感應的人吧！</Text>}
                   <View style={styles.reviewForm}>
                     <View style={styles.reviewRatingRow}>
                       <Text style={styles.reviewLabel}>評分：</Text>
@@ -359,10 +422,10 @@ export default function MapScreen() {
                         </TouchableOpacity>
                       ))}
                     </View>
-                    <TextInput style={styles.reviewInput} value={reviewAuthor} onChangeText={setReviewAuthor} placeholder="您的名字" placeholderTextColor={theme.textMuted} />
-                    <TextInput style={[styles.reviewInput, { minHeight: 56 }] as any} value={reviewText} onChangeText={setReviewText} placeholder="留下您對這座廟宇的感想…" placeholderTextColor={theme.textMuted} multiline maxLength={200} />
+                    <TextInput style={styles.reviewInput} value={reviewAuthor} onChangeText={setReviewAuthor} placeholder="您的稱呼（如：陳信士）" placeholderTextColor={theme.textMuted} />
+                    <TextInput style={[styles.reviewInput, { minHeight: 56 }] as any} value={reviewText} onChangeText={setReviewText} placeholder="分享您的參拜祈願或還願感應心得…" placeholderTextColor={theme.textMuted} multiline maxLength={200} />
                     <TouchableOpacity style={styles.reviewSubmitBtn} onPress={handleAddReview} disabled={!reviewText.trim()}>
-                      <Text style={styles.reviewSubmitText}>發佈評論</Text>
+                      <Text style={styles.reviewSubmitText}>發佈心得</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -441,6 +504,14 @@ export default function MapScreen() {
                 <View style={styles.cardTitleRow}>
                   <Text style={styles.templeName}>{temple.name}</Text>
                   <Text style={styles.templeCity}>{temple.city}</Text>
+                  {(() => {
+                    const heat = calculateIncenseHeat(temple.id);
+                    return (
+                      <View style={[styles.heatBadge, heat.level === 'blazing' && styles.heatBlazing, heat.level === 'bustling' && styles.heatBustling]}>
+                        <Text style={styles.heatBadgeText}>{heat.heatLabel}</Text>
+                      </View>
+                    );
+                  })()}
                   {getCheckInCount(temple.id) > 0 && (
                     <View style={styles.checkInBadge}>
                       <Text style={styles.checkInBadgeText}>打卡 {getCheckInCount(temple.id)}</Text>
@@ -472,6 +543,30 @@ export default function MapScreen() {
               {/* 展開詳情 */}
               {selectedTemple?.id === temple.id && (
                 <View style={styles.detailPanel}>
+                  {/* 即時香火指數卡片 */}
+                  {(() => {
+                    const heat = calculateIncenseHeat(temple.id);
+                    return (
+                      <View style={styles.incenseCard}>
+                        <View style={styles.incenseCardHeader}>
+                          <Text style={styles.incenseCardTitle}>🔥 即時香火熱度指數</Text>
+                          <View style={[styles.heatBadge, heat.level === 'blazing' && styles.heatBlazing, heat.level === 'bustling' && styles.heatBustling]}>
+                            <Text style={styles.heatBadgeText}>{heat.heatLabel}</Text>
+                          </View>
+                        </View>
+                        <View style={styles.incenseBarBg}>
+                          <View style={[styles.incenseBarFill, { width: `${heat.crowdIndex}%` }]} />
+                        </View>
+                        <Text style={styles.incenseTip}>💡 參拜指引：{heat.recommendedHours}</Text>
+                        {heat.specialNotice ? (
+                          <Text style={[styles.incenseTip, { marginTop: 4, color: theme.goldLight }]}>
+                            ⚠️ {heat.specialNotice}
+                          </Text>
+                        ) : null}
+                      </View>
+                    );
+                  })()}
+
                   <View style={styles.divider} />
                   <Text style={styles.detailAddress}>📍 {temple.address}</Text>
                   <Text style={styles.detailTime}>🕐 {temple.openHours}</Text>
@@ -499,36 +594,62 @@ export default function MapScreen() {
                       ) : null}
                     </TouchableOpacity>
                   </View>
-                {/* 評論區 */}
-                <View style={styles.reviewSection}>
-                  <Text style={styles.reviewTitle}>廟宇評論</Text>
-                  {reviews.map(r => (
-                    <View key={r.id} style={styles.reviewItem}>
-                      <View style={styles.reviewHeader}>
-                        <Text style={styles.reviewAuthor}>{r.author}</Text>
-                        <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</Text>
-                        <Text style={styles.reviewDate}>{new Date(r.timestamp).toLocaleDateString('zh-TW')}</Text>
+
+                  {/* 精選信眾靈驗心得 */}
+                  {(() => {
+                    const curated = getCuratedReviews(temple.id);
+                    if (curated.length === 0) return null;
+                    return (
+                      <View style={styles.curatedSection}>
+                        <Text style={styles.curatedSectionTitle}>📿 精選信眾靈驗事蹟</Text>
+                        {curated.map(c => (
+                          <View key={c.id} style={styles.curatedItem}>
+                            <View style={styles.curatedHeader}>
+                              <Text style={styles.curatedAuthor}>{c.avatarEmoji} {c.author}</Text>
+                              <View style={styles.curatedCategoryBadge}>
+                                <Text style={styles.curatedCategoryText}>{c.tag}</Text>
+                              </View>
+                              <Text style={styles.reviewStars}>{'★'.repeat(c.rating)}</Text>
+                              <Text style={styles.curatedLikes}>👍 {c.likes}</Text>
+                            </View>
+                            <Text style={styles.curatedExperience}>{c.text}</Text>
+                            <Text style={styles.curatedDate}>{c.dateStr}</Text>
+                          </View>
+                        ))}
                       </View>
-                      <Text style={styles.reviewText}>{r.text}</Text>
+                    );
+                  })()}
+
+                  {/* 評論區 */}
+                  <View style={styles.reviewSection}>
+                    <Text style={styles.reviewTitle}>信眾心得交流 ({reviews.length})</Text>
+                    {reviews.map(r => (
+                      <View key={r.id} style={styles.reviewItem}>
+                        <View style={styles.reviewHeader}>
+                          <Text style={styles.reviewAuthor}>{r.author}</Text>
+                          <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</Text>
+                          <Text style={styles.reviewDate}>{new Date(r.timestamp).toLocaleDateString('zh-TW')}</Text>
+                        </View>
+                        <Text style={styles.reviewText}>{r.text}</Text>
+                      </View>
+                    ))}
+                    {reviews.length === 0 && <Text style={styles.noReviews}>還沒有信眾在此留言，成為第一個留下心願或感應的人吧！</Text>}
+                    <View style={styles.reviewForm}>
+                      <View style={styles.reviewRatingRow}>
+                        <Text style={styles.reviewLabel}>評分：</Text>
+                        {[1,2,3,4,5].map(n => (
+                          <TouchableOpacity key={n} onPress={() => setReviewRating(n)}>
+                            <Text style={[styles.reviewStar, n <= reviewRating && styles.reviewStarActive]}>★</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                      <TextInput style={styles.reviewInput} value={reviewAuthor} onChangeText={setReviewAuthor} placeholder="您的稱呼（如：陳信士）" placeholderTextColor={theme.textMuted} />
+                      <TextInput style={[styles.reviewInput, { minHeight: 56 }] as any} value={reviewText} onChangeText={setReviewText} placeholder="分享您的參拜祈願或還願感應心得…" placeholderTextColor={theme.textMuted} multiline maxLength={200} />
+                      <TouchableOpacity style={styles.reviewSubmitBtn} onPress={handleAddReview} disabled={!reviewText.trim()}>
+                        <Text style={styles.reviewSubmitText}>發佈心得</Text>
+                      </TouchableOpacity>
                     </View>
-                  ))}
-                  {reviews.length === 0 && <Text style={styles.noReviews}>還沒有評論，來第一個留言吧！</Text>}
-                  <View style={styles.reviewForm}>
-                    <View style={styles.reviewRatingRow}>
-                      <Text style={styles.reviewLabel}>評分：</Text>
-                      {[1,2,3,4,5].map(n => (
-                        <TouchableOpacity key={n} onPress={() => setReviewRating(n)}>
-                          <Text style={[styles.reviewStar, n <= reviewRating && styles.reviewStarActive]}>★</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                    <TextInput style={styles.reviewInput} value={reviewAuthor} onChangeText={setReviewAuthor} placeholder="您的名字" placeholderTextColor={theme.textMuted} />
-                    <TextInput style={[styles.reviewInput, { minHeight: 56 }] as any} value={reviewText} onChangeText={setReviewText} placeholder="留下您對這座廟宇的感想…" placeholderTextColor={theme.textMuted} multiline maxLength={200} />
-                    <TouchableOpacity style={styles.reviewSubmitBtn} onPress={handleAddReview} disabled={!reviewText.trim()}>
-                      <Text style={styles.reviewSubmitText}>發佈評論</Text>
-                    </TouchableOpacity>
                   </View>
-                </View>
                 </View>
               )}
             </TouchableOpacity>
@@ -790,6 +911,129 @@ function createStyles(theme: ThemeColors, layout: ReturnType<typeof useResponsiv
   },
   checkInBadgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
   distanceNear: { color: theme.success },
+
+  // 香火熱度 Badge & Card
+  heatBadge: {
+    backgroundColor: theme.goldDark + '33',
+    borderRadius: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 7,
+    marginLeft: 6,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '60',
+    alignSelf: 'flex-start',
+  },
+  heatBlazing: {
+    backgroundColor: theme.red + '26',
+    borderColor: theme.redLight + '99',
+  },
+  heatBustling: {
+    backgroundColor: theme.goldDark + '40',
+    borderColor: theme.gold + '99',
+  },
+  heatBadgeText: {
+    color: theme.goldLight,
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  incenseCard: {
+    backgroundColor: theme.bgMedium,
+    borderRadius: 12,
+    padding: TempleSpacing.md,
+    marginTop: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: theme.goldDark + '40',
+  },
+  incenseCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  incenseCardTitle: {
+    color: theme.goldLight,
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+  incenseBarBg: {
+    height: 6,
+    backgroundColor: theme.bgDark,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  incenseBarFill: {
+    height: '100%',
+    backgroundColor: theme.gold,
+    borderRadius: 3,
+  },
+  incenseTip: {
+    color: theme.textLight,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+
+  // 精選信眾靈驗事蹟
+  curatedSection: {
+    marginTop: TempleSpacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.goldDark + '30',
+    paddingTop: TempleSpacing.sm,
+  },
+  curatedSectionTitle: {
+    color: theme.gold,
+    fontWeight: 'bold',
+    fontSize: TempleFonts.small,
+    marginBottom: TempleSpacing.sm,
+  },
+  curatedItem: {
+    marginBottom: TempleSpacing.sm,
+    padding: TempleSpacing.sm,
+    backgroundColor: theme.bgMedium,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.gold,
+  },
+  curatedHeader: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  curatedAuthor: {
+    color: theme.textLight,
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  curatedCategoryBadge: {
+    backgroundColor: theme.goldDark + '44',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  curatedCategoryText: {
+    color: theme.goldLight,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  curatedLikes: {
+    color: theme.textMuted,
+    fontSize: 11,
+    marginLeft: 'auto',
+  },
+  curatedExperience: {
+    color: theme.textLight,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  curatedDate: {
+    color: theme.textMuted,
+    fontSize: 10,
+    textAlign: 'right',
+  },
+
   // 評論
   reviewSection: { marginTop: TempleSpacing.md, borderTopWidth: 1, borderTopColor: theme.goldDark + '30', paddingTop: TempleSpacing.sm },
   reviewTitle: { color: theme.textGold, fontWeight: 'bold', fontSize: TempleFonts.small, marginBottom: TempleSpacing.sm },

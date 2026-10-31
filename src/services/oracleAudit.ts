@@ -40,24 +40,78 @@ export function classifyOracleSource(sourceType: string): OracleSourceClass {
   return 'unclassified';
 }
 
-export function auditGodOracle(god: God): OracleAuditRow {
-  // 月老有兩版，稽核以預設的台灣版對照神明資料的首數
-  const poems = getPoemsByGod(god.id, DEFAULT_YUELAO_EDITION);
-  const catalog = getOracleCatalogByGodId(god.id, DEFAULT_YUELAO_EDITION);
+export function auditPoemsData(
+  god: God,
+  poems: readonly Poem[],
+  catalog: OracleCatalogEntry,
+): OracleAuditRow {
   const errors: string[] = [];
   const warnings: string[] = [];
 
   if (poems.length !== god.totalPoems) errors.push(`實際 ${poems.length} 首，神明資料標示 ${god.totalPoems} 首`);
   if (catalog.totalPoems !== god.totalPoems) errors.push(`來源目錄標示 ${catalog.totalPoems} 首，與神明資料不一致`);
+
+  const hasSpecialNumbering = poems.some(
+    (poem) => poem.isKingPoem || poem.isHeadPoem || (poem.kind && poem.kind !== 'standard') || Boolean(poem.displayNumber)
+  );
+
   const expectedNumbers = Array.from({ length: god.totalPoems }, (_, index) => index + 1);
-  if (poems.some((poem, index) => poem.number !== expectedNumbers[index])) errors.push('籤號並非從 1 起連續排列');
+  const isSequential1ToN = !poems.some((poem, index) => poem.number !== expectedNumbers[index]);
+
+  if (!isSequential1ToN) {
+    if (hasSpecialNumbering) {
+      warnings.push('格式特殊：含籤首／籤王或非連號排列');
+    } else {
+      errors.push('籤號並非從 1 起連續排列');
+    }
+  }
 
   let missingFields = 0;
+  let totalChecks = 0;
+  let specialPoemCount = 0;
+  let imagePendingCount = 0;
+
   poems.forEach((poem) => {
-    REQUIRED_TEXT_FIELDS.forEach((field) => { if (!String(poem[field] ?? '').trim()) missingFields += 1; });
-    REQUIRED_INTERPRETATIONS.forEach((field) => { if (!String(poem.jieYue?.[field] ?? '').trim()) missingFields += 1; });
+    const isSpecialPoem = Boolean(
+      poem.isKingPoem ||
+      poem.isHeadPoem ||
+      (poem.kind && poem.kind !== 'standard') ||
+      poem.unrankedLevel ||
+      poem.nonStandardMeter ||
+      poem.specialNote
+    );
+    if (isSpecialPoem) specialPoemCount += 1;
+
+    if (poem.imageTranscriptionPending) {
+      imagePendingCount += 1;
+      return; // 影像待轉錄狀態，不計為空白欄位錯誤
+    }
+
+    REQUIRED_TEXT_FIELDS.forEach((field) => {
+      // 若為未標吉凶之特殊籤，不強制要求 level
+      if (field === 'level' && (poem.unrankedLevel || poem.level === '未標')) {
+        return;
+      }
+      // 若為籤王/籤首/特殊籤，不強制要求 ganzhi
+      if (
+        field === 'ganzhi' &&
+        (poem.isKingPoem || poem.isHeadPoem || poem.kind === 'qian-wang' || poem.kind === 'qian-shou' || poem.kind === 'special')
+      ) {
+        return;
+      }
+      totalChecks += 1;
+      if (!String(poem[field] ?? '').trim()) missingFields += 1;
+    });
+
+    REQUIRED_INTERPRETATIONS.forEach((field) => {
+      totalChecks += 1;
+      if (!String(poem.jieYue?.[field] ?? '').trim()) missingFields += 1;
+    });
   });
+
   if (missingFields) errors.push(`共有 ${missingFields} 個必要內容欄位為空白`);
+  if (imagePendingCount > 0) warnings.push(`含 ${imagePendingCount} 首影像待轉錄之籤文`);
+  if (specialPoemCount > 0) warnings.push(`格式特殊：含 ${specialPoemCount} 首特殊格式籤（籤首／籤王／未標吉凶／非七言）`);
 
   const normalizedContents = poems.map((poem) => poem.content.replace(/\s+/g, ' ').trim());
   const uniqueContentCount = new Set(normalizedContents).size;
@@ -68,12 +122,18 @@ export function auditGodOracle(god: God): OracleAuditRow {
   if (!catalog.versionTag || catalog.versionTag === 'internal-general-v1') errors.push('缺少可追蹤的版本標記');
   if (!catalog.editionNote.trim() || !catalog.sourceNote.trim()) errors.push('缺少來源或版本說明');
 
-  const totalChecks = poems.length * (REQUIRED_TEXT_FIELDS.length + REQUIRED_INTERPRETATIONS.length);
-  const completenessPercent = totalChecks ? Math.round(((totalChecks - missingFields) / totalChecks) * 100) : 0;
+  const completenessPercent = totalChecks ? Math.round(((totalChecks - missingFields) / totalChecks) * 100) : 100;
   return {
     god, catalog, sourceClass, poemCount: poems.length, uniqueContentCount, completenessPercent,
     errors, warnings, status: errors.length ? 'critical' : warnings.length ? 'review' : 'complete',
   };
+}
+
+export function auditGodOracle(god: God): OracleAuditRow {
+  // 月老有兩版，稽核以預設的台灣版對照神明資料的首數
+  const poems = getPoemsByGod(god.id, DEFAULT_YUELAO_EDITION);
+  const catalog = getOracleCatalogByGodId(god.id, DEFAULT_YUELAO_EDITION);
+  return auditPoemsData(god, poems, catalog);
 }
 
 export function auditAllOracles(): OracleAuditSummary {

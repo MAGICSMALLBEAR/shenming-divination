@@ -8,6 +8,7 @@
 import { gods, getPoemsByGod, type God } from './gods';
 import type { YuelaoEdition } from './yuelaoEdition';
 import type { Poem } from './poems/leiyushi';
+import { getOracleEditionById } from './oracleEditionRegistry';
 import { leiyushiPoems } from './poems/leiyushi';
 import { jiazi60Poems } from './poems/jiazi60';
 import { guanyinLingQianPoems } from './poems/guanyinLingQian';
@@ -45,6 +46,7 @@ export interface OracleSourceCard {
   listedCommit: string;
   withdrawal: string;
   poems: readonly Poem[];
+  editionIds?: readonly string[];
 }
 
 type CardInput = Omit<OracleSourceCard, 'totalPoems' | 'reviewer' | 'withdrawal'>;
@@ -71,6 +73,7 @@ const RIGHTS_PENDING = '待確認；白話、籤題與解曰為本 App 撰寫。
 export const oracleSourceCards: OracleSourceCard[] = [
   card({
     id: 'leiyushi-100',
+    editionIds: ['leiyushi-100'],
     title: '雷雨師百首（關聖帝君靈籤）',
     origin: '行天宮、城隍廟等台灣廟宇通行；即《正統道藏》護國嘉濟江東王靈籤',
     edition: '台灣現行版本；2026-10-17 以道藏三方比對修正 7 處錯字',
@@ -89,6 +92,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'jiazi-60',
+    editionIds: ['jiazi-60', 'mazu-jiazi-60', 'guangze-jiazi-60', 'wunian-jiazi-60'],
     title: '六十甲子籤',
     origin: '媽祖廟、王爺廟、土地公廟、天公廟等台灣廟宇通行',
     edition: '傳統定本，保留六十甲子排序；2026-10-23 三方比對修正 6 首，#55 因押韻保留',
@@ -105,6 +109,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'guanyin-100',
+    editionIds: ['guanyin-100', 'guanyin-common-100', 'dongyue-guanyin-100'],
     title: '觀音靈籤百首',
     origin: '艋舺龍山寺等觀音廟宇通行',
     edition: '2026-10-23 三方比對修正 3 首；第 100 籤主詩依籤本「詩曰一」',
@@ -121,6 +126,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'huangdaxian-100',
+    editionIds: ['huangdaxian-100'],
     title: '黃大仙靈籤一百首',
     origin: '香港嗇色園黃大仙祠',
     edition: '三方多數決定字；2026-10-17 修正 4 處錯字',
@@ -138,6 +144,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'chegong-96',
+    editionIds: ['chegong-96'],
     title: '車公靈籤九十六首',
     origin: '香港沙田車公廟',
     edition: '三方逐字比對，差異僅異體字',
@@ -154,6 +161,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'xuantian-daozang-49',
+    editionIds: ['xuantian-daozang-49', 'xuantian-49'],
     title: '玄天上帝感應靈籤四十九首',
     origin: '《正統道藏》續道藏《玄天上帝百字聖號》（DZ1482）',
     edition: '原典；#40 缺字以「□」保留',
@@ -166,6 +174,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'zhusheng-daozang-64',
+    editionIds: ['zhusheng-daozang-64', 'zhusheng-28', 'zhusheng-64'],
     title: '靈濟真君注生堂靈籤六十四首',
     origin: '《正統道藏》；原為靈濟真君（徐仙）信仰的求嗣籤',
     edition: '原典',
@@ -178,6 +187,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'linshui-daozang-99',
+    editionIds: ['linshui-daozang-99', 'linshui-36', 'linshui-99'],
     title: '九天衛房聖母元君靈應寶籤九十九首',
     origin: '《正統道藏》正一部（DZ1300）',
     edition: '原典；#28 缺字以「□」保留',
@@ -190,6 +200,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'yuelao-taiwan-100',
+    editionIds: ['yuelao-taiwan-100'],
     title: '月老聖籤一百籤（台灣版）',
     origin: '新竹普天宮',
     edition: '籤號依好廟網；錯字可考出處者依原典定字',
@@ -203,6 +214,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'yuelao-hongkong-101',
+    editionIds: ['yuelao-hongkong-101'],
     title: '月老靈簽一百零一簽（香港版）',
     origin: '香港通行',
     edition: '籤號與吉凶依 golla／hkir；錯字可考出處者依原典定字',
@@ -219,6 +231,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'kongzi-wenwu-72',
+    editionIds: ['kongzi-wenwu-72', 'kongzi-shengqian-60', 'kongzi-shengqian-72'],
     title: '孔子聖籤七十二首',
     origin: '南投日月潭文武廟',
     edition: '依廟方官網；明顯打字錯誤依所引原典改正',
@@ -235,6 +248,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'luzu-zhinan-61',
+    editionIds: ['luzu-zhinan-61'],
     title: '指南宮呂祖靈籤六十首＋籤王',
     origin: '台北木柵指南宮',
     edition: '依籤紙；籤序依六十甲子，籤王排第 61',
@@ -251,6 +265,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'zhuge-384',
+    editionIds: ['zhuge-384'],
     title: '諸葛神數三百八十四籤',
     origin: '民間流傳',
     edition: '三方多數決定字',
@@ -267,6 +282,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'qingshui-taipei-50',
+    editionIds: ['qingshui-taipei-50'],
     title: '清水祖師靈籤（臺北版）四十八首＋簽王二首',
     origin: '三峽長福巖、艋舺清水巖、淡水清水巖通行；見於《清水岩志略》',
     edition: '臺北版；明顯錯字依安溪版改正',
@@ -283,6 +299,7 @@ export const oracleSourceCards: OracleSourceCard[] = [
   }),
   card({
     id: 'baosheng-baoan-61',
+    editionIds: ['baosheng-baoan-61'],
     title: '大龍峒保安宮保生大帝籤六十首＋籤王',
     origin: '台北大龍峒保安宮',
     edition: '依好廟網；新聞引用 5 首抽查一致',
@@ -303,13 +320,75 @@ function sameText(base: readonly Poem[], poems: readonly Poem[]) {
   return base.length === poems.length && base.every((poem, index) => poem.content === poems[index].content);
 }
 
-/** 以籤詩原文找出底本；神明專屬改寫只動白話與解曰，原文不變。 */
+/** 依 editionId 取得來源卡；籤本以 editionId 為主鍵以避免同詩文覆蓋來源 */
+export function getOracleSourceCardByEditionId(editionId: string): OracleSourceCard | null {
+  if (!editionId) return null;
+  const match = oracleSourceCards.find(
+    (item) => item.id === editionId || item.editionIds?.includes(editionId),
+  );
+  if (match) return match;
+
+  const candidate = getOracleEditionById(editionId);
+  if (candidate) {
+    return {
+      id: candidate.id,
+      title: candidate.label,
+      origin: candidate.temple,
+      edition: candidate.transcription?.archive ?? '離線轉錄典藏',
+      totalPoems: candidate.expectedCount ?? candidate.poems?.length ?? 0,
+      sources: candidate.sourceUrl ? [{ label: candidate.temple, url: candidate.sourceUrl }] : [],
+      sourceGapNote: candidate.rightsCleared ? undefined : '待取得廟方正式展示權同意',
+      originalImages: candidate.transcription ? '已目視轉錄影像' : '未取得',
+      rights: candidate.rightsCleared ? '已取得展示權' : '展示權待確認；未取得使用同意前不建立公開抽籤資料',
+      reviewer: ORACLE_SOURCE_PENDING,
+      listedAt: candidate.transcription?.verifiedAt ?? '2026-10-28',
+      listedCommit: '51354ad',
+      withdrawal: ORACLE_SOURCE_PENDING,
+      poems: candidate.poems ?? [],
+      editionIds: [candidate.id],
+    };
+  }
+
+  return null;
+}
+
+/** 以籤詩原文找出底本；作為 editionId 無法比對時之輔助。 */
 export function getOracleSourceCardForPoems(poems: readonly Poem[]): OracleSourceCard | null {
   return oracleSourceCards.find((item) => item.poems === poems || sameText(item.poems, poems)) ?? null;
 }
 
-export function getOracleSourceCardByGodId(godId: number, yuelaoEdition?: YuelaoEdition): OracleSourceCard | null {
+/** 依神明與版次取得來源卡；優先使用 editionId，無則以神明與詩文比對輔助 */
+export function getOracleSourceCardByGodId(
+  godId: number,
+  yuelaoEdition?: YuelaoEdition,
+  editionId?: string,
+): OracleSourceCard | null {
+  const targetEditionId = editionId || (
+    godId === 13 && yuelaoEdition
+      ? (yuelaoEdition === 'hongkong' ? 'yuelao-hongkong-101' : 'yuelao-taiwan-100')
+      : undefined
+  );
+  if (targetEditionId) {
+    const card = getOracleSourceCardByEditionId(targetEditionId);
+    if (card) return card;
+  }
   return getOracleSourceCardForPoems(getPoemsByGod(godId, yuelaoEdition));
+}
+
+/** 依紀錄或收藏的 editionId 查找來源卡 */
+export function getOracleSourceCardForRecord(record: {
+  editionId?: string | null;
+  godId?: number;
+  poem?: { number: number; content: string };
+}): OracleSourceCard | null {
+  if (record.editionId) {
+    const card = getOracleSourceCardByEditionId(record.editionId);
+    if (card) return card;
+  }
+  if (record.godId) {
+    return getOracleSourceCardByGodId(record.godId);
+  }
+  return null;
 }
 
 /** 每張來源卡被哪些神明使用；月老兩個版本都算。 */

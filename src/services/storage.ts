@@ -202,6 +202,39 @@ export async function removeFavorite(id: string): Promise<void> {
   await setFavorites(favorites.filter((record) => record.id !== id));
 }
 
+export async function deduplicateFavorites(): Promise<{ beforeCount: number; afterCount: number; deduplicatedCount: number }> {
+  const favorites = await getFavorites();
+  const seen = new Set<string>();
+  const uniqueFavorites: DivinationRecord[] = [];
+
+  for (const record of favorites) {
+    const editionDisplay = getRecordEditionDisplay(record);
+    const editionKey = editionDisplay.id ?? 'unspecified';
+    const key = `${record.godName}:${record.poem.number}:${editionKey}:${editionKey === 'unspecified' ? record.poem.content : ''}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      if (!record.editionId && editionDisplay.inferred && editionDisplay.id) {
+        uniqueFavorites.push(normalizeRecord({
+          ...record,
+          editionId: editionDisplay.id,
+          editionLabel: editionDisplay.label,
+        }));
+      } else {
+        uniqueFavorites.push(record);
+      }
+    }
+  }
+
+  if (uniqueFavorites.length !== favorites.length) {
+    await setFavorites(uniqueFavorites);
+  }
+  return {
+    beforeCount: favorites.length,
+    afterCount: uniqueFavorites.length,
+    deduplicatedCount: favorites.length - uniqueFavorites.length,
+  };
+}
+
 function sameFavoritePoem(
   record: DivinationRecord,
   poemNumber: number,

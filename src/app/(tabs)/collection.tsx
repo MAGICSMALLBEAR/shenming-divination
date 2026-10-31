@@ -30,6 +30,7 @@ import {
   addToFolder,
   clearHistory,
   createFolder,
+  deduplicateFavorites,
   deleteFolder,
   getFolderRecords,
   getFolders,
@@ -122,6 +123,7 @@ export default function CollectionScreen() {
     useState<VerificationStatus>('pending');
   const [searchText, setSearchText] = useState('');
   const [selectedGod, setSelectedGod] = useState<string>('all');
+  const [selectedEdition, setSelectedEdition] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedVerification, setSelectedVerification] = useState<VerificationFilter>('all');
   const [selectedLevel, setSelectedLevel] = useState<LevelFilter>('all');
@@ -159,6 +161,16 @@ export default function CollectionScreen() {
     setLoading(false);
   }, []);
 
+  const handleDeduplicate = async () => {
+    const result = await deduplicateFavorites();
+    await loadData();
+    if (result.deduplicatedCount > 0) {
+      Alert.alert('整理完成', `已成功移除 ${result.deduplicatedCount} 筆重複收藏，並為舊紀錄補齊對應版次。`);
+    } else {
+      Alert.alert('整理完成', '目前收藏清冊無重複項目，版次皆已最新。');
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, [loadData]);
@@ -179,6 +191,18 @@ export default function CollectionScreen() {
     return gods.filter((god) => names.has(god.name));
   }, [currentRecords]);
 
+  const availableEditions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const record of currentRecords) {
+      if (selectedGod !== 'all' && record.godName !== selectedGod) continue;
+      const display = getRecordEditionDisplay(record);
+      const key = display.id ?? 'unspecified';
+      const label = display.label ?? '版本未註明';
+      map.set(key, label);
+    }
+    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
+  }, [currentRecords, selectedGod]);
+
   const filteredRecords = useMemo(() => {
     const search = normalizeText(searchText);
     const filtered = currentRecords.filter((record) => {
@@ -188,6 +212,12 @@ export default function CollectionScreen() {
       if (selectedVerification !== 'all' && selectedVerification !== 'due' && (record.verificationStatus ?? 'pending') !== selectedVerification) return false;
       if (selectedLevel !== 'all' && getLevelFilter(record.poem.level) !== selectedLevel) return false;
       if (notesOnly && !record.notes?.trim()) return false;
+
+      const editionDisplay = getRecordEditionDisplay(record);
+      if (selectedEdition !== 'all') {
+        const currentEditionKey = editionDisplay.id ?? 'unspecified';
+        if (currentEditionKey !== selectedEdition) return false;
+      }
 
       if (!search) return true;
 
@@ -201,6 +231,10 @@ export default function CollectionScreen() {
         record.notes ?? '',
         record.aiInterpretation ?? '',
         record.verificationNotes ?? '',
+        editionDisplay.label,
+        record.editionTemple ?? '',
+        record.editionSource ?? '',
+        record.editionId ?? '',
       ]
         .join(' ')
         .toLowerCase()
@@ -212,7 +246,7 @@ export default function CollectionScreen() {
     );
 
     return filtered;
-  }, [currentRecords, notesOnly, searchText, selectedCategory, selectedGod, selectedLevel, selectedVerification, sortMode]);
+  }, [currentRecords, notesOnly, searchText, selectedCategory, selectedEdition, selectedGod, selectedLevel, selectedVerification, sortMode]);
 
   const recordDelays = useStaggeredList({ itemCount: filteredRecords.length, staggerDelay: 60 });
 
@@ -948,6 +982,19 @@ export default function CollectionScreen() {
                 對照模式
               </Text>
             </TouchableOpacity>
+
+            {activeTab === 'favorites' ? (
+              <TouchableOpacity
+                style={styles.filterChip}
+                onPress={handleDeduplicate}
+                accessibilityRole="button"
+                accessibilityLabel="整理重複收藏"
+              >
+                <Text style={styles.filterChipText}>
+                  🧹 整理重複
+                </Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
 
@@ -955,7 +1002,10 @@ export default function CollectionScreen() {
           <View style={styles.filterContent}>
             <TouchableOpacity
               style={[styles.filterChip, selectedGod === 'all' && styles.filterChipActive]}
-              onPress={() => setSelectedGod('all')}
+              onPress={() => {
+                setSelectedGod('all');
+                setSelectedEdition('all');
+              }}
             >
               <Text style={[styles.filterChipText, selectedGod === 'all' && styles.filterChipTextActive]}>
                 {t('allGods')}
@@ -965,7 +1015,10 @@ export default function CollectionScreen() {
               <TouchableOpacity
                 key={god.id}
                 style={[styles.filterChip, selectedGod === god.name && styles.filterChipActive]}
-                onPress={() => setSelectedGod(god.name)}
+                onPress={() => {
+                  setSelectedGod(god.name);
+                  setSelectedEdition('all');
+                }}
               >
                 <Text
                   style={[
@@ -979,6 +1032,37 @@ export default function CollectionScreen() {
             ))}
           </View>
         </View>
+
+        {availableEditions.length > 1 ? (
+          <View style={styles.filterStrip}>
+            <View style={styles.filterContent}>
+              <TouchableOpacity
+                style={[styles.filterChip, selectedEdition === 'all' && styles.filterChipActive]}
+                onPress={() => setSelectedEdition('all')}
+              >
+                <Text style={[styles.filterChipText, selectedEdition === 'all' && styles.filterChipTextActive]}>
+                  全部版次
+                </Text>
+              </TouchableOpacity>
+              {availableEditions.map((edition) => (
+                <TouchableOpacity
+                  key={edition.id}
+                  style={[styles.filterChip, selectedEdition === edition.id && styles.filterChipActive]}
+                  onPress={() => setSelectedEdition(edition.id)}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      selectedEdition === edition.id && styles.filterChipTextActive,
+                    ]}
+                  >
+                    {edition.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.filterStrip}>
           <View style={styles.filterContent}>
@@ -1288,6 +1372,9 @@ export default function CollectionScreen() {
                     const isSameNumber = compareRecords[0].poem.number === compareRecords[1].poem.number;
                     const isSameLevel = compareRecords[0].poem.level === compareRecords[1].poem.level;
                     const editionDisplay = getRecordEditionDisplay(rec);
+                    const edition0 = getRecordEditionDisplay(compareRecords[0]);
+                    const edition1 = getRecordEditionDisplay(compareRecords[1]);
+                    const isDiffEdition = isSameGod && isSameNumber && (edition0.id !== edition1.id || edition0.label !== edition1.label);
 
                     return (
                       <View
@@ -1313,6 +1400,11 @@ export default function CollectionScreen() {
                           {isSameNumber && idx === 1 ? (
                             <View style={styles.compareSameTag}>
                               <Text style={styles.compareSameTagText}>同籤號</Text>
+                            </View>
+                          ) : null}
+                          {isDiffEdition && idx === 1 ? (
+                            <View style={styles.compareDiffEditionTag}>
+                              <Text style={styles.compareDiffEditionTagText}>不同版次對照</Text>
                             </View>
                           ) : null}
                           <View style={[
@@ -2285,6 +2377,19 @@ function createStyles(theme: ThemeColors) {
   compareSameTagText: {
     fontSize: 10,
     color: theme.success,
+    fontWeight: '700',
+  },
+  compareDiffEditionTag: {
+    backgroundColor: theme.gold + '25',
+    borderWidth: 1,
+    borderColor: theme.gold + '70',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  compareDiffEditionTagText: {
+    fontSize: 10,
+    color: theme.goldLight,
     fontWeight: '700',
   },
   comparePanelMeta: {

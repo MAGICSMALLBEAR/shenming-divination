@@ -6,6 +6,13 @@ const MAX_ENTRIES = 300;
 
 export type DreamTag = '惡夢' | '好夢' | '清醒夢' | '反覆夢' | '奇異夢';
 
+export interface DreamFollowupQA {
+  id: string;
+  question: string;
+  reply: string;
+  createdAt: number;
+}
+
 export interface DreamJournalEntry {
   id: string;
   dream: string;
@@ -13,6 +20,7 @@ export interface DreamJournalEntry {
   tags: DreamTag[];
   result: DreamResult;
   reflection?: string;
+  followups?: DreamFollowupQA[];
   createdAt: number;
 }
 
@@ -21,6 +29,7 @@ function normalizeEntry(entry: DreamJournalEntry): DreamJournalEntry {
     ...entry,
     tags: Array.isArray(entry.tags) ? entry.tags : [],
     result: { ...entry.result, symbols: Array.isArray(entry.result?.symbols) ? entry.result.symbols : [] },
+    followups: Array.isArray(entry.followups) ? entry.followups : [],
   };
 }
 
@@ -56,8 +65,32 @@ export async function getDreamEntry(id: string): Promise<DreamJournalEntry | nul
   return entries.find((entry) => entry.id === id) ?? null;
 }
 
-export async function updateDreamEntry(id: string, updates: Partial<Pick<DreamJournalEntry, 'reflection' | 'tags'>>): Promise<void> {
+export async function updateDreamEntry(
+  id: string,
+  updates: Partial<Pick<DreamJournalEntry, 'dream' | 'feeling' | 'reflection' | 'tags' | 'followups'>>
+): Promise<void> {
   const entries = await getDreamJournal();
   const updated = entries.map((entry) => entry.id === id ? normalizeEntry({ ...entry, ...updates }) : entry);
   await setItem(DREAM_JOURNAL_KEY, JSON.stringify(updated));
+}
+
+export async function addDreamFollowup(
+  entryId: string,
+  question: string,
+  reply: string
+): Promise<DreamFollowupQA> {
+  const qa: DreamFollowupQA = {
+    id: `qa_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    question: question.trim(),
+    reply: reply.trim(),
+    createdAt: Date.now(),
+  };
+  const entries = await getDreamJournal();
+  const updated = entries.map((entry) => {
+    if (entry.id !== entryId) return entry;
+    const existing = Array.isArray(entry.followups) ? entry.followups : [];
+    return normalizeEntry({ ...entry, followups: [...existing, qa] });
+  });
+  await setItem(DREAM_JOURNAL_KEY, JSON.stringify(updated));
+  return qa;
 }

@@ -1,8 +1,8 @@
-// Sentry error tracking — 需填入真實 DSN 後生效
+// Sentry error tracking — 支援環境變數 EXPO_PUBLIC_SENTRY_DSN 或填入真實 DSN 後生效
 // 文件: https://docs.sentry.io/platforms/react-native/expo/
 import * as Sentry from '@sentry/react-native';
 
-const SENTRY_DSN = ''; // ← 在此填入你的 Sentry DSN
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN || ''; // ← 亦可在此填入你的 Sentry DSN
 
 export function initSentry() {
   if (!SENTRY_DSN) {

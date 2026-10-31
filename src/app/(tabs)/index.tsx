@@ -78,6 +78,7 @@ export default function HomeScreen() {
   const [newFamName, setNewFamName] = React.useState('');
   const [newFamRelation, setNewFamRelation] = React.useState('');
   const [settings, setSettings] = React.useState<AppSettings | null>(null);
+  const [numberEntrySource, setNumberEntrySource] = React.useState<'drawing' | 'choose-draw-method'>('drawing');
   const [quickDrawGod, setQuickDrawGod] = React.useState<God | null>(null);
   // 一事一籤：送出問題時若 24 小時內已向同一位神明問過，先提醒再決定
   const [sameMatter, setSameMatter] = React.useState<{ record: DivinationRecord; question: string; category: string; name: string } | null>(null);
@@ -251,8 +252,10 @@ export default function HomeScreen() {
       case 'enter-zhuge-number':
         if (div.selectedGod?.poemSystem === '諸葛神數') {
           div.goToStep('meditate');
-        } else {
+        } else if (numberEntrySource === 'choose-draw-method') {
           div.goToStep('choose-draw-method');
+        } else {
+          div.performDraw();
         }
         break;
       default: handleReset();
@@ -527,7 +530,12 @@ export default function HomeScreen() {
         return (
           <DrawMethodSelector
             godName={div.selectedGod?.name}
-            onSelect={div.chooseDrawMethod}
+            onSelect={(method) => {
+              if (method === 'number') {
+                setNumberEntrySource('choose-draw-method');
+              }
+              div.chooseDrawMethod(method);
+            }}
           />
         );
       case 'enter-zhuge-number': {
@@ -583,15 +591,59 @@ export default function HomeScreen() {
       case 'drawing':
         return (
           <View style={styles.fullScreen}>
-          {div.drawPhase === 'shaking' ? (
-            <TouchableOpacity
-              style={styles.alternateDrawButton}
-              onPress={() => div.goToStep('choose-draw-method')}
-              accessibilityRole="button"
-              accessibilityLabel="其他取籤方式"
-            >
-              <Text style={styles.alternateDrawButtonText}>其他取籤方式</Text>
-            </TouchableOpacity>
+          {div.drawPhase === 'shaking' && div.selectedGod?.poemSystem !== '諸葛神數' ? (
+            <View style={styles.drawMethodBar}>
+              <View style={styles.drawMethodBarHeader}>
+                <Text style={styles.drawMethodBarTitle}>取籤方式</Text>
+                <TouchableOpacity
+                  style={styles.allMethodsLink}
+                  onPress={() => div.goToStep('choose-draw-method')}
+                  accessibilityRole="button"
+                  accessibilityLabel="其他取籤方式"
+                >
+                  <Text style={styles.allMethodsLinkText}>全部方式說明 ›</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.drawMethodChips}>
+                <View
+                  style={[styles.drawMethodChip, styles.drawMethodChipActive]}
+                  accessibilityRole="text"
+                  accessibilityLabel="手搖籤筒（目前模式）"
+                >
+                  <Text style={styles.drawMethodChipActiveText}>🎋 手搖籤筒</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.drawMethodChip}
+                  onPress={() => {
+                    setNumberEntrySource('drawing');
+                    div.chooseDrawMethod('number');
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="心中報數"
+                >
+                  <Text style={styles.drawMethodChipText}>🔢 心中報數</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawMethodChip}
+                  onPress={() => div.chooseDrawMethod('auto')}
+                  accessibilityRole="button"
+                  accessibilityLabel="自動抽籤"
+                >
+                  <Text style={styles.drawMethodChipText}>🌓 自動抽籤</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.drawMethodChip}
+                  onPress={() => div.chooseDrawMethod('direct')}
+                  accessibilityRole="button"
+                  accessibilityLabel="直接點籤"
+                >
+                  <Text style={styles.drawMethodChipText}>☝️ 直接點籤</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           ) : null}
           <DrawAnimation
             god={div.selectedGod}
@@ -1394,6 +1446,63 @@ function createStyles(theme: ThemeColors) {
     borderWidth: 1, borderColor: theme.gold + '88', backgroundColor: theme.bgCard,
   },
   alternateDrawButtonText: { color: theme.goldLight, fontSize: 12, fontWeight: TempleFonts.heavy },
+  drawMethodBar: {
+    marginHorizontal: TempleSpacing.md,
+    marginTop: TempleSpacing.xs,
+    marginBottom: TempleSpacing.xs,
+    paddingHorizontal: TempleSpacing.md,
+    paddingVertical: 10,
+    backgroundColor: theme.bgCard + 'F2',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: theme.gold + '40',
+  },
+  drawMethodBarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  drawMethodBarTitle: {
+    fontSize: 12,
+    color: theme.goldLight,
+    fontWeight: TempleFonts.heavy,
+  },
+  allMethodsLink: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  allMethodsLinkText: {
+    fontSize: 12,
+    color: theme.gold,
+    fontWeight: TempleFonts.medium,
+  },
+  drawMethodChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  drawMethodChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: theme.bgDark,
+    borderWidth: 1,
+    borderColor: theme.gold + '30',
+  },
+  drawMethodChipActive: {
+    backgroundColor: theme.gold + '25',
+    borderColor: theme.gold,
+  },
+  drawMethodChipText: {
+    fontSize: 12,
+    color: theme.textLight,
+  },
+  drawMethodChipActiveText: {
+    fontSize: 12,
+    color: theme.goldLight,
+    fontWeight: TempleFonts.heavy,
+  },
   verificationHeading: {
     color: theme.goldLight, fontSize: TempleFonts.heading, fontWeight: TempleFonts.heavy,
     textAlign: 'center', marginTop: TempleSpacing.sm,

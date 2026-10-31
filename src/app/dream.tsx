@@ -4,6 +4,7 @@ import {
   View, Text, StyleSheet, ScrollView, TextInput,
   TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { TempleSpacing, TempleFonts } from '@/constants/temple-theme';
@@ -15,9 +16,41 @@ import type { ThemeColors } from '@/constants/themes';
 import { analyzeDream, DreamResult } from '@/services/dreamAnalysis';
 import { saveDreamEntry, type DreamTag } from '@/services/dreamJournal';
 import { VoiceQuestionInput } from '@/components/VoiceQuestionInput';
-import { getDreamReminderPreferences, setDreamReminderEnabled } from '@/services/dreamReminder';
+import { getItem } from '@/services/storage';
+import {
+  formatDreamReminderTime,
+  getDreamReminderPreferences,
+  setDreamReminderEnabled,
+  setDreamReminderTime,
+} from '@/services/dreamReminder';
 
-const API_BASE = 'http://localhost:3001';
+async function resolveDreamApiUrl(): Promise<string> {
+  try {
+    const raw = await getItem('@divination_settings');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.aiServerUrl) {
+        return parsed.aiServerUrl.replace(/\/+$/, '').replace(/\/api\/interpret|\/api\/chat/, '') + '/api/dream';
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  if (process.env.EXPO_PUBLIC_AI_API_URL) {
+    return process.env.EXPO_PUBLIC_AI_API_URL.replace(/\/+$/, '').replace(/\/api\/interpret|\/api\/chat/, '') + '/api/dream';
+  }
+
+  if (Platform.OS === 'web') {
+    return '/api/dream';
+  }
+
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:3001/api/dream';
+  }
+
+  return 'http://localhost:3001/api/dream';
+}
 
 const EMOJI_QUICK_SELECT = [
   { emoji: '😨', label: '害怕' },
@@ -69,9 +102,24 @@ export default function DreamScreen() {
   const [provider, setProvider] = useState('');
   const [tags, setTags] = useState<DreamTag[]>([]);
   const [saved, setSaved] = useState(false);
+  const [savedEntryId, setSavedEntryId] = useState<string | null>(null);
   const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderHour, setReminderHour] = useState(7);
+  const [reminderMinute, setReminderMinute] = useState(30);
 
-  React.useEffect(() => { getDreamReminderPreferences().then((prefs) => setReminderEnabled(prefs.enabled)); }, []);
+  React.useEffect(() => {
+    getDreamReminderPreferences().then((prefs) => {
+      setReminderEnabled(prefs.enabled);
+      setReminderHour(prefs.hour);
+      setReminderMinute(prefs.minute);
+    });
+  }, []);
+
+  const handleSelectReminderTime = async (h: number, m: number) => {
+    setReminderHour(h);
+    setReminderMinute(m);
+    await setDreamReminderTime(h, m);
+  };
 
   const handleSubmit = async () => {
     if (!dream.trim()) {
@@ -84,9 +132,11 @@ export default function DreamScreen() {
     setResult(null);
     setProvider('');
     setSaved(false);
+    setSavedEntryId(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/dream`, {
+      const url = await resolveDreamApiUrl();
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -111,6 +161,8 @@ export default function DreamScreen() {
         setResult({
           symbols: data.symbols || [],
           interpretation: data.interpretation || '',
+          traditionalView: data.traditionalView || '周公解夢：夢境隨心而化，順應常理行事則吉。',
+          psychologicalView: data.psychologicalView || '心理覺察：反映近期內在潛意識對於環境變動的直觀感受。',
           fortune: data.fortune || '中',
           advice: data.advice || '',
         });
@@ -133,8 +185,9 @@ export default function DreamScreen() {
 
   const handleSave = async () => {
     if (!result || saved) return;
-    await saveDreamEntry({ dream: dream.trim(), feeling: feeling.trim() || undefined, tags, result });
+    const entry = await saveDreamEntry({ dream: dream.trim(), feeling: feeling.trim() || undefined, tags, result });
     setSaved(true);
+    setSavedEntryId(entry.id);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
@@ -215,9 +268,37 @@ export default function DreamScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity style={s.reminderRow} onPress={toggleReminder} accessibilityLabel="設定早晨解夢提醒">
-              <Text style={s.reminderText}>☀️ 每天早上 7:30 提醒我記錄夢境</Text><Text style={[s.reminderState, reminderEnabled && s.reminderStateOn]}>{reminderEnabled ? '已開啟' : '開啟'}</Text>
-            </TouchableOpacity>
+            <View style={s.reminderContainer}>
+              <TouchableOpacity style={s.reminderRow} onPress={toggleReminder} accessibilityLabel="設定早晨解夢提醒">
+                <Text style={s.reminderText}>☀️ 每天早上 {formatDreamReminderTime(reminderHour, reminderMinute)} 提醒我記錄夢境</Text>
+                <Text style={[s.reminderState, reminderEnabled && s.reminderStateOn]}>{reminderEnabled ? '已開啟' : '開啟'}</Text>
+              </TouchableOpacity>
+              {reminderEnabled ? (
+                <View style={s.timePresetRow}>
+                  <Text style={s.timePresetLabel}>提醒時間：</Text>
+                  {[
+                    { h: 6, m: 30, label: '06:30' },
+                    { h: 7, m: 0, label: '07:00' },
+                    { h: 7, m: 30, label: '07:30' },
+                    { h: 8, m: 0, label: '08:00' },
+                    { h: 8, m: 30, label: '08:30' },
+                  ].map((preset) => {
+                    const active = reminderHour === preset.h && reminderMinute === preset.m;
+                    return (
+                      <TouchableOpacity
+                        key={preset.label}
+                        style={[s.timePresetChip, active && s.timePresetChipActive]}
+                        onPress={() => handleSelectReminderTime(preset.h, preset.m)}
+                      >
+                        <Text style={[s.timePresetText, active && s.timePresetTextActive]}>
+                          {preset.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ) : null}
+            </View>
 
             <Text style={s.tagLabel}>夢境標籤（選填）</Text>
             <View style={s.emojiRow}>
@@ -279,21 +360,63 @@ export default function DreamScreen() {
               {/* 夢境解析 */}
               {result.interpretation ? (
                 <View style={s.section}>
-                  <Text style={s.sectionTitle}>夢境解析</Text>
+                  <Text style={s.sectionTitle}>夢境核心解析</Text>
                   <Text style={s.interpretationText}>{result.interpretation}</Text>
+                </View>
+              ) : null}
+
+              {/* 周公解夢傳統視角 */}
+              {result.traditionalView ? (
+                <View style={s.section}>
+                  <Text style={s.sectionTitle}>📜 周公解夢傳統視角</Text>
+                  <Text style={s.interpretationText}>{result.traditionalView}</Text>
+                </View>
+              ) : null}
+
+              {/* 現代心理覺察視角 */}
+              {result.psychologicalView ? (
+                <View style={s.section}>
+                  <Text style={s.sectionTitle}>🧠 現代心理覺察視角</Text>
+                  <Text style={s.interpretationText}>{result.psychologicalView}</Text>
                 </View>
               ) : null}
 
               {/* 建議 */}
               {result.advice ? (
                 <View style={s.section}>
-                  <Text style={s.sectionTitle}>溫馨建議</Text>
+                  <Text style={s.sectionTitle}>溫馨指引</Text>
                   <Text style={s.adviceText}>{result.advice}</Text>
                 </View>
               ) : null}
               <TouchableOpacity style={[s.saveBtn, saved && s.saveBtnSaved]} onPress={handleSave} disabled={saved} accessibilityLabel="儲存到夢境日記">
-                <Text style={s.saveText}>{saved ? '已儲存至夢境日記' : '儲存到夢境日記'}</Text>
+                <Text style={s.saveText}>{saved ? '✓ 已儲存至夢境日記' : '儲存到夢境日記'}</Text>
               </TouchableOpacity>
+
+              {/* 儲存後操作引導閉環 */}
+              {saved && savedEntryId ? (
+                <View style={s.savedActionsRow}>
+                  <TouchableOpacity
+                    style={s.savedActionBtn}
+                    onPress={() => router.push(`/dream-entry/${savedEntryId}` as never)}
+                  >
+                    <Text style={s.savedActionText}>💬 深入向 AI 追問此夢 ›</Text>
+                  </TouchableOpacity>
+                  <View style={s.savedActionsSubRow}>
+                    <TouchableOpacity
+                      style={s.savedActionSubBtn}
+                      onPress={() => router.push('/dream-journal' as never)}
+                    >
+                      <Text style={s.savedActionSubText}>📖 查看夢境日記</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={s.savedActionSubBtn}
+                      onPress={() => router.push('/dream-hub' as never)}
+                    >
+                      <Text style={s.savedActionSubText}>🌙 回夢境專區</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : null}
             </Animated.View>
           )}
         </ScrollView>
@@ -401,10 +524,53 @@ function createStyles(theme: ThemeColors) {
     tagChipActive: { backgroundColor: theme.gold },
     tagText: { fontSize: TempleFonts.caption, color: theme.textMuted },
     tagTextActive: { color: theme.bgDark, fontWeight: 'bold' },
-    reminderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderRadius: 10, padding: TempleSpacing.sm, backgroundColor: theme.gold + '14', borderColor: theme.gold + '35', borderWidth: 1, marginBottom: TempleSpacing.sm },
+    reminderContainer: {
+      backgroundColor: theme.gold + '14',
+      borderColor: theme.gold + '35',
+      borderWidth: 1,
+      borderRadius: 12,
+      padding: TempleSpacing.sm,
+      marginBottom: TempleSpacing.sm,
+    },
+    reminderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     reminderText: { color: theme.textLight, fontSize: TempleFonts.small },
     reminderState: { color: theme.textGold, fontSize: TempleFonts.small, fontWeight: 'bold' },
     reminderStateOn: { color: theme.success },
+    timePresetRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: 6,
+      marginTop: 8,
+      paddingTop: 8,
+      borderTopWidth: 1,
+      borderTopColor: theme.gold + '20',
+    },
+    timePresetLabel: {
+      fontSize: TempleFonts.caption,
+      color: theme.goldLight,
+      marginRight: 2,
+    },
+    timePresetChip: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+      backgroundColor: theme.bgDark,
+      borderWidth: 1,
+      borderColor: theme.gold + '30',
+    },
+    timePresetChipActive: {
+      backgroundColor: theme.gold + '35',
+      borderColor: theme.gold,
+    },
+    timePresetText: {
+      fontSize: TempleFonts.caption,
+      color: theme.textMuted,
+    },
+    timePresetTextActive: {
+      color: theme.goldLight,
+      fontWeight: 'bold',
+    },
     errorText: {
       color: theme.danger,
       fontSize: TempleFonts.small,
@@ -495,5 +661,45 @@ function createStyles(theme: ThemeColors) {
     },
     saveBtnSaved: { backgroundColor: theme.success },
     saveText: { color: theme.bgDark, fontWeight: 'bold', fontSize: TempleFonts.body },
+
+    // 儲存後引導區
+    savedActionsRow: {
+      marginTop: TempleSpacing.md,
+      paddingTop: TempleSpacing.md,
+      borderTopWidth: 1,
+      borderTopColor: theme.gold + '25',
+      gap: 10,
+    },
+    savedActionBtn: {
+      backgroundColor: theme.gold + '25',
+      borderColor: theme.gold,
+      borderWidth: 1,
+      borderRadius: 20,
+      alignItems: 'center',
+      paddingVertical: 11,
+    },
+    savedActionText: {
+      color: theme.goldLight,
+      fontWeight: 'bold',
+      fontSize: TempleFonts.small,
+    },
+    savedActionsSubRow: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    savedActionSubBtn: {
+      flex: 1,
+      backgroundColor: theme.bgMedium,
+      borderColor: theme.gold + '35',
+      borderWidth: 1,
+      borderRadius: 16,
+      alignItems: 'center',
+      paddingVertical: 9,
+    },
+    savedActionSubText: {
+      color: theme.textMuted,
+      fontSize: 12,
+      fontWeight: '600',
+    },
   });
 }
